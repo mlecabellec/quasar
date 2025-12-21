@@ -1,0 +1,20 @@
+26/08/94 : Actuellement, les debordements eventuels ne sont pas indiques a
+           l'ecran en cours d'espionnage.
+           --> Ce devrait etre pourtant le comportement par defaut
+               (affichage de "\007DEBORDEMENT\n");
+           --> Une option de la ligne de commande permettrait d'inhiber cet
+               affichage
+               
+               
+26/08/94 : Il serait tres souhaitable de disposer d'un programme de recherche 
+           d'erreurs dans un fichier espion.dat
+           (il afficherait la nature de l'erreur, le numero du tampon, le
+            numero de l'echange, etc...)
+            
+            
+26/08/94 : Penser a effectuer des recherches sur le probleme de SOUEF avec
+           l'erreur 0x140 (probleme a l'origine de abi2cmba v2.3)
+
+
+13/09/94 : abi2cmba devrait etre reecrit plus proprement. Un bug subsiste sans 
+	   doute si l'avant dernier message espionne est en erreur.

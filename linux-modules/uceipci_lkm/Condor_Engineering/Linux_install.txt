@@ -1,0 +1,851 @@
+------------------------------------------------------------------------------
+
+                              Abaco Systems, Inc.
+                                 Goleta, CA.
+                               copyright 2018
+
+------------------------------------------------------------------------------
+
+This document covers the installation of Abaco Systems avionics Linux support
+package and API distributions for all Linux supported boards.
+
+This document is organized into the following sections:
+
+1. Preliminaries
+
+2. Installation:
+     Hardware Installation
+     Software Installation
+     Distribution Contents
+
+3. Distribution Build:
+     Automatic install
+     Manual install
+     Cross-compile environment
+
+4. Device Drivers:
+     Building the Device Driver
+     Loading the Device Driver
+     Unloading the Device Driver
+
+5. Loading Additional Boards
+
+6. The configuration file 
+
+7. Troubleshooting
+
+8. Revisions
+
+9. Contact Information
+
+
+===============================================================================
+1.  Preliminaries
+===============================================================================
+
+Abaco Systems avionics provides Linux API distribution packages which are
+divided into two sections: first is the Linux support package which consists of
+the device drivers and the low-level library (the interface to the device
+drivers, this includes USB, and the operating system for the API library(s)).
+Second is the API distributions which consist of an API library(s) and examples
+demonstrating how to use the library.  All the provided source code is
+proprietary and all users must agree and adhere to Abaco Systems' Software
+License agreement (refer to the "Partial Source Code" document at
+https://www.abaco.com/support/embeddedsupport/legal).
+
+Dependencies
+------------
+1. The "Condor_Engineering" directory must be the main directory for all
+   Abaco Systems avionics API distributions.
+2. When the system is restarted both the PCI and/or ISA device driver will need
+   to be loaded.  Refer to the "Device Drivers" section.  
+3. The low-level library and PCI device driver for kernels 2.6 and 3.x/4.x will
+   use the "sysfs" if detected.
+4. The low-level library and PCMCIA device driver for kernel 2.6 will use
+   "sysfs" if all of the following apply: the "sysfs" is detected, the kernel
+   is 2.6.11 or later, and the PCI driver nor the ISA driver is loaded.
+5. The USB support requires using the libUSB library that can be installed
+   using the Linux distribution software package manager or from the source
+   files at libusb.info (this would require modifying the "lowlevel" library
+   makefile).  Abaco Systems takes no responsibility for libUSB usage,
+   therefore all technical support inquiries concerning this package must be
+   directed to the package's admin.
+6. The USB support will not use "sysfs" instead it requires using the
+   "ceidev.conf" file. 
+7. The PCCARD-(D)1553 is a PCIC device and not a cardbus device.  Therefore the
+   PCMCIA Card Services may need to be installed on the system.  It is
+   available at http://pcmcia-cs.sourceforge.net. Abaco Systems takes no
+   responsibility for its usage, therefore all technical support inquiries
+   concerning this package must be directed to the package's admin.
+8. The distribution is dependent on the following Linux utilities: bash,make,
+   gcc, ld, insmod, rmmod.  Abaco Systems takes no responsibility for their
+   usage, therefore all questions concerning these packages must be directed
+   to the appropriate package admin.
+
+Support
+-------
+Abaco Systems offers limited Linux support, refer to the "Linux_support.txt"
+file for more information.
+
+Source License
+--------------
+The provided source code is proprietary and subject to the Abaco Systems
+Software License Agreement (which can be referenced from
+https://www.abaco.com/support/embeddedsupport/legal).  Some of the provided
+device drivers for the 2.6 and 3.x/4.x kernel identify themselves as having a
+"GPL" license, instead of a "Proprietary" license.  This reference to the "GPL"
+license does not supersede or void the Abaco Systems license agreement. If
+exception to this is taken, then the Linux kernel 2.4, 2.6, and 3.x/4.x device
+drivers, and low-level library will need to be compiled by the user to not
+include kernel interfaces exported as "GPL". Refer to the notes in the "Manual
+Install" section concerning the device drivers and the low-level library.
+
+
+===============================================================================
+2.  Installation
+===============================================================================
+
+Install all of the Abaco Systems avionics boards (except PCMCIA devices) prior
+to software installation.
+A. Hardware Installation
+   ---------------------
+    1. Turn OFF your computer system.
+    2. Ground yourself before handling the board.  All hardware devices are
+       static sensitive.
+    3. If installing ISA devices, you will need to set the on-board jumpers for
+       the base memory address to an address that is available on the system.
+       Refer to the applicable API manual.
+    4. Insert the board into any ISA or PCI slot.  Secure it in place with a
+       screw on the end panel mounting plate.
+
+B. Software Installation
+   ---------------------
+    1. Hardware must be installed first.
+    2. To install the software you must log on as "root" (can use "su").
+    3. Copy the API distribution's compressed tar file (tgz) to a directory.
+       The file is located on the API distribution CD-ROM and is available
+       at http://www.abaco.com
+    4. Uncompress and extract the installation file,
+       tar -zxvf <API distribution name>.tgz
+       NOTE: 
+         refer to the API distribution documentation for the API distribution
+         name of the compressed tar file (tgz).
+
+C. Distribution Contents
+   ---------------------
+    After the tarball extraction completes the following directory structure
+    will be created.  Depending on which API distribution is installed:
+    ARINC, MIL-STD-1553, or IO will also be created.  Refer to the API
+    distribution's documentation for more information.
+
+                         Condor_Engineering
+          ______________________ | _ _ __ _ _ _ _ _ _ _ _ _ _ _ _ _  
+         |         |        |         |                |           |
+      Drivers   Install  Lowlevel   ARINC          MIL-STD-1553    IO
+     ____|_____ _______     |    _ _ _|_ _ _ _ _      _|_ __       _|_
+    |          |       |   usb  |     |   |  |  |    |   |  |     |   |
+   2.4        2.6     3.0     ceix20  |   |  |  | bt1553 |  |    pser |
+  __|__      __|__     |           ceix30 |  |  |      core |        pdis
+ |  |  |    |  |  |   pci               ipav |  |        bt1553mp
+isa |  |   isa |  |                        p708 |
+   pci |      pci |                            sar
+     pcmcia     pcmcia
+
+
+----------      -------------------------------------------------------------
+  Dir           Contents
+----------      -------------------------------------------------------------
+
+Drivers         Source for kernel 2.4, 2.6, and 3.x/4.x device drivers,
+                makefiles, shell scripts for loading/unloading the device
+                drivers.
+
+Install         The "install" shell script which installs the Linux Support
+                Package and any API distributions that are detected.  Included
+                is the "build_conf" which will build the "ceidev.conf" if
+                needed.
+
+Lowlevel        This directory contains all the source files necessary to
+                build the standard or enhanced library.
+
+Lowlevel/usb    Includes the archive libraries needed to support USB devices.
+
+ARINC/ceix20    If installed will include all of the files needed to build the
+                CEI-x20 API.
+
+ARINC/ceix30    If installed will include all of the files needed to build the
+                CEI-x30 API.
+
+ARINC/ipav      If installed will include all of the files needed to build the
+                IP-Avionics API.
+
+ARINC/p708      If installed will include all of the files needed to build the
+                P-708 API.
+                
+ARINC/sar       If installed will include all of the files needed to build the
+                CEI-SAR API.                
+
+MIL-STD-1553/bt1553
+                If installed will include all of the files needed to build the
+                Bustools/1553 API.
+
+MIL-STD-1553/bt1553mp
+                If installed will include all of the files needed to build the
+                Bustools/1553 multi-protocol API.
+
+MIL-STD-1553/core
+                If installed will include all of the files needed to build the
+                CORE API.
+
+IO/pser         If installed will include all of the files needed to build the
+                P-SER API.
+
+IO/pdis         If installed will include all of the files needed to build the
+                P-DIS API.
+
+===============================================================================
+3.  Distribution Build
+===============================================================================
+
+There are three methods to build the LSP and any detected APIs.  The first
+method (automatic install) uses a shell script ("install") which will build and
+load everything at once.  The second method is to manually install each part of
+the distribution.  It is recommended to use the automatic install but if
+problems occur it will be necessary to manually install each part to determine
+where the problem is occurring.  The third method is specific for
+cross-compiling environments.
+
+NOTE:  If the user does not agree with the "Proprietary/GPL" license usage of
+this distribution, then support for the SYS file system will need to be removed
+as indicated in the installation procedures.
+
+A.  Automatic install (builds LSP and APIs)
+    ---------------------------------------
+    1.  Change directory to the "Install" directory.
+    2.  There are four bus types arguments for the "install" script:
+        a. PCI devices:  ./install
+           NOTE:
+             the PCI device driver will build and load if the installation
+             script detects an Abaco Systems avionics PCI board in the "procfs"
+             file system.  If the system does not have a "proc" file system,
+             then perform a manual install of the device driver.
+        b. ISA devices:  ./install isa <BASEMEM> <IRQ>
+            example:  ./install isa 0xd0000 7
+                      this programs the driver for the ISA board at 0xd0000.
+           NOTE:
+             The <BASEMEM> is the base memory address (in hexadecimal) that the
+             board's jumpers have been set to.
+           NOTE:
+             The <IRQ> is optional and is only necessary for boards needing
+             hardware interrupt support.
+           NOTE:
+             If more then one ISA device is installed, refer to the "Loading
+             Additional Boards" section.
+           NOTE:
+             The ISA drivers do not support the "wait queue" functionality for
+             hardware interrupt notification, only POSIX signals.
+        c. PCMCIA devices:  ./install pcmcia
+           NOTE:
+             Do not insert a PCCARD-(D)1553 device into the PCMCIA controller
+             before running the "install" script.  After the "install" script
+             is finished, then insert the PCCARD-(D)1553 device.
+           NOTE:
+             The "install" script may indicate that the "build_conf" will need
+             to be executed after inserting the PCCARD-(D)1553 board(s).
+           NOTE:
+             To install both an ISA device and a PCMCIA execute:
+             ./install pcmcia isa <BASEMEM> <IRQ>
+        d. USB devices:  ./install usb
+           NOTE:
+             Only if it is required to use both channels on the R15-USB device
+             concurrently, then instead use "./install usb_server".  This will
+             install the USB support to be dependent on the USB server
+             functionality, which runs a background process to handle access 
+             requests made by the two client processes (one process per channel).
+    3.  There are eight configuration arguments that are accepted by the 
+        "install" script:
+        a. To remove support for SYSFS (the SYS file system), include "no_sysfs"
+           in the "./install" command line.
+           NOTE:
+             If any of the following apply, then SYSFS support must be
+             removed: the system does not have the SYS file system, will be using
+             an ISA device, will be using a PCCARD-(D)1553 device with a Linux
+             kernel before 2.6.11, or using kernel 3.x/4.x or a kernel after
+             2.6.10 and user does not agree with the "Proprietary/GPL" license.
+        b. To debug the kernel device driver(s), include "debug_drv=<DEBUG LEVEL>"
+           in the "./install" command line. The debug statements will be printed
+           out to the kernel message log. 
+           NOTE:
+             The <DEBUG LEVEL> provides increasing debug information with a 
+             range of "0" (none) to "3" (all).
+        c. To debug the low level library, include "debug_ll" in the
+           "./install" command line.  The debug statements will be printed to
+           stdout.
+        d. To only build the device drivers and libraries, include "no_install"
+           in the "./install" command line.
+           NOTE:
+             If support for SYSFS has been removed, the "ceidev.conf" will not
+             be generated. Need to follow the instructions that are displayed 
+             on the screen during the installation.  Refer to sub-section 4
+             in the next section ("Manual Install") concerning the "ceidev.conf"
+             file.
+        e. To build the low-level and API libraries as 32-bit libraries to run
+           in 32-bit emulation mode for 64-bit systems, include "32bit" in the
+           "./install" command line.
+        f. To disable hardware interrupt support in the kernel 2.6 PCI/ISA
+           drivers or the kernel 3.x/4.x PCI driver, include "no_hwint" in the
+           "./install" command line.
+        g. To disable using POSIX Real Time signals in the kernel 2.6 PCI/ISA
+           drivers or in the kernel 3.x/4.x PCI driver, include "no_hwint_signal"
+           in the "./install" command line.
+        h. To disable using a "wait queue" for the kernel 2.6 PCI driver or
+           the kernel 3.x/4.x PCI driver, include "no_hwint_waitqueue" in the
+           "./install" command line.
+    4.  The installation is finished.  Check the "install" script output and
+        the kernel message log for any errors.  If there are no errors then
+        the device driver(s) are loaded into the kernel, the low-level library
+        is built as well as all detected API(s) distributions.
+
+B.  Manual install 
+    --------------
+    1. Build/Load the Device Drivers
+       -----------------------------
+       1. Change to the applicable driver directory (kernel/bus) in the
+          "Drivers" directory.
+       2. There are three bus types arguments for building and loading:
+           a. PCI devices:  ./install_drv pci
+           b. ISA devices:  ./install_drv isa <BASEMEM> <IRQ>
+              example:  ./install_drv isa 0xd0000 7
+                         this programs the driver for the ISA board at 0xd0000.
+              NOTE:
+                The <BASEMEM> is the base memory address that the board
+                jumpers have been set to.
+              NOTE:
+                The <IRQ> is optional and is only necessary for MIL-STD-1553
+                boards needing hardware interrupt support.
+              NOTE:
+                If more then one ISA device is installed, refer to the "Loading
+                Additional Boards" section.
+           c. PCMCIA devices:  ./install_drv pcmcia
+              NOTE:
+                Do not insert an Abaco Systems avionics PCMCIA device into the
+                PCMCIA card reader before running the "install_drv" script.
+                After the "install_drv" script is finished, then insert the
+                Abaco Systems avionics PCMCIA device.
+              NOTE:
+                The "build_conf" application can only be used after the
+                PCCARD(s) have been inserted into the PCMCIA controller.
+       3. There are six configuration arguments that are accepted by the 
+          "install_drv" script:
+           a. To remove support for SYSFS (the SYS file system), include
+              "NO_SYSFS_SUPPORT" in the "./install_drv" command line.
+           b. To debug the kernel device driver(s), include "DEBUG=1" in the
+              "./install_drv" command line. The debug statements will be
+              printed out to the kernel message log. 
+           c. To only build the device drivers, include "NO_INSTALL" in the
+              "./install_drv" command line. 
+           d. To disable hardware interrupt support in the kernel 2.6 PCI/ISA
+              drivers or the kernel 3.x/4.x PCI driver, include "NO_HW_INTERRUPT"
+              in the "./install_drv" command line.
+           e. To disable using POSIX RT signals in the kernel 2.6 PCI/ISA
+              drivers or the kernel 3.x/4.x PCI driver, include
+              "NO_HW_INTERRUPT_SIGNAL" in the "./install_drv" command line.
+           f. To disable using a "wait queue" for the kernel 2.6 or the kernel
+              3.x/4.x PCI driver, include "NO_HW_INTERRUPT_WAITQUEUE" in the
+              "./install_drv" command line.
+       4. There is one configuration option for the kernel 3.x/4.x PCI driver:
+           a. To disable the driver from verifying the PID of a process,
+              set "DISABLE_PID_VERIFICATION" in the "uceipci.c" file.
+       5. To load the device drivers, refer to the "Loading the Device
+          Drivers" section.
+
+    2. Build the Low-level library
+       --------------------------
+       1. Change to the "Lowlevel" directory.
+       2. ./install_ll
+          There are six configuration arguments that are accepted by the 
+          "install_ll" script:
+          a. To remove support for SYSFS (the SYS file system), include
+             "NO_SYSFS_SUPPORT" in the "./install_ll" command line.  The
+             low-level library will then be dependent on the "ceidev.conf" file
+             NOTE:
+               If any of the following apply, then SYSFS support must be
+               removed: the system does not have the SYS file system, will be
+               using an ISA device, will be using a PCCARD-(D)1553 device with
+               a Linux kernel before 2.6.11, or using a kernel 3.x/4.x or a
+               kernel after 2.6.10 and user does not agree with the
+               "Proprietary/GPL" license.
+          b. To debug the low-level library, include "DEBUG" in the
+             "./install_ll" command line.
+          c. To only build the low-level library, include "NO_INSTALL" in the
+             "./install_ll" command line. 
+          d. To build the low-level library as a 32-bit library to run in
+             32-bit emulation mode for 64-bit systems, include "32BIT" in the
+             "./install_ll" command line.
+          e. To build USB support, include "USB_SUPPORT" in the "./install_ll"
+             command line.
+          f. To build the USB support to handle two channels concurrently, 
+             include "USB_SERVER_SUPPORT" in the "./install_ll" commmand line. 
+
+    3. Build the API(s)
+       ----------------
+       1. Change to the applicable API directory.
+       2. ./install_<API name>
+          There are three configuration arguments that is accepted by the API
+          installation scripts, and two configuration arguments specific for
+          the BusTools/1553 API: 
+          a. To only build the API library, include "NO_INSTALL" in the
+             "./install_<API>" command line. 
+          b. To build the API library as a 32-bit library to run in 32-bit
+             emulation mode for 64-bit systems, include "32BIT" in the
+             "./install_<API>" command line.
+          c. To build the API library without support for a "wait queue",
+             include "NO_WAITQUEUE" in the "./install_<API>" command line.
+          d. To build USB support, include "USB_SUPPORT" in the "./install_1553"
+             command line. (BusTools/1553 API only)
+          e. To build the USB support to handle two channels concurrently, 
+             include "USB_SERVER_SUPPORT" in the "./install_1553" commmand
+             line.  (BusTools/1553 API only)
+       NOTE:
+         Refer to the API distribution's documentation for more information.
+
+    4. Generate a "ceidev.conf" file (if no SYSFS support)
+       ---------------------------------------------------
+       1. Change to the "Install" directory.
+       2. make -f makeconf
+          There are six makefile options:
+          a. For a 2.6 kernel, add "KERNEL=26" to the command line.
+          b. For a 3.x/4.x kernel, add "KERNEL=30" to the command line.
+          c. For a ppc architecture, add "ARCH=ppc".
+          d. For a x86_64 architecture, add "ARCH=x86_64".
+          e. For a x86_64 architecture, add "ARCH=ppc64".
+          f. To build a 32-bit application to run on a 64-bit system, add
+             "32BIT" to the command line.
+       3. ./build_conf
+       NOTE:
+         For ISA devices append "isa" and for PCMCIA devices append "pcmcia".
+       NOTE:
+         The device driver(s) need to be loaded for the application to function.
+       NOTE:
+         Refer to "The configuration file" section for more information.
+       NOTE:
+         For USB devices append "USB".  Since the USB device will not be
+         operational when the "ceidev.conf" is configured, it might require
+         modification.  Either modify the "build_conf.c" file or after the file
+         is created modify the "ch0" and "func0" variables.
+
+C.  Cross-compile environment
+    -------------------------
+    Do not use any of the install shell scripts in the distribution, since they 
+    will query the host system for its environmental variables and not the
+    target system.  Refer to the "Automatic install" and "Manual install"
+    sections for explanation of configuration arguments. 
+    1. Device drivers
+       NOTE: these instructions are only applicable to the kernel 2.6 PCI/ISA
+             drivers and the kernel 3.x/4.x PCI driver, other drivers will need
+             their makefiles modified.
+       a. set the makefile option "MODULE_PATH=" to the path for the kernel
+          source used by the target system.
+       b. additional configuration arguments: add "SYSFS=1" to support the SYS
+          file system.
+       c. may need to modify the "load_pci" shell script for the path to "insmod".
+       NOTE: the "load_pci" shell script is intended to be executed on the target
+             system that has the board inserted to load its device driver.
+    2. Low-level library
+       a. add "ARCH=" with a supported architecture and "CROSS_COMPILE=" with
+          the appropriate toolchain to the command line for the makefile.
+       b. additional configuration arguments: add "KERNEL=24" for a 2.4 kernel,
+          add "SYSFS=1" to support the SYS file system.
+    3. API library
+       a. add "ARCH=" with a supported architecture and "CROSS_COMPILE=" with
+          the appropriate toolchain to the command line for the makefile.
+    4. API examples
+       a. add "ARCH=" with a supported architecture and "CROSS_COMPILE=" with
+          the appropriate toolchain to the command line for the makefile.
+       b. additional configuration arguments: add "NO_INSTALL=1" to link
+          examples to the "low level" and API libraries in located in the local
+          directory or in their designate directories of the distribution.
+    5. "ceidev.conf" (if no SYSFS support)
+       a. add "ARCH=" with a supported architecture and "CROSS_COMPILE=" with
+          the appropriate toolchain to the command line for the makefile.
+       b. additional configuration arguments: add "KERNEL=26" for a 2.6 kernel
+          or "KERNEL=30" for a 3.x/4.x kernel, add "32BIT" to build as a 32-bit
+          application for a 64-bit system.
+       NOTE: the "build_conf" application is intended to be executed on the
+             target system that have the boards inserted.
+
+
+===============================================================================
+4.  Device Drivers
+===============================================================================
+
+The device drivers for Abaco Systems avionics boards must be loaded for the
+APIs to communicate with the board.  When the system is restarted both the PCI
+and/or ISA device driver will need to be loaded, but the PCMCIA device driver
+will not need to be loaded each time.
+
+A.  Loading the Device Driver
+    -------------------------
+    1. Change to the applicable driver directory (kernel/bus) in the "Drivers"
+       directory.
+    2. There are three options for loading:
+       a. PCI devices:  ./load_pci
+       b. ISA devices:  ./load_isa <BASEMEM> <IRQ>
+          example: ./load_isa 0xd0000 7
+                   this programs the driver for the ISA board at 0xd0000.
+          NOTE:
+            The <BASEMEM> is the base memory address that the board's jumpers
+            have been set to.
+          NOTE:
+            The <IRQ> is optional and is only necessary for MIL-STD-1553 boards
+            needing hardware interrupt support.
+          NOTE:
+            If more then one ISA device is installed, refer to the "Loading
+            Additional Boards" section.
+       c. PCMCIA devices:  ./load_pcmcia
+          NOTE:
+            The PCMCIA client driver does not needed to be loaded at system
+            start.  It is only mentioned here since the installation procedure
+            calls it and if problems occur.
+    3. There is one configuration argument that is accepted by the "load_pci" and 
+       "load_isa" scripts:
+       a. To debug the kernel device driver(s), include "DEBUG=<DEBUG LEVEL>"
+          in the "./load_pci" or "./load_isa" command line. The debug
+          statements will be printed out to the kernel message log.
+           NOTE:
+             For the kernel 3.x/4.x and 2.6 drivers the <DEBUG LEVEL> provides
+             increasing debug information with a range of "0" (none) to "3"
+             (all).
+           NOTE:
+             For the kernel 2.4 drivers the <DEBUG LEVEL> is either "0" (none)
+             or "1" (all).
+
+B.  Unloading the Device Driver
+    ---------------------------
+    1. Change to the applicable driver directory (kernel/bus) in the "Drivers"
+       directory.
+    2. There are three options for unloading:
+       a. PCI devices:  ./unload_pci
+       b. ISA devices:  ./unload_isa
+       c. PCMCIA devices:  ./unload_pcmcia
+
+
+===============================================================================
+5.  Loading Additional Boards
+===============================================================================
+
+The PCI device driver will support up to 8 boards, the ISA device driver will
+support up to 4 boards, and the PCMCIA driver up to 2 boards.  There is no need
+to make the drivers for each board, nor is it necessary to load the drivers for
+each board.  The only driver that needs additional information is the ISA driver
+which takes the base memory address and irq (if needed) for each board.
+
+In the applicable ISA driver (Linux kernel) directory: 
+  ./load_isa 0xXXXXX,0xXXXXX,0xXXXXX,0xXXXXX X,X,X,X
+
+example (two Q104-1553 boards): ./load_isa 0xD0000,0xE0000 7,9
+
+
+===============================================================================
+6.  The configuration file
+===============================================================================
+
+The configuration file "ceidev.conf" (located in the local path or in the 
+"Condor_Engineering" directory) provides information from the device drivers to
+the API concerning information about the boards that are installed in the
+system.  This file is necessary if any of the following apply: for Linux kernel
+2.4 systems, Linux kernel 2.6 or 3.x/4.x systems that do not have support for
+the "sysfs" file system, for all Abaco Systems avionics USB and ISA devices,
+and for the Abaco Systems PCCARD-(D)1553 on systems with Linux kernels before
+2.6.11.  The "ceidev.conf" file can be written manually, or can be generated by
+the "build_conf" application.  By default the "build_conf" app will check for
+PCI devices, for USB device append "usb", for ISA devices append "isa", and for
+PCMCIA devices append "pcmcia".
+
+The following lines need to be present and correct for every board installed,
+or the board will not function or have limited functionality:
+  id<device>=<X>
+  ch<device>=<X>    (applies only to Bustools/1553 API)
+  func<device>=<X>  (applies only to Bustools/1553 API)
+  bus<device>=<X>   (applies only to Bustools/1553 API)
+  minor<device>=<X>
+  irig<device>=<X>  (applies only to Bustools/1553 API)
+  csc<device>=<X>   (applies only to Bustools/1553 API)
+  drv<device>=<driver>_<minor>
+  devnum=<X>
+
+  Description:	
+    <device> = The device (logical) number for the board.  This is the value
+               that is used by the low-level to identify the board to the APIs.
+               Valid range: 0 to 7
+    id: The board identification value in decimal (converted from a hex value): 
+        * Bustools/1553 API refer to the "busapi.h" file.
+        * CEI-x20, CEI-x30 and P-708 API: take the part number in hex and covert
+          to decimal, for the CEI-820TX add "1". example: CEI-820 (0x820) = 2080
+        * P-SER: 4100 (hex 0x1004)
+        * P-DIS: 4102 (hex 0x1006)
+    ch: The number of available channels on the board.
+    func: Identifies a single-function ('0') or multi-function board ('1').
+    bus: The bus used by the board: ISA ('1'), PCI ('2'), PCMCIA ('4'), USB ('5').
+    minor: The minor number in the dev file system.  The operating system will
+           assign the first board '0' and each sequential board an incremented
+           value.  Valid range: '0' to '7'
+    irig: Identifies if irig functionality is present ('1').
+    csc: The "Control/Status Configuration" register.
+    drv: The device (logical) number for the board in the APIs.
+         <minor> = same value as minor.
+         <driver> = The name of the device driver for the board: uceipci,
+                    uceiisa, cei_pcc1553_cs, libusb.
+    devnum: Identifies how many Abaco Systems avionics devices are installed.
+
+  Example 1: configuration for two RPCIe-1553 (0x155A):
+
+      id0=5466
+      ch0=2
+      func0=1
+      bus0=2
+      minor0=0
+      irig0=0
+      csc0=0
+      drv0=uceipci_0
+
+      id1=5466
+      ch1=2
+      func1=1
+      bus1=2
+      minor1=1
+      irig1=0
+      csc1=0
+      drv1=uceipci_1
+
+      devnum=2
+
+   Example 2: configuration for of a CEI-830 (0x830) and a RAR-PCIe (0x100B):
+
+      id0=2096
+      ch0=0
+      func0=0
+      bus0=2
+      minor0=0
+      irig0=0
+      csc0=0
+      drv0=uceipci_0
+
+      id1=4107
+      ch1=0
+      func1=0
+      bus1=2
+      minor1=1
+      irig1=0
+      csc1=0
+      drv1=uceipci_1
+
+      devnum=2
+
+   Example 3: configuration file for a Q104-1553 (0x170) and a CEI-420 (0x420):
+
+      id0=368
+      ch0=2
+      func0=1
+      bus0=1
+      minor0=0
+      irig0=1
+      csc0=0
+      drv0=uceiisa_0
+
+      id1=1056
+      ch1=0
+      func1=0
+      bus1=1
+      minor1=1
+      irig1=0
+      csc1=0
+      drv1=uceiisa_1
+
+      devnum=2
+
+   Example 4: configuration file for PCCARD-D1553 (0x200)
+
+      id0=512
+      ch0=2
+      func0=1
+      bus0=4
+      minor0=0
+      irig0=1
+      csc0=0
+      drv0=pcc1553_0
+
+      devnum=1
+
+
+===============================================================================
+7. Troubleshooting
+===============================================================================
+
+When installing any API distribution, you will need to be logged on as "root".
+Use the "su" command to gain "root" permissions.  Root permissions are
+necessary when building device drivers and loading the modules into the kernel.
+
+Useful Linux system utilities 
+-----------------------------
+ dmesg:   displays the kernel message log. 
+ lsmod:   displays the current modules loaded in the kernel
+ lspci:   displays the PCI config space for all PCI devices
+ cardmgr: controls the PCMCIA card manager (part of PCMCIA Card Services).
+ strace:  displays the system calls that the driver or application calls.
+ ltrace:  displays the calls to the dynamic libraries that the application calls.
+ gdb:     the GNU debugger.
+ modinfo: displays the module information for a driver.
+ 
+Compilation
+-----------
+1. If there are compilation errors, check that the path to the kernel headers
+   is valid.  If different than the default ("/lib/modules/<KERNEL>/build"),
+   include the path in the applicable driver's makefile by including a "-I"
+   with the path.
+2. If there are system calls that cannot be resolved, check the
+   "/proc/kallsyms" file to verify that they are compiled into the kernel.
+
+Run-time
+--------
+1. Check that the device drivers (uceipci, uceiisa, and/or cei_pcc1553_cs) are
+   loaded with "lsmod".
+2. Examine the kernel message log for error output from the device drivers
+   (uceipci, uceiisa, or cei_pcc1553_cs).  Use "dmesg" and/or look directed at
+   the kernel message log located in "/var/log/messages".
+3. If there are version errors when loading the drivers, the driver's version
+   string (magic) may not coincide with current running kernel.  Use
+   "modinfo" to get the driver's magic number.  Refer to the 
+   "/usr/src/linux/makefile" and "/usr/src/linux/.config".
+4. To determine where an error may be occurring in the application or API
+   libraries use "gdb".  Make sure when compiling to provide the "-g" to GCC.
+5. If a device driver fails to unload with "modprobe", use "rmmod".  
+6. If loading the kernel 2.6 or 3.x/4.x PCI device driver and receive errors
+   indicating missing symbols with "sysfs" in the symbol name, then build the
+   distribution without support for SYSFS.
+
+
+=================================================================================
+8. Revisions
+=================================================================================
+
+Release Notes - v1.18, 2 November 2016
+--------------------------------------
+* added instructions for building the kernel 3.x/4.x PCI driver without support 
+  for PID verification.
+
+Release Notes - v1.17, 10 October 2016
+--------------------------------------
+* identified support for Linux kernel 4.x with 3.x/4.x.
+* rebranded to Abaco Systems.
+
+Release Notes - v1.16, 23 June 2015
+-----------------------------------
+* added information for the CEI-SAR API.
+
+Release Notes - v1.16, 10 April 2015
+------------------------------------
+* modified information for USB support and software license agreement.
+
+Release Notes - v1.15, 28 August 2014
+-------------------------------------
+* added information for USB support.
+
+Release Notes - v1.14, 14 August 2013
+-------------------------------------
+* added the "csc" to the "The configuration file" section.
+
+Release Notes - v1.13, 7 August 2012
+------------------------------------
+* added information for the BusTools/1553 multi-protocol API.
+
+Release Notes - v1.12, 11 October 2011
+--------------------------------------
+* added instructions to support Linux kernel 3.x
+
+Release Notes - v1.11, 17 August 2010
+-------------------------------------
+* added information for the P-DIS API.
+
+Release Notes - v1.10, 10 April 2009
+------------------------------------
+* added instructions for building the API without "wait queue" functionality.
+
+Release Notes - v1.09, 18 November 2008
+---------------------------------------
+* added information for the P-708 API.
+
+Release Notes - v1.08, 25 January 2008
+--------------------------------------
+* added information for the P-SER API.
+
+Release Notes - v1.07, 10 December 2007
+---------------------------------------
+* added instructions to both the automatic and manual install procedures to
+  allow only building (not installing) the device driver(s) and low-level and
+  API libraries.
+* modified the automatic and manual install procedures for debugging 2.4 drivers
+* added instructions to both the automatic and manual install procedures to
+  allow building the low-level and API libraries in 32 bit emulation mode for
+  64 bit systems.
+* added a section for "cross-compiling" environments.
+* added instructions to both the automatic and manual install procedures to
+  allow building the 2.6 PCI/ISA device drivers without hardware interrupt
+  support.
+* added instructions to both the automatic and manual install procedures to
+  allow building the 2.6 PCI/ISA device drivers without support for POSIX RT
+  signals for hardware interrupt notification to the API.
+* added instructions to both the automatic and manual install procedures to
+  allow building the 2.6 PCI device driver without support for a "wait queue"
+  for the API to determine when a hardware interrupt occurs.
+
+Release Notes - v1.06, 28 June 2007
+-----------------------------------
+* added instructions to both the automatic and manual install procedures to
+  remove support for SYSFS and to debug the 2.6 device driver(s) and the
+  low level library 
+
+Release Notes - v1.05, 01 June 2007
+-----------------------------------
+* added "devnum" to "The configuration file" section
+
+Release Notes - v1.04, 27 March 2007
+------------------------------------
+* added information for the CORE API
+* added instructions for the "build_conf" application
+* added instructions for building the driver without SYSFS support
+
+Release Notes - v1.03, 25 May 2006
+----------------------------------
+* added information for the IP-Avionics API
+* modified instructions for "Loading the device driver"
+
+Release Notes - v1.02, 14 April 2006
+------------------------------------
+* minor modifications
+
+Release Notes - v1.01, 12 September 2005
+---------------------------------------
+* added information for the CEI-x30 API
+* added "Source License" section
+* removed section concerning kernel versions and system compliance
+* removed reference to the "sysfsutils" package
+
+Release Notes - v1.00, 21 April 2005
+------------------------------------
+* initial
+
+
+===============================================================================
+9. Contact Information
+===============================================================================
+
+If you have any questions or need more technical information, please contact:
+
+Abaco Systems, Inc.
+26 Castilian Drive, Suite B
+Goleta, CA. 93117
+
+phone:  805-965-8000
+email:  avionics.support@abaco.com
+url:    http://www.abaco.com/products/avionics

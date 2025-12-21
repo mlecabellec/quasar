@@ -1,0 +1,42 @@
+
+
+
+Evolution EXAM :
+================
+
+
+V2.1	Fonctionne indifferemment avec carte ABI-V (ucode >= v2.1) ou carte
+	ABI-V3 (ucode SBS M019G) [monabi V1.3, V2.1 ou V2.3]
+	
+V2.2	Accepte les horloges de datation variables (tient compte du mot #8 du 
+        bloc IDENTIFICATION du fichier produit par monabi).
+
+V2.3	Augmentation du nombre des donnees affichees
+	Comptage des messages et erreurs separement sur chaque bus
+	
+V2.4	Correction bug si horloge de datation variable
+
+v2.5	Controle la succession normale des numeros des tampons ABI 
+        (ABI-V3 seulement) et affiche un message si des tampons manquent.
+        Ajout des options :
+		-p : Pour utilisation en connection "pipe" avec monabi
+		     Il faut frapper 2 fois Ctrl-C pour arreter exam
+		-E : Seuls les messages qui contiennent des erreurs sont
+		     affiches
+		-e : Seuls les messages qui contiennent des erreurs et le
+		     dernier message correct qui les precedent sont affiches
+		-v : Affichage infos diverses internes a monabi (debug)
+		-S : N'affiche pas les tailles des tampons d'espionnage ABI
+		-N : Inhibe le controle des numeros de tampons ABI (si ABI-V3)
+
+
+v2.6	Tentative de diminution des temps de traitement (surtout si option -E)
+
+        Attention : Si l'option -E est specifiee, mais pas l'option -S, le 
+                    dernier message des tampons n'est pas affiche s'il ne
+                    contient pas d'erreur.
+                    Par contre, si c'est l'option -e qui est specifiee, ce
+                    dernier message est affiche (mais le temps d'execution est
+                    beaucoup plus grand).
+
+v3.0	Version (pour essai) adaptee au coupleur ABIPMC2-IRIG sous LynxOS

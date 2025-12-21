@@ -1,0 +1,56 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          tsyncpci
+# Required-Start:    
+# Required-Stop:     
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Startup script for the tsyncpci IO device
+# Description:       Startup script for the tsyncpci IO device
+### END INIT INFO
+# tsyncpci    Startup script for the tsyncpci IO device
+#
+# chkconfig: 2345 70 30
+# description: tsyncpci is a irig driver 
+
+
+if [ -f /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
+. /etc/drast_lkm/tsyncpci.conf
+
+start() {
+	modprobe tsyncpci 
+	chmod 660 /dev/tsyncpci*
+	if [ "$DEVGROUP" != "" ]
+	then
+		chgrp $DEVGROUP /dev/tsyncpci*
+	fi
+	return 0
+}
+
+stop() {
+	rmmod tsyncpci && rm -rf /dev/tsyncpci* || echo "tsyncpci not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+}
+
+show_status() {
+	fgrep tsyncpci /proc/devices && cat /proc/tsyncpci || echo "no tsyncpci loaded."
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

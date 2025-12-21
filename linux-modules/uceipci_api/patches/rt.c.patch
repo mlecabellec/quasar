@@ -1,0 +1,138 @@
+--- rt.c	2020-01-03 04:22:33.000000000 +0100
++++ rt.c	2025-01-31 17:54:07.967088620 +0100
+@@ -695,6 +695,135 @@
+    return status;
+ }
+ 
++// ASTRE addons
++NOMANGLE BT_INT CCONV BusTools_RT_QuickEnable(
++   BT_UINT cardnum,         // (i) card number (0 - based)
++   BT_UINT rtaddress,       // (i) RT address (0 - based)
++   BT_U16BIT enableA, BT_U16BIT enableB) {
++
++   if (cardnum >= MAX_BTA)
++      return API_BUSTOOLS_BADCARDNUM;
++
++   if (bt_inited[cardnum] == 0)
++      return API_BUSTOOLS_NOTINITED;
++
++   return BT_RT_QuickEnable[cardnum](cardnum,rtaddress,enableA,enableB);
++}
++NOMANGLE BT_INT CCONV v5_RT_QuickEnable(
++   BT_UINT cardnum,         // (i) card number (0 - based)
++   BT_UINT rtaddress,       // (i) RT address (0 - based)
++   BT_U16BIT enableA, BT_U16BIT enableB) {
++   
++   /************************************************
++   *  Local variables
++   ************************************************/
++   BT_U32BIT     RTDisableA=0;   // Channel A RT disable flags for all RTs
++   BT_U32BIT     RTDisableB=0;   // Channel B RT disable flags for all RTs
++   BT_INT status = API_SUCCESS;
++  
++   /************************************************
++   *  Check initial conditions
++   ************************************************/
++   if (cardnum >= MAX_BTA)
++      return API_BUSTOOLS_BADCARDNUM;
++
++   if (bt_inited[cardnum] == 0) 
++      return API_BUSTOOLS_NOTINITED;
++
++   if (rt_inited[cardnum] == 0)
++      return API_RT_NOTINITED;
++
++   if (rtaddress >= RT_ADDRESS_COUNT)
++      return API_RT_ILLEGAL_ADDR;
++
++   // Read the current values of the RAM Registers RT Disables
++   vbtRead(cardnum, (LPSTR)&RTDisableA, RAMREG_RT_DISA*2, 4);
++   vbtRead(cardnum, (LPSTR)&RTDisableB, RAMREG_RT_DISB*2, 4);
++
++   flip(&RTDisableA);
++   flip(&RTDisableB);
++
++   // Now update the Channel A RAM Register Disables:
++   if ( enableA == 0 )
++      RTDisableA |= 1 << rtaddress;
++   else
++      RTDisableA &= ~(1 << rtaddress);
++
++   // Now update the Channel B RAM Register Disables:
++   if ( enableB == 0 )
++      RTDisableB |= 1 << rtaddress;
++   else
++      RTDisableB &= ~(1 << rtaddress);
++
++   flip(&RTDisableA);
++   flip(&RTDisableB);
++
++   // Now write the updated values to the RAM Registers
++   vbtWrite(cardnum, (LPSTR)&RTDisableA, RAMREG_RT_DISA*2, 4);
++   vbtWrite(cardnum, (LPSTR)&RTDisableB, RAMREG_RT_DISB*2, 4);
++
++   return status;
++}
++NOMANGLE BT_INT CCONV v6_RT_QuickEnable(
++   BT_UINT cardnum,         // (i) card number (0 - based)
++   BT_UINT rtaddress,       // (i) RT address (0 - based)
++   BT_U16BIT enableA, BT_U16BIT enableB) {
++   
++   /************************************************
++   *  Local variables
++   ************************************************/
++   BT_U32BIT     RTDisableA=0;   // Channel A RT disable flags for all RTs
++   BT_U32BIT     RTDisableB=0;   // Channel B RT disable flags for all RTs
++   BT_INT status = API_SUCCESS;
++   BT_U32BIT hwrtenableA=0, hwrtenableB=0;
++  
++   /************************************************
++   *  Check initial conditions
++   ************************************************/
++   if (cardnum >= MAX_BTA)
++      return API_BUSTOOLS_BADCARDNUM;
++
++   if (bt_inited[cardnum] == 0) 
++      return API_BUSTOOLS_NOTINITED;
++
++   if (rt_inited[cardnum] == 0)
++      return API_RT_NOTINITED;
++
++   if (rtaddress >= RT_ADDRESS_COUNT)
++      return API_RT_ILLEGAL_ADDR;
++
++   // Read the current values of the HW Registers RT Disables
++   RTDisableA = vbtGetRegister[cardnum](cardnum, HWREG_RT_ENABLEA);
++   RTDisableB = vbtGetRegister[cardnum](cardnum, HWREG_RT_ENABLEB);
++
++   //convert hw register low for enable to high for enable to match user input
++   hwrtenableA = (BT_U16BIT)(RTDisableA & (1 << rtaddress) ? 0 : 1);
++   hwrtenableB = (BT_U16BIT)(RTDisableB & (1 << rtaddress) ? 0 : 1);
++       
++
++   // Now update the Channel A RAM Register Disables:
++   if ( enableA == 0 )
++          RTDisableA |= 1 << rtaddress;
++   else
++          RTDisableA &= ~(1 << rtaddress);
++
++   // Now update the Channel B RAM Register Disables:
++   if ( enableB == 0 )
++          RTDisableB |= 1 << rtaddress;
++   else
++          RTDisableB &= ~(1 << rtaddress);
++
++   // Now write the updated values to the HW Registers
++   if (hwrtenableA != enableA)
++   {
++         vbtSetRegister[cardnum](cardnum, HWREG_RT_ENABLEA, RTDisableA);
++   }
++   if (hwrtenableB != enableB)
++   {
++         vbtSetRegister[cardnum](cardnum, HWREG_RT_ENABLEB, RTDisableB);
++   }
++   return status;
++}
+ 
+ /****************************************************************************
+ *

@@ -1,0 +1,39 @@
+# Fichier de parametrage d'une carte ABI-PMC2 par le logiciel INITABI
+# 
+#						Y. Guillemot, le 31/05/2002
+
+
+
+
+
+NBREPR 0			# Nombre reprise sur erreur (mode BC)
+
+BUSREPR 0			# Bus utilise pour les reprises
+				# Analyse bits poids-faible vers poids-fort
+				#   bit = 1 ==> autre bus
+				#   bit = 0 ==> meme bus
+				# Exemple : 0x00F3 signifie
+				#   2 premieres reprises sur autre bus
+				#   2 reprises suivantes sur meme bus
+				#   4 reprises suivantes sur autre bus
+                                #   toutes les reprises suivantes sur meme bus
+
+T_INTER_MSG 25			# Temps Inter-Messages (us)
+
+T_REP_ABO 11			# Temps Reponse (us) des abonnes simules
+
+T_REP_MAX 20			# Temps de reponse maxi autorise (us) 
+				# (modes BC et espion)
+
+TTAMPMON 0x5000			# Taille tampons moniteur
+
+TTAMPIT  50			# Taille tampons interruption
+
+
+DERIVATIONS LONGUES		# LONGUES ou COURTES
+
+MODE_RT NORMAL			# NORMAL ou ETENDU
+
+VOIE_SYNCHRO TRIG3		# VOIE UTILISEE POUR LES E/S SYNCHRO
+				# (TRIG3 ou TRIG4)
+

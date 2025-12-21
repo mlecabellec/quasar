@@ -1,0 +1,3 @@
+SUBSYSTEM=="tsyncpci", MODE="666", OPTIONS="last_rule"
+SUBSYSTEM=="ptp", ATTR{clock_name}=="tsync ptp clock", SYMLINK += "ptp_tsync ptp-tsync"
+SUBSYSTEM=="ptp", ATTR{clock_name}=="tsync host ref", SYMLINK += "ptp-tsync-host-reference"

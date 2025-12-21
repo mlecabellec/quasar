@@ -1,0 +1,61 @@
+#!/bin/bash
+# v1.01
+
+# Condor Engineering - PCCARD-1553
+
+DEVICE=$2
+MODULE="cei_pcc1553_cs"
+
+if [ -d /var/lib/pcmcia ] ; then
+  STAB="/var/lib/pcmcia/stab"
+else
+  STAB="/var/run/stab"
+fi
+COUNT=`cat ${STAB} | grep -c "${MODULE}"`
+
+case "$1" in
+'start')
+    MAJOR=`cat ${STAB} | awk "\\$5==\"${DEVICE}\" {print \\$6}"`
+    MINOR=`cat ${STAB} | awk "\\$5==\"${DEVICE}\" {print \\$7}"`
+    if test ${COUNT} -gt "0"
+     then 
+      echo Adding node for ${MODULE} ${MAJOR}, ${MINOR}
+      rm -f /dev/${DEVICE}    
+      mknod /dev/${DEVICE} c ${MAJOR} ${MINOR}
+      chgrp root /dev/${DEVICE}
+      chmod 666 /dev/${DEVICE}     
+    else
+      echo ${MODULE} client driver not loaded
+    fi
+    ;;
+
+'check')
+    ;;
+
+'stop')
+    echo Removing node for ${DEVICE}
+    rm -f /dev/${DEVICE}
+# workaround for problem with modprobe     
+    if test ${COUNT} -le "1"
+      then
+	if test `cat /proc/devices | grep -c "${MODULE}"` -ge 0
+          then
+            echo Removing ${MODULE} driver
+            /sbin/rmmod ${MODULE}   	       
+        fi
+    fi
+    ;;
+
+'cksum')
+    ;;
+
+'suspend'|'resume')
+    ;;
+
+*)
+    usage
+    ;;
+
+esac
+
+exit 0

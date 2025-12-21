@@ -1,0 +1,91 @@
+#!/bin/bash
+# 1.10
+
+#=============================================================================*
+#
+# Configuration arguments:
+#  Required:
+#   none
+#  Optional:
+#   USB_SUPPORT - enable USB support
+#   USB_SERVER_SUPPORT - enable USB support to support two channels
+#                        concurrently (R15-USB only)
+#   NO_SYSFS_SUPPORT - disable support for the SYS file system
+#   32BIT - compiles the low level library for 32-bit emulation in a 64-bit
+#           system
+#   NO_INSTALL - does not move the library to the /usr/lib(64) directory
+#   DEBUG - outputs debugging information 
+#
+#=============================================================================*
+
+
+ARG_NO_SYSFS=0
+ARG_DEBUG=0
+ARG_NO_INSTALL=0
+ARG_32BIT=0
+ARG_USB=0
+ARG_USB_SERVER=0
+
+# check for positional parameters
+until [ -z "$1" ]; do
+  # use the "ceidev.conf" file instead of the SYS filesystem 
+  if [ "$1" == "NO_SYSFS_SUPPORT" ]; then 
+   echo Disable SYSFS support
+   ARG_NO_SYSFS=1
+  # will enable debugging statements from the driver to the kernel message log
+  elif [ $1 == "DEBUG" ]; then 
+   echo Enable debug
+   ARG_DEBUG=1
+  # will not install the library
+  elif [ $1 == "NO_INSTALL" ]; then 
+   echo Not installing Low level library
+   ARG_NO_INSTALL=1
+  elif [ $1 == "32BIT" ]; then 
+   echo Building 32-bit library
+   ARG_32BIT=1
+  # enable USB support 
+  elif [ $1 == "USB_SUPPORT" ]; then 
+   echo Building USB support
+   ARG_USB=1
+  # enable the USB server to provide concurrent operation of two channels
+  elif [ $1 == "USB_SERVER_SUPPORT" ]; then 
+   echo Building USB server support
+   ARG_USB_SERVER=1
+  fi
+  shift
+done
+
+if test ${ARG_NO_INSTALL} -eq 0; then
+  # To install the Lowlevel, log on as 'root'.
+  if test `whoami | grep -ci "root"` -ne 1; then
+    echo Need to be logged on as 'root' to install the low level library
+    exit 1 
+  fi
+fi
+
+# checks for the 2.4 kernel
+if test `uname -r | grep -c "^2.4"` -eq 1; then
+  ARG_KERNEL=24
+fi
+
+# determines if sysfs exists
+if [ ${ARG_NO_SYSFS} == 0 ]; then
+ if test `cat /proc/filesystems | grep -ci "sysfs"` -eq 0; then
+  ARG_NO_SYSFS=1
+ fi
+fi
+
+# determine architecture
+ARG_ARCH=`uname -p`
+if [[ ${ARG_ARCH} == i*86 ]]; then
+ ARG_ARCH=x86
+fi
+
+# build the library
+echo Make the Lowlevel shared library
+make KERNEL=${ARG_KERNEL} NO_SYSFS=${ARG_NO_SYSFS} DEBUG=${ARG_DEBUG} ARCH=${ARG_ARCH} NO_INSTALL=${ARG_NO_INSTALL} 32BIT=${ARG_32BIT} USB_SUPPORT=${ARG_USB} USB_SERVER_SUPPORT=${ARG_USB_SERVER}
+if [ $? != 0 ]; then
+  exit 1
+fi
+
+exit 0

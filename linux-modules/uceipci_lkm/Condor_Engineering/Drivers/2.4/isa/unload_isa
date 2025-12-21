@@ -1,0 +1,15 @@
+#!/bin/bash
+# v1.01
+
+
+MODULE="uceiisa"
+
+# invoke rmmod with all arguments we got
+echo removing module ${MODULE}
+/sbin/rmmod ${MODULE} || exit 1
+
+# Remove stale nodes
+echo Removing node ${MODULE}
+rm -f /dev/${MODULE}_[0-7] /dev/${MODULE}
+
+exit 0

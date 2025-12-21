@@ -1,0 +1,25 @@
+#!/bin/bash
+# v1.01
+
+
+PCMCIA_DIR=/etc/pcmcia
+MODULE=cei_pcc1553_cs
+
+if test `ps -ef | grep -ci "/sbin/cardmgr"` -eq 0
+  then	
+    echo cardmgr not running.
+    exit 1
+fi
+
+# send (HUP) signal to 'cardmgr' to reload client database
+PID=`ps -ef | grep -m 1 "/sbin/cardmgr" | awk '{print $2}'`
+kill -HUP ${PID}
+
+# eject and than insert all cards in PCMCIA sockets
+if test `/sbin/cardctl ident | grep -c "cei"` -gt 0
+  then
+    /sbin/cardctl eject
+    /sbin/cardctl insert
+fi
+
+exit 0

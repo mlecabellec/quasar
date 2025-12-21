@@ -1,0 +1,10 @@
+# Initialisations specifiques :
+use integer;
+#use asdc;
+
+# Utilitaires :
+sub p { print "@_\n"; }
+
+p 6;
+p 3600*100;
+quit;

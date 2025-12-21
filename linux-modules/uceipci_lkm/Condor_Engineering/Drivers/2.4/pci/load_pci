@@ -1,0 +1,77 @@
+#!/bin/bash
+# v1.05
+
+#=============================================================================*
+#
+# Configuration arguments:
+#  Required: 
+#   none
+#  Optional:
+#   DEBUG=1 - enable debugging to output to the kernel message log
+#
+#=============================================================================*  
+
+
+# path to binaries
+PATH_INSMOD=/sbin/insmod
+
+MODULE=uceipci
+# sets the file permissions for the device nodes in /dev
+DEV_PERM=666
+
+if test `whoami | grep -ci "root"` -ne 1
+  then
+    echo Need to be root to load drivers	  
+    exit 1
+fi
+
+# set the debug level for the driver
+DEBUG_LEVEL=0
+until [ -z "$1" ]; do
+  if [[ $1 == DEBUG=* ]]; then 
+    DEBUG_LEVEL=${1:6}
+  fi
+  shift
+done
+
+# Will cause the driver
+# to print to the kernel message log, which is used to troubleshoot system
+# issues with the driver.
+DRV_PARMS=uceipci_debug=${DEBUG_LEVEL}
+
+
+# load the PCI driver with modprobe
+#if test `ls /sbin | grep -ci "modprobe"` -ne 0
+#  then
+    # need to run depmod to update modules.pcimap
+#    /sbin/depmod -A ${MODULE}	  
+#    /sbin/modprobe ${MODULE} ${DRV_PARMS}
+#fi
+# load the PCI driver with insmod
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    ${PATH_INSMOD} ${MODULE}.o ${DRV_PARMS}
+fi
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    echo Failed to load module: ${MODULE}.  Review the kernel message log \(dmesg\) for errors.
+    exit 1
+fi
+echo Successfully loaded module: ${MODULE}
+
+# create device node(s) if needed
+if test `ls /dev | grep -ci "${MODULE}_"` -eq 0
+  then
+    MAJOR=`cat /proc/devices | awk "\\$2==\"${MODULE}\" {print \\$1}"`
+    CNT=`lspci -d 13C6:* | grep -c "Condor Engineering"`
+    INDEX=0
+    while [ ${INDEX} -lt ${CNT} ]; do
+      echo Creating node: ${MODULE}_${INDEX}	    
+      mknod -m ${DEV_PERM} /dev/${MODULE}_${INDEX} c ${MAJOR} ${INDEX}
+      chgrp root /dev/${MODULE}_${INDEX}
+      let INDEX=${INDEX}+1
+    done
+fi
+
+exit 0

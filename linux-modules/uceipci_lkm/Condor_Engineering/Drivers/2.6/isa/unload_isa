@@ -1,0 +1,29 @@
+#!/bin/bash
+# v1.02
+
+
+# path to binaries
+PATH_RMMOD=/sbin/rmmod
+
+MODULE=uceiisa
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    echo Driver ${MODULE} is not loaded
+    exit 1
+fi
+	
+echo Removing driver ${MODULE}
+${PATH_RMMOD} ${MODULE}.ko
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    echo  Successfully removed ${MODULE} driver
+  else
+    echo  Failed to remove ${MODULE} driver
+fi
+
+echo Removing nodes for ${MODULE}
+rm -f /dev/${MODULE}_[0-3] /dev/${MODULE}
+
+exit 0

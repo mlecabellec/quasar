@@ -1,0 +1,136 @@
+#!/bin/sh
+# $URL: http://subversion:8080/svn/gsc/trunk/drivers/LINUX/16AI64SSA/make_all $
+# $Rev: 52914 $
+# $Date: 2023-04-20 15:12:34 -0500 (Thu, 20 Apr 2023) $
+
+# 16AI64SSA: Overall make script
+
+
+
+#==============================================================================
+_process_sources() {
+	# 1 = name of "sources" script to process
+	# 2 = build target
+
+	SRC=${1}
+	DST=_sources
+
+	if [ -e ${SRC} ]
+	then
+		# The above named file is present at GSC for development purposes only
+		# and is not distributed in driver archives.
+
+		D2U=`which dos2unix 2>/dev/null | wc -l`
+
+		if [ "${D2U}" != "1" ]
+		then
+
+			D2U=~/c/gsc/gsc_common/utils/linux/d2u
+
+		else
+
+			D2U=dos2unix
+
+		fi
+
+		rm -f ${DST}
+
+		chmod +w ${SRC}
+		${D2U} ${SRC}	 2>/dev/null  1>/dev/null
+		chmod +x ${SRC}
+		${SRC}
+
+		make -f ${DST} ${2}
+
+		rm -f ${DST}
+
+	fi
+}
+
+
+
+#==============================================================================
+_process() {
+	# 1 = directory name
+	# 2 = build target
+
+	if [ -d ./${1} ]
+	then
+
+		echo -e "======================================================================\r${1} "
+
+		CWD=`pwd`
+
+		cd ./${1}
+
+		_process_sources ./sources ${2}
+
+		if [ -e ./makefile ]
+		then
+
+			make -f ./makefile ${2}
+
+		elif [ -e ./Makefile ]
+		then
+
+			make -f ./Makefile ${2}
+
+		fi
+
+		cd ${CWD}
+
+	fi
+}
+
+
+
+#==============================================================================
+
+_process driver						${1}
+
+if [ ! "${1}" != "" ]
+then
+./driver/start
+fi
+
+_process include					${1}
+_process api						${1}
+_process docsrc						${1}
+_process utils						${1}
+_process lib						${1}
+
+_process samples/fsamp				${1}
+_process samples/id					${1}
+_process samples/irq				${1}
+_process samples/regs				${1}
+_process samples/rxrate				${1}
+_process samples/savedata			${1}
+_process samples/signals			${1}
+_process samples/stream				${1}
+_process samples/vrange				${1}
+_process samples/wait				${1}
+
+if [ -d samples/ll_fifo ]
+then
+_process samples/ll_fifo			${1}
+fi
+
+if [ -d samples/metrics ]
+then
+_process samples/metrics			${1}
+fi
+
+if [ -d samples/noise ]
+then
+_process samples/noise				${1}
+fi
+
+if [ -d samples/slowrate ]
+then
+_process samples/slowrate			${1}
+fi
+
+if [ -d samples/vspec ]
+then
+_process samples/vspec				${1}
+fi

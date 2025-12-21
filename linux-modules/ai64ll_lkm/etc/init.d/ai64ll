@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# ai64ll    Startup script for the ai64ll device
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#                               CAUTION 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# This script may have side effect with ai64 driver (or may be the 
+# opposite).
+# Using both ai64 and ai64ll driver will probably fail...
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# chkconfig: 2345 50 50
+# description: ai64ll Driver
+
+
+. /etc/rc.d/init.d/functions
+. /etc/drast_lkm/ai64ll.conf
+
+start() {
+	modprobe ai64ll
+	MAJOR=`fgrep ai64ll /proc/devices | cut -f 1 -d ' '` 
+	if  [ "$MAJOR" = "" ]
+	then
+		return 1
+	fi 
+	rm -rf /dev/ai64ll*
+	count=`grep "^boards: [0-9]*$" /proc/ai64ll | cut -d " " -f 2`
+	i=0
+	while [ $i -lt $count ]
+	do
+		mknod /dev/ai64ll$i c $MAJOR $i
+		chmod 660 /dev/ai64ll$i
+		if [ "$DEVGROUP" != "" ]
+		then
+			chgrp $DEVGROUP /dev/ai64ll$i
+		fi
+		i=`expr $i + 1`
+	done
+	return 0
+}
+
+stop() {
+	rmmod ai64ll && rm -rf /dev/ai64ll* || echo "ai64ll not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+}
+
+show_status() {
+	fgrep ai64ll /proc/devices && cat /proc/ai64ll || echo "no ai64ll loaded."
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	status)
+		show_status
+		;;
+esac

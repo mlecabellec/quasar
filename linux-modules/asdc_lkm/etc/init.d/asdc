@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# asdc    Startup script for the asdc IO device
+#
+# chkconfig: 2345 80 20
+# description: asdc is driver 
+#	       for 1553 board .
+
+
+. /etc/rc.d/init.d/functions
+. /etc/drast_lkm/asdc.conf
+
+DEVICE=asdc
+
+start() {
+	
+	/sbin/modprobe $DEVICE $MODOPTS
+	echo "Module "${DEVICE}" has been installed."
+	MAJOR=`fgrep ASDC /proc/devices | cut -f 1 -d ' '` 
+	if  [ "${MAJOR}" = "" ]
+	then
+		echo "Major of ASDC module is not defined in /proc/devices !"
+		return 1
+	fi 
+
+	rm -f /dev/${DEVICE}[12]
+	echo "Stale device nodes /dev/${DEVICE}[1-2] have been removed."
+	
+	mknod /dev/${DEVICE}1 c ${MAJOR} 0
+	mknod /dev/${DEVICE}2 c ${MAJOR} 1
+	chmod 666 /dev/${DEVICE}[12]
+
+	if [ "$DEVGROUP" != "" ]
+	then
+		chgrp $DEVGROUP /dev/${DEVICE}1
+		chgrp $DEVGROUP /dev/${DEVICE}2
+	fi
+	echo
+
+	return 0
+}
+
+stop() {
+	rmmod asdc && rm -rf /dev/asdc1 /dev/asdc2 || echo "asdc not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+}
+
+show_status() {
+	fgrep ASDC /proc/devices && echo "ASDC is loaded" || echo "no ASDC loaded"
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

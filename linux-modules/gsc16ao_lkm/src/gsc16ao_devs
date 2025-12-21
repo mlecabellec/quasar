@@ -1,0 +1,80 @@
+###############################################################################
+#                                                                             #
+#               !!! This heading is automatically generated !!!               #
+#                                                                             #
+# This file is created whenever the 'start' script or 'make load' is called.  #
+# A list of cards detected are included at the end of this file. The user can #
+# edit this file to associate a device number to a particular card. In this   #
+# way, the user can associate their application device to a specific card.    #
+#                                                                             #
+# If the user associates a device with a card in this file, they will need    #
+# to re-run the 'start' script or 'make' to load the driver module for the    #
+# association to take affect. Any invalid association will result in the load #
+# failing. User will need to correct the device to card number association    #
+# and re-issue the 'start' script or 'make load'.                             #
+#                                                                             #
+# If the user deletes this file or does not associate any device to a card    #
+# prior to issuing the 'start' script or 'make load' the driver will perform  #
+# a one to one device to card association.                                    #
+#                                                                             #
+# User can assign a device number to a card number with the help of either    #
+# one of the following formats:                                               #
+#                                                                             #
+#      Format-A: "device=" or "device_wave=" and "card=" keywords             #
+#      Format-B: "device=" or "device_wave=" and "bus=" and "slot=" and       #
+#                                             "func=" keywords                #
+#                                                                             #
+#     For either format, the following rules need to be adhered to:           #
+#     - any lines starting with '#' are ignored and deleted by the script.    #
+#     - any lines starting with '!' are ignored but not deleted by the script.#
+#     - only valid keywords are allowed in an un-commented line.              #
+#     - keywords cannot be duplicated for a particular format.                #
+#     - device numbers range from '0' to '9'.                                 #
+#     - Format-A: card numbers can only range from '0' to 'MAX CARDS DETECTED'#
+#     - Format-B: card must reside in specified bus/slot/func numbers         #
+#     - device numbers cannot be duplicated as they are used to create        #
+#       unique device names.                                                  #
+#     - different device numbers can be assigned to the same card number.     #
+#     - only those devices are created that are specified by the user         #
+#       in this file.                                                         #
+#     - if none of the above keywords are specified, the driver will default  #
+#       to assiging the device number the same as the card number.            #
+#     - the keyword and the number must be separated with '='. No spaces      #
+#       are allowed between them.                                             #
+#     - keywords can be entered in any order, however, they can only be       #
+#       separated by spaces ' ' or commas ','.                                #
+#                                                                             #
+# When this file is re-created, all lines starting with '#' are deleted.      #
+# Users should therefore use '!' instead to retain their comments.            #
+#                                                                             #
+# e.g. assume 4 cards were detected by the driver:                            # 
+#      assume card 4 is located in bus=3, slot=12, func=0                     #
+#                                                                             #
+#       device=4      card=2                                                  #
+#       card=2        device=5                                                #
+#       device=3      card=0                                                  #
+#       device=1      bus=3, slot=12, func=0                                  #
+#       device_wave=3 card=0                                                  #
+#                                                                             #
+#     In the above example, the following devices will be created.            #
+#       /dev/gsc16ao4  device 4 assigned to card=2                            #
+#       /dev/gsc16ao5  device 5 also assigned to card=2                       #
+#       /dev/gsc16ao3  device 3 assigned to card=0                            #
+#       /dev/gsc16ao1  device 1 assigned to card 4 in bus=3, slot=12, func=0  #
+#       /dev/gsc16ao_wave3  device_wave 3 assigned to card=0                  #
+#                                                                             #
+#     Note: card=1 is not assigned and hence cannot be accessed by the user   #
+#                                                                             #
+###############################################################################
+#                                                                             #
+# The following cards are detected by the driver:                             #
+#                                                                             #
+#     version: 6.3.x_2                                                        #
+#     built: Jul 17 2014, 11:08:31                                            #
+#     boards: 1                                                               #
+#     GSC16AO16 : 1                                                           #
+#     GSC16AO12 : 0                                                           #
+#                                                                             #
+#       card=0: [83:04.0] bus=131, slot=4, func=0, firmware=0x001b0008, irq=50  #
+#                                                                             #
+###############################################################################

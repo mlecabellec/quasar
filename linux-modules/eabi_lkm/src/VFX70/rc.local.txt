@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Exemple de fichier RC.local permettant de charger
+# le driver de la carte Acromag VFX70 au demarrage
+
+## Installation driver Acromag PMCVFX70
+/bin/logger -s ="--- Debut installation driver pmcvfx70 ---"
+/sbin/insmod /prg/sys/vfx70/apmcvfx70.ko
+if [ ! -r /dev/apmcvfx70_0 ]; then
+  mknod -m 666 /dev/apmcvfx70_0 c 46 0 #(1st PMC board)
+  mknod -m 666 /dev/apmcvfx70_1 c 46 1 #(2nd PMC board)
+  mknod -m 666 /dev/apmcvfx70_2 c 46 2 #(3rd PMC board)
+  mknod -m 666 /dev/apmcvfx70_3 c 46 3 #(4th PMC board)
+else
+/bin/logger -s ="--- Echec installation driver pmcvfx70 ---"
+fi
+/bin/logger -s ="--- Fin installation driver pmcvfx70 ---"
+
+
+touch /var/lock/subsys/local

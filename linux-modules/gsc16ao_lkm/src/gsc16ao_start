@@ -1,0 +1,679 @@
+#!/bin/sh
+
+###############################################################################
+#                                                                             #
+# File:         gsc16ao_start                                                 #
+#                                                                             #
+# Description:  Shell script for loading and unloading the 16AO12 driver      #
+#               from the kernel                                               #
+#                                                                             #
+# Syntax:                                                                     #
+#   gsc16ao_start     ==> load the gsc16ao module in the kernel and           #
+#                         also create the devices /dev/gsc16ao[0-15]          #
+#   gsc16ao_start -x  ==> remove the gsc16ao module from the kernel           #
+#                                                                             #
+# Date:        05/29/2009                                                     #
+# History:                                                                    #
+#                                                                             #
+#   4  5/29/09 D. Dubash                                                      #
+#      added support for device_wave= and more than 10 boards                 #
+#                                                                             #
+#   3  9/26/08 D. Dubash                                                      #
+#      added support for chkconfig                                            #
+#                                                                             #
+#   2  9/09/05 D. Dubash                                                      #
+#      added changes for gsc16ao.devs support                                 #
+#                                                                             #
+#   1  5/30/2003 G. Barton                                                    #
+#      Initial version adapted from equivalent lcaio script                   #
+#                                                                             #
+###############################################################################
+
+BOARD_NUMBERS="[0-9]"	# supported board numbers
+module_name=gsc16ao
+CONFIG_DIR=/usr/lib/config
+USER_CONFIG=${CONFIG_DIR}/${module_name}_config
+USER_DEVS=${CONFIG_DIR}/${module_name}_devs
+USER_MSG=/tmp/${module_name}_msg$$
+PROC_FILE=/proc/${module_name}
+user_assigned=0
+TEMP=/tmp/${module_name}_setup.$$
+
+YELLOW="\033[33;1m"
+GRAY="\033[37;m"
+ERROR="${YELLOW}ERROR${GRAY}"
+
+Abort() {
+    if [ `check_loaded` -gt 0 ]
+    then
+	    rmmod ${module_name}
+    fi
+    rm -f ${TEMP} ${USER_MSG}
+    echo "Edit the '${USER_DEVS}' device assignment file and try again!!!"
+    exit 1
+}
+
+#######################################################################
+#
+# read user <module_name>_devs file and /proc/<module_name> file
+
+read_dev_config() {
+    if [ -f ${USER_DEVS} ]
+    then
+        config_entry=`grep -v "^#" ${USER_DEVS} | grep -v "^!"`
+        format_A=0
+        format_B=0
+        device=
+        device_wave=
+        dev_found=
+        card=
+        bus=
+        echo "#!/bin/sh" > $TEMP
+        echo "errcode=0" >> $TEMP
+        echo "echo -e \"\\n>>> User defined assignments in file /$USER_DEVS <<<\""  >> $TEMP
+        chmod 755 $TEMP
+        declare -a old_dn
+        declare -a old_dn_wave
+        # remove any commas
+        config_entry=`echo $config_entry | sed -e 's/,/ /g'`
+
+        for i in $config_entry
+        do
+            case "$i" in
+                device=*) 
+                    if [ x$device != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in current format"
+                        Abort
+                    fi
+                    if [ x$device_wave != x ]
+                    then
+                        echo "ERROR!!! cannot mix 'device=' and 'device_wave='"
+                        Abort
+                    fi
+                    device=$i 
+                    dev_found=$i
+                    ;;
+
+                device_wave=*) 
+                    if [ x$device_wave != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in current format"
+                        Abort
+                    fi
+                    if [ x$device != x ]
+                    then
+                        echo "ERROR!!! cannot mix 'device=' and 'device_wave='"
+                        Abort
+                    fi
+                    device_wave=$i 
+                    dev_found=$i
+                    ;;
+
+                card=*) 
+                    if [ x$card != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in format 'A'"
+                        Abort
+                    fi
+                    if [ $format_B != 0 ]
+                    then
+                        echo "ERROR!!! Cannot mix command formats 'A' & 'B'"
+                        Abort
+                    fi
+                    card=$i 
+                    format_A=`expr $format_A + 1`
+                    ;;
+
+                bus=*)
+                    if [ x$bus != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in format 'B'"
+                        Abort
+                    fi
+                    if [ $format_A != 0 ]
+                    then
+                        echo "ERROR!!! Cannot mix command formats 'A' & 'B'"
+                        Abort
+                    fi
+                    bus=$i 
+                    format_B=`expr $format_B + 1`
+                    ;;
+
+                slot=*)
+                    if [ x$slot != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in format 'B'"
+                        Abort
+                    fi
+                    if [ $format_A != 0 ]
+                    then
+                        echo "ERROR!!! Cannot mix command formats 'A' & 'B'"
+                        Abort
+                    fi
+                    slot=$i 
+                    format_B=`expr $format_B + 1`
+                    ;;
+
+                func=*)
+                    if [ x$func != x ]
+                    then
+                        echo "ERROR!!! duplicate keyword '$i' in format 'B'"
+                        Abort
+                    fi
+                    if [ $format_A != 0 ]
+                    then
+                        echo "ERROR!!! Cannot mix command formats 'A' & 'B'"
+                        Abort
+                    fi
+                    func=$i 
+                    format_B=`expr $format_B + 1`
+                    ;;
+
+                append=*)
+                    echo "append FOUND - $i"
+                    ;;
+
+                *) 
+                    echo "ERROR!!! Invalid keyword '$i'" 
+                    Abort
+                    ;;
+            esac
+
+            #
+            # if user has specified bus, slot, func - then get 
+            # equivalent card number from /proc/<driver> file
+            #
+            if [ \( x$device != x -o x$device_wave != x \) -a x$bus != x -a x$slot != x -a x$func != x ]
+            then
+                card=`grep "$bus," ${PROC_FILE} | grep "$slot," \
+                                            | grep "$func" | cut -d: -f1 `
+                if [ "x$card" = x ]
+                then
+                    echo "ERROR!!! Card not found in $bus, $slot, $func"
+                    Abort
+                fi
+                format_B=0
+                bus=
+                slot=
+                func=
+            fi
+
+            #
+            # check if both 'device=' or 'device_wave=' and 'card=' keywords 
+            # are present
+            #
+            if [ \( x$device != x  -o x$device_wave != x \) -a "x$card" != x ]
+            then
+                dn=`echo $dev_found | cut -d= -f2`
+                case $dn in
+                    [0-9]*) 
+                        ;;
+                    *) 
+                        echo "ERROR!!! Invalid device [device=$dn]. Must be 0-15"
+                        Abort
+                        ;;
+                esac
+    
+                cn=`echo $card | cut -d= -f2`
+                case $cn in
+                    [0-9]*) 
+                        ;;
+                    *) 
+                        echo "ERROR!!! Invalid card [card=$cn]. Must be 0-15"
+                        Abort
+                        ;;
+                esac
+
+                board_count=`grep "^boards: [0-9]" ${PROC_FILE} | cut -d" " -f2`
+                board_count=`expr 0${board_count}`
+
+                if [ $cn -ge $board_count ]
+                then
+                    echo "ERROR!!! Invalid card number $cn"
+                    Abort
+                fi
+    
+                if [ x$device != x ]
+                then
+                    # if device already specified, error out
+                    if [ ! -z ${old_dn[$dn]} ]
+                    then
+                        echo "ERROR!!! Device number 'device=$dn' being re-used"
+                        Abort
+                    fi
+
+                    old_dn[$dn]=$dn     # save device number
+                    DName=/dev/${module_name}${dn}
+                fi
+
+                if [ x$device_wave != x ]
+                then
+                    # if device already specified, error out
+                    if [ ! -z ${old_dn_wave[$dn]} ]
+                    then
+                        echo "ERROR!!! Device number 'device_wave=$dn' being re-used"
+                        Abort
+                    fi
+    
+                    old_dn_wave[$dn]=$dn     # save device number
+                    DName=/dev/${module_name}_wave${dn}
+                fi
+    
+                minor_no=$cn
+
+                cmd=`echo mknod --mode=a+rw ${DName} c $major_no $minor_no`
+                echo $cmd >> $TEMP
+                echo "errcode=\`expr \$errcode + \$?\`" >> $TEMP
+
+                echo "if [ \$errcode = 0 ]" >> $TEMP
+                echo "then" >> $TEMP
+                echo "echo \"    Device ${DName} assigned to card $cn\"" >> $TEMP
+    
+                echo "else" >> $TEMP
+                echo "echo \"ERROR!!! Device ${DName} failed to be created.\"" >> $TEMP
+                echo "fi" >> $TEMP
+                count=0
+                user_assigned=`expr $user_assigned + 1`
+                device=
+                device_wave=
+                dev_found=
+                card=
+                format_A=0
+            fi
+        done
+
+        if [ $format_A != 0 ]
+        then
+            echo "ERROR!!! Format_A requires 'device=' or 'device_wave=' and 'card=' keys to be specified"
+            Abort
+        fi
+  
+        if [ $format_B != 0 ]
+        then
+            echo "ERROR!!! Format_B requires 'device=' or 'device_wave=' and 'bus=', 'slot=' and 'func=' keys to be specified"
+            Abort
+        fi
+
+        if [ x$device != x ]
+        then
+            echo "ERROR!!! 'device=' or 'device_wave=' key must be used with format_A or format_B"
+            Abort
+        fi
+  
+        if [ $user_assigned != 0 ]
+        then
+            $TEMP   #execute command
+        fi
+
+        rm -f $TEMP
+    fi
+}
+
+
+##################################################################
+#
+# create the <module_name>_devs file
+
+create_devs_file ()
+{
+cat << END_HEADER >  ${USER_MSG}
+###############################################################################
+#                                                                             #
+#               !!! This heading is automatically generated !!!               #
+#                                                                             #
+# This file is created whenever the 'start' script or 'make load' is called.  #
+# A list of cards detected are included at the end of this file. The user can #
+# edit this file to associate a device number to a particular card. In this   #
+# way, the user can associate their application device to a specific card.    #
+#                                                                             #
+# If the user associates a device with a card in this file, they will need    #
+# to re-run the 'start' script or 'make' to load the driver module for the    #
+# association to take affect. Any invalid association will result in the load #
+# failing. User will need to correct the device to card number association    #
+# and re-issue the 'start' script or 'make load'.                             #
+#                                                                             #
+# If the user deletes this file or does not associate any device to a card    #
+# prior to issuing the 'start' script or 'make load' the driver will perform  #
+# a one to one device to card association.                                    #
+#                                                                             #
+# User can assign a device number to a card number with the help of either    #
+# one of the following formats:                                               #
+#                                                                             #
+#      Format-A: "device=" or "device_wave=" and "card=" keywords             #
+#      Format-B: "device=" or "device_wave=" and "bus=" and "slot=" and       #
+#                                             "func=" keywords                #
+#                                                                             #
+#     For either format, the following rules need to be adhered to:           #
+#     - any lines starting with '#' are ignored and deleted by the script.    #
+#     - any lines starting with '!' are ignored but not deleted by the script.#
+#     - only valid keywords are allowed in an un-commented line.              #
+#     - keywords cannot be duplicated for a particular format.                #
+#     - device numbers range from '0' to '9'.                                 #
+#     - Format-A: card numbers can only range from '0' to 'MAX CARDS DETECTED'#
+#     - Format-B: card must reside in specified bus/slot/func numbers         #
+#     - device numbers cannot be duplicated as they are used to create        #
+#       unique device names.                                                  #
+#     - different device numbers can be assigned to the same card number.     #
+#     - only those devices are created that are specified by the user         #
+#       in this file.                                                         #
+#     - if none of the above keywords are specified, the driver will default  #
+#       to assiging the device number the same as the card number.            #
+#     - the keyword and the number must be separated with '='. No spaces      #
+#       are allowed between them.                                             #
+#     - keywords can be entered in any order, however, they can only be       #
+#       separated by spaces ' ' or commas ','.                                #
+#                                                                             #
+# When this file is re-created, all lines starting with '#' are deleted.      #
+# Users should therefore use '!' instead to retain their comments.            #
+#                                                                             #
+# e.g. assume 4 cards were detected by the driver:                            # 
+#      assume card 4 is located in bus=3, slot=12, func=0                     #
+#                                                                             #
+#       device=4      card=2                                                  #
+#       card=2        device=5                                                #
+#       device=3      card=0                                                  #
+#       device=1      bus=3, slot=12, func=0                                  #
+#       device_wave=3 card=0                                                  #
+#                                                                             #
+#     In the above example, the following devices will be created.            #
+#       /dev/gsc16ao4  device 4 assigned to card=2                            #
+#       /dev/gsc16ao5  device 5 also assigned to card=2                       #
+#       /dev/gsc16ao3  device 3 assigned to card=0                            #
+#       /dev/gsc16ao1  device 1 assigned to card 4 in bus=3, slot=12, func=0  #
+#       /dev/gsc16ao_wave3  device_wave 3 assigned to card=0                  #
+#                                                                             #
+#     Note: card=1 is not assigned and hence cannot be accessed by the user   #
+#                                                                             #
+###############################################################################
+#                                                                             #
+# The following cards are detected by the driver:                             #
+#                                                                             #
+END_HEADER
+
+awk '{ printf ("#     %-71s #\n", $0); }' ${PROC_FILE} >> ${USER_MSG}
+
+cat << END_HEADER >>  ${USER_MSG}
+#                                                                             #
+###############################################################################
+END_HEADER
+
+    if [ -f ${USER_DEVS} ]
+    then
+        grep -v "^#" ${USER_DEVS} >> ${USER_MSG}
+    fi
+    
+    cp ${USER_MSG} ${USER_DEVS}
+    rm -f ${USER_MSG}
+
+}
+
+
+# function to see if the module is loaded
+check_loaded() {
+	lsmod | grep -w ${module_name} | wc -l
+}
+
+# test for any arguments
+if [ x$1 = x-x ]
+then
+	if [ `check_loaded` -gt -1 ]
+	then
+		echo "Removing module ${module_name} ... "
+	else
+		exit 0
+	fi
+else
+	if [ x$1 = x ]
+	then
+		echo "Loading module ${module_name} ... "
+	else
+		echo -e "\n${ERROR}: Invalid Argument [$1]"
+		echo -e "Format: $0     ==> load ${module_name} module"
+		echo -e "        $0 -x  ==> unload ${module_name} module"
+		exit 1
+	fi
+fi
+
+# Make sure the module name is validly set.
+if [ -z ${module_name} ]
+then
+	echo -e ${ERROR}: invalid variable \"module_name\": ${module_name}
+	exit 1
+fi
+
+# Make sure we're running the script in a satisfactory manner.
+script=`echo $0 | sed -e "s/[^/]*\///g"`
+
+if [ ".${script}" != ".${module_name}_start" ]
+then
+	echo -e ${ERROR}: invalid invocation
+	exit 1
+fi
+
+# Compute the module file name.
+module_file=/lib/modules/`uname -r`/misc/${module_name}.ko
+
+# Make sure the module file exists.
+if [ ! -f ${module_file} -a x$1 = x ]
+then
+	echo -e ${ERROR}: module file does not exist: ${module_file}
+	echo -e ${ERROR}: do a \'make install\' to install the driver before loading
+	exit 1
+fi
+
+# Compare the module against the module in the local directory
+COMPARE_RET=0
+if [ -f  ${module_name}.ko ]
+then
+	cmp -s ${module_file} ${module_name}.ko
+	COMPARE_RET=$?
+fi
+
+#######################################################################
+#
+# Utility functions.
+#
+
+# function to see if the module is loaded
+# check_loaded() {
+#	 lsmod | grep -w ${module_name} | wc -l
+# }
+
+# function to see if the module is loaded
+check_running() {
+	cat /proc/devices | grep -w ${module_name} | wc -l
+}
+
+# Get the device's major number.
+get_major_number() {
+	cat /proc/devices | grep -w ${module_name} | cut -d" " -f1
+}
+
+# Count the number of existing device nodes.
+count_device_nodes() {
+	count=`ls -al /dev/${module_name}${BOARD_NUMBERS}* 2> /dev/null | wc -l`
+	count_wave=`ls -al /dev/${module_name}_wave${BOARD_NUMBERS}* 2> /dev/null | wc -l`
+    count=`expr $count + $count_wave`
+    echo $count
+}
+
+#######################################################################
+#
+# Unload the current module to make sure the latest gets loaded.
+#
+
+if [ `check_loaded` -gt 0 ]
+then
+	rmmod ${module_name}
+fi
+
+if [ `check_loaded` -gt 0 ]
+then
+	echo -e ${ERROR}: unable to unload module.
+	exit 1
+fi
+
+#######################################################################
+#
+# Remove any existing device nodes.
+#
+
+rm -f /dev/${module_name}${BOARD_NUMBERS}*
+rm -f /dev/${module_name}_wave${BOARD_NUMBERS}*
+
+if [ `count_device_nodes` -gt 0 ]
+then
+	echo -e ${ERROR}: unable to remove existing device nodes.
+	exit 1
+fi
+
+### If unload reqested, exit ###
+if [ x$1 = x-x ]
+then
+	echo -e "\n### $0: module ${module_name} removed successfully ###\n"
+	exit 0
+fi
+
+#######################################################################
+#
+# Load the existing module.
+#
+
+# insmod ${module_file}
+
+CONFIG=
+
+if [ -f  ${USER_CONFIG} ]
+then
+	CONFIG=`grep -v \# ${USER_CONFIG} | grep -v \* | grep "="| tail -n 1`
+fi
+
+echo -e "\n### modprobe ${module_name} ${CONFIG} ###"
+modprobe ${module_name} ${CONFIG}
+
+# Make sure the module got loaded.
+if [ `check_loaded` -le 0 ]
+then
+	echo -e ${ERROR}: unable to load module.
+	exit 1
+fi
+
+#######################################################################
+#
+# Get the major device number.
+#
+
+if [ `check_running` -le 0 ]
+then
+	echo -e ${ERROR}: module is not running.
+	exit 1
+fi
+
+major_no=`get_major_number`
+
+if [ $major_no -le 0 ]
+then
+	echo -e ${ERROR}: invalid major number: $major_no
+	exit 1
+fi
+
+#######################################################################
+#
+# See how many boards are installed.
+#
+
+# Make sure the proc file exists
+if [ ! -f ${PROC_FILE} ]
+then
+	echo -e ${ERROR}: file does not exist: ${PROC_FILE}
+	exit 1
+fi
+
+# Get the board count from the proc file.
+board_count=`grep "^boards: [0-9]" ${PROC_FILE} | cut -d" " -f2`
+board_count=`expr 0${board_count}`
+
+# Make sure the number of boards is valid
+
+if [ ${board_count} -le 0 ]
+then
+	echo -e ${ERROR}: file ${PROC_FILE} is invalid
+	exit 1
+fi
+
+#######################################################################
+#
+# Display all cards that have been detected
+#
+    echo -e "======================================================================="
+    cat ${PROC_FILE}
+    echo -e "======================================================================="
+
+#######################################################################
+#
+# Re-Create the user specified <module_name>_devs file
+#
+    create_devs_file
+
+#######################################################################
+#
+# Use User specified device assignments if present
+#
+    read_dev_config
+
+#######################################################################
+#
+# Install a node for each installed board.
+#
+
+if [ $user_assigned = 0 ] # if user not assigned devices
+then
+	minor_no=0
+	
+	while [ $minor_no -lt ${board_count} ]
+	do
+        mknod --mode=a+rw /dev/${module_name}${minor_no} c $major_no $minor_no
+        mknod --mode=a+rw /dev/${module_name}_wave${minor_no} c $major_no $minor_no
+	    minor_no=`expr $minor_no + 1`
+	done
+
+    board_count=`expr $board_count \* 2`
+	
+	if [ `count_device_nodes` -ne ${board_count} ]
+	then
+		echo -e ${ERROR}: failed to install the required number of device nodes.
+		exit 1
+	fi
+fi
+
+#######################################################################
+#
+# Print warning if installed module is different from module in current 
+# directory
+#
+if [ ${COMPARE_RET} = 1 ]
+then
+	echo -e "\n\t##########################################################"
+	echo -e "\t#                                                        #"
+	echo -e "\t#                     !!!WARNING!!!                      #"
+	echo -e "\t#                                                        #"
+	echo -e "\t# Installed Module is NOT the same as the module in      #"
+	echo -e "\t# the current directory. You will need to issue the      #"
+	echo -e "\t# \"make install\" command to install the module in the    #"
+	echo -e "\t# current directory.                                     #"
+	echo -e "\t#                                                        #"
+	echo -e "\t##########################################################\n"
+fi
+
+#######################################################################
+#
+# We're done.
+#
+
+	echo -e "\n###"
+	echo -e "### $0: module ${module_name} successfully loaded ###"
+	echo -e "###\n"
+
+exit 0
+

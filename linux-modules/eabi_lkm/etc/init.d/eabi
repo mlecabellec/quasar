@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# eabi      Startup script for the emuabi device
+#
+# chkconfig: 2345 80 20
+# description: emuabi is a mil-std-1553 adapter compatible with ABI adapter.
+
+
+. /etc/rc.d/init.d/functions
+. /etc/drast_lkm/eabi.conf
+
+DEVICE=eabi
+
+start() {
+	modprobe vfx70
+	rm -rf /dev/apmcvfx70_*
+	mknod -m 660 /dev/apmcvfx70_0 c 46 0
+	mknod -m 660 /dev/apmcvfx70_1 c 46 1
+	mknod -m 660 /dev/apmcvfx70_2 c 46 2
+	mknod -m 660 /dev/apmcvfx70_3 c 46 3
+
+	if [ "$DRASTBIN" = "" ]
+	then
+		DRASTBIN=/opt/drast_lkm/bin
+	fi
+	# load FPGA firmware and configure
+	"$DRASTBIN"/drast_vfx70_tools config /dev/apmcvfx70_0 /etc/drast_lkm/VFX70EMUABI.mcs
+	"$DRASTBIN"/drast_vfx70_tools evf /dev/apmcvfx70_0 0x8008 0x3C03C1F0
+	"$DRASTBIN"/drast_vfx70_tools evf /dev/apmcvfx70_0 0x8074 0x3C3FC9FF
+	rmmod vfx70
+
+
+	if [ "$MODARGS" = "" ]
+	then
+		MODARGS="tf1=150 tf2=50 tf3=300 tf4=250 tf5=500"
+	fi
+	modprobe ${DEVICE} $MODARGS
+	
+	if [ "$DEVGROUP" != "" ]
+	then
+		chgrp $DEVGROUP /dev/apmcvfx70_*
+	fi
+	return 0
+}
+
+stop() {
+	rmmod ${DEVICE} && rm -rf /dev/${DEVICE}* || echo "Emuabi not unloaded. Was not loaded or can't unload. Check all using modules are unloaded."
+}
+
+show_status() {
+	/sbin/lsmod | grep eabi && echo "Emuabi is loaded" || echo "no emuabi loaded"
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

@@ -1,0 +1,5 @@
+opto16x16_close
+opto16x16_init
+opto16x16_ioctl
+opto16x16_open
+opto16x16_read

@@ -1,0 +1,93 @@
+#!/bin/bash
+# v1.05
+
+#============================================================================*
+#
+# Configuration arguments:
+#  Required:
+#   none
+#  Optional:
+#   USB_SUPPORT - enable USB support
+#   USB_SERVER_SUPPORT - enable USB support to support two channels on the
+#                        R15-USB concurrently
+#   32BIT - build as 32-bit instead of 64-bit only if a x86_64 system is
+#           detected
+#   NO_INSTALL - does not move the library to the /usr/lib(64) and links the
+#                examples to the low level library in the "Lowlevel" directory
+#                and the API library in the "bt1553/Source" directory
+#   NO_WAITQUEUE - not use a "wait queue" for detecting hardware interrupts,
+#                  but instead use a POSIX signal.
+#
+#============================================================================*
+
+
+echo Building the BusTools/1553 API distribution
+
+CONDOR_PATH=`pwd`
+ARCH=`uname -m`
+
+arg=""
+# check for positional parameters
+until [ -z "$1" ]; do
+  if [ $1 == "NO_INSTALL" ]; then 
+   echo Not installing BusTools/1553 API library
+   arg="${arg} NO_INSTALL=1"
+  elif [ $1 == "32BIT" ]; then 
+   echo Building 32-bit library and examples
+   arg="${arg} 32BIT=1"
+  elif [ $1 == "NO_WAITQUEUE" ]; then 
+   arg="${arg} NO_WAITQUEUE=1"
+  elif [ $1 == "USB_SUPPORT" ]; then
+   echo Building with USB support enabled
+   arg="${arg} USB_SUPPORT=1"
+  elif [ $1 == "USB_SERVER_SUPPORT" ]; then
+   echo Building with USB server support enabled
+   arg="${arg} USB_SERVER_SUPPORT=1"
+  fi
+  shift
+done
+
+# if a 2.4.x kernel, then build the API without the "wait queue" functionality
+if [ `uname -r | awk -F . '{print $1}'` -eq 2 ]; then
+  if [ `uname -r | awk -F . '{print $2}'` -eq 4 ]; then
+    arg="${arg} NO_WAITQUEUE=1"
+  fi  
+fi
+
+# To install the library, need to be logged on as 'root'.
+if test `whoami | grep -ci "root"` -ne 1; then
+  if test `echo ${arg} | grep -ci "NO_INSTALL=1"` -ne 1; then
+    echo Failed: need to be logged on as 'root' to install the BusTools/1553 API library
+    exit  
+  fi
+fi
+
+# determines if running on a x86, x86_64, or ppc system
+if [[ ${ARCH} == i*86 ]]; then
+  arg="${arg} ARCH=x86"
+elif [ ${ARCH} == "x86_64" ]; then
+  arg="${arg} ARCH=x86_64"
+elif [ ${ARCH} == "ppc" ]; then
+  arg="${arg} ARCH=ppc"
+else
+  echo Failed: non-supported architecture ${ARCH}
+  exit 1
+fi
+
+# Make the Bustools/1553 API shared library
+cd ${CONDOR_PATH}/Source
+echo Make Bustools/1553 shared library: ${arg}
+make ${arg}
+if [ $? != 0 ]; then
+  exit 1
+fi
+
+# Make the BusTools/1553 API examples
+echo Make Bustools/1553 examples
+cd ${CONDOR_PATH}/Examples
+make ${arg}
+if [ $? != 0 ]; then
+  exit 1
+fi
+
+exit 0

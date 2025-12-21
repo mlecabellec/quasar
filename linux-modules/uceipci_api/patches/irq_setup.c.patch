@@ -1,0 +1,11 @@
+--- irq_setup.c	2018-02-23 01:08:39.000000000 +0000
++++ irq_setup.c	2024-10-16 12:44:03.524969598 +0000
+@@ -91,7 +91,7 @@
+ #include "globals.h"
+ #include "lowlevel.h"
+ #include "btdrv.h"
+-#include "../../../Lowlevel/ll_posix.h"
++#include "Lowlevel/ll_posix.h"
+ 
+ #define POSIX_ERROR -1
+ 

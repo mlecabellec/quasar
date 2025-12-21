@@ -1,0 +1,752 @@
+#!/bin/bash
+# v1.22
+
+#=============================================================================*
+#
+# Configuration arguments:
+#  Required:
+#   isa    - for an ISA device.  Need to specify a base memory address
+#            (0xXXXXX) and an IRQ (if needing hardware interrupts).
+#   pcmcia - for a PCMCIA device.
+#   usb    - for an USB device.
+#
+#  Optional:
+#   no_sysfs - disbles support for the SYS file system
+#   no_hwint - disables hardware interrupt support
+#   no_hwint_signal - disables using POSIX RT signals for notifing the
+#                      API that a hardware interrupt occured
+#   no_hwint_waitqueue - disable using a "wait queue" for the API to
+#                         determine if a hardware interrupt occured
+#   32bit - compiles the low level library and API(s) libraries and examples
+#            for 32-bit emulation in a 64-bit system
+#   no_install - does not move the library to the system's library directory
+#                 and links the examples to the low level library in the
+#                 "Lowlevel" directory and the API library in the
+#                 "ceix20/Source" directory
+#   debug_drv= - set the debug level for the driver
+#   debug_ll - outputs information when debugging the low level library
+#   no_drv - does not build or load the drivers
+#   no_ll - does not build the low level library
+#   no_api - does not build the API(s) distributions
+#   usb_server - builds the USB server functionality
+#
+#=============================================================================*
+
+LSP_VERSION=1.36   # version of Linux support package
+
+KERN_MINOR_53=11   # highest kernel 5.3 minor revision support
+KERN_MINOR_52=21   # highest kernel 5.2 minor revision support
+KERN_MINOR_51=21   # highest kernel 5.1 minor revision support
+KERN_MINOR_50=21   # highest kernel 5.0 minor revision support
+KERN_MINOR_420=17  # highest kernel 4.20 minor revision support
+KERN_MINOR_419=84  # highest kernel 4.19 minor revision support
+KERN_MINOR_418=20  # highest kernel 4.18 minor revision support
+KERN_MINOR_417=19  # highest kernel 4.17 minor revision support
+KERN_MINOR_416=18  # highest kernel 4.16 minor revision support
+KERN_MINOR_415=18  # highest kernel 4.15 minor revision support
+KERN_MINOR_414=154 # highest kernel 4.14 minor revision support
+KERN_MINOR_413=16  # highest kernel 4.13 minor revision support
+KERN_MINOR_412=14  # highest kernel 4.12 minor revision support
+KERN_MINOR_411=12  # highest kernel 4.11 minor revision support
+KERN_MINOR_410=17  # highest kernel 4.10 minor revision support
+KERN_MINOR_49=202  # highest kernel 4.9 minor revision support
+KERN_MINOR_48=17   # highest kernel 4.8 minor revision support
+KERN_MINOR_47=10   # highest kernel 4.7 minor revision support
+KERN_MINOR_46=7    # highest kernel 4.6 minor revision support
+KERN_MINOR_45=7    # highest kernel 4.5 minor revision support
+KERN_MINOR_44=202  # highest kernel 4.4 minor revision support
+KERN_MINOR_43=6    # highest kernel 4.3 minor revision support
+KERN_MINOR_42=8    # highest kernel 4.2 minor revision support
+KERN_MINOR_41=52   # highest kernel 4.1 minor revision support
+KERN_MINOR_40=9    # highest kernel 4.0 minor revision support
+KERN_MINOR_319=8   # highest kernel 3.19 minor revision support
+KERN_MINOR_318=140 # highest kernel 3.18 minor revision support
+KERN_MINOR_317=8   # highest kernel 3.17 minor revision support
+KERN_MINOR_316=77  # highest kernel 3.16 minor revision support
+KERN_MINOR_315=10  # highest kernel 3.15 minor revision support
+KERN_MINOR_314=79  # highest kernel 3.14 minor revision support
+KERN_MINOR_313=11  # highest kernel 3.13 minor revision support
+KERN_MINOR_312=74  # highest kernel 3.12 minor revision support
+KERN_MINOR_311=10  # highest kernel 3.11 minor revision support
+KERN_MINOR_310=108 # highest kernel 3.10 minor revision support
+KERN_MINOR_39=11   # highest kernel 3.9 minor revision support
+KERN_MINOR_38=13   # highest kernel 3.8 minor revision support
+KERN_MINOR_37=10   # highest kernel 3.7 minor revision support
+KERN_MINOR_36=11   # highest kernel 3.6 minor revision support
+KERN_MINOR_35=7    # highest kernel 3.5 minor revision support
+KERN_MINOR_34=113  # highest kernel 3.4 minor revision support
+KERN_MINOR_33=8    # highest kernel 3.3 minor revision support
+KERN_MINOR_32=102  # highest kernel 3.2 minor revision support
+KERN_MINOR_31=10   # highest kernel 3.1 minor revision support
+KERN_MINOR_30=101  # highest kernel 3.0 minor revision support
+KERN_MINOR_26=43   # highest kernel 2.6 minor revision support
+KERN_MINOR_24=37   # highest kernel 2.4 minor revision support
+
+KERN_5_MAX=5.3.${KERN_MINOR_53}
+KERN_4_MAX=4.20.${KERN_MINOR_420}
+KERN_3_MAX=3.19.${KERN_MINOR_319}
+KERN_26_MAX=2.6.${KERN_MINOR_26}
+KERN_24_MAX=2.4.${KERN_MINOR_24}
+
+echo Installing Linux support package v${LSP_VERSION}
+
+BUILD_DRV=1
+BUILD_LL=1
+BUILD_API=1
+NO_INSTALL=0
+CEIDEV=0
+PCI=0
+ISA=0
+PCMCIA=0
+USB=0
+USB_SERVER=0
+DRV_ARGS=""
+LL_ARGS=""
+API_ARGS=""
+CONF_ARGS=""
+
+# check for positional parameters
+until [ -z "$1" ]; do
+  if [ $1 == "pcmcia" ]; then
+    PCMCIA=1
+  elif [ $1 == "isa" ]; then
+    ISA=1
+    CEIDEV=1
+  elif [ $1 == "usb" ]; then
+    USB=1
+    BUILD_DRV=0
+    CEIDEV=1
+    LL_ARGS="${LL_ARGS} USB_SUPPORT"
+    CONF_ARGS="${CONF_ARGS} USB_SUPPORT=1"
+  elif [ $1 == "usb_server" ]; then
+    USB=1
+    USB_SERVER=1
+    BUILD_DRV=0
+    CEIDEV=1
+    LL_ARGS="${LL_ARGS} USB_SERVER_SUPPORT"
+    CONF_ARGS="${CONF_ARGS} USB_SUPPORT=1"
+  # user supplied base memory for an ISA device
+  elif [[ $1 == 0x* ]]; then
+    ISA_BASEMEM=$1
+  # user supplied IRQ for an ISA device
+  elif [[ $1 == [0-9*] ]]; then
+    ISA_IRQ=$1	
+  # use the "ceidev.conf" file instead of the SYS filesystem
+  elif [ $1 == "no_sysfs" ]; then
+    DRV_ARGS="${DRV_ARGS} NO_SYSFS_SUPPORT"
+    LL_ARGS="${LL_ARGS} NO_SYSFS_SUPPORT"
+    CEIDEV=1
+  # will enable debuging statements from the driver to the kernel message log
+  elif [[ $1 == debug_drv=* ]]; then
+    DRV_ARGS="${DRV_ARGS} DEBUG=${1:10}"
+  # will enable debugging statements to output from the lowlevel library
+  elif [ $1 == "debug_ll" ]; then
+    LL_ARGS="${LL_ARGS} DEBUG"
+  elif [ $1 == "no_drv" ]; then
+    BUILD_DRV=0
+  elif [ $1 == "no_ll" ]; then
+    BUILD_LL=0
+  elif [ $1 == "no_api" ]; then
+    BUILD_API=0
+  elif [ $1 == "no_install" ]; then
+    NO_INSTALL=1;
+    DRV_ARGS="${DRV_ARGS} NO_INSTALL"
+    LL_ARGS="${LL_ARGS} NO_INSTALL"
+    API_ARGS="${API_ARGS} NO_INSTALL"
+  elif [ $1 == "32bit" ]; then
+    LL_ARGS="${LL_ARGS} 32BIT"
+    API_ARGS="${API_ARGS} 32BIT"
+    CONF_ARGS="${CONF_ARGS} 32BIT=1"
+  elif [ $1 == "no_hwint" ]; then
+    DRV_ARGS="${DRV_ARGS} NO_HW_INTERRUPT"
+  elif [ $1 == "no_hwint_signal" ]; then
+    DRV_ARGS="${DRV_ARGS} NO_HW_INTERRUPT_SIGNAL"
+  elif [ $1 == "no_hwint_waitqueue" ]; then
+    DRV_ARGS="${DRV_ARGS} NO_HW_INTERRUPT_WAITQUEUE"
+    API_ARGS="${API_ARGS} NO_WAITQUEUE"
+  fi
+  shift
+done
+
+
+if [ ${NO_INSTALL} -eq 0 ]; then
+  # checks for "root" permissions
+  if [ `whoami` != "root" ]; then
+    echo \*********************************************************************
+    echo ERROR: \ Will need \"root\" permissions to load the device drivers and 
+    echo \ \ \ \ \ \ \ \ libraries. Use the \"su\" system call to become \"root\"
+    echo \*********************************************************************
+    exit 1
+  fi
+fi
+
+# check for architecture support
+ARCH=`uname -m`
+if [[ ${ARCH} == i*86 ]]; then
+  CONF_ARGS="${CONF_ARGS} ARCH=x86"
+elif [ ${ARCH} == "x86_64" ]; then
+  CONF_ARGS="${CONF_ARGS} ARCH=${ARCH}"
+elif [ ${ARCH} == "ppc" ]; then
+  if [[ ${ISA} == 1 || ${PCMCIA} == 1 || ${USB} == 1 ]]; then
+    echo \*********************************************************************
+    echo ERROR: \ This distribution only supports PCI devices with PowerPC
+    echo \*********************************************************************
+    exit 1
+  fi
+  CONF_ARGS="${CONF_ARGS} ARCH=${ARCH}"
+elif [ ${ARCH} == "ppc64" ]; then
+  if [[ ${ISA} == 1 || ${PCMCIA} == 1  || ${USB} == 1 ]]; then
+    echo \*********************************************************************
+    echo ERROR: \ This distribution only supports PCI devices with PowerPC
+    echo \*********************************************************************
+    exit 1
+  fi
+  CONF_ARGS="${CONF_ARGS} ARCH=${ARCH}"
+else
+  echo \*********************************************************************
+  echo ERROR: \ Detected an unsupported architecture:  ${ARCH}
+  echo \ \ \ \ \ \ \ \ This distribution only supports: x86, x86_64, ppc or ppc64
+  echo \*********************************************************************
+  exit 1
+fi
+
+# check for Condor Engineering directory
+if [[ `pwd` != *Condor_Engineering* ]]; then
+  echo \*********************************************************************
+  echo ERROR: \ Condor Engineering directory not found. Check installation.
+  echo \*********************************************************************
+  exit 1
+fi
+
+CONDOR_PATH=`pwd | awk -F Condor_Engineering '{print $1}'`Condor_Engineering
+# checks for the "Install" directory
+if [ ! -d ${CONDOR_PATH}/Install ]; then
+  echo \*********************************************************************
+  echo ERROR: \ Install directory not found. Check installation.
+  echo \*********************************************************************
+  exit 1
+fi
+
+# checks for the "Lowlevel" directory
+if [ ! -d ${CONDOR_PATH}/Lowlevel ]; then
+  echo \*********************************************************************
+  echo ERROR: \  Lowlevel directory not found.  Check installation.
+  echo \*********************************************************************
+  exit 1
+fi
+
+# check the file versions of the LSP's source
+${CONDOR_PATH}/Install/source_check LSP
+if [ $? == 1 ]; then
+  exit 1
+fi
+
+KERNEL=`uname -r` 
+# determine the Linux kernel version
+A=`echo ${KERNEL} | awk -F . '{print $1}'` # get kernel version
+B=`echo ${KERNEL} | awk -F . '{print $2}'` # get major revision
+C=`echo ${KERNEL} | awk -F . '{print $3}'| awk -F . '{print $1}'` # get minor revision
+if [[ ${C:1:1} == [0-9] ]]; then
+  C=${C:0:1}${C:1:1}
+else
+  C=${C:0:1}
+fi
+echo $C
+D=`expr $A \* 65536`
+E=`expr $B \* 256`
+KERNEL_VER=`expr $D + $E + $C`
+  
+if [ ${BUILD_DRV} == 1 ]; then
+  # checks for the "Drivers" directory
+  if [ ! -d ${CONDOR_PATH}/Drivers ]; then
+    echo \*********************************************************************
+    echo ERROR: \ Drivers directory not found. Check installation.
+    echo \*********************************************************************
+    exit 1
+  fi
+ 
+  # checks for a supported kernel
+  case ${A} in
+  2) if [ ${B} == 4 ]; then
+       if [ ${C} -gt ${KERN_MINOR_24} ]; then
+        ERR="2.4.0 to 2.4.${KERN_MINOR_24}"
+       fi
+     elif [ ${B} == 6 ]; then
+       if [ ${C} -gt ${KERN_MINOR_26} ]; then
+        ERR="2.6.0 to 2.6.${KERN_MINOR_26}"
+       fi
+     else
+       ERR="2.4.x and 2.6.x"
+     fi
+  ;;
+  3) if [ ${B} == 0 ]; then
+     if [ ${C} -gt ${KERN_MINOR_30} ]; then
+        ERR="3.${B}.0 to 3.${B}.${KERN_MINOR_30}"
+       fi
+     elif [ ${B} == 1 ]; then
+       if [ ${C} -gt ${KERN_MINOR_31} ]; then
+        ERR="3.${B}.${KERN_MINOR_31}"
+       fi
+     elif [ ${B} == 2 ]; then
+       if [ ${C} -gt ${KERN_MINOR_32} ]; then
+        ERR="3.${B}.${KERN_MINOR_32}"
+       fi
+     elif [ ${B} == 3 ]; then
+       if [ ${C} -gt ${KERN_MINOR_33} ]; then
+        ERR="3.${B}.${KERN_MINOR_33}"
+       fi
+     elif [ ${B} == 4 ]; then
+       if [ ${C} -gt ${KERN_MINOR_34} ]; then
+        ERR="3.${B}.${KERN_MINOR_34}"
+       fi
+     elif [ ${B} == 5 ]; then
+       if [ ${C} -gt ${KERN_MINOR_35} ]; then
+        ERR="3.${B}.${KERN_MINOR_35}"
+       fi
+     elif [ ${B} == 6 ]; then
+       if [ ${C} -gt ${KERN_MINOR_36} ]; then
+        ERR="3.${B}.${KERN_MINOR_36}"
+       fi
+     elif [ ${B} == 7 ]; then
+       if [ ${C} -gt ${KERN_MINOR_37} ]; then
+        ERR="3.${B}.${KERN_MINOR_37}"
+       fi
+     elif [ ${B} == 8 ]; then
+       if [ ${C} -gt ${KERN_MINOR_38} ]; then
+        ERR="3.${B}.${KERN_MINOR_38}"
+       fi
+     elif [ ${B} == 9 ]; then
+       if [ ${C} -gt ${KERN_MINOR_39} ]; then
+        ERR="3.${B}.${KERN_MINOR_39}"
+       fi
+     elif [ ${B} == 10 ]; then
+       if [ ${C} -gt ${KERN_MINOR_310} ]; then
+        ERR="3.${B}.${KERN_MINOR_310}"
+       fi
+     elif [ ${B} == 11 ]; then
+       if [ ${C} -gt ${KERN_MINOR_311} ]; then
+        ERR="3.${B}.${KERN_MINOR_311}"
+       fi
+     elif [ ${B} == 12 ]; then
+       if [ ${C} -gt ${KERN_MINOR_312} ]; then
+        ERR="3.${B}.${KERN_MINOR_312}"
+       fi
+     elif [ ${B} == 13 ]; then
+       if [ ${C} -gt ${KERN_MINOR_313} ]; then
+        ERR="3.${B}.${KERN_MINOR_313}"
+       fi
+     elif [ ${B} == 14 ]; then
+       if [ ${C} -gt ${KERN_MINOR_314} ]; then
+        ERR="3.${B}.${KERN_MINOR_314}"
+       fi
+     elif [ ${B} == 15 ]; then
+       if [ ${C} -gt ${KERN_MINOR_315} ]; then
+        ERR="3.${B}.${KERN_MINOR_315}"
+       fi
+     elif [ ${B} == 16 ]; then
+       if [ ${C} -gt ${KERN_MINOR_316} ]; then
+        ERR="3.${B}.${KERN_MINOR_316}"
+       fi
+     elif [ ${B} == 17 ]; then
+       if [ ${C} -gt ${KERN_MINOR_317} ]; then
+        ERR="3.${B}.${KERN_MINOR_317}"
+       fi
+     elif [ ${B} == 18 ]; then
+       if [ ${C} -gt ${KERN_MINOR_318} ]; then
+        ERR="3.${B}.${KERN_MINOR_318}"
+       fi
+     elif [ ${B} == 19 ]; then
+       if [ ${C} -gt ${KERN_MINOR_319} ]; then
+        ERR="3.${B}.${KERN_MINOR_319}"
+       fi
+     else
+       ERR="3.0.x to 3.19.x"     
+     fi
+  ;;
+  4) if [ ${B} == 0 ]; then
+     if [ ${C} -gt ${KERN_MINOR_40} ]; then
+        ERR="4.${B}.0 to 4.${B}.${KERN_MINOR_40}"
+       fi
+     elif [ ${B} == 1 ]; then
+       if [ ${C} -gt ${KERN_MINOR_41} ]; then
+        ERR="4.${B}.${KERN_MINOR_41}"
+       fi
+     elif [ ${B} == 2 ]; then
+       if [ ${C} -gt ${KERN_MINOR_42} ]; then
+        ERR="4.${B}.${KERN_MINOR_42}"
+       fi
+     elif [ ${B} == 3 ]; then
+       if [ ${C} -gt ${KERN_MINOR_43} ]; then
+        ERR="4.${B}.${KERN_MINOR_43}"
+       fi
+     elif [ ${B} == 4 ]; then
+       if [ ${C} -gt ${KERN_MINOR_44} ]; then
+        ERR="4.${B}.${KERN_MINOR_44}"
+       fi
+     elif [ ${B} == 5 ]; then
+       if [ ${C} -gt ${KERN_MINOR_45} ]; then
+        ERR="4.${B}.${KERN_MINOR_45}"
+       fi
+     elif [ ${B} == 6 ]; then
+       if [ ${C} -gt ${KERN_MINOR_46} ]; then
+        ERR="4.${B}.${KERN_MINOR_46}"
+       fi
+     elif [ ${B} == 7 ]; then
+       if [ ${C} -gt ${KERN_MINOR_47} ]; then
+        ERR="4.${B}.${KERN_MINOR_47}"
+       fi
+     elif [ ${B} == 8 ]; then
+       if [ ${C} -gt ${KERN_MINOR_48} ]; then
+        ERR="4.${B}.${KERN_MINOR_48}"
+       fi
+     elif [ ${B} == 9 ]; then
+       if [ ${C} -gt ${KERN_MINOR_49} ]; then
+        ERR="4.${B}.${KERN_MINOR_49}"
+       fi
+     elif [ ${B} == 10 ]; then
+       if [ ${C} -gt ${KERN_MINOR_410} ]; then
+        ERR="4.${B}.${KERN_MINOR_410}"
+       fi
+     elif [ ${B} == 11 ]; then
+       if [ ${C} -gt ${KERN_MINOR_411} ]; then
+        ERR="4.${B}.${KERN_MINOR_411}"
+       fi
+     elif [ ${B} == 12 ]; then
+       if [ ${C} -gt ${KERN_MINOR_412} ]; then
+        ERR="4.${B}.${KERN_MINOR_412}"
+       fi
+     elif [ ${B} == 13 ]; then
+       if [ ${C} -gt ${KERN_MINOR_413} ]; then
+        ERR="4.${B}.${KERN_MINOR_413}"
+       fi
+     elif [ ${B} == 14 ]; then
+       if [ ${C} -gt ${KERN_MINOR_414} ]; then
+        ERR="4.${B}.${KERN_MINOR_414}"
+       fi
+     elif [ ${B} == 15 ]; then
+       if [ ${C} -gt ${KERN_MINOR_415} ]; then
+        ERR="4.${B}.${KERN_MINOR_415}"
+       fi
+     elif [ ${B} == 16 ]; then
+       if [ ${C} -gt ${KERN_MINOR_416} ]; then
+        ERR="4.${B}.${KERN_MINOR_416}"
+       fi
+     elif [ ${B} == 17 ]; then
+       if [ ${C} -gt ${KERN_MINOR_417} ]; then
+        ERR="4.${B}.${KERN_MINOR_417}"
+       fi
+     elif [ ${B} == 18 ]; then
+       if [ ${C} -gt ${KERN_MINOR_418} ]; then
+        ERR="4.${B}.${KERN_MINOR_418}"
+       fi
+     elif [ ${B} == 19 ]; then
+       if [ ${C} -gt ${KERN_MINOR_419} ]; then
+        ERR="4.${B}.${KERN_MINOR_419}"
+       fi
+     elif [ ${B} == 20 ]; then
+       if [ ${C} -gt ${KERN_MINOR_420} ]; then
+        ERR="4.${B}.${KERN_MINOR_420}"
+       fi
+     else
+       ERR="4.0.x to ${KERN_4_MAX}"     
+     fi
+  ;;
+  5) if [ ${B} == 0 ]; then
+     if [ ${C} -gt ${KERN_MINOR_50} ]; then
+        ERR="5.${B}.0 to 5.${B}.${KERN_MINOR_50}"
+       fi
+     elif [ ${B} == 1 ]; then
+       if [ ${C} -gt ${KERN_MINOR_51} ]; then
+        ERR="5.${B}.${KERN_MINOR_51}"
+       fi
+     elif [ ${B} == 2 ]; then
+       if [ ${C} -gt ${KERN_MINOR_52} ]; then
+        ERR="5.${B}.${KERN_MINOR_52}"
+       fi
+     elif [ ${B} == 3 ]; then
+       if [ ${C} -gt ${KERN_MINOR_53} ]; then
+        ERR="5.${B}.${KERN_MINOR_53}"
+       fi
+     else
+       ERR="5.0.x to ${KERN_5_MAX}"     
+     fi
+  ;;
+  *) ERR="2.4.0 to ${KERN_24_MAX}, 2.6.0 to ${KERN_26_MAX}, 3.0.0 to ${KERN_3_MAX}, 4.0.0 to ${KERN_4_MAX}, 5.0.0 to ${KERN_5_MAX}"
+  ;;
+  esac
+  
+  if [ ${KERNEL_VER} -gt 196608 ]; then
+    if [ ${PCMCIA} == 1 ]; then 
+      echo PCMCIA devices are not supported with Linux kernels after 2.6.x
+      PCMCIA=0
+    fi 
+    if [ ${ISA} == 1 ]; then
+      echo ISA devices are not supported with Linux kernels after 2.6.x  
+      ISA=0 
+    fi
+    if [ ${USB} == 1 ]; then
+      # No need to check for kernel version so clear ERR string     
+      ERR=''
+    fi
+  fi
+  
+  if [ ! -z "${ERR}" ]; then
+    echo \*********************************************************************
+    echo ERROR: \ Linux kernel version ${KERNEL} is not supported
+    echo \ \ \ \ \ \ \ \ Support for kernel versions: ${ERR}
+    echo \*********************************************************************
+    exit 1
+  fi
+  echo Building with the Linux kernel ${KERNEL}
+
+  # checks for the Linux kernel source include directory
+  if [ ! -d "/lib/modules/${KERNEL}/build/include" ]; then
+    echo \*********************************************************************
+    echo ERROR: \ Linux kernel source include directory not found.  Drivers will
+    echo \ \ \ \ \ \ \ \ not build without the kernel source header files.  Need to
+    echo \ \ \ \ \ \ \ \ install the kernel source or verify the path for the kernel
+    echo \ \ \ \ \ \ \ \ source.
+    echo \*********************************************************************
+    exit 1
+  fi
+  # build the universal drivers
+  cd ${CONDOR_PATH}/Drivers
+  # PCI
+    # 0x13c6 - Condor Engineering devices 
+    # 0x10B51024 - Acromag APC8620 carrier
+    # 0x124B0040 - SBS PCI-40A carrier
+    if [[ `grep -ic "13c6" /proc/bus/pci/devices` > 0 || \
+        `grep -ic "10b51024" /proc/bus/pci/devices` > 0 || \
+        `grep -ic "124b0040" /proc/bus/pci/devices`  > 0 ]]; then
+    # checks for a 2.4 kernel and SYS filesystem
+    if [[ ${KERNEL_VER} -lt 132608 || `grep -ic "sysfs" /proc/filesystems` == 0 ]]; then
+      if [[ ${DRV_ARGS} != *NO_SYSFS_SUPPORT* ]]; then
+        DRV_ARGS="${DRV_ARGS} NO_SYSFS_SUPPORT"
+      fi
+      CEIDEV=1
+    fi
+    ./install_drv pci ${DRV_ARGS}
+    PCI=1
+  fi
+  # PCMCIA
+  if [ ${PCMCIA} == 1 ]; then
+    ./install_drv pcmcia ${DRV_ARGS}
+    # checks if the kernel version is earlier than 2.6.11
+    if [ ${KERNEL_VER} -lt 132619 ]; then
+      CEIDEV=1
+    fi
+  fi
+  # ISA
+  if [ ${ISA} == 1 ]; then
+    if [[ ${LL_ARGS} != *NO_SYSFS_SUPPORT* ]]; then
+      LL_ARGS="${LL_ARGS} NO_SYSFS_SUPPORT"
+    fi
+    ./install_drv isa ${ISA_BASEMEM} ${ISA_IRQ} ${DRV_ARGS}
+  fi
+fi
+# build the ceidev.conf file if needed
+if [ ${CEIDEV} == 1 ]; then
+  echo Building the ceidev.conf file \(${CEIDEV}${ISA}${PCMCIA}${USB}\)
+  cd ${CONDOR_PATH}/Install
+  CONF_ARGS="${CONF_ARGS} ARCH=${ARCH}"
+  if [ ${KERNEL_VER} -gt 196608 ]; then
+    CONF_ARGS="${CONF_ARGS} KERNEL=30"
+  elif [ ${KERNEL_VER} -gt 132608 ]; then
+    CONF_ARGS="${CONF_ARGS} KERNEL=26"
+  fi
+  make -f makeconf ${CONF_ARGS}
+  if [ ${USB} == 1 ]; then
+    BUILD_CONF_ARGS=${BUILD_CONF_ARGS}" usb"
+  fi
+  if [ ${ISA} == 1 ]; then
+    BUILD_CONF_ARGS=${BUILD_CONF_ARGS}" isa"
+  fi
+  if [ ${PCMCIA} == 1 ]; then
+    BUILD_CONF_ARGS=${BUILD_CONF_ARGS}" pcmcia"
+    echo \***************************************************************
+    echo NOTICE: \ Will need to run \"./build_conf ${BUILD_CONF_ARGS}\" after the 
+    echo \ \ \ \ \ \ \ \  installation is complete.  Make sure to have the
+    echo \ \ \ \ \ \ \ \  PCCARD-\(D\)1553 inserted into the PCMCIA controller.
+    echo \***************************************************************
+  else
+    if [ ${NO_INSTALL} == 1 ]; then
+      echo \***************************************************************
+      echo NOTICE: \ Will need to run \"./build_conf ${BUILD_CONF_ARGS}\" on the system after
+      echo \ \ \ \ \ \ \ \  the device driver is loaded to generate the \"ceidev.conf\"
+      echo \***************************************************************
+    else 
+      ./build_conf ${BUILD_CONF_ARGS}
+    fi
+  fi
+fi
+
+if [ ${BUILD_LL} == 1 ]; then
+  if [[ ${CEIDEV} == 1 && ${LL_ARGS} != *NO_SYSFS_SUPPORT* ]]; then
+    LL_ARGS="${LL_ARGS} NO_SYSFS_SUPPORT"
+  fi
+  echo
+  echo Building the lowlevel library
+  cd ${CONDOR_PATH}/Lowlevel
+  ./install_ll ${LL_ARGS}
+fi
+
+if [ ${BUILD_API} == 0 ]; then
+  exit
+fi
+
+# build MIL-STD-1553 API distributions
+MIL_PATH=${CONDOR_PATH}/MIL-STD-1553
+if [ -d ${MIL_PATH} ]; then
+  # build the BusTools/1553 API distribution
+  if [ -d ${MIL_PATH}/bt1553 ]; then
+    echo
+    echo Detected the Bustools/1553 API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check BT1553
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${MIL_PATH}/bt1553
+    # include USB support if enabled
+    if [ ${USB} == 1 ]; then
+      if [ ${USB_SERVER} == 1 ]; then
+        API_ARGS="${API_ARGS} USB_SERVER_SUPPORT"
+      else
+        API_ARGS="${API_ARGS} USB_SUPPORT"
+      fi
+    fi
+    if [ ${ISA} == 1 ]; then
+      API_ARGS="${API_ARGS} NO_WAITQUEUE"
+    fi
+    ./install_1553 ${API_ARGS}
+  fi
+  # build the BusTools/1553 multi-protocol API distribution
+  if [ -d ${MIL_PATH}/bt1553mp ]; then
+    echo
+    echo Detected the Bustools/1553 Multi-Protocol API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check BT1553MP
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${MIL_PATH}/bt1553mp
+    ./install_1553mp ${API_ARGS}
+  fi
+  # build the CORE-1553 API distribution
+  if [ -d ${MIL_PATH}/core ]; then
+    echo
+    echo Detected the CORE-1553 API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check CORE
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${MIL_PATH}/core
+    ./install_core ${API_ARGS}
+  fi
+fi
+
+# build the ARINC API distributions
+ARINC_PATH=${CONDOR_PATH}/ARINC
+if [ -d ${ARINC_PATH} ]; then
+  # build the CEI-x20 API distribution
+  if [ -d ${ARINC_PATH}/ceix20 ]; then
+    echo
+    echo Detected the CEI-x20 API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check CEIX20
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${ARINC_PATH}/ceix20	
+    if [ ${ISA} == 1 ]; then
+      ./install_x20 STANDARD ${API_ARGS}
+    fi
+    if [ ${PCI} == 1 ]; then
+      ./install_x20 ENHANCED ${API_ARGS}
+      # if device is a 820TX	
+      if [ `grep -ic "13c60821" /proc/bus/pci/devices` -gt 0 ]; then
+        ./install_x20 820TX ${API_ARGS}
+      fi
+    fi
+  fi
+  # build the CEI-x30 API distribution
+  if [ -d ${ARINC_PATH}/ceix30 ]; then
+    echo
+    echo Detected Condor Engineering CEI-x30 API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check CEIX30
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${ARINC_PATH}/ceix30	
+    ./install_x30 ${API_ARGS}
+  fi
+  # build the SAR API distribution
+  if [ -d ${ARINC_PATH}/sar ]; then
+    echo
+    echo Detected Condor Engineering SAR API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check SAR
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${ARINC_PATH}/sar
+    ./install_sar ${API_ARGS}
+  fi
+  # build the IP-AVIONICS API distribution
+  if [ -d ${ARINC_PATH}/ipav ]; then
+    echo
+    echo Detected the IP-Avionics API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check IPAV
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${ARINC_PATH}/ipav	
+    ./install_ipav ${API_ARGS}
+  fi
+  # build the P-708 API distribution
+  if [ -d ${ARINC_PATH}/p708 ]; then
+    echo
+    echo Detected Condor Engineering P-708 API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check P708
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${ARINC_PATH}/p708
+    ./install_p708 ${API_ARGS}
+  fi
+fi
+
+# build the IO API distributions
+IO_PATH=${CONDOR_PATH}/IO
+if [ -d ${IO_PATH} ]; then
+  # build the P-SER API distribution
+  if [ -d ${IO_PATH}/pser ]; then
+    echo
+    echo Detected the P-SER API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check PSER
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${IO_PATH}/pser
+    ./install_pser ${API_ARGS}
+  fi
+  # build the P-DIS API distribution
+  if [ -d ${IO_PATH}/pdis ]; then
+    echo
+    echo Detected the P-DIS API
+    # check for compatible API version
+    ${CONDOR_PATH}/Install/source_check PDIS
+    if [ $? == 1 ]; then
+      exit 1
+    fi
+    cd ${IO_PATH}/pdis
+    ./install_pdis ${API_ARGS}
+  fi
+fi
+
+exit 0

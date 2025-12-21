@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# ai64    Startup script for the ai64 device
+#
+# chkconfig: 2345 50 50
+# description: ai64 Driver
+
+
+. /etc/rc.d/init.d/functions
+. /etc/drast_lkm/ai64.conf
+
+start() {
+	modprobe ai64
+	MAJOR=`fgrep ai64 /proc/devices | cut -f 1 -d ' '` 
+	if  [ "$MAJOR" = "" ]
+	then
+		return 1
+	fi 
+	rm -rf /dev/ai64*
+	count=`grep "^boards: [0-9]*$" /proc/ai64 | cut -d " " -f 2`
+	i=0
+	while [ $i -lt $count ]
+	do
+		mknod /dev/ai64$i c $MAJOR $i
+		chmod 660 /dev/ai64$i
+		if [ "$DEVGROUP" != "" ]
+		then
+			chgrp $DEVGROUP /dev/ai64$i
+		fi
+		i=`expr $i + 1`
+	done
+	return 0
+}
+
+stop() {
+	rmmod ai64 && rm -rf /dev/ai64* || echo "ai64 not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+}
+
+show_status() {
+	fgrep ai64 /proc/devices && cat /proc/ai64 || echo "no ai64 loaded."
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	status)
+		show_status
+		;;
+esac

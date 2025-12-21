@@ -1,0 +1,22 @@
+--- Lowlevel/ll.h	2024-10-16 12:49:36.519110890 +0000
++++ Lowlevel/ll.h	2024-10-16 12:49:57.086996083 +0000
+@@ -29,6 +29,11 @@
+ #include "lowlevel.h"
+ #include "ll_posix.h"
+ 
++#ifndef __CONFIG_C_
++#define EXTERN_LL extern
++#else
++#define EXTERN_LL
++#endif
+ 
+ #define LSP_MAJOR_VERSION  1
+ #define LSP_MINOR_VERSION  36
+@@ -88,6 +93,6 @@
+ 
+ 
+ // GLOBALS
+-DEVMAP_T cei_pMap[MAX_DEVICES];
++EXTERN_LL DEVMAP_T cei_pMap[MAX_DEVICES];
+ 
+ #endif  // _LL_H_

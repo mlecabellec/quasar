@@ -1,0 +1,11 @@
+--- globals.h	2020-01-03 03:22:33.000000000 +0000
++++ globals.h	2024-10-16 12:57:41.396404400 +0000
+@@ -225,7 +225,7 @@
+ BT_U32BIT *usb_host_hwreg[MAX_BTA];
+ IQ_MBLOCK_V6 *usb_int_queue[MAX_BTA];
+ #endif //INCLUDE_USB_SUPPORT
+-BT_U32BIT * ptrMbuf[MAX_BTA];
++EXTERN BT_U32BIT * ptrMbuf[MAX_BTA];
+ 
+ #define NAPI_BM_BUFFERS  8192 /* Length of API BM message queue, a power of 2 */
+ #if NAPI_BM_BUFFERS & NAPI_BM_BUFFERS-1

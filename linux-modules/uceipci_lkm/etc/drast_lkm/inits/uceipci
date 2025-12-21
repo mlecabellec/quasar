@@ -1,0 +1,75 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          uceipci
+# Required-Start:    
+# Required-Stop:     
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Startup script for the uceipci
+# Description:       Startup script for the uceipci (aka Condor or GE) 1553 board
+### END INIT INFO
+
+#
+# uceipci      Startup script for the uceipci (aka Condor or GE) 1553 board
+#
+# chkconfig: 2345 70 30
+# description:  is a linux kernel module to handle 1553 boards from General Electric
+
+DEVICE=uceipci
+
+if [ -f /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
+. /etc/drast_lkm/$DEVICE.conf
+
+start() {
+        if [ "${DEVPERM}" = "" ] 
+	then
+		DEVPERM=0660
+	fi
+	modprobe ${DEVICE} ${MODARGS}
+	
+	MAJOR=`fgrep ${DEVICE} /proc/devices | cut -f 1 -d ' '` 
+	if  [ "${MAJOR}" = "" ]
+	then
+		return 1
+	fi 
+	rm -rf /dev/${DEVICE}
+	#standard GE script creates 8 devices files
+	for i in 0 1 2 3 4 5 6 7
+	do
+		mknod -m ${DEVPERM}  /dev/${DEVICE}_${i} c ${MAJOR} 0
+	done
+	
+	if [ ! ${DEVGROUP} = "" ]
+	then
+		chgrp ${DEVGROUP} /dev/${DEVICE}_[0-7]
+	fi
+	return 0
+}
+
+stop() {
+	rmmod ${DEVICE} && rm -rf /dev/${DEVICE}_[0-7] || echo "${DEVICE} not unloaded. Was not loaded or can't unload. Check all using modules are unloaded."
+}
+
+show_status() {
+	fgrep ${DEVICE} /proc/devices && echo "${DEVICE} is loaded" || echo "no ${DEVICE} loaded"
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

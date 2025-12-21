@@ -1,0 +1,76 @@
+#!/bin/bash
+# v1.05
+
+#=============================================================================*
+#
+# Configuration arguments:
+#  Required: 
+#   none
+#  Optional:
+#   DEBUG= - set the debug level (0-3) to increase the verbose of debugging
+#             output to the kernel message log
+#
+#=============================================================================*  
+
+
+# path to binaries
+PATH_INSMOD=/sbin/insmod
+
+MODULE=uceipci
+# sets the file permissions for the device nodes in /dev
+DEV_PERM=666
+
+if test `whoami | grep -ci "root"` -ne 1
+  then
+    echo Need to be root to load drivers
+    exit 1
+fi
+
+DEBUG_LEVEL=0
+until [ -z "$1" ]; do
+  if [[ $1 == DEBUG=* ]]; then 
+    DEBUG_LEVEL=${1:6}
+  fi
+  shift
+done
+DRV_PARMS=uceipci_debug=${DEBUG_LEVEL}
+
+# verify that a Condor Engineering board is installed
+if test `cat /proc/bus/pci/devices | grep -ci "13c6"` -eq 0
+  then
+    echo Failed to detect an installed Condor Engineering PCI device.  The PCI driver will not be loaded.
+    exit 1    
+fi
+
+# load the driver if not loaded
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    ${PATH_INSMOD} ${MODULE}.ko ${DRV_PARMS}
+fi
+
+# if using modprobe, run depmod to update modules.pcimap
+# /sbin/depmod -A ${MODULE}
+# /sbin/modprobe ${MODULE} ${DRV_PARMS}
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    echo Failed to load module: ${MODULE}.  Check the kernel message log \(dmesg\) for any errors.
+    exit 1
+fi
+echo Successfully loaded module: ${MODULE}
+
+# create device node(s) if needed
+if test `ls /dev | grep -ci "${MODULE}_"` -eq 0
+  then
+    MAJOR=`cat /proc/devices | awk "\\$2==\"${MODULE}\" {print \\$1}"`
+    CNT=`lspci -d 13C6:* | grep -c "Condor Engineering"`
+    INDEX=0
+    while [ ${INDEX} -lt ${CNT} ]; do
+      echo Creating node: ${MODULE}_${INDEX}	    
+      mknod -m ${DEV_PERM} /dev/${MODULE}_${INDEX} c ${MAJOR} ${INDEX}
+      chgrp root /dev/${MODULE}_${INDEX}
+      let INDEX=${INDEX}+1
+    done
+fi
+
+exit 0

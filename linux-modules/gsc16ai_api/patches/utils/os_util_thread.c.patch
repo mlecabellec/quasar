@@ -1,0 +1,11 @@
+--- utils/os_util_thread.c	2024-08-07 21:09:36.000000000 +0000
++++ utils/os_util_thread.c	2024-10-16 08:21:46.412811091 +0000
+@@ -142,7 +142,7 @@
+ 		}
+ 
+ 		data->free	= 1;
+-		strncpy(thread->name, name, sizeof(thread->name));
++		strncpy(thread->name, name, sizeof(thread->name) - 1);
+ 		thread->name[sizeof(thread->name) - 1]	= 0;
+ 		break;
+ 	}

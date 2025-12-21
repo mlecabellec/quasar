@@ -1,0 +1,23 @@
+--- init.c	2020-01-03 04:22:33.000000000 +0100
++++ init.c	2025-01-31 17:54:07.987088508 +0100
+@@ -1711,6 +1711,7 @@
+       BT_RT_Init[cardnum]                 = v5_RT_Init;
+       BT_RT_AbufRead[cardnum]             = v5_RT_AbufRead;
+       BT_RT_AbufWrite[cardnum]            = v5_RT_AbufWrite;
++      BT_RT_QuickEnable[cardnum]          = v5_RT_QuickEnable;
+       BT_RT_CbufbroadWrite[cardnum]       = v5_RT_CbufbroadWrite;
+       BT_RT_CbufWrite[cardnum]            = v5_RT_CbufWrite;
+       BT_RT_MessageBufferNext[cardnum]	  = v5_RT_MessageBufferNext;
+@@ -1748,10 +1749,11 @@
+       BT_RT_Init[cardnum]                 = v6_RT_Init;
+       BT_RT_AbufRead[cardnum]             = v6_RT_AbufRead;
+       BT_RT_AbufWrite[cardnum]            = v6_RT_AbufWrite;
++      BT_RT_QuickEnable[cardnum]          = v6_RT_QuickEnable;
+       BT_RT_CbufbroadWrite[cardnum]       = v6_RT_CbufbroadWrite;
+       BT_RT_CbufWrite[cardnum]            = v6_RT_CbufWrite;
+       BT_RT_MessageBufferNext[cardnum]	  = v6_RT_MessageBufferNext;
+-	  BT_RT_MessageRead[cardnum]          = v6_RT_MessageRead;
++	   BT_RT_MessageRead[cardnum]          = v6_RT_MessageRead;
+       BT_RT_MessageWriteDef[cardnum]      = v6_RT_MessageWriteDef;
+       //BM Functions
+       BT_BM_FilterWrite[cardnum]          = v6_BM_FilterWrite;

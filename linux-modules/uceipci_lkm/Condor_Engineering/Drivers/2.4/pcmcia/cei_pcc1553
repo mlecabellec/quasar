@@ -1,0 +1,52 @@
+#!/bin/bash
+# v1.01
+
+# Condor Engineering - PCCARD-1553
+
+DEVICE=$2
+BOARD="PCCARD-1553"
+
+
+case "$1" in
+'start')
+    if [ -d /var/lib/pcmcia ] ; then
+      STAB="/var/lib/pcmcia/stab"
+    else
+      STAB="/var/run/stab"
+    fi
+    COUNT=`cat ${STAB} | grep -c "${BOARD}"`
+    MAJOR=`cat ${STAB} | awk "\\$5==\"${DEVICE}\" {print \\$6}"`
+    MINOR=`cat ${STAB} | awk "\\$5==\"${DEVICE}\" {print \\$7}"`
+    if test ${COUNT} -gt "0"
+     then 
+      echo Adding node for ${BOARD} ${MAJOR}, ${MINOR}
+      rm -f /dev/${DEVICE}    
+      mknod /dev/${DEVICE} c ${MAJOR} ${MINOR}
+      chgrp root /dev/${DEVICE}
+      chmod 666 /dev/${DEVICE}     
+    else
+      echo ${BOARD} client driver not loaded
+    fi
+    ;;
+
+'check')
+    ;;
+
+'stop')
+    echo Removing node for ${DEVICE}
+    rm -f /dev/${DEVICE}
+    ;;
+
+'cksum')
+    ;;
+    
+'suspend'|'resume')
+    ;;
+
+*)
+    usage
+    ;;
+
+esac
+
+exit 0

@@ -1,0 +1,403 @@
+------------------------------------------------------------------------------
+
+                              Abaco Systems, Inc.
+                                 Goleta, CA.
+                                copyright 2019
+
+------------------------------------------------------------------------------
+
+This document covers Abaco Systems avionics Linux support that is
+current with the Linux support package (v1.36).  Unfortunately, because of the
+almost infinite variety of Linux distributions, Abaco Systems can
+only provide limited support for system configuration or troubleshooting 
+issues with Linux kernels or Linux distributions.  Our released Linux support 
+has been tested with kernels/distributions as listed below.  It is therefore
+recommended to use the associated Linux kernel version as tested.
+
+This document is organized into the following sections:
+
+1. System compliance
+
+2. Tested kernel versions
+
+3. Tested API distributions
+
+4. Linux distribution support
+
+5. Linux kernel support
+
+6. Revisions
+
+7. Contact Information
+  
+
+===============================================================================
+1.  System compliance
+===============================================================================
+
+1. The kernel 3.0 PCI device driver supports kernels:
+    5.0.0 to 5.0.21, 5.1.1 to 5.1.21, 5.2.0 to 5.2.21, and 5.3.0 to 5.3.11
+    4.0.0 to 4.0.9, 4.1.0 to 4.1.52, 4.2.0 to 4.2.8, 4.3.0 to 4.3.6, 4.4.0 to
+    4.4.202, 4.5.0 to 4.5.7, 4.6.0 to 4.6.7, 4.7.0 to 4.7.10, 4.8.0 to 4.8.17,
+    4.9.0 to 4.9.140, 4.10.0 to 4.10.17, 4.11.0 to 4.11.12, 4.12.0 to 4.12.14,
+    4.13.0 to 4.13.16, 4.14.0 to 4.14.154, 4.15.0 to 4.15.18, 4.16.0 to
+    4.16.18, 4.17.0 to 4.17.19, 4.18.0 to 4.18.20, 4.19.0 to 4.19.84, and
+    4.20.0 to 4.20.17
+    3.0.0 to 3.0.101, 3.1.0 to 3.1.10, 3.2.0 to 3.2.102, 3.3.0 to 3.3.8, 3.4.0
+    to 3.4.113, 3.5.0 to 3.5.7, 3.6.0 to 3.6.11, 3.7.0 to 3.7.10, 3.8.0 to
+    3.8.13, 3.9.0 to 3.9.11, 3.10.0 to 3.10.108, 3.11.0 to 3.11.10, 3.12.0 to
+    3.12.74, 3.13.0 to 3.13.11, 3.14.0 to 3.14.79, 3.15.0 to 3.15.10, 3.16.0 to
+    3.16.77, 3.17.0 to 3.17.8, 3.18.0 to 3.18.140, and 3.19.0 to 3.19.8
+2. The kernel 2.6 PCI/ISA device drivers support kernels 2.6.0 to 2.6.39
+3. The kernel 2.6 PCMCIA device driver support kernels 2.6.0 to 2.6.14. The
+    driver is dependent on card services and PCMICA 16-bit support, no
+    support for PCMCIAutils.
+4. The kernel 2.4 device drivers will support kernels 2.4.0 to 2.4.37
+5. Support for PCI/PCIe on x86, x86_64, ppc and ppc64.
+6. Support for ISA/PCMCIA is only on x86.
+7. Support for USB on x86 and x86_64. The low-level USB libraries (no source
+   provided) are dependent on the third-party library "libUSB" (staring with 
+   v1.0.19).
+8. The APIs and low-level libraries are not reentrant.
+
+
+===============================================================================
+2.  Tested Linux kernel versions
+===============================================================================
+
+The following kernel versions were compile using the offical released kernel
+source code and tested on the identified Linux distribution.  The tests
+include executing a 32-bit applications on a 64-bit system.
+  kernel               distribution
+  ------               ------------
+   3.2.102  (x86_64)  ->  Fedora 16
+   3.16.77  (x86_64)  ->  Fedora 20
+   3.18.140 (x86_64)  ->  Fedora 21
+   4.1.202  (x86_64)  ->  Fedora 21
+   4.4.164  (x86_64)  ->  Fedora 21
+   4.9.202  (x86_64)  ->  Fedora 24
+   4.14.154 (x86_64)  ->  Fedora 27
+   4.15.0   (x86_64)  ->  Fedora 27
+   4.15.18  (x86_64)  ->  Fedora 27
+   4.16.0   (x86_64)  ->  Fedora 27
+   4.16.18  (x86_64)  ->  Fedora 27
+   4.17.0   (x86_64)  ->  Fedora 27
+   4.17.19  (x86_64)  ->  Fedora 27
+   4.18.0   (x86_64)  ->  Fedora 27
+   4.18.20  (x86_64)  ->  Fedora 27
+   4.19.0   (x86_64)  ->  Fedora 27
+   4.19.84  (x86_64)  ->  Fedora 27
+   4.20.0   (x86_64)  ->  Fedora 27
+   4.20.17  (x86_64)  ->  Fedora 27
+   5.0.0    (x86_64)  ->  Fedora 30
+   5.0.21   (x86_64)  ->  Fedora 30
+   5.1.0    (x86_64)  ->  Fedora 30
+   5.1.21   (x86_64)  ->  Fedora 30
+   5.2.0    (x86_64)  ->  Fedora 30
+   5.2.21   (x86_64)  ->  Fedora 30
+   5.3.0    (x86_64)  ->  Fedora 30
+   5.3.11   (x86_64)  ->  Fedora 30
+
+===============================================================================
+3.  Tested Abaco Systems avionics API distributions
+===============================================================================
+
+The following API versions are supported with this version of the LSP.  Earlier
+API Linux distributions may work but there are no guarantees.  Therefore it is
+recommended to use the tested API distribution version.  The "source_check"
+script will test for the minimum API distribution version requirement during
+installation.
+
+  distribution       version
+  ------------       -------
+   BusTools/1553  ->  8.28
+   CEI-x20        ->  4.50
+   CEI-x30        ->  5.10
+   P-708          ->  3.30
+   P-SER          ->  2.30
+   P-DIS          ->  2.10
+   SAR            ->  1.70
+
+
+===============================================================================
+4.  Linux distribution support
+===============================================================================
+
+We utilize one Linux distribution per kernel version to test the Linux support
+package and APIs.  Therefore not all Linux distributions are tested with a
+specified kernel version.  Keep in mind that Linux distributions may modify the
+official released kernel source, which may cause the associated device drivers,
+low-level library and/or the API libraries to fail, not compile or to execute
+properly.  Therefore results may vary when executing the Linux support
+package/API in an untested Linux distribution.  Refer to your specific Linux
+distributor for technical support.
+
+
+===============================================================================
+5.  Linux kernel support
+===============================================================================
+
+Functionality of the Linux support package and API may be affected when used
+with a newer kernel than what was tested.  The user will need to determine the
+changes that occurred with each of the Linux kernel system calls that are
+utilized in the device drivers and low-level library.
+
+
+===============================================================================
+6. Revisions
+===============================================================================
+
+Release Notes - v1.36, 30 December 2019
+---------------------------------------
+* added support for Linux kernels: 3.16.62 to 3.16.77, 3.18.127 to 3.18.140,
+  4.4.165 to 4.4.202, 4.14.84 to 4.14.154, 4.19.5 to 4.19.84, 4.20.0 to
+  4.20.17, 5.0.0 to 5.0.21, 5.1.1 to 5.1.21, 5.2.0 to 5.2.21, and 5.3.0 to
+  5.3.11 for PCI devices.
+* improved performance in the USB low-level libraries.
+* changed the name to Abaco in the USB firmware libraries.
+
+Release Notes - v1.35, 27 November 2018
+---------------------------------------
+* added support for Linux kernels: 3.2.97 to 3.2.102, 3.16.52 to 3.16.61,
+  3.18.91 to 3.18.126, 4.1.49 to 4.1.52, 4.4.109 to 4.4.164, 4.9.74 to
+  4.9.140, 4.14.11 to 4.14.83, 4.15.0 to 4.15.18, 4.16.0 to 4.16.18, 4.17.0 to
+  4.17.19, 4.18.0 to 4.18.20, and 4.19.0 to 4.19.4 for PCI devices.
+
+Release Notes - v1.34, 04 January 2018
+--------------------------------------
+* added support for Linux kernels: 3.2.84 to 3.2.96, 3.4.113,
+  3.10.105 to 3.10.108, 3.12.53 to 3.12.74, 3.16.39 to 3.16.51, 3.18.45
+  to 3.18.90, 4.1.36 to 4.1.48, 4.4.28 to 4.4.108, 4.8.5 to 4.8.17,
+  4.9.0 to 4.9.73, 4.10.0 to 4.10.17, 4.11.0 to 4.11.12, 4.12.0 to 4.12.14,
+  4.13.0 to 4.13.16, and 4.14.0 to 4.14.10 for PCI devices.
+* updated R15-USB firmware to v1.91 (LPU v6.11 b1) in low-level library.
+
+Release Notes - v1.33, 10 October 2016
+--------------------------------------
+* added support for the R15-MPCIe and RAR-MPCIe.
+* added support for Linux kernels: 3.2.76 to 3.2.83, 3.4.111 and 3.4.112,
+  3.10.95 to 3.10.104, 3.14.59 to 3.14.79, 3.16.8 to 3.16.38, 3.18.26
+  to 3.18.44, 4.1.7 to 4.1.35, 4.3.4 to 4.3.6, 4.4.1 to 4.4.27, 4.5.0 to 4.5.7,
+  4.6.0 to 4.6.7, 4.7.0 to 4.7.10, and 4.8.0 to 4.8.4 for PCI devices.
+
+Release Notes - v1.32, 14 January 2016
+--------------------------------------
+* added support for Linux kernels: 3.2.67 to 3.2.75, 3.4.106 to 3.4.110,
+  3.10.41 to 3.10.94, 3.12.37 to 3.12.52, 3.14.29 to 3.14.58, 3.15.10, 3.18.3
+  to 3.18.25, 3.19.0 to 3.19.8, 4.0.0 to 4.0.9, 4.1.0 to 4.1.6, 4.2.0 to
+  4.2.8, 4.3.0 to 4.3.3, and 4.4.0 for PCI devices.
+  
+Release Notes - v1.31, 15 January 2015
+--------------------------------------
+* added support for the RAR-XMC
+* added support for Linux kernels: 3.2.59 to 3.2.66, 3.4.90 to 3.4.105, 3.10.40
+  to 3.10.64, 3.12.19 to 3.12.36, 3.14.4 to 3.14.28, 3.15.0 to 3.15.9, 3.16.0 to
+  3.16.7, 3.17.0 to 3.17.8, and 3.18.0 to 3.18.2 for PCI devices.
+
+Release Notes - v1.30, 30 October 2014
+--------------------------------------
+* added support for the RAR-USB
+
+Release Notes - v1.29, 29 August 2014
+-------------------------------------
+* added support for the R15-USB
+
+Release Notes - v1.28, 08 May 2014
+----------------------------------
+* added support for the RP-708
+* added support for Linux kernels 3.2.55 to 3.2.58, kernels 3.4.81 to 3.4.89,
+   kernels 3.10.31 to 3.10.39, kernels 3.12.12 to 3.12.18, kernels 3.13.4 to
+   3.13.11, and kernels 3.14.0 to 3.14.3 for PCI devices.
+
+Release Notes - v1.27, 24 February 2014
+---------------------------------------
+* added support for the R15-PMC
+* added support for Linux kernel 3.0.101, kernels 3.2.53 to 3.2.54, kernels
+   3.4.70 to 3.4.80, kernels 3.10.20 to 3.10.30, kernels 3.11.9 to 3.11.10,
+   kernels 3.12.1 to 3.12.11 and kernels 3.13.0 to 3.13.3 for PCI devices.
+
+Release Notes - v1.26, 19 November 2013
+---------------------------------------
+* added support for Linux kernels 3.0.82 to 3.0.100, kernels 3.2.47 to 3.2.52,
+   kernels 3.4.49 to 3.4.69, kernels 3.9.6 to 3.9.11, kernels 3.10.0 to 3.10.19,
+   kernels 3.11.0 to 3.11.8 and kernel 3.12.0 for PCI devices.
+
+Release Notes - v1.25, 13 June 2013
+-----------------------------------
+* added support for Linux kernels 3.0.75 to 3.0.81, kernels 3.2.44 to 3.2.46,
+   kernels 3.4.42 to 3.4.48, kernels 3.8.9 to 3.8.13 and kernels 3.9.0 to 3.9.5
+   for PCI devices.
+
+Release Notes - v1.24, 24 April 2013
+------------------------------------
+* added support for Linux kernels 3.0.53 to 3.0.74, kernels 3.2.35 to 3.2.43,
+   kernels 3.4.20 to 3.4.41, kernels 3.6.8 to 3.6.12, kernels 3.7.0 to 3.7.10,
+   and kernels 3.8.0 to 3.8.8 for PCI devices.
+   
+Release Notes - v1.23, 27 November 2012
+---------------------------------------
+* added support for Linux kernels 3.0.48 to 3.0.52, kernels 3.2.33 and 3.2.34,
+   kernels 3.4.16 to 3.4.19, and kernels 3.6.4 to 3.6.7 for PCI devices.
+
+Release Notes - v1.22, 24 October 2012
+--------------------------------------
+* added support for Linux kernels 3.0.13 to 3.0.32, kernels 3.1.5 to 3.1.10,
+   kernels 3.2.0 to 3.2.32, kernels 3.3.0 to 3.3.8, kernels 3.4.0 to 3.4.15,
+   kernels 3.5.0 to 3.5.7, and kernels 3.6.0 to 3.6.3 for PCI devices.
+
+Release Notes - v1.21, 06 December 2011
+---------------------------------------
+* added support for Linux kernels 3.0.5 to 3.0.12 and kernels 3.1.1 to 3.1.4 for
+   PCI devices
+
+Release Notes - v1.20, 25 October 2011
+--------------------------------------
+* added support for Linux kernel 3.1.0 for PCI devices
+* added support for Linux kernels 3.0.0 to 3.0.4 for PCI devices
+* added support for Linux kernel 2.6.39 for PCI devices
+* added x86_64 support for Linux kernel 2.4 PCI driver
+* added support for the CEI-430A
+* added hardware interrupt support for CEI-x30 boards in Linux kernel 2.4 PCI driver
+* added multiple wait queue support for PCI devices  
+
+Release Notes - v1.19, 12 April 2011
+------------------------------------
+* added support for Linux kernels 2.6.37 and 2.6.38 for PCI devices
+* added support for Linux kernels 2.6.22 to 2.6.38 for ISA devices
+* modified distribution shell scripts to use bash instead of sh
+
+Release Notes - v1.18, 9 November 2010
+--------------------------------------
+* added support for Linux kernels 2.6.36 for PCI devices
+
+Release Notes - v1.17, 17 August 2010
+-------------------------------------
+* added support for Linux kernels 2.6.35 for PCI devices
+
+Release Notes - v1.16, 14 July 2010
+-----------------------------------
+* added support for Linux kernels 2.6.33 and 2.6.34 for PCI devices
+* added support for the RAR-PCIE in the kernel 2.6 driver
+
+Release Notes - v1.15, 01 February 2010
+---------------------------------------
+* added support for Linux kernel 2.6.32 for PCI devices
+* added PowerPC support for PCI devices with kernel 2.4
+
+Release Notes - v1.14, 20 October 2009
+--------------------------------------
+* added support for Linux kernel 2.6.31 for PCI devices
+* added support for the RPCIE-1553 in the kernel 2.6 driver
+
+Release Notes - v1.13, 21 July 2009
+-----------------------------------
+* added support for Linux kernel 2.6.30 for PCI devices
+* added support for the RXMC-1553 in the kernel 2.6 driver
+* added hardware interrupt support for CEI-x30 boards in kernel 2.6 driver 
+
+Release Notes - v1.12, 10 April 2009
+------------------------------------
+* added support for Linux kernels 2.6.29 for PCI devices
+
+Release Notes - v1.11, 27 February 2009
+---------------------------------------
+* added support for Linux kernels 2.6.28 for PCI devices
+* added hardware interrupt support for P-Ser in kernel 2.6 driver
+* modified initialzation of PCI devices in 2.6 driver
+
+Release Notes - v1.10, 18 November 2008
+---------------------------------------
+* added support for Linux kernels 2.6.24 to 2.6.27 for PCI devices
+* added support for the R15-AMC
+* removed support for Linux kernel 2.2.x
+* added "cei_types" to low-level library
+
+Release Notes - v1.09, 24 January 2008
+--------------------------------------
+* added support for Linux kernel 2.6.23 and 2.4.36 for PCI devices
+* added support for the RAR-CPCI and RAR-EC
+* added support for the P-SER, P-DIS, P-MIO and P-708
+* removed setting "devID" for AMC-A30 to "0xA30"
+* replaced product name RCEI-830RX with R830RX
+
+Release Notes - v1.08, 11 September 2007
+----------------------------------------
+* added support for the RCEI-830RX
+* added support for Linux kernel 2.6.22 for PCI devices
+* provided a "build only" and a "32 bit emulation mode for 64 bit systems"
+   option in installation
+* added PowerPC support for PCI devices with kernel 2.6
+
+Release Notes - v1.07, 9 July 2007
+----------------------------------
+* added support for the CEI-530
+
+Release Notes - v1.06, 15 June 2007
+-----------------------------------
+* added support for Linux kernel 2.6.21 for PCI/ISA devices
+* added support for multiple process (2.6 PCI only)
+* added support for hardware interrupts with CEI-820
+* added hardware interrupt control for PCI/ISA devices on 2.6.x
+
+Release Notes - v1.05, 27 March 2007
+------------------------------------
+* added support for Linux kernels 2.6.18 to 2.6.20 for PCI/ISA devices
+* added support for the QPCX-1553
+* added support for the EPMC-1553
+
+Release Notes - v1.04, 22 September 2006
+----------------------------------------
+* added support for the AMC-1553 and AMC-A30
+* added PCI/ISA support for Linux kernels 2.6.15 to 2.6.17
+* added PCMCIA support for kernels 2.6.13 and 2.6.14
+
+Release Notes - v1.03, 25 May 2006
+----------------------------------
+* modified the hardware interrupt notification (signals) from the drivers to the
+   low-level library (CEI_SIGNAL)
+
+Release Notes - v1.02, 14 April 2006
+------------------------------------
+* added support for Linux kernels 2.6.13 to 2.6.14
+* added x86_64 support for PCI devices
+* added POSIX support to low-level library for APIs
+* added support for the IP-Avionics CEI-500 device
+* added common data types to low-level
+* renamed "mem_unix.c" and "unix_config.c" to "mem.c" and "config.c"
+* modified "config.c" to handle multiple "ceidev.conf" files
+
+Release Notes - v1.01, 12 September 2005
+----------------------------------------
+* added support for Linux kernels 2.6.9 to 2.6.12
+* added support for the CEI-x30 devices
+* added PCMCIA support for kernel 2.6, supports sysfs with kernel 2.6.11+
+* improved the "install" and "build_conf" scripts
+* added the "source_check" script
+* modified the kernel 2.4 PCI drivers for interrupt vectors
+* removed dependency on /dev/mem
+* removed dependency on "libsysfs" (sysfsutils package)
+* added "Linux_support.txt" file
+
+Release Notes - v1.0, 21 April 2005
+-----------------------------------
+* initial release of LSP is a merge of the previous versions of BusTools/1553
+   API and CEI-x20 API Linux distribution's kernel 2.4 drivers, low-level
+   library and install script
+* added kernel support for 2.6.0 to 2.6.8
+* no support for PCMCIA on kernel 2.6
+* sysfs support only for the kernel 2.6 PCI driver
+
+
+===============================================================================
+7. Contact Information
+===============================================================================
+
+If you have any questions or need more technical information, please contact:
+
+Abaco Systems, Inc.
+26 Castilian Drive, Suite B
+Goleta, CA. 93117
+
+phone:  805-965-8000
+email:  avionics.support@abaco.com
+url:    http://www.abaco.com/products/avionics

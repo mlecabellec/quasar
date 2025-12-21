@@ -1,0 +1,14 @@
+--- uceipci.c	2019-11-21 08:18:20.000000000 +0000
++++ uceipci.c	2024-10-16 11:53:06.290034484 +0000
+@@ -97,6 +97,11 @@
+ #include "uceipci_arinc.h"
+ 
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0)
++# define ioremap_nocache ioremap
++#endif
++
++
+ // optional:  disables verifying the PID of a process to support "fork" processes
+ //#define DISABLE_PID_VERIFICATION
+ 

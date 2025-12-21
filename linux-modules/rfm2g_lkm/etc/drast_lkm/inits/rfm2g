@@ -1,0 +1,71 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          rfm2g
+# Required-Start:    
+# Required-Stop:     
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Startup script for the rfm2g IO device
+# Description:       Startup script for the rfm2g IO device
+### END INIT INFO
+#
+# rfm2g    Startup script for the rfm2g IO device
+#
+# chkconfig: 2345 70 30
+# description: rfm2g is a reflective memory driver 
+#	       for GE 5565 piorc board .
+
+
+if [ -f /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
+. /etc/drast_lkm/rfm2g.conf
+
+start() {
+	modprobe rfm2g 
+	MAJOR=`fgrep rfm2g /proc/devices | cut -f 1 -d ' '` 
+	if  [ "$MAJOR" = "" ]
+	then
+		return 1
+	fi 
+	rm -rf /dev/rfm2g*
+	count=`cat /proc/rfm2g | grep RFM2G_DEVICE_COUNT | awk '{print $2}'`
+	i=0
+	while [ $i -lt $count ]
+	do
+		mknod /dev/rfm2g$i c $MAJOR $i
+		chmod 660 /dev/rfm2g$i
+		if [ "$DEVGROUP" != "" ]
+		then
+			chgrp $DEVGROUP /dev/rfm2g$i
+		fi
+		i=`expr $i + 1`
+	done
+	return 0
+}
+
+stop() {
+	rmmod rfm2g && rm -rf /dev/rfm2g* || echo "rfm2g not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+}
+
+show_status() {
+	fgrep rfm2g /proc/devices && cat /proc/rfm2g || echo "no rfm2g loaded."
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restar)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

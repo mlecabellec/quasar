@@ -1,0 +1,35 @@
+
+/***   Essai de simulation d'abonnes avec cplasdc   ***/
+
+
+// RAZ {}
+
+
+VOIE { ADRESSE=9; SA=7; NOMBRE=2; SENS=RECEPTION
+     }
+
+
+VOIE { ADRESSE=9; SA=4; NOMBRE=4; SENS=EMISSION;   
+       TAMPON=3; DON=0x1111,0x2222, 0x3333, 0x4444;
+                 DON=0x5555,0x6666, 0x7777, 0x8888;
+                 DON=0x9999,0xaaaa, 0xbbbb, 0xcccc
+     }
+
+
+VOIE { ADRESSE=9; SA=5; NOMBRE=2; SENS=RECEPTION  
+     }
+
+
+VOIE { ADRESSE=18; SA=1; NOMBRE=1; SENS=RECEPTION;   
+       TAMPON=5
+     }
+     
+
+VOIE { ADRESSE=7; SA=7; NOMBRE=7; SENS=EMISSION;
+       TAMPON=5; 
+       DONNEES = 1001, 1002, 1003, 1004, 1005, 1006, 1007;
+       DONNEES = 2001, 2002, 2003, 2004, 2005, 2006, 2007;
+       DONNEES = 3001, 3002, 3003, 3004, 3005, 3006, 3007;
+       DONNEES = 4001, 4002, 4003, 4004, 4005, 4006, 4007;
+       DONNEES = 5001, 5002, 5003, 5004, 5005, 5006, 5007
+     }

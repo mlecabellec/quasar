@@ -1,0 +1,69 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:		pcie6509_simusol
+# Required-Start:	$network $remote_fs $syslog
+# Required-Stop:	$network $remote_fs $syslog
+# Default-Start:	3 5
+# Default-Stop:         0 1 2 6
+# Short-Description: pcie6509 Startup script fort the pcie6509 IO devices (simulsol)
+#
+# pcie6509  Startup script for the pcie6509 IO devices (simusol)
+#
+# chkconfig: 345 10 90
+# description: Activates/Deactivates all network interfaces configured to \
+#              start at boot time.
+### END INIT INFO
+
+# Source function library.
+
+. /etc/drast_lkm/pcie6509_simusol.conf
+
+DEVICE=pcie6509_simusol
+DEVICE_KO=/lib/modules/`uname -r`/drast_lkm/$DEVICE.ko
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+
+start() {
+    modprobe $DEVICE $MODOPTS --force-modversion
+	echo "Module "$DEVICE" has been installed."
+    set `grep PCIE6509 /proc/devices`
+	if  [ "$1" = "" ]
+	then
+		echo "Major of PCIE6509 module is not defined in /proc/devices !"
+		return 1
+	fi 
+    for i in $(eval echo {0..$NBOARDS}); 
+    do
+        rm -f /dev/${DEVICE}_$i
+        mknod -m 666 /dev/${DEVICE}_$i c $1 $i;
+        if [ "$DEVGROUP" != "" ]
+        then
+            chgrp $DEVGROUP /dev/${DEVICE}_$i
+        fi
+    done
+    return 0
+}
+stop() {
+	rmmod $DEVICE && rm -rf /dev/${DEVICE}_* || echo "$DEVICE not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+	return 1
+}
+
+show_status() {
+	fgrep PCIE6509 /proc/devices && echo "PCIE6509 is loaded" || echo "no PCIE6509 loaded"
+}
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

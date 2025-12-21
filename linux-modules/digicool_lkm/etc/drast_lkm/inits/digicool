@@ -1,0 +1,195 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:		digicool
+# Required-Start:	$network $remote_fs $syslog
+# Required-Stop:	$network $remote_fs $syslog
+# Default-Start:	3 5
+# Default-Stop:     0 1 2 6
+# Short-Description: Startup script fort the digicool devices
+### END INIT INFO
+
+
+# Startup script for the digicool devices
+#
+# chkconfig: 345 10 90
+# description: is a linux kernel module to hangle DIGIBUS boards 
+
+###################################
+BOARD_NAME=digicool
+MODULE_NAME=pcigdrv_m.ko
+DEVICE=Pcig
+
+if [ "${ECHO}" != "1" ]
+then
+ECHO=echo
+else
+ECHO=/bin/echo
+fi
+
+. /etc/drast_lkm/${BOARD_NAME}.conf
+
+###################################
+
+start() {
+	echo "Driver loading: ${MODULE_NAME} ..."
+	
+	ERROR="--->ERROR<---"
+	
+	# Make sure the module name is validly set.
+	if [ -z ${MODULE_NAME} ]
+	then
+		${ECHO} -e ${ERROR}: invalid variable \"module_name\": ${MODULE_NAME}
+		exit 1
+	fi
+	
+    # Compute the module file name.
+    MODULE_FILE=/lib/modules/`uname -r`/drast_lkm/${MODULE_NAME}
+
+    # Make sure the module file exists.
+    if [ ! -f ${MODULE_FILE} ]
+    then
+        ${ECHO} -e ${ERROR}: module file does not exist: ${MODULE_FILE}
+        exit 1
+    fi
+    
+    # Compute the module /dev/null device node name (/dev/nul or /dev/null).
+    if [ -f /dev/nul ]
+    then
+        NULL=/dev/nul
+    else
+        NULL=/dev/null
+    fi
+    
+    #######################################################################
+    #
+    # Utility functions.
+    #
+    
+    # function to see if the module is loaded
+    check_loaded() {
+        lsmod | grep -w ${DEVICE} | wc -l
+    }
+    
+    # function to see if the module is loaded
+    check_running() {
+        cat /proc/devices | grep -w ${DEVICE} | wc -l
+    }
+    
+    # Get the device's major number.
+    get_major_number() {
+        cat /proc/devices | grep -w ${DEVICE} | cut -d" " -f1
+    }
+    
+    # Count the number of existing device nodes.
+    count_device_nodes() {
+        ls -al /dev/${DEVICE}* 2> ${NULL} | wc -l
+    }
+    
+    #######################################################################
+    #
+    # Remove any existing device nodes.
+    #
+    
+    rm -f /dev/${DEVICE}_[0-3]
+    
+    if [ `count_device_nodes` -gt 0 ]
+    then
+        ${ECHO} -e ${ERROR}: unable to remove existing device nodes.
+        exit 1
+    fi
+    
+    #######################################################################
+    #
+    # Load the existing module.
+    #
+    
+    insmod ${MODULE_FILE} || exit 1
+    
+    # Make sure the module got loaded.
+    if [ `check_loaded` -le 0 ]
+    then
+        ${ECHO} -e ${ERROR}: unable to load module.
+        exit 0
+    fi
+
+	#######################################################################
+    #
+    # Get the major device number.
+    #
+    
+    if [ `check_running` -le 0 ]
+    then
+        ${ECHO} -e ${ERROR}: module is not running.
+        exit 1
+    fi
+    
+    major_no=`get_major_number`
+    
+    if [ $major_no -le 0 ]
+    then
+        ${ECHO} -e ${ERROR}: invalid major number: $major_no
+        exit 1
+    fi
+    
+    #######################################################################
+    #
+    # Install a node for each installed board.
+    #
+    
+    count=0
+    
+    while [ $count -lt 4 ]
+    do
+        dev=/dev/${DEVICE}_$count
+        echo "Creating   ${dev}"
+        mknod ${dev} c $major_no $count
+        chmod 666 ${dev}
+        chmod a+rw ${dev}
+        if [ "${DEVGROUP}" != "" ]
+        then
+			chgrp ${DEVGROUP} ${dev}
+		fi
+		
+        count=`expr $count + 1`
+    done
+    
+    if [ `count_device_nodes` -ne ${board_count} ]
+    then
+        ${ECHO} -e ${ERROR}: failed to install the required number of device nodes.
+        exit 1
+    fi
+    
+    #######################################################################
+    #
+    # We're done.
+    #
+    
+    ${ECHO} "Driver loaded:  ${BOARD_NAME}"
+    return 0
+    
+}
+  
+stop() {
+	rmmod $DEVICE && rm -rf /dev/${DEVICE}_* || echo "$DEVICE not unloaded. Was not loaded or can't unload. Check all user modules are unloaded."
+	return 1
+}
+
+show_status() {
+	fgrep ${DEVICE} /proc/devices && echo "${DEVICE} is loaded" || echo "no ${DEVICE} loaded"
+}
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		stop
+		;;
+	status)
+		show_status
+		;;
+esac

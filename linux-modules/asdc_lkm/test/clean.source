@@ -1,0 +1,1 @@
+find . | egrep -v '\..+\..+' | xargs rm

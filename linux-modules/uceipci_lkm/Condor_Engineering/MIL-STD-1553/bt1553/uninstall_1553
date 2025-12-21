@@ -1,0 +1,23 @@
+#!/bin/bash
+# v1.01
+
+# To uninstall the Bustools/1553 API library, log on as root
+
+if [ `whoami | grep -c "root"` -ne 1 ]; then
+  echo Need to be logged on as 'root'
+  exit 1
+fi
+
+# determines if running on a X86_64 system
+if [ `uname -a | grep -ci "x86_64"` -eq 1 ]; then
+  LIBDIR="/usr/lib64"
+else
+  LIBDIR="/usr/lib"
+fi
+
+if [ `ls ${LIBDIR} | grep -ci "libbusapi.so"` -eq 1 ]; then
+  echo Remove the Bustools/1553 API shared library
+  rm -f ${LIBDIR}/libbusapi.so
+fi
+
+exit 0

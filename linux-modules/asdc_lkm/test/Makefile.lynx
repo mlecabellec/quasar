@@ -1,0 +1,239 @@
+#
+# Compilation des utilitaires ASDC (liste UTIL) et de divers programmes
+# de tests qui accompagnent ASDC
+#
+# make :		Compile les utilitaires
+# make util :		Compile les utilitaires
+# make tout :		Compile tout (utilitaires + divers progs de test)
+# make install :	Installe les utilitaires (dans REP_INSTALL)
+# make install_tout :	Installe tout (dans REP_INSTALL)
+# make uninstall :	Destinstalle tout (dans REP_INSTALL)
+# make clean :		Ne conserve que les sources
+#
+
+
+
+
+# Repertoire ou trouver le fichier asdcctl.h inclus par de nombreux sources
+REP_DRIVER = ..
+
+# Repertoire ou installer les executables produits (si make install)
+REP_INSTALL = $(HOME)/lynx-prg/bin
+
+# Liste des programmes utilitaires
+UTIL =  eabi labi  visuasdc lima abivar abierr visualloc cplasdc \
+	visuflux visutflux testabi histoit lver lirig eima	 \
+	flashabi monabi monabi_bascule exam
+# 	visuflev visutflev
+
+# Liste des autres programmes de test (parfois vieux et perimes ...)
+AUTRES = eabi16 eabi32 labi16 labi32 initabi0 			\
+         message messagex 					\
+         etrame1 etrame2 etrame3 				\
+         ealloue elibere eflux1 eflux2 				\
+         alimflux credon3 tradon eflux3 credon4 eflux4 		\
+         initabie initabie1 					\
+         simabol simaboe rafale lecture creabo abocc ecrabo	\
+         limal limah eimal eimah lmsg
+
+CFLAGS = -I$(REP_DRIVER)
+
+util : $(UTIL)
+
+tout : util $(AUTRES)
+
+initabi0 : initabi0.o ln1.o
+
+initabie : initabie.o ln1.o
+
+initabie1 : initabie1.o ln1.o
+
+testabi : testabi.o ln1.o
+
+histoit : histoit.o ln1.o
+
+creabo : creabo.o
+
+creabo.o : $(REP_DRIVER)/asdcctl.h
+
+abocc : abocc.o
+
+abocc.o : $(REP_DRIVER)/asdcctl.h
+
+ecrabo : ecrabo.o
+
+ecrabo.o : $(REP_DRIVER)/asdcctl.h
+
+simabol : simabol.o
+
+simabol.o : $(REP_DRIVER)/asdcctl.h
+
+simaboe : simaboe.o
+
+simaboe.o : $(REP_DRIVER)/asdcctl.h
+
+rafale : rafale.o ln1.o
+
+rafale.o : $(REP_DRIVER)/asdcctl.h
+
+lecture : lecture.o ln1-bc.o ln1.o
+
+lecture.o : ln1-bc.h $(REP_DRIVER)/asdcctl.h
+
+visuasdc : visuasdc.o ln1.o
+
+visuasdc.o : visuasdc.c ln1.h $(REP_DRIVER)/asdcctl.h
+
+visuflux : visuflux.o ln1.o
+
+visuflux.o : visuflux.c ln1.h $(REP_DRIVER)/asdcctl.h
+
+visutflux : visutflux.c 
+
+# visuflev : visuflev.o ln1.o
+
+# visuflev.o : visuflev.c ln1.h $(REP_DRIVER)/asdcctl.h
+
+# visutflev : visutflev.o ln1.o
+
+# visutflev.o : visutflev.c ln1.h $(REP_DRIVER)/asdcctl.h
+
+abivar : abivar.o ln1.o
+
+abivar.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+abierr : abierr.o ln1.o
+
+abierr.o : ln1.h
+
+visualloc : visualloc.c
+
+cplasdc : cplasdc.o util/libutil.a
+
+cplasdc.o : $(REP_DRIVER)/asdcctl.h util/util.h
+
+etrame1 : etrame1.o
+
+etrame1.o : $(REP_DRIVER)/asdcctl.h
+
+etrame2 : etrame2.o ln1.o
+
+etrame2.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+etrame3 : etrame3.o ln1.o
+
+etrame3.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+eflux1 : eflux1.o ln1.o
+
+eflux1.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+eflux2 : eflux2.o ln1.o
+
+eflux2.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+eflux3 : eflux3.o ln1.o
+
+eflux3.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+eflux4 : eflux4.o ln1.o
+
+eflux4.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+alimflux : alimflux.o ln1.o
+
+alimflux.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+credon3 : credon3.o
+
+credon3.o : $(REP_DRIVER)/asdcctl.h
+
+credon4 : credon4.o
+
+credon4.o : $(REP_DRIVER)/asdcctl.h
+
+tradon : tradon.o
+
+tradon.o : $(REP_DRIVER)/asdcctl.h
+
+message : message.o ln1-bc.o ln1.o
+
+message.o : message.c ln1-bc.h $(REP_DRIVER)/asdcctl.h
+
+messagex : messagex.o ln1-bc.o ln1.o
+
+messagex.o : messagex.c ln1-bc.h $(REP_DRIVER)/asdcctl.h
+
+ealloue : ealloue.c
+
+elibere : elibere.c
+
+eabi : eabi.o ln1.o
+
+eabi16 : eabi16.o ln1.o
+
+eabi32 : eabi32.o ln1.o
+
+labi : labi.o ln1.o
+
+lima : lima.o ln1.o
+
+limal : limal.o ln1.o
+
+limah : limah.o ln1.o
+
+eima : eima.o ln1.o
+
+eimal : eimal.o ln1.o
+
+eimah : eimah.o ln1.o
+
+labi16 : labi16.o ln1.o
+
+labi32 : labi32.o ln1.o
+
+ln1.o : ln1.c $(REP_DRIVER)/asdcctl.h
+
+ln1-bc.o : $(REP_DRIVER)/asdcctl.h ln1.h
+
+lmsg.o : $(REP_DRIVER)/asdcctl.h lmsg.c
+
+lmsg : lmsg.o
+
+eabi.o : eabi.c ln1.h
+
+lver : lver.o
+
+lver.o : lver.c $(REP_DRIVER)/asdcctl.h
+
+lirig : lirig.o
+
+lirig.o : lirig.c $(REP_DRIVER)/asdcctl.h
+
+flashabi : flashabi.o ln1.o
+
+flashabi.o : flashabi.c  $(REP_DRIVER)/asdcctl.h ln1.h
+
+util/libutil.a :
+	(cd util; make)
+
+monabi monabi_bascule exam :
+	(cd repmonabi; make)
+	(cd repmonabi; mv monabi monabi_bascule exam ..)
+
+clean :
+	rm -f *.o $(UTIL) $(AUTRES)
+	(cd util; make clean)
+	(cd repmonabi; make clean)
+
+install : $(UTIL)
+	cp $(UTIL) $(REP_INSTALL)
+
+install_tout : $(UTIL) $(AUTRES)
+	cp $(UTIL) $(AUTRES) $(REP_INSTALL)
+
+uninstall :
+	(cd $(REP_INSTALL); rm -f $(UTIL) $(AUTRES))
+
+
+

@@ -1,0 +1,222 @@
+#!/bin/bash
+# v1.14
+
+# This script will check the file versions of the specific files against the
+# tested LSP or API file versions.  Valid arguments are: LSP, BT1553, BT1553MP,
+# CEIX20, CEIX30, SAR, IPAV, CORE, P708, PSER, and PDIS.
+
+# LSP and tested API versions
+LSP_VERSION=1.36
+CEI_BT1553_API=8.28
+CEI_BT1553MP_API=1.54
+CEI_X20_API=4.50
+CEI_X30_API=5.10
+CEI_SAR_API=1.70
+CEI_PSER_API=2.30
+CEI_P708_API=3.30
+CEI_PDIS_API=2.10
+CEI_IPAV_API=3.35
+CEI_CORE_API=2.12
+
+# LSP (driver) file versions
+LSP_30_PCI=1.14
+LSP_26_PCI=1.25
+LSP_26_ISA=1.10
+LSP_26_PCMCIA=1.02
+LSP_24_PCI=2.36
+LSP_24_ISA=2.03
+LSP_24_PCMCIA=1.02
+
+# LSP (low-level) file versions
+LSP_LL_LOWLEVEL=5.23
+LSP_LL_MEM=1.15
+LSP_LL_CONFIG=4.73
+LSP_LL_POSIX=1.13
+LSP_LL_CONF=1.27
+
+
+DISTRIBUTION=$1
+
+# determines which code to check
+case ${DISTRIBUTION} in
+LSP)
+  SRC_CHK=1;;
+BT1553 | BT1553MP | CEIX20 | CEIX30 | SAR | IPAV | CORE | P708 | PSER | PDIS)
+  SRC_CHK=2;;
+*)
+ echo Valid distributions: LSP, BT1553, BT1553MP CEIX20, CEIX30, SAR, IPAV, CORE, P708, PSER, PDIS
+ exit 1;;
+esac
+
+# determines the relative directory path
+CONDOR_PATH=`pwd | awk -F Condor_Engineering '{print $1}'`Condor_Engineering
+
+# check for the Condor Engineering directory
+if [ ! -d ${CONDOR_PATH} ]; then
+  echo \*********************************************************************
+  echo ERROR: \ Condor Engineering directory not found. Check installation.
+  echo \*********************************************************************
+  exit 1
+fi
+
+# checks for the "Install" directory
+if [ ! -d ${CONDOR_PATH}/Install ]; then
+  echo \*********************************************************************
+  echo ERROR: \ Install directory not found. Check installation.
+  echo \*********************************************************************
+  exit 1
+fi
+
+if [ ${SRC_CHK} -eq 1 ]; then
+  # checks for the "Drivers" directory
+  if [ ! -d ${CONDOR_PATH}/Drivers ]; then
+    echo \*********************************************************************
+    echo ERROR: \ Drivers directory not found. Check installation.
+    echo \*********************************************************************
+    exit 1
+  fi
+
+  # checks for the "Lowlevel" directory
+  if [ ! -d ${CONDOR_PATH}/Lowlevel ]; then
+    echo \*********************************************************************
+    echo ERROR: \  Lowlevel directory not found.  Check installation.
+    echo \*********************************************************************
+    exit 1
+  fi
+
+  # LSP directories
+  LSP_24_DIR=${CONDOR_PATH}/Drivers/2.4
+  LSP_26_DIR=${CONDOR_PATH}/Drivers/2.6
+  LSP_30_DIR=${CONDOR_PATH}/Drivers/3.0
+  LSP_PCI_SRC=/pci/uceipci
+  LSP_ISA_SRC=/isa/uceiisa
+  LSP_PCMCIA_SRC=/pcmcia/cei_pcc1553_cs
+  LSP_LL_DIR=${CONDOR_PATH}/Lowlevel
+  ERR=0
+  # checks the source versions for the LSP (drivers and lowlevel)
+  for var in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    case ${var} in
+    1) SRC_FILE=${LSP_24_DIR}${LSP_PCI_SRC}.c;LSP_FILE_VER=${LSP_24_PCI};;
+    2) SRC_FILE=${LSP_24_DIR}${LSP_ISA_SRC}.c;LSP_FILE_VER=${LSP_24_ISA};;
+    3) SRC_FILE=${LSP_24_DIR}${LSP_PCMCIA_SRC}.c;LSP_FILE_VER=${LSP_24_PCMCIA};;
+    4) SRC_FILE=${LSP_26_DIR}${LSP_PCI_SRC}.c;LSP_FILE_VER=${LSP_26_PCI};;
+    5) SRC_FILE=${LSP_26_DIR}${LSP_ISA_SRC}.c;LSP_FILE_VER=${LSP_26_ISA};;
+    6) SRC_FILE=${LSP_26_DIR}${LSP_PCMCIA_SRC}.c;LSP_FILE_VER=${LSP_26_PCMCIA};;
+    7) SRC_FILE=${LSP_30_DIR}${LSP_PCI_SRC}.c;LSP_FILE_VER=${LSP_30_PCI};;
+    8) SRC_FILE=${LSP_LL_DIR}/mem.c;LSP_FILE_VER=${LSP_LL_MEM};;
+    9) SRC_FILE=${LSP_LL_DIR}/config.c;LSP_FILE_VER=${LSP_LL_CONFIG};;
+    10) SRC_FILE=${LSP_LL_DIR}/lowlevel.h;LSP_FILE_VER=${LSP_LL_LOWLEVEL};;
+    11) SRC_FILE=${LSP_LL_DIR}/ll_posix.c;LSP_FILE_VER=${LSP_LL_POSIX};;
+    12) SRC_FILE=${CONDOR_PATH}/Install/build_conf.c;LSP_FILE_VER=${LSP_LL_CONF};;
+    esac
+
+    if [ ! -r ${SRC_FILE} ]; then
+      echo \-\> Failed to find/read \"${SRC_FILE}\".  Check LSP installation.
+      exit 1
+    fi
+
+    FILE_VER=`grep 'Revision:' ${SRC_FILE} | awk -F ':' '{print $2}' | awk -F ' ' '{print $1}'`
+    A=`echo -n ${FILE_VER} | awk -F . '{print $1}'`
+    B=`echo -n ${FILE_VER} | awk -F . '{print $2}'`
+    VER_FILE=`expr ${A} \* 100 + ${B}`
+    A=`echo -n ${LSP_FILE_VER} | awk -F . '{print $1}'`
+    B=`echo -n ${LSP_FILE_VER} | awk -F . '{print $2}'`
+    VER_LSP=`expr ${A} \* 100 + ${B}`
+    if [ ${VER_FILE} -lt ${VER_LSP} ]; then
+      echo \"${SRC_FILE}\" v${FILE_VER} is not supported with LSP v${LSP_VERSION}
+      ERR=1
+    fi
+  done
+  if [ ${ERR} -eq 1 ]; then
+    exit 1
+  fi
+  echo \-\> Verfied Condor Engineering Linux Support Package v${LSP_VERSION}
+fi
+
+
+# checks the source versions for the APIs
+if [ ${SRC_CHK} -eq 2 ]; then
+  case ${DISTRIBUTION} in
+  BT1553)
+     CEI_API=BusTools/1553;
+     API_VER_TESTED=${CEI_BT1553_API};
+     API_SRC_FILE=${CONDOR_PATH}/MIL-STD-1553/bt1553/Include/busapi.h;
+     API_VER_CMD="grep -m 1 'define API_VER' ${API_SRC_FILE} | awk -F '\"' '{print \$2}'";;
+  BT1553MP)
+     CEI_API=BusTools/1553;
+     API_VER_TESTED=${CEI_BT1553MP_API};
+     API_SRC_FILE=${CONDOR_PATH}/MIL-STD-1553/bt1553mp/Include/busapi.h;
+     API_VER_CMD="grep -m 1 'define API_VER' ${API_SRC_FILE} | awk -F '\"' '{print \$2}'";;
+  CEIX20)
+     CEI_API=CEI-x20;
+     API_VER_TESTED=${CEI_X20_API};
+     API_SRC_FILE=${CONDOR_PATH}/ARINC/ceix20/Source/api520.h;
+     API_VER_CMD="grep -m 1 'define API_VER' ${API_SRC_FILE} | awk -F '\"' '{print \$2}'";;
+  CEIX30)
+     CEI_API=CEI-x30;
+     API_VER_TESTED=${CEI_X30_API};
+     API_SRC_FILE=${CONDOR_PATH}/ARINC/ceix30/Include/cdev_api.h;
+     API_VER_CMD="grep -m 2 'define API_VERSION' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  SAR)
+     CEI_API=SAR;
+     API_VER_TESTED=${CEI_SAR_API};
+     API_SRC_FILE=${CONDOR_PATH}/ARINC/sar/Include/sar_api.h;
+     API_VER_CMD="grep -m 2 'define API_VERSION' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  IPAV)
+     CEI_API=IP-Avionics;
+     API_VER_TESTED=${CEI_IPAV_API};
+     API_SRC_FILE=${CONDOR_PATH}/ARINC/ipav/Source/ipav_api.h;
+     API_VER_CMD="grep -m 2 'define API_VERSION' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  CORE)
+     CEI_API=CORE;
+     API_VER_TESTED=${CEI_CORE_API};
+     API_SRC_FILE=${CONDOR_PATH}/MIL-STD-1553/core/Source/COREAPIdefs.h;
+     API_VER_CMD="grep -m 1 'define CORE_API_VERSION' ${API_SRC_FILE} | awk -F '0x' '{print \$2}'";;
+  P708)
+     CEI_API=P-708;
+     API_VER_TESTED=${CEI_P708_API};
+     API_SRC_FILE=${CONDOR_PATH}/ARINC/p708/Include/p708_api.h;
+     API_VER_CMD="grep -m 1 'define P708_API_VERSION' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  PSER)
+     CEI_API=P-SER;
+     API_VER_TESTED=${CEI_PSER_API};
+     API_SRC_FILE=${CONDOR_PATH}/IO/pser/Include/pser_api.h;
+     API_VER_CMD="grep -m 2 'define API_VERSION_PSER' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  PDIS)
+     CEI_API=P-DIS;
+     API_VER_TESTED=${CEI_PDIS_API};
+     API_SRC_FILE=${CONDOR_PATH}/IO/pdis/Include/pdis_api.h;
+     API_VER_CMD="grep -m 2 'define PDIS_API_VERSION' ${API_SRC_FILE} | awk -F '\"' '{print \$2}' | awk '! /RT_/'";;
+  esac
+  if [ ! -e ${API_SRC_FILE} ]; then
+    echo The file \"${API_SRC_FILE}\" does not exist.  Check the ${CEI_API} API installation.
+    exit 1
+  fi
+  API_VER=`eval $API_VER_CMD`
+  if [ ${DISTRIBUTION} = "CORE" ]; then
+    A=`echo -n ${API_VER} | awk '{print substr($0,1,2)}'`
+    B=`echo -n ${API_VER} | awk '{print substr($0,3,2)}'`
+    API_VER=${A}.${B}
+  fi
+  A=`echo -n ${API_VER} | awk -F . '{print $1}'`
+  B=`echo -n ${API_VER} | awk -F . '{print $2}'`
+  C=`echo -n ${API_VER} | awk -F . '{print $3}'`
+  if [ -z ${C} ]; then
+    C=0
+  fi
+  VER_FILE=`expr ${A} \* 10000 + ${B} \* 100 + ${C}`
+  A=`echo -n ${API_VER_TESTED} | awk -F . '{print $1}'`
+  B=`echo -n ${API_VER_TESTED} | awk -F . '{print $2}'`
+  C=`echo -n ${API_VER_TESTED} | awk -F . '{print $3}'`
+  if [ -z ${C} ]; then
+    C=0
+  fi
+  VER_TESTED=`expr ${A} \* 10000 + ${B} \* 100 + ${C}`
+  if [ ${VER_FILE} -lt ${VER_TESTED} ]; then
+    echo \-\> Fail: LSP v${LSP_VERSION} requires ${CEI_API} API v${API_VER_TESTED} or later.
+    exit 1
+  fi
+  echo \-\> Verfied Condor Engineering ${CEI_API} API v${API_VER}
+fi
+
+exit 0

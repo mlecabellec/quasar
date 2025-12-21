@@ -1,0 +1,25 @@
+#!/bin/bash
+# v1.01
+
+PCMCIA_DIR=/etc/pcmcia
+MODULE=cei_pcc1553_cs
+
+# eject all cards in PCMCIA sockets
+if test `/sbin/cardctl ident | grep -ci "cei"` -gt 0
+  then
+    /sbin/cardctl eject
+fi
+
+if test `/sbin/lsmod | grep -ci "${MODULE}"` -ne 0
+  then
+    /sbin/rmmod ${MODULE}
+fi
+	
+if test `ls /var/run | grep -c "cardmgr.pid"` -ne 0
+  then
+    # send (SIGHUP) signal to 'cardmgr' to reload client database
+    PID=`cat /var/run/cardmgr.pid`
+    kill -s 1 ${PID}
+fi
+
+exit 0

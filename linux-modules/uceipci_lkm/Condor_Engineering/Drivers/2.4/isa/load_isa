@@ -1,0 +1,79 @@
+#!/bin/bash
+# v1.02
+
+#==============================================================================*
+#
+# Configuration arguments:
+#  Required: 
+#   BASEMEM= - specify the base memory address for the ISA device 
+#  Optional:
+#   IRQ= -  specify the IRQ for hardware interrupts
+#   DEBUG=1 - enable debugging to output to the kernel message log
+#
+#==============================================================================*  
+
+
+# path to binaries
+PATH_INSMOD=/sbin/insmod
+
+MODULE=uceiisa
+# sets the file permissions for the device nodes in /dev
+DEV_PERM=666
+
+if test `whoami | grep -c "root"` -ne 1
+  then
+    echo Need to be root to load drivers
+    exit 1
+fi
+
+BASEMEM=0
+IRQ=-1
+DEBUG_LEVEL=0
+until [ -z "$1" ]; do
+  # get the base memory address
+  if [[ $1 == 0x* ]]; then
+    BASEMEM=$1
+  # get the IRQ value
+  elif [[ $1 == [0-9] || $1 == [0-9][0-9] ]]; then
+    IRQ=$1	
+  elif [[ $1 == DEBUG=* ]]; then 
+    # set the debug level for the driver
+    DEBUG_LEVEL=${1:6}
+  fi
+  shift
+done
+
+if [ $BASEMEM == 0 ]; then
+  echo Need to specify a base memory address \(0xXXXXX\) for ${MODULE}
+  exit 1
+fi
+
+# Can change the debug level (0-3) by setting "uceiisa_debug=<X>".  Will
+# cause the driver to print to the kernel message log.  Use to troubleshoot
+# system issues with the driver.
+#DRV_PARMS=uceiisa_debug=${DEBUG_LEVEL}
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    # load the ISA driver
+    ${PATH_INSMOD} ${MODULE}.o basemem=${BASEMEM} IRQ=${IRQ} uceiisa_debug=${DEBUG_LEVEL}
+fi
+
+if test `cat /proc/devices | grep -ci "${MODULE}"` -eq 0
+  then
+    echo Failed to load module: ${MODULE}.  Review the kernel message log \(dmesg\) for errors.
+    exit 1
+fi
+echo Successfully added module ${MODULE} \($BASEMEM, ${IRQ}\)
+
+MAJOR=`cat /proc/devices | awk "\\$2==\"${MODULE}\" {print \\$1}"`
+if test `ls /dev | grep -ci "${MODULE}_"` -eq 0
+  then
+    mknod -m ${DEV_PERM} /dev/${MODULE}_0 c ${MAJOR} 0
+    mknod -m ${DEV_PERM} /dev/${MODULE}_1 c ${MAJOR} 1
+    mknod -m ${DEV_PERM} /dev/${MODULE}_2 c ${MAJOR} 2
+    mknod -m ${DEV_PERM} /dev/${MODULE}_3 c ${MAJOR} 3
+    chgrp root /dev/${MODULE}_[0-4]
+fi
+
+exit 0

@@ -1,0 +1,205 @@
+#!/bin/sh
+# $URL: http://subversion:8080/svn/gsc/trunk/drivers/LINUX/16AI64SSA/driver/start $
+# $Rev: 54971 $
+# $Date: 2024-08-07 15:59:52 -0500 (Wed, 07 Aug 2024) $
+
+# 16AI64SSA: Device Driver: driver load script
+
+module_name=16ai64ssa
+
+#######################################################################
+
+ECHO=`ls /bin/echo 2>/dev/null | wc -l`
+if [ "${ECHO}" != "1" ]
+then
+ECHO=echo
+else
+ECHO=/bin/echo
+fi
+
+#######################################################################
+
+echo "Driver loading: ${module_name} ... "
+
+ERROR="--->ERROR<---"
+
+# Make sure the module name is validly set.
+if [ -z ${module_name} ]
+then
+	${ECHO} -e ${ERROR}: invalid variable \"module_name\": ${module_name}
+	exit 1
+fi
+
+os_ver=`uname -r | cut -d . -f 1-2`
+
+# Compute the module file name.
+case $os_ver in
+	2.[0-5])
+		module_file=`echo $0 | sed -e "s/[^/]*\$/${module_name}.o/g"`
+		;;
+	*)
+		module_file=`echo $0 | sed -e "s/[^/]*\$/${module_name}.ko/g"`
+		;;
+esac
+
+if [ `echo $0 | grep "^/" | wc -l` -le 0 ]
+then
+	module_file=`pwd`/${module_file}
+fi
+
+# Make sure the module file exists.
+if [ ! -f ${module_file} ]
+then
+	${ECHO} -e ${ERROR}: module file does not exist: ${module_file}
+	exit 1
+fi
+
+# Compute the module /dev/null device node name (/dev/nul or /dev/null).
+if [ -f /dev/nul ]
+then
+	NULL=/dev/nul
+else
+	NULL=/dev/null
+fi
+
+#######################################################################
+#
+# Utility functions.
+#
+
+# function to see if the module is loaded
+check_loaded() {
+	lsmod | grep -w ${module_name} | wc -l
+}
+
+# function to see if the module is loaded
+check_running() {
+	cat /proc/devices | grep -w ${module_name} | wc -l
+}
+
+# Get the device's major number.
+get_major_number() {
+	cat /proc/devices | grep -w ${module_name} | cut -d" " -f1
+}
+
+# Count the number of existing device nodes.
+count_device_nodes() {
+	ls -al /dev/${module_name}\.[0-9]* 2> ${NULL} | wc -l
+}
+
+#######################################################################
+#
+# Remove any existing device nodes.
+#
+
+rm -f /dev/${module_name}\.*
+
+if [ `count_device_nodes` -gt 0 ]
+then
+	${ECHO} -e ${ERROR}: unable to remove existing device nodes.
+	exit 1
+fi
+
+#######################################################################
+#
+# Unload the current module to make sure the latest gets loaded.
+#
+
+if [ `check_loaded` -gt 0 ]
+then
+	rmmod ${module_name}
+fi
+
+if [ `check_loaded` -gt 0 ]
+then
+	${ECHO} -e ${ERROR}: unable to unload module.
+	exit 1
+fi
+
+#######################################################################
+#
+# Load the existing module.
+#
+
+insmod ${module_file}
+
+# Make sure the module got loaded.
+if [ `check_loaded` -le 0 ]
+then
+	${ECHO} -e ${ERROR}: unable to load module.
+	exit 0
+fi
+
+#######################################################################
+#
+# Get the major device number.
+#
+
+if [ `check_running` -le 0 ]
+then
+	${ECHO} -e ${ERROR}: module is not running.
+	exit 1
+fi
+
+major_no=`get_major_number`
+
+if [ $major_no -le 0 ]
+then
+	${ECHO} -e ${ERROR}: invalid major number: $major_no
+	exit 1
+fi
+
+#######################################################################
+#
+# See how many boards are installed.
+#
+
+# Make sure the proc file exists
+if [ ! -f /proc/${module_name} ]
+then
+	${ECHO} -e ${ERROR}: file does not exist: /proc/${module_name}
+	exit 1
+fi
+
+# Get the board count from the proc file.
+board_count=`grep "^boards: [0-9]*$" /proc/${module_name} | cut -d" " -f2`
+board_count=`expr 0${board_count}`
+
+# Make sure the number of boards is valid
+
+if [ ${board_count} -le 0 ]
+then
+	${ECHO} -e ${ERROR}: file /proc/${module_name} is invalid
+	exit 0
+fi
+
+#######################################################################
+#
+# Install a node for each installed board.
+#
+
+count=0
+
+while [ $count -lt ${board_count} ]
+do
+	dev=/dev/${module_name}.$count
+	echo "Creating   ${dev}"
+	mknod ${dev} c $major_no $count
+	chmod 666 ${dev}
+	count=`expr $count + 1`
+done
+
+if [ `count_device_nodes` -ne ${board_count} ]
+then
+	${ECHO} -e ${ERROR}: failed to install the required number of device nodes.
+	exit 1
+fi
+
+#######################################################################
+#
+# We're done.
+#
+
+echo "Driver loaded:  ${module_name}"
+exit 0
+
