@@ -12,7 +12,7 @@ add_compile_options(-Wall -Wextra -Werror -pedantic)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
-add_library(quasar_coretypes ${SOURCES} ${HEADERS})
+add_library(quasar_coretypes SHARED ${SOURCES} ${HEADERS})
 
 target_include_directories(quasar_coretypes PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
