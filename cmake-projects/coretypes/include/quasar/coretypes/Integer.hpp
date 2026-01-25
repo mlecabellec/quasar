@@ -36,9 +36,44 @@ public:
       : value_(parseInt(s, radix, 0)) {}
 
   // Number interface implementation
-  int toInt() const override { return static_cast<int>(value_); }
-  long toLong() const override { return static_cast<long>(value_); }
-  float toFloat() const override { return static_cast<float>(value_); }
+  // Number interface implementation
+  int toInt() const override {
+    if constexpr (std::numeric_limits<T>::max() >
+                  std::numeric_limits<int>::max()) {
+      if (value_ > static_cast<T>(std::numeric_limits<int>::max()))
+        throw std::overflow_error("Integer overflow in toInt");
+    }
+    if constexpr (std::is_signed<T>::value &&
+                  std::numeric_limits<T>::min() <
+                      std::numeric_limits<int>::min()) {
+      if (value_ < static_cast<T>(std::numeric_limits<int>::min()))
+        throw std::overflow_error("Integer underflow in toInt");
+    }
+    // Handle Unsigned T to Signed Int conversion where value > INT_MAX
+    // e.g. uint32 to int32. generic check above covers it if T::max > int::max
+    // (uint32 max > int32 max) But check strictness. uint32::max (4G) >
+    // int32::max (2G). Yes.
+    return static_cast<int>(value_);
+  }
+
+  long toLong() const override {
+    if constexpr (std::numeric_limits<T>::max() >
+                  std::numeric_limits<long>::max()) {
+      if (value_ > static_cast<T>(std::numeric_limits<long>::max()))
+        throw std::overflow_error("Integer overflow in toLong");
+    }
+    if constexpr (std::is_signed<T>::value &&
+                  std::numeric_limits<T>::min() <
+                      std::numeric_limits<long>::min()) {
+      if (value_ < static_cast<T>(std::numeric_limits<long>::min()))
+        throw std::overflow_error("Integer underflow in toLong");
+    }
+    return static_cast<long>(value_);
+  }
+
+  float toFloat() const override {
+    return static_cast<float>(value_);
+  } // Precision loss allowed
   double toDouble() const override { return static_cast<double>(value_); }
   std::string toString() const override { return toString(value_, 10); }
 

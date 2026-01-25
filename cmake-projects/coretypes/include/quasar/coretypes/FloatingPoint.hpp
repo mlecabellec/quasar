@@ -37,10 +37,66 @@ public:
       : value_(parseFloatingPoint(s)) {}
 
   // Number interface implementation
-  int toInt() const override { return static_cast<int>(value_); }
-  long toLong() const override { return static_cast<long>(value_); }
-  float toFloat() const override { return static_cast<float>(value_); }
-  double toDouble() const override { return static_cast<double>(value_); }
+  int toInt() const override {
+    if (std::isnan(value_)) {
+      throw std::runtime_error("Cannot convert NaN to int");
+    }
+    if (std::isinf(value_)) {
+      throw std::overflow_error("Cannot convert Infinity to int");
+    }
+    // Safe range calculation
+    constexpr double min_int =
+        static_cast<double>(std::numeric_limits<int>::min());
+    constexpr double max_int =
+        static_cast<double>(std::numeric_limits<int>::max());
+
+    // Check using double precision for both float and double T
+    if (static_cast<double>(value_) < min_int ||
+        static_cast<double>(value_) > max_int) {
+      throw std::overflow_error("Floating point value out of integer range");
+    }
+    return static_cast<int>(value_);
+  }
+
+  long toLong() const override {
+    if (std::isnan(value_)) {
+      throw std::runtime_error("Cannot convert NaN to long");
+    }
+    if (std::isinf(value_)) {
+      throw std::overflow_error("Cannot convert Infinity to long");
+    }
+    // Limits check
+    // Note: double cannot represent full range of int64_t (long).
+    // converting limits::max() to double rounds to 2^63 (approx) which is
+    // slightly > max long. So 'value > limits::max()' logic works if value is
+    // exactly 2^63 (overflow). If value is rounded 2^63 from user input, it
+    // catches it.
+
+    if (value_ > static_cast<T>(std::numeric_limits<long>::max()) ||
+        value_ < static_cast<T>(std::numeric_limits<long>::min())) {
+      throw std::overflow_error("Floating point value out of long range");
+    }
+    return static_cast<long>(value_);
+  }
+
+  float toFloat() const override {
+    if constexpr (std::is_same<T, float>::value) {
+      return value_;
+    } else {
+      // Check for overflow when casting double to float
+      if (std::isinf(value_))
+        return static_cast<float>(value_);
+      if (std::abs(value_) > std::numeric_limits<float>::max()) {
+        throw std::overflow_error("Value exceeds float range");
+      }
+      return static_cast<float>(value_);
+    }
+  }
+
+  double toDouble() const override {
+    // float to double is always safe
+    return static_cast<double>(value_);
+  }
   std::string toString() const override { return std::to_string(value_); }
 
   /**
