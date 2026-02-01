@@ -43,11 +43,12 @@ public:
       if (value_ > static_cast<T>(std::numeric_limits<int>::max()))
         throw std::overflow_error("Integer overflow in toInt");
     }
-    if constexpr (std::is_signed<T>::value &&
-                  std::numeric_limits<T>::min() <
-                      std::numeric_limits<int>::min()) {
-      if (value_ < static_cast<T>(std::numeric_limits<int>::min()))
-        throw std::overflow_error("Integer underflow in toInt");
+    if constexpr (std::is_signed<T>::value) {
+      if constexpr (std::numeric_limits<T>::min() <
+                    std::numeric_limits<int>::min()) {
+        if (value_ < static_cast<T>(std::numeric_limits<int>::min()))
+          throw std::overflow_error("Integer underflow in toInt");
+      }
     }
     // Handle Unsigned T to Signed Int conversion where value > INT_MAX
     // e.g. uint32 to int32. generic check above covers it if T::max > int::max
@@ -62,11 +63,12 @@ public:
       if (value_ > static_cast<T>(std::numeric_limits<long>::max()))
         throw std::overflow_error("Integer overflow in toLong");
     }
-    if constexpr (std::is_signed<T>::value &&
-                  std::numeric_limits<T>::min() <
-                      std::numeric_limits<long>::min()) {
-      if (value_ < static_cast<T>(std::numeric_limits<long>::min()))
-        throw std::overflow_error("Integer underflow in toLong");
+    if constexpr (std::is_signed<T>::value) {
+      if constexpr (std::numeric_limits<T>::min() <
+                    std::numeric_limits<long>::min()) {
+        if (value_ < static_cast<T>(std::numeric_limits<long>::min()))
+          throw std::overflow_error("Integer underflow in toLong");
+      }
     }
     return static_cast<long>(value_);
   }

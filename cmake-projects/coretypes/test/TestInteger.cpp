@@ -87,3 +87,31 @@ TEST(IntegerTest, Endianness) {
   Short sSwapped = s.swapBytes();
   EXPECT_EQ(sSwapped.value(), 0x3412);
 }
+
+TEST(IntegerTest, PrimitiveInitialization) {
+  // Signed types
+  Byte b(static_cast<int8_t>(10));
+  EXPECT_EQ(b.value(), 10);
+
+  Short s(static_cast<int16_t>(1000));
+  EXPECT_EQ(s.value(), 1000);
+
+  Int i(100000);
+  EXPECT_EQ(i.value(), 100000);
+
+  Long l(10000000000L);
+  EXPECT_EQ(l.value(), 10000000000L);
+
+  // Unsigned types
+  UByte ub(static_cast<uint8_t>(200));
+  EXPECT_EQ(ub.value(), 200);
+
+  UShort us(static_cast<uint16_t>(50000));
+  EXPECT_EQ(us.value(), 50000);
+
+  UInt ui(3000000000U);
+  EXPECT_EQ(ui.value(), 3000000000U);
+
+  ULong ul(10000000000000000000ULL);
+  EXPECT_EQ(ul.value(), 10000000000000000000ULL);
+}
