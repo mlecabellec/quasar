@@ -44,10 +44,16 @@ jobs:
           cd build-projects
           cpack -G DEB
 
+      - name: Generate Safe Artifact Name
+        id: artifact-name
+        run: |
+          SAFE_NAME=$(echo "${{ matrix.container }}" | tr ':' '-')
+          echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload Debian Package
         uses: actions/upload-artifact@v4
         with:
-          name: quasar-deb-${{ matrix.container }}
+          name: quasar-deb-${{ steps.artifact-name.outputs.safe_name }}
           path: build-projects/*.deb
 
       - name: Prepare Linux Modules (EtherCAT)
