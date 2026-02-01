@@ -5,7 +5,7 @@
 /* abonne, une en reception et une en emission, qui ont ete     */
 /* "rebouclees" pour permettre un test de type "SA30".          */
 /*                                                              */
-/*                          ASTRIUM ST - TE641 - Yves Guillemot */
+/*                          ************ - TE641 - ************ Anonymized */
 /****************************************************************/
 
 /*
@@ -32,134 +32,116 @@ Quand       Qui   Quoi
 
 */
 
-
-
 #include "driverIncludes.h"
-
-
-
 
 /* Parametrage des elements de la fonction :                                */
 /*    DEVCTL_NOM est un nom pour affichage au debug uniquement              */
 /*    STRUCT_ES est la structure E/S (peut-etre une union)                  */
 /*    STRUCT_E est la structure d'entree (peut etre identique a STRUCT_ES)  */
 /*    STRUCT_S est la structure de sortie (peut etre identique a STRUCT_ES) */
-#define DEVCTL_NOM     "ASDC_SA_DELIER"
-#define STRUCT_E       abiboucl_t
+#define DEVCTL_NOM "ASDC_SA_DELIER"
+#define STRUCT_E abiboucl_t
 
+long do_ASDC_SA_DELIER(int vfxNum, int asdcNum, struct asdc_varg *dst,
+                       unsigned long arg) {
 
+  /* Structure d'E/S et pointeur associe */
+  STRUCT_E data;
+  STRUCT_E *ptr;
 
-long
-do_ASDC_SA_DELIER(int vfxNum, int asdcNum,
-                  struct asdc_varg *dst, unsigned long arg)
-{
+  /* Variables specifiques a cette fonction io_devctl particuliere */
+  int bus, adr, sar;
+  int saTable, pSaTable;
+  int pTamponR, aTamponR;
+  int espion_tr;
+  int zdr; /* Adresses de la "Zone de donnees" des la voie en reception */
+  int atptr, swtptr;
+  int cmd;
 
-    /* Structure d'E/S et pointeur associe */
-    STRUCT_E data;
-    STRUCT_E *ptr;
+  /* Message de debug eventuel */
+  //     printLog(ABI_DEBUG, "%s\n", DEVCTL_NOM);
 
-    /* Variables specifiques a cette fonction io_devctl particuliere */
-    int bus, adr, sar;
-    int saTable, pSaTable;
-    int pTamponR, aTamponR;
-    int espion_tr;
-    int zdr;  /* Adresses de la "Zone de donnees" des la voie en reception */
-    int atptr, swtptr;
-    int cmd;
+  /* Copie des donnees depuis l'espace utilisateur */
+  if (copy_from_user(&data, (STRUCT_E *)arg, sizeof(data)))
+    return -EFAULT;
+  ptr = &data;
 
-    /* Message de debug eventuel */
-//     printLog(ABI_DEBUG, "%s\n", DEVCTL_NOM);
+  /******************************/
+  /** Debut du code specifique **/
 
-    /* Copie des donnees depuis l'espace utilisateur */
-    if (copy_from_user(&data, (STRUCT_E *) arg, sizeof(data))) return -EFAULT;
-    ptr = &data;
+  /* Adresse 1553, sous-adresse en reception (par convention, c'est cette */
+  /* derniere seule qui est passee en argument).                          */
+  bus = ptr->bus & 0x01;
+  adr = ptr->adr & 0x1F;
+  sar = ptr->sar & 0x1F;
 
-    /******************************/
-    /** Debut du code specifique **/
+  /* Adresses des tables */
+  atptr = L(ATPTR);
+  swtptr = L(SWTPTR);
 
-    /* Adresse 1553, sous-adresse en reception (par convention, c'est cette */
-    /* derniere seule qui est passee en argument).                          */
-    bus = ptr->bus & 0x01;
-    adr = ptr->adr & 0x1F;
-    sar = ptr->sar & 0x1F;
+  /* Les tables sont elles bien definies ? */
+  if ((atptr == 0) || (swtptr == 0)) {
+    return -EADDRNOTAVAIL; /* L'une des tables n'est pas definie ! */
+  }
 
-    /* Adresses des tables */
-    atptr  = L(ATPTR);
-    swtptr = L(SWTPTR);
-  
-    /* Les tables sont elles bien definies ? */
-    if ((atptr == 0) || (swtptr == 0)) { 
-        return -EADDRNOTAVAIL;      /* L'une des tables n'est pas definie ! */
-    }
+  /* Recherche adresses des tampons */
+  pSaTable = atptr + adr + 32 * bus; /* Adresse ptr table des sous-adresses */
+  saTable = L(pSaTable);             /* Adresse table des sous-adresses */
+  //     printLog(ABI_DEBUG, "saTable : 0x%04X\n", saTable);
+  if (saTable == 0) {
+    //         printLog(ABI_ERROR, "RT%d n'est pas defini !\n", adr);
+    return -EADDRNOTAVAIL;
+  }
 
-    /* Recherche adresses des tampons */
-    pSaTable = atptr + adr + 32 * bus; /* Adresse ptr table des sous-adresses */
-    saTable = L(pSaTable);             /* Adresse table des sous-adresses */
-//     printLog(ABI_DEBUG, "saTable : 0x%04X\n", saTable);
-    if (saTable == 0) {
-//         printLog(ABI_ERROR, "RT%d n'est pas defini !\n", adr);
-        return -EADDRNOTAVAIL;
-    }
+  pTamponR = saTable + 0 + sar;
+  aTamponR = L(pTamponR);
+  //     printLog(ABI_DEBUG, "pTamponR=0x%04X aTamponR=0x%04X\n",
+  //                          pTamponR, aTamponR);
 
-    pTamponR = saTable + 0 + sar;
-    aTamponR = L(pTamponR);
-//     printLog(ABI_DEBUG, "pTamponR=0x%04X aTamponR=0x%04X\n",
-//                          pTamponR, aTamponR);
+  zdr = LI(saTable + sar, -1); /* Zone des donnees voie R */
 
-    zdr = LI(saTable + sar, -1);   /* Zone des donnees voie R */
+  if ((aTamponR == 0) || (zdr == 0)) {
+    //         printLog(ABI_ERROR,
+    //                  "La voie en reception RT%d,%d n'est pas definie !\n",
+    //                  adr, sar);
+    return -EADDRNOTAVAIL; /* La voie R n'est pas definie ! */
+  }
 
-    if ((aTamponR == 0) || (zdr == 0)) {
-//         printLog(ABI_ERROR,
-//                  "La voie en reception RT%d,%d n'est pas definie !\n",
-//                  adr, sar);
-        return -EADDRNOTAVAIL;      /* La voie R n'est pas definie ! */
-    }
+  /* On verifie qu'un rebouclage est bien effectue */
+  cmd = LI(zdr + IRCMD, -1);
+  if ((cmd & 0x0400) == 0) {
+    //         printLog(ABI_ERROR,
+    //                  "La voie "R" RT%d,%d n'est pas liee a une voie "T" !\n",
+    //                  adr, sar);
+    return -ENOTBLK; /* La voie R existe, mais n'est pas rebouclee */
+  }
 
-    /* On verifie qu'un rebouclage est bien effectue */
-    cmd = LI(zdr + IRCMD, -1);
-    if ((cmd & 0x0400) == 0) {
-//         printLog(ABI_ERROR,
-//                  "La voie "R" RT%d,%d n'est pas liee a une voie "T" !\n",
-//                  adr, sar);
-        return -ENOTBLK;      /* La voie R existe, mais n'est pas rebouclee */
-    }
+  /* RT programme en "espion TR" ? */
+  espion_tr = L(L(PROPTR) + adr + 32 * bus) & 2;
 
-    /* RT programme en "espion TR" ? */
-    espion_tr = L(L(PROPTR) + adr + 32 * bus) & 2;
+  //     /* Un debouclage ne peut pas etre effectue si l'abonne est */
+  //     /* en mode espion temps reel.                              */
+  //     if (espion_tr) return XXXX    // Et pourquoi donc ???
 
-//     /* Un debouclage ne peut pas etre effectue si l'abonne est */
-//     /* en mode espion temps reel.                              */
-//     if (espion_tr) return XXXX    // Et pourquoi donc ???
-        
-        
-        
-    /* Execution du debouclage */
-    E(pTamponR, 0);              /* Suppression tampon R */
-    EI(saTable + sar, 0, -1);    /* Suppression zd */
-    E(pTamponR + 64, 0);         /* RAZ nombre mots legal (utile ???) */
-    
+  /* Execution du debouclage */
+  E(pTamponR, 0);           /* Suppression tampon R */
+  EI(saTable + sar, 0, -1); /* Suppression zd */
+  E(pTamponR + 64, 0);      /* RAZ nombre mots legal (utile ???) */
 
-//     printLog(ABI_DEBUG,
-//             "Debouclage RT%d,%d\n",adr, sar);
+  //     printLog(ABI_DEBUG,
+  //             "Debouclage RT%d,%d\n",adr, sar);
 
+  /******************************************************************/
+  /** Debut du code generique de preparation du renvoi des donnees **/
 
+  /** Fin du code generique de preparation du renvoi des donnees **/
+  /****************************************************************/
 
-    /******************************************************************/
-    /** Debut du code generique de preparation du renvoi des donnees **/
+  /* Recopie des donnees a transferer */
+  /* Aucune donnee a transferer !!! */
 
+  /** Fin du code specifique **/
+  /****************************/
 
-    /** Fin du code generique de preparation du renvoi des donnees **/
-    /****************************************************************/
-
-    /* Recopie des donnees a transferer */
-        /* Aucune donnee a transferer !!! */
-
-    /** Fin du code specifique **/
-    /****************************/
-
-    return -EOK;
+  return -EOK;
 }
-
-
-
-

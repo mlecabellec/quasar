@@ -15,7 +15,7 @@
 /* sees par CWRITE .                                                          */
 /*                                                                            */
 /*                                                                            */
-/*                                                  Y. Guillemot - 1/8/1988   */
+/*                                                  Anonymized - 1/8/1988   */
 
 #include "noms_ext.h"
 

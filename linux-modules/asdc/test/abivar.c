@@ -6,7 +6,7 @@
 /*     Suppose que la fonction mmap() soit disponible dans le      */
 /*     driver du peripherique concerne ...                         */
 /*                                                                 */
-/*              Y. Guillemot,                                      */
+/*              Anonymized,                                      */
 /*                  Microcode SBS standard : le    18 avril 1994   */
 /*                  Microcode SDC V4.1 :     le 8 septembre 1994   */
 /*             Modif. ABIPMC2 et LynxOS :    le  31 juillet 2001   */

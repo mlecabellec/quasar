@@ -4,7 +4,7 @@
 /*                  Definition des constantes :                    */
 /*                  ---------------------------                    */
 /*                                                                 */
-/*                              Y. Guillemot, le 13 janvier 1994   */
+/*                              Anonymized, le 13 janvier 1994   */
 /*                              modif. (V2.1) le    20 juin 1994   */
 /*                              modif. (V?.?) le     3 aout 2001   */
 /*******************************************************************/

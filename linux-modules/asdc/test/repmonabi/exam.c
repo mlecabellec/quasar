@@ -4,7 +4,7 @@
 /*      Affichage "en clair" du fichier brut fourni par MONABI     */
 /*      ------------------------------------------------------     */
 /*                                                                 */
-/*                                   Y. Guillemot, le 16/12/1993   */
+/*                                   Anonymized, le 16/12/1993   */
 /*                                         modifie le  3/01/1994   */
 /*                                         modifie le  6/01/1994   */
 /*                                         modifie le  7/01/1994   */

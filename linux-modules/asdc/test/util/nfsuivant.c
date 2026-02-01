@@ -2,7 +2,7 @@
    /*                                                            */
    /*      RECHERCHE D'UN NOM DE FICHIER NON ENCORE UTILISE      */
    /*                                                            */
-   /*                         Y. Guillemot, le    10 avril 1991  */
+   /*                         Anonymized, le    10 avril 1991  */
    /*                       derniere modif. le    12 avril 1991  */
    /**************************************************************/
 

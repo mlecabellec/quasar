@@ -9,9 +9,9 @@
 **
 ** Prise en compte de la reecriture complete de asdcwq.c (suite
 ** a un mauvais fonctionnement manifeste)
-**                                             Y. Guillemot, le  8/09/2005
+**                                             Anonymized, le  8/09/2005
 **
-** Ajout compatibilite Linux 64 bits           Y. Guillemot, le 12/01/2009
+** Ajout compatibilite Linux 64 bits           Anonymized, le 12/01/2009
 */
 
 #ifndef		ASDCWQLINUX_H_

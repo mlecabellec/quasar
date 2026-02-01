@@ -4,9 +4,8 @@ This directory contains a user-space API and test suite for the General Standard
 
 ## API Information
 
-*   **Copyright:** ArianeGroup (2020)
-*   **Description:** This is a C/C++ API for controlling the GSC 16AI64SSA data acquisition card from user-space.
-*   **Dependencies:** The API and test code rely on a utility library called "mastol," which appears to be from ArianeGroup.
+
+*   **Description:** This is a C/C++ API for controlling the GSC 16AI64SSA data acquisition card from 
 
 ## Functionality
 

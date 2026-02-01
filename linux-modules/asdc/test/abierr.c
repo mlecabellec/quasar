@@ -6,7 +6,7 @@
 /*     Suppose que la fonction mmap() soit disponible dans le      */
 /*     driver du peripherique concerne ...                         */
 /*                                                                 */
-/*                              Y. Guillemot, le 30 janvier 1991   */
+/*                              Anonymized, le 30 janvier 1991   */
 /*                            derniere modif. le  4 fevrier 1991   */
 /*                             adaptation SDC le    31 mars 1992   */
 /*                            derniere modif. le     8 mars 1993   */

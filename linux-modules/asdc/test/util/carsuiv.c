@@ -25,7 +25,7 @@
 /*   Une chaine de caractere commence et s'acheve par '"'                  */
 /*   Un commentaire ne peut pas etre inclu dans une chaine                 */
 /*                                                                         */
-/*                                        Y. Guillemot, le 22/11/1990      */
+/*                                        Anonymized, le 22/11/1990      */
 /*                                      derniere modif. le                 */
 /***************************************************************************/
 

@@ -4,7 +4,8 @@
 /* DriverIncludes.h : Regroupement des directives "#include"        */
 /* utilisees par le driver.                                         */
 /*                                                                  */
-/*                             ASTRIUM ST - TEA343 - Yves Guillemot */
+/*                             ************ - ************ - ************
+ * Anonymized */
 /********************************************************************/
 /************************************************************/
 
@@ -18,27 +19,27 @@ Quand       Qui   Quoi
 #ifndef PCIE6509_DRIVERINCLUDES_H_
 #define PCIE6509_DRIVERINCLUDES_H_
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/wait.h>
-#include <linux/delay.h>
-#include <linux/param.h>
 #include <asm/uaccess.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/param.h>
+#include <linux/pci.h>
 #include <linux/sysctl.h>
 #include <linux/version.h>
+#include <linux/wait.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
-#include <linux/uaccess.h>
 #include <linux/sched/signal.h>
+#include <linux/uaccess.h>
 #else
 #include <linux/sched.h>
 #endif
 
-#include <linux/kdev_t.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/kdev_t.h>
 #include <linux/types.h>
 
 #include "pcie6509.h"
@@ -46,5 +47,3 @@ Quand       Qui   Quoi
 #include "pcie6509_version.h"
 
 #endif /* PCIE6509_DRIVERINCLUDES_H_ */
-
-

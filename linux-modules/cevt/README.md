@@ -4,7 +4,7 @@ This directory contains the source code for the "CEVT" Linux kernel module.
 
 ## Module Information
 
-*   **Original Author:** Y. Guillemot
+*   **Original Author:** Anonymized
 *   **Description:** This is a "pseudo-driver" called "Concentrateur d'EVenemenTs" (Event Concentrator). It is not a driver for a specific piece of hardware. Instead, it acts as a software layer that works in conjunction with other hardware drivers, such as `asdc`.
 *   **Language:** The source code comments are primarily in French.
 

@@ -4,7 +4,7 @@
 /*                                                                 */
 /*      CONTROLE DE LA COHERENCE DU CONTENU DE CES STRUCTURES      */
 /*                                                                 */
-/*                            Y. Guillemot, le       16 mai 1994   */
+/*                            Anonymized, le       16 mai 1994   */
 /*                 Carte SBS1553 ABI/PMC2 : le   6 novembre 2000   */
 /*              Mise en conformite gcc v4 : le   15 fevrier 2008   */
 /*                          derniere modif. le                     */

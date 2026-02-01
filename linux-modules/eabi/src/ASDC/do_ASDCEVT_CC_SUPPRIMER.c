@@ -99,7 +99,7 @@ do_ASDCEVT_CC_SUPPRIMER(int vfxNum, int asdcNum, struct asdc_varg *dst, unsigned
     *             ==> Cette strategie pourra toujours etre revue
     *                 ulterieurement, si le besoin s'en fait sentir ...
     *
-    *                                     Y. Guillemot, le 5/6/2002
+    *                                     Anonymized, le 5/6/2002
     */
 
     /* Fin normale de ASDCEVT_CC_SUPPRIMER */

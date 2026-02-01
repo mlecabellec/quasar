@@ -8,7 +8,7 @@
  *     ou, pour LynxOS, STRUCTURE DES VARIABLES STATIQUES DU PILOTE     *
  *                                                                      *
  *                                                                      *
- *                                         Y.Guillemot, le  9/09/2002   *
+ *                                         Y.Anonymized, le  9/09/2002   *
  *                           Implementation du "select" le 23/09/2002   *
  *	           Debut traitement compatibilite Linux le  3/10/2002   *
  *        Adapte a kernel recent (> 2.6.18) et EMUABI : le 18/04/2013   *

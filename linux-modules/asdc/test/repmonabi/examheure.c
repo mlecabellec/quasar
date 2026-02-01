@@ -6,7 +6,7 @@
 /*                                                                 */
 /*          Lecture et decodage d'un bloc DEBUT ou FIN             */
 /*                                                                 */
-/*                                   Y. Guillemot, le 16/12/1993   */
+/*                                   Anonymized, le 16/12/1993   */
 /*                                         modifie le  3/01/1994   */
 /*                                         modifie le  6/01/1994   */
 /*                                         modifie le  7/01/1994   */

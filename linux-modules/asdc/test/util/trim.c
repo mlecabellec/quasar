@@ -2,7 +2,7 @@
 /*   Suppression des caracteres blancs (et tabs) places de part   */
 /*   et d'autre d'une chaine de caracteres                        */
 /*                                                                */
-/*                            Y. Guillemot, le 14 octobre 1989    */
+/*                            Anonymized, le 14 octobre 1989    */
 /******************************************************************/
 
 

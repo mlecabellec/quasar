@@ -97,7 +97,7 @@ This document provides a summary of the Linux kernel modules found in this repos
 ## pcie6509_simusol
 
 *   **Hardware:** National Instruments PCIe-6509 digital I/O card.
-*   **Features:** Third-party Linux driver (from Astrium ST). 96 bidirectional digital I/O lines. TTL/CMOS compatibility. Each channel can be individually configured as an input or output. This is a separate, independent implementation from `pcie6509`.
+*   **Features:** Third-party Linux driver (from ************). 96 bidirectional digital I/O lines. TTL/CMOS compatibility. Each channel can be individually configured as an input or output. This is a separate, independent implementation from `pcie6509`.
 
 ## rfm2g
 

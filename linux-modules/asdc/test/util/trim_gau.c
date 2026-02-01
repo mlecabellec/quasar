@@ -2,7 +2,7 @@
 /*   Suppression des caracteres blancs (et tabs) places a GAUCHE   */
 /*   d'une chaine de caracteres                                    */
 /*                                                                 */
-/*                             Y. Guillemot, le 14 octobre 1989    */
+/*                             Anonymized, le 14 octobre 1989    */
 /*                            derniere modif. le 3 fevrier 1989    */
 /*******************************************************************/
 

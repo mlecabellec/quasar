@@ -6,7 +6,7 @@
  *         Definition des registres materiels et des constantes         *
  *                                                                      *
  *                                                                      *
- *                                         Y.Guillemot, le  9/09/2002   *
+ *                                         Y.Anonymized, le  9/09/2002   *
  *            (XS ?) : Declaration cevt_signaler_date() le 22/05/2003   *
  *                                   Adaptation a Linux le 18/10/2006   *
  *                       Adaptation au TSC (sous Linux) le 25/10/2006   *

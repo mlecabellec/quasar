@@ -4,7 +4,7 @@
 /*                                                                 */
 /*   La fonction renvoie l'adresse de cette chaine                 */
 /*                                                                 */
-/*                             Y. Guillemot, le 20 octobre 1989    */
+/*                             Anonymized, le 20 octobre 1989    */
 /*******************************************************************/
 
 

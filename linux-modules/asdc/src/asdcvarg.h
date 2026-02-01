@@ -8,7 +8,7 @@
  *     ou, pour LynxOS, STRUCTURE DES VARIABLES STATIQUES DU PILOTE     *
  *                                                                      *
  *                                                                      *
- *                                         Y.Guillemot, le 25/09/1994   *
+ *                                         Y.Anonymized, le 25/09/1994   *
  *                                      derniere modif. le              *
  *                                               v3.3 : le 13/04/1995   *
  *                                               v3.4 : le  1/12/1995   *

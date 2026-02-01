@@ -9,7 +9,7 @@
  *    (Provisoire, en attendant remplacement par spin_locks ...)        *
  *                         ==================                           *
  *                                                                      *
- *                       Y.Guillemot, pour asdc v4.13 : le 25/10/2004   *
+ *                       Y.Anonymized, pour asdc v4.13 : le 25/10/2004   *
  *                       Integre tel quel a cevt v1.5 : le  9/01/2008   *
  *                    Adaptation aux processurs 64 bits le 12/01/2009   *
  ************************************************************************/

@@ -6,7 +6,7 @@ This directory contains the Linux kernel module for the Acromag PMC-VFX70, a use
 
 *   **Product:** PMC-VFX70
 *   **Manufacturer:** Acromag
-*   **Authors:** FJM (Acromag), Louis Herve (Astrium), Yves Guillemot (Astrium)
+*   **Authors:** FJM (Acromag), Louis Herve (Astrium), ************ Anonymized (Astrium)
 *   **Description:** This is a Linux driver for the Acromag PMC-VFX70, a PMC card with a Xilinx Virtex-5 FPGA.
 
 ## Hardware Overview

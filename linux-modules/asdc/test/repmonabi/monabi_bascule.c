@@ -11,7 +11,7 @@
    
    Le pseudo-device est "/dev/asdc1" par defaut
    
-   				                    Y. Guillemot, le 6/01/1994
+   				                    Anonymized, le 6/01/1994
 							   modif. le 4/10/1994
 				     Adaptation LynxOS et ABIPMC2 le 3/08/2001
 						  derniere modif. le

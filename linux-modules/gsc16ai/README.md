@@ -7,7 +7,7 @@ This directory contains the Linux kernel module for the General Standards Corpor
 *   **Product:** 16AI64SSA
 *   **Manufacturer:** General Standards Corporation
 *   **Description:** This is a Linux driver for the 16AI64SSA, a 16-bit, 64-channel, simultaneous sampling analog input card.
-*   **Maintainer (likely):** ArianeGroup (based on the copyright of the associated user-space API).
+*   **Maintainer (likely):** ************ (based on the copyright of the associated user-space API).
 
 ## Hardware Overview
 
@@ -29,5 +29,5 @@ For more information about the hardware, refer to the General Standards Corporat
 
 *   The driver source code is located in the `driver` directory within the extracted tarball.
 *   The `release.txt` file provides a detailed revision history of the driver.
-*   The `gsc16ai_api` directory contains a user-space API and test suite for this driver, which is maintained by ArianeGroup.
+*   The `gsc16ai_api` directory contains a user-space API and test suite for this driver, which is maintained by ************.
 *   The driver is designed to be used with the `gsc16ai_api` to provide a complete solution for using the 16AI64SSA card.

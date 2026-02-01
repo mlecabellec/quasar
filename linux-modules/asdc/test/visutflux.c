@@ -4,7 +4,7 @@
 /*           AFFICHAGE DES TAMPONS DES FIFO D'UN FLUX BC           */
 /*                                                                 */
 /*                                                                 */
-/*                            Y. Guillemot, le   31 octobre 2001   */
+/*                            Anonymized, le   31 octobre 2001   */
 /*                Mise en conformite gcc v4 le   15 fevrier 2008   */
 /*                                   modif. le                     */
 /*                                 derniere le                     */

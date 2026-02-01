@@ -2,7 +2,7 @@
 /*   MONABI : Logiciel d'espionnage 1553 utilisant une carte ABI   */
 /*                                                                 */
 /*                                                                 */
-/*                              Y. Guillemot, le 13 janvier 1994   */
+/*                              Anonymized, le 13 janvier 1994   */
 /*                                    modifie le    30 mars 1994   */
 /*                            derniere modif. le    31 mars 1994   */
 /*                                                                 */

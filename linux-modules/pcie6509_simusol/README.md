@@ -5,8 +5,8 @@ This directory contains a Linux kernel module for the National Instruments PCIe-
 ## Module Information
 
 *   **Hardware:** National Instruments PCIe-6509
-*   **Author:** Yves Guillemot
-*   **Company:** Astrium ST (now part of Airbus Defence and Space)
+*   **Author:** ************ Anonymized
+*   **Company:** ************ (now part of Airbus Defence and Space)
 *   **Description:** This is a third-party Linux driver for the National Instruments PCIe-6509, a 96-channel, parallel digital I/O card. The comments in the source code are primarily in French.
 
 ## Hardware Overview

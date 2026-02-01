@@ -8,7 +8,7 @@
 /*            (impression conditionnelle selon erreurs             */
 /*                rencontrees et options specifiees)               */
 /*                                                                 */
-/*                       Y. Guillemot (EXAM v2.5), le 20/05/1997   */
+/*                       Anonymized (EXAM v2.5), le 20/05/1997   */
 /*                             modif. (EXAM v2.6), le 21/05/1997   */
 /*******************************************************************/
 

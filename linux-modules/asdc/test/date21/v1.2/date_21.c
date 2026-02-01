@@ -7,7 +7,7 @@
    
    ===> Il faut etre superuser ou pouvoir le devenir !
    
-                                Y. Guillemot, le    11 juin 1997
+                                Anonymized, le    11 juin 1997
                                Remis en forme le 26 fevrier 1998
                                   et complete le    17 mars 1998
                                   

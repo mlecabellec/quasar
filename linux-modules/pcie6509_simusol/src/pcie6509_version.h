@@ -2,7 +2,8 @@
 /* Driver Linux pour carte E/S TOR PCIe-6509 de National Instrument */
 /*                                                                  */
 /*                                                                  */
-/*                             ASTRIUM ST - TEA343 - Yves Guillemot */
+/*                             ************ - ************ - ************
+ * Anonymized */
 /********************************************************************/
 
 /*
@@ -22,13 +23,9 @@ V1.1 : 25/03/2014
 #ifndef PCIE6509_VERSION_H
 #define PCIE6509_VERSION_H
 
+#define PCIE6509_NOM "PCIE6509"
+#define PCIE6509_VERSION 1
+#define PCIE6509_REVISION 1
+#define PCIE6509_DATE "25 mars 2014"
 
-#define PCIE6509_NOM             "PCIE6509"
-#define PCIE6509_VERSION         1
-#define PCIE6509_REVISION        1
-#define PCIE6509_DATE            "25 mars 2014"
-
-
-#endif  /* PCIE6509_VERSION_H */
-
-
+#endif /* PCIE6509_VERSION_H */

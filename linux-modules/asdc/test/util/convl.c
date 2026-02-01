@@ -8,7 +8,7 @@
    /*                                                            */
    /*         Renvoie 0 si tout s'est bien passe, -1 autrement.  */
    /*                                                            */
-   /*                         Y. Guillemot, le 2 janvier 1991    */
+   /*                         Anonymized, le 2 janvier 1991    */
    /*                       derniere modif. le 1 fevrier 1991    */
    /*                                                            */
    /*            Mise en conformite gcc v4, le     15/02/2008    */

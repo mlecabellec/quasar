@@ -3,7 +3,7 @@
 /*   AFFICHAGE DES STRUCTURES DU DRIVER ASDC LIEES AUX FLUX BC     */
 /*                                                                 */
 /*                                                                 */
-/*                            Y. Guillemot, le   26 octobre 2001   */
+/*                            Anonymized, le   26 octobre 2001   */
 /*                                   modif. le   7 novembre 2001   */
 /*                    modif. pour asdc v4.8 le   7 novembre 2002   */
 /*                   modif. pour asdc v4.12 le       3 aout 2004   */

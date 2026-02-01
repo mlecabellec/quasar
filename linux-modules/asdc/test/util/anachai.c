@@ -43,7 +43,7 @@
 /*                                                                   */
 /*                                                                   */
 /*                                                                   */
-/*                                Y. Guillemot, le 26 octobre 1990   */
+/*                                Anonymized, le 26 octobre 1990   */
 /*                              derniere modif. le 29 octobre 1990   */
 /*                                                                   */
 /*                   Mise en conformite gcc v4, le 15 fevrier 2008   */

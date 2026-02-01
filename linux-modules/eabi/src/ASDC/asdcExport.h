@@ -7,7 +7,7 @@
  *      au profit du driver CEVT.                                       *
  *                                                                      *
  *                                                                      *
- *  Version initiale :                     Y.Guillemot, le 11/04/2013   *
+ *  Version initiale :                     Y.Anonymized, le 11/04/2013   *
  *  Modification types pour compatibilite 32b/64b       le 18/06/2014   *
  ************************************************************************/
 

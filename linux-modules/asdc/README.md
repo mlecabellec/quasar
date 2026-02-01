@@ -4,7 +4,7 @@ This directory contains the Linux kernel module for the SBS Technologies (now Ab
 
 ## Module Information
 
-*   **Original Author:** Y. Guillemot
+*   **Original Author:** Anonymized
 *   **Description:** This driver provides an interface to the SBS Technologies MIL-STD-1553 interface cards, such as the ABI (Advanced Bus Interface) and ASF (Advanced Single Function) series. The name "ASDC" is used throughout the source code, but the hardware is from SBS.
 *   **Language:** The source code comments are primarily in French.
 

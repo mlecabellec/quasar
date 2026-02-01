@@ -19,7 +19,7 @@
 /*                                                                         */
 /*                                                                         */
 /*                                                                         */
-/*                                      Y. Guillemot, le    4 avril 1991   */
+/*                                      Anonymized, le    4 avril 1991   */
 /*                                                                         */
 /*                         Mise en conformite gcc v4, le     15/02/2008    */
 /*                                    derniere modif. le                   */

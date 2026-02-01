@@ -5,7 +5,7 @@
  *                                                                      *
  *        Fonctions d'allocation de blocs dans la memoire de l'AMI      *
  *                                                                      *
- *                                         Y.Guillemot, le 23/01/1991   *
+ *                                         Y.Anonymized, le 23/01/1991   *
  *                                      derniere modif. le 29/01/1991   *
  *                         Adaptation a microcode SDC : le 31/03/1992   *
  *            Modification pour gestion memoire libre : le 17/05/1994   *

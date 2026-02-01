@@ -3,7 +3,7 @@
    /*                SIMULER PAR UNE "CARTE" AMI/ABI               */
    /*                MUNIE DU MICROCODE MODIFIE SDC                */
    /*                                                              */
-   /*                         Y. Guillemot, le     13 avril 1991   */
+   /*                         Anonymized, le     13 avril 1991   */
    /*                                modif. le        7 mai 1991   */
    /*                                modif. le       12 mai 1991   */
    /*                       derniere modif. le      21 juin 1991   */

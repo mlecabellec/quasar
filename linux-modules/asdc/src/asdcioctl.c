@@ -6,7 +6,7 @@
  *                          Fonction ioctl()                            *
  *                         ==================                           *
  *                                                                      *
- *                                         Y.Guillemot, le 24/01/1991   *
+ *                                         Y.Anonymized, le 24/01/1991   *
  *                                               modif. le  1/02/1991   *
  *                                               modif. le 14/03/1991   *
  *                                               modif. le 18/03/1991   *
@@ -6355,7 +6355,7 @@ void asdcmsg_fin(struct asdc_varg *dst)
           *             ==> Cette strategie pourra toujours etre revue
           *                 ulterieurement, si le besoin s'en fait sentir ...
           *
-          *					Y. Guillemot, le 5/6/2002
+          *					Anonymized, le 5/6/2002
           */
 
           /* Fin normale de ASDCEVT_ABO_AJOUTER */
@@ -6444,7 +6444,7 @@ void asdcmsg_fin(struct asdc_varg *dst)
           *             ==> Cette strategie pourra toujours etre revue
           *                 ulterieurement, si le besoin s'en fait sentir ...
           *
-          *					Y. Guillemot, le 5/6/2002
+          *					Anonymized, le 5/6/2002
           */
 
           /* Fin normale de ASDCEVT_ABO_AJOUTER */
@@ -6555,7 +6555,7 @@ void asdcmsg_fin(struct asdc_varg *dst)
           *             ==> Cette strategie pourra toujours etre revue
           *                 ulterieurement, si le besoin s'en fait sentir ...
           *
-          *					Y. Guillemot, le 5/6/2002
+          *					Anonymized, le 5/6/2002
           */
 
           /* Fin normale de ASDCEVT_CC_AJOUTER */
@@ -6637,7 +6637,7 @@ void asdcmsg_fin(struct asdc_varg *dst)
           *             ==> Cette strategie pourra toujours etre revue
           *                 ulterieurement, si le besoin s'en fait sentir ...
           *
-          *					Y. Guillemot, le 5/6/2002
+          *					Anonymized, le 5/6/2002
           */
 
           /* Fin normale de ASDCEVT_CC_SUPPRIMER */

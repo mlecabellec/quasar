@@ -1,7 +1,7 @@
 /*********************************************************/
 /*   Extraction et mise en forme de la date du systeme   */
 /*                                                       */
-/*                                 Y. Guillemot          */
+/*                                 Anonymized          */
 /*                   derniere modif. le 8 janvier 1991   */
 /*                                                       */
 /*        Mise en conformite gcc v4 le 15 fevrier 2008   */

@@ -1,6 +1,6 @@
 
 /* Essai de liberation memoire d'echange via ASDCLIBERE */
-/*                     Y. Guillemot, le 31 octobre 2001 */
+/*                     Anonymized, le 31 octobre 2001 */
 
 #include <stdio.h> 
 #include <stdlib.h>

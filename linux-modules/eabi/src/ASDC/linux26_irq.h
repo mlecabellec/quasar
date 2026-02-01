@@ -9,7 +9,7 @@
  *    (Provisoire, en attendant remplacement par spin_locks ...)        *
  *                         ==================                           *
  *                                                                      *
- *                            Y.Guillemot, pour v4.13 : le 25/10/2004   *
+ *                            Y.Anonymized, pour v4.13 : le 25/10/2004   *
  *                    Adaptation aux processurs 64 bits le 12/01/2009   *
  ************************************************************************/
 

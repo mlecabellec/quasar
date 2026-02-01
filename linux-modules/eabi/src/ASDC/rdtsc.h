@@ -9,7 +9,7 @@
 /*    /proc/cpuinfo) qui permet de ramener a une grandeur      */
 /*    standard la valeur lue par rdtsc()                       */
 /*                                                             */
-/*                               Y. Guillemot, le 26/11/2004   */
+/*                               Anonymized, le 26/11/2004   */
 /*                                                             */
 /*
 

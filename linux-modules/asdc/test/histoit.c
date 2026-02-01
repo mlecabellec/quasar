@@ -3,7 +3,7 @@
 /*     AFFICHAGE DE L'HISTOGRAMME DU NOMBRE D'IT DANS LA TABLE     */
 /*                                                                 */
 /*                                                                 */
-/*                             Y. Guillemot, le 27 novembre 2001   */
+/*                             Anonymized, le 27 novembre 2001   */
 /*                  Mise en conformite gcc v4 le 15 fevrier 2008   */
 /*                           derniere modif. le                    */
 /*******************************************************************/

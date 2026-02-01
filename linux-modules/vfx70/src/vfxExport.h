@@ -7,7 +7,7 @@
  *     utilisateur.                                                     *
  *                                                                      *
  *                                                                      *
- *  Version initiale :                     Y.Guillemot, le  5/04/2013   *
+ *  Version initiale :                     Y.Anonymized, le  5/04/2013   *
  ************************************************************************/
 
 

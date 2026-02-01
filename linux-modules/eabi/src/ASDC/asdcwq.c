@@ -14,11 +14,11 @@
 **      YG, le 26/10/2004
 **
 ** Reecriture complete (car mauvais fonctionnement manifeste)
-**                                             Y. Guillemot, le  8/09/2005
+**                                             Anonymized, le  8/09/2005
 **
-** Ajout #include <linux/sched.h>              Y. Guillemot, le 28/11/2007
+** Ajout #include <linux/sched.h>              Anonymized, le 28/11/2007
 **
-** Ajout compatibilite Linux 64 bits           Y. Guillemot, le 12/01/2009
+** Ajout compatibilite Linux 64 bits           Anonymized, le 12/01/2009
 **
 ** Rassemblement des includes dans un seul fichier       YG, le 16/06/2014
 */

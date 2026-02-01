@@ -4,7 +4,7 @@
 /*                     AUX FLUX D'EVENEMENTS RT                    */
 /*                                                                 */
 /*                                                                 */
-/*                            Y. Guillemot, le      10 juin 2002   */
+/*                            Anonymized, le      10 juin 2002   */
 /*                                   modif. le                     */
 /*                                 derniere le                     */
 /*******************************************************************/

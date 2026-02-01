@@ -9,7 +9,7 @@
  *                                                                      *
  *                         ==================                           *
  *                                                                      *
- *                                         Y.Guillemot, le  3/10/2002   *
+ *                                         Y.Anonymized, le  3/10/2002   *
  *                                          pour v1.1 : le  3/10/2002   *
  *                                          pour v1.4 : le 18/10/2006   *
  *   Inclusion conditionnelle de linux26_irq.h (v1.5) : le  9/01/2008   *

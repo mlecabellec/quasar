@@ -6,7 +6,7 @@
  *                     VARIABLES GLOBALES DU PILOTE                     *
  *                                                                      *
  *                                                                      *
- *  Version initiale :                     Y.Guillemot, le  4/04/2013   *
+ *  Version initiale :                     Y.Anonymized, le  4/04/2013   *
  ************************************************************************/
 
 

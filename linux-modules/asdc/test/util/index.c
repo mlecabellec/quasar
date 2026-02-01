@@ -10,7 +10,7 @@
                     /* Peut-etre aurait-il mieux valu renvoyer un  */
                     /* pointeur et non une "position" ?            */
                     /*                                             */
-                    /*                     Y. Guillemot - 1/8/1988 */
+                    /*                     Anonymized - 1/8/1988 */
                     /*                                             */
                     /*    Mise en conformite gcc v4, le 15/02/2008 */
 

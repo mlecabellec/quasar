@@ -15,7 +15,7 @@
    /*          La fonction renvoie la valeur fournie par         */
    /*          l'operateur                                       */
    /*                                                            */
-   /*                           Y. Guillemot, le 10 mars 1992    */
+   /*                           Anonymized, le 10 mars 1992    */
    /*                         derniere modif. le                 */
    /**************************************************************/
 

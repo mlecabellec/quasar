@@ -5,7 +5,7 @@
 /* erreur, etc...) dans syslog en fonction du parametrage   */
 /* choisi et en fonction de la nature du message.           */
 /*                                                          */
-/*                      ASTRIUM ST - TE641 - Yves Guillemot */
+/*                      ************ - TE641 - ************ Anonymized */
 /************************************************************/
 
 /*
@@ -16,16 +16,11 @@ Quand       Qui   Quoi
 
 */
 
-
-
 #include "DriverIncludes.h"
-
 
 /* Valeurs par defaut des seuils d'ecriture */
 static int seuilSyslog = DRV_INFO;
 static int seuilStderr = DRV_WARNING;
-
-
 
 /*
  * Modification d'un seuil d'ecriture :
@@ -35,28 +30,24 @@ static int seuilStderr = DRV_WARNING;
  * Le seuil d'ecriture associe a la sortir <destination> est
  * regle a la valeur <niveau>.
  */
-void initPrintLog(int destination, int niveau)
-{
-printk("destination=%d niveau=%d SYSLOG=%d\n", destination, niveau, SYSLOG);
-    if (destination == SYSLOG) {
-      printk("%s: Nouveau loglevel = %d\n", PCIE6509_NOM, niveau);  
-    }
+void initPrintLog(int destination, int niveau) {
+  printk("destination=%d niveau=%d SYSLOG=%d\n", destination, niveau, SYSLOG);
+  if (destination == SYSLOG) {
+    printk("%s: Nouveau loglevel = %d\n", PCIE6509_NOM, niveau);
+  }
 
-    switch(destination) {
-        case SYSLOG :
-            seuilSyslog = niveau;
-            break;
-        case STDERR :
-            seuilStderr = niveau;
-            break;
-        default :
-            printLog(DRV_WARNING,
-                     "initLog: destination %d anormale\n",
-                     destination);
-            break;
-    }
+  switch (destination) {
+  case SYSLOG:
+    seuilSyslog = niveau;
+    break;
+  case STDERR:
+    seuilStderr = niveau;
+    break;
+  default:
+    printLog(DRV_WARNING, "initLog: destination %d anormale\n", destination);
+    break;
+  }
 }
-
 
 /*
  * Ecriture d'un message d'information ou d'erreur :
@@ -74,55 +65,57 @@ printk("destination=%d niveau=%d SYSLOG=%d\n", destination, niveau, SYSLOG);
  *    DRV_INFO    : Une information
  *    DRV_DEBUG   : Message utile en phase de mise au point uniquement
  */
-void printLog(const int msglevel,
-              const char *format,
-                      ...)
-{
-    va_list ap;
-    char * loglevel;
-    char formatComplet[150];
-    char *fmt;
-    
-    fmt = formatComplet;
+void printLog(const int msglevel, const char *format, ...) {
+  va_list ap;
+  char *loglevel;
+  char formatComplet[150];
+  char *fmt;
 
-/* Le code commente ci-desous etait valide sous QNX, ou le "resource    */
-/* manager" est une application en espace utilisateur. Il n'est plus    */
-/* fonctionnel sous Linux ou le driver est execute dans l'espace noyau. */
-/*
-    if (msglevel >= seuilStderr) {
-        va_start(ap, format);
-            vfprintf(stderr, format, (va_list)ap);
-        va_end(ap);
+  fmt = formatComplet;
+
+  /* Le code commente ci-desous etait valide sous QNX, ou le "resource    */
+  /* manager" est une application en espace utilisateur. Il n'est plus    */
+  /* fonctionnel sous Linux ou le driver est execute dans l'espace noyau. */
+  /*
+      if (msglevel >= seuilStderr) {
+          va_start(ap, format);
+              vfprintf(stderr, format, (va_list)ap);
+          va_end(ap);
+      }
+  */
+
+  if (strlen(format) > (sizeof(formatComplet) - 5)) {
+    printk(KERN_CRIT "qabil:logMsg(): format trop long : \n\"%s\"\n", format);
+    return;
+  }
+
+  if (msglevel >= seuilSyslog) {
+
+    switch (msglevel) {
+    case DRV_FATAL:
+      loglevel = KERN_CRIT;
+      break;
+    case DRV_ERROR:
+      loglevel = KERN_ERR;
+      break;
+    case DRV_WARNING:
+      loglevel = KERN_WARNING;
+      break;
+    case DRV_INFO:
+      loglevel = KERN_INFO;
+      break;
+    case DRV_DEBUG:
+      loglevel = KERN_DEBUG;
+      break;
+    default:
+      loglevel = KERN_ERR; /* Ne devrait pas arriver */
     }
-*/
 
-    if (strlen(format) > (sizeof(formatComplet) - 5)) {
-        printk(KERN_CRIT "qabil:logMsg(): format trop long : \n\"%s\"\n",
-               format);
-        return;
-    }
-    
-    if (msglevel >= seuilSyslog) {
+    strcpy(formatComplet, loglevel);
+    strcat(formatComplet, format);
 
-        switch(msglevel) {
-            case DRV_FATAL :   loglevel = KERN_CRIT;    break;
-            case DRV_ERROR :   loglevel = KERN_ERR;     break;
-            case DRV_WARNING : loglevel = KERN_WARNING; break;
-            case DRV_INFO :    loglevel = KERN_INFO;    break;
-            case DRV_DEBUG :   loglevel = KERN_DEBUG;   break;
-            default :          loglevel = KERN_ERR; /* Ne devrait pas arriver */
-        }
-
-        strcpy(formatComplet, loglevel);
-        strcat(formatComplet, format);
-
-        va_start(ap, format);
-            vprintk(format, ap);
-        va_end(ap);
-    }
+    va_start(ap, format);
+    vprintk(format, ap);
+    va_end(ap);
+  }
 }
-
-
-
-
-

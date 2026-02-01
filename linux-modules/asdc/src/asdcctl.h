@@ -5,7 +5,7 @@
  *                                                                      *
  *         Definition des registres materiels et des constantes         *
  *                                                                      *
- *                                         Y.Guillemot, le 23/01/1991   *
+ *                                         Y.Anonymized, le 23/01/1991   *
  *                                               modif. le 30/01/1991   *
  *                                      derniere modif. le  4/09/1991   *
  *                         Adaptation a microcode SDC :  le 31/3/1992   *
