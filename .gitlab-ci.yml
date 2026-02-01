@@ -20,6 +20,6 @@ debian-bookworm:
   image: debian:bookworm
   extends: .build_template
 
-debian-testing:
-  image: debian:testing
+debian-trixie:
+  image: debian:trixie
   extends: .build_template
