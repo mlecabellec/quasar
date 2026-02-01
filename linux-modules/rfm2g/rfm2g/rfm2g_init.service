@@ -1,9 +1,0 @@
-[Unit]
-Description=RFM2G Driver Service
-
-[Service]
-Type=simple
-ExecStart=/etc/init.d/rfm2g_init start
-
-[Install]
-WantedBy=multi-user.target

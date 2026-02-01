@@ -1,2 +1,0 @@
-# Ensure tsyncpci /dev entry is named and located properly
-KERNEL="tsyncpci*",    NAME="%k", MODE="0666"
