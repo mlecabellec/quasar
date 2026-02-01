@@ -39,6 +39,17 @@ jobs:
       - name: Test CMake Projects
         run: ctest --test-dir build-projects --output-on-failure
 
+      - name: Package (Debian)
+        run: |
+          cd build-projects
+          cpack -G DEB
+
+      - name: Upload Debian Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: quasar-deb-${{ matrix.container }}
+          path: build-projects/*.deb
+
       - name: Prepare Linux Modules (EtherCAT)
         # This step might fail if the kernel headers don't match uname -r
         # We will try to configure it.

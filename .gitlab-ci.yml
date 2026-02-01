@@ -12,9 +12,17 @@ stages:
     - cmake --build build-projects
     - echo "Running tests..."
     - ctest --test-dir build-projects --output-on-failure
+    - echo "Packaging..."
+    - cd build-projects && cpack -G DEB
     - echo "Configuring linux-modules..."
+    - cd ..
     - cmake -S linux-modules -B build-modules
     # Note: explicit build of linux-modules is skipped due to potential kernel mismatch in CI containers
+
+  artifacts:
+    paths:
+      - build-projects/*.deb
+    expire_in: 1 week
 
 debian-bookworm:
   image: debian:bookworm

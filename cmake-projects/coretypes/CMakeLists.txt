@@ -19,6 +19,19 @@ target_include_directories(quasar_coretypes PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+# Installation
+install(TARGETS quasar_coretypes
+    EXPORT quasar_coretypes_targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(DIRECTORY include/
+    DESTINATION include
+)
+
 # Testing
 enable_testing()
 add_subdirectory(test)

@@ -76,6 +76,19 @@ target_include_directories(quasar_named PUBLIC
     ${TINYXML2_INCLUDE_DIRS}
 )
 
+# Installation
+install(TARGETS quasar_named
+    EXPORT quasar_named_targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(DIRECTORY include/
+    DESTINATION include
+)
+
 target_link_libraries(quasar_named PUBLIC
     quasar_coretypes
     ${YAML_CPP_LIBRARIES}
