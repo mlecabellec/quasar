@@ -13,12 +13,6 @@ Quasar shall:
 
 
 
-Quasar should:
-- Have a robust design compatible with DOE-178A class C.
-- Have a secure design compatible with IEC 62443-4-2.
-- Have a reliable design compatible with IEC 61508-3.
-- Have a maintainable design compatible with IEC 61508-3.
-
 # Purpose of this file
 
 This file is intended to collect and index all the development notes and information about the Quasar project. It is also intended to be used as a reference for the coding agents.
