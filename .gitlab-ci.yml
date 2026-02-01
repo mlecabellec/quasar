@@ -1,0 +1,25 @@
+stages:
+  - build_and_test
+
+.build_template:
+  stage: build_and_test
+  before_script:
+    - apt-get update
+    - apt-get install -y cmake g++ make git autoconf automake libtool linux-headers-amd64
+  script:
+    - echo "Building cmake-projects..."
+    - cmake -S cmake-projects -B build-projects
+    - cmake --build build-projects
+    - echo "Running tests..."
+    - ctest --test-dir build-projects --output-on-failure
+    - echo "Configuring linux-modules..."
+    - cmake -S linux-modules -B build-modules
+    # Note: explicit build of linux-modules is skipped due to potential kernel mismatch in CI containers
+
+debian-bookworm:
+  image: debian:bookworm
+  extends: .build_template
+
+debian-testing:
+  image: debian:testing
+  extends: .build_template

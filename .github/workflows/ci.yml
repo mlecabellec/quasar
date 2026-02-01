@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        container: ["debian:bookworm", "debian:testing"]
+
+    container:
+      image: ${{ matrix.container }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y cmake g++ make git linux-headers-amd64
+          # Attempt to install headers for the running kernel if possible, 
+          # but in a container on GHA this is usually not matching the distro repo.
+          # We install the default headers for the distro to allow compilation 
+          # if the build system allows specifying the KERNELDIR.
+
+      - name: Configure CMake Projects
+        run: cmake -S cmake-projects -B build-projects
+
+      - name: Build CMake Projects
+        run: cmake --build build-projects
+
+      - name: Test CMake Projects
+        run: ctest --test-dir build-projects --output-on-failure
+
+      - name: Prepare Linux Modules (EtherCAT)
+        # This step might fail if the kernel headers don't match uname -r
+        # We will try to configure it.
+        continue-on-error: true
+        run: |
+          # Install autotools for ethercat bootstrap
+          apt-get install -y autoconf automake libtool
+
+          # Configure the top level linux-modules
+          # Note: linux-modules/CMakeLists.txt adds subdirectories.
+          # ethercat/CMakeLists.txt runs ./bootstrap and ./configure
+
+          cmake -S linux-modules -B build-modules
+
+          # We don't run build here because it will invoke 'make modules' 
+          # which will likely fail due to kernel version mismatch in container.
+          # But we can try to see if cmake configuration passes.
