@@ -1,0 +1,1 @@
+savedcmd_/home/vortigern/git/quasar/linux-modules/dummy/Module.symvers :=  scripts/mod/modpost -M -m       -o /home/vortigern/git/quasar/linux-modules/dummy/Module.symvers -n -T /home/vortigern/git/quasar/linux-modules/dummy/modules.order -i Module.symvers -e 

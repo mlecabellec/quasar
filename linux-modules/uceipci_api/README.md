@@ -36,6 +36,6 @@ For more information about the hardware and the BusTools software, refer to the 
 ## Maintenance Notes
 
 *   This is a user-space API, not a kernel module.
-*   The `uceipci_lkm` directory likely contains the corresponding kernel module for this API.
+*   The `uceipci` directory likely contains the corresponding kernel module for this API.
 *   The `test` directory contains a CppUnit test suite that demonstrates how to use the API.
 *   The `patches` directory contains modifications to the original API headers, which may provide insight into the specific customizations made for this project.

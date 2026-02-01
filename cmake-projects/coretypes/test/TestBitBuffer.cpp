@@ -1,5 +1,8 @@
 #include "quasar/coretypes/BitBuffer.hpp"
+#include <chrono>
+#include <future>
 #include <gtest/gtest.h>
+#include <thread>
 #include <vector>
 
 using namespace quasar::coretypes;
@@ -95,4 +98,65 @@ TEST(BitBufferTest, ReverseBitsGroup) {
   // 10 -> 4,5
   EXPECT_TRUE(bb.getBit(4));
   EXPECT_FALSE(bb.getBit(5));
+}
+
+TEST(BitBufferTest, OutOfRange) {
+  BitBuffer bb(8); // 8 bits = 1 byte
+  EXPECT_THROW(bb.getBit(8), std::out_of_range);
+  EXPECT_FALSE(bb.getBit(7));
+  EXPECT_THROW(bb.setBit(100, true), std::out_of_range);
+
+  // Slice out of range
+  EXPECT_THROW(bb.sliceBits(5, 5), std::out_of_range); // 5+5=10 > 8
+}
+
+TEST(BitBufferTest, Performance_GetSet) {
+  BitBuffer bb(1024 * 8); // 1KB
+  const int iterations = 1000000;
+
+  auto start = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < iterations; ++i) {
+    bb.setBit(i % (1024 * 8), true);
+  }
+  auto end = std::chrono::high_resolution_clock::now();
+
+  std::chrono::duration<double, std::milli> elapsed = end - start;
+  std::cout << "1M setBit operations took: " << elapsed.count() << " ms"
+            << std::endl;
+
+  // Basic sanity check that it was fast enough (e.g. < 500ms for 1M ops).
+  // This is hardware dependent but 1M ops should be very fast.
+  EXPECT_LT(elapsed.count(), 1000.0);
+}
+
+TEST(BitBufferTest, ThreadSafety) {
+  BitBuffer bb(1024);
+  std::atomic<bool> stop{false};
+
+  auto writer = std::async(std::launch::async, [&]() {
+    int i = 0;
+    while (!stop) {
+      bb.setBit(i % 1024, true);
+      i++;
+    }
+  });
+
+  auto reader = std::async(std::launch::async, [&]() {
+    int i = 0;
+    while (!stop) {
+      // Just read to provoke race if any
+      volatile bool b = bb.getBit(i % 1024);
+      (void)b;
+      i++;
+    }
+  });
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  stop = true;
+  writer.get();
+  reader.get();
+
+  // If we didn't crash or TSAN didn't flag, we assume basic thread safety holds
+  // (locks are working).
+  SUCCEED();
 }

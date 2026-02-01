@@ -6,6 +6,8 @@
 namespace quasar {
 namespace coretypes {
 
+class BitBufferSlice;
+
 /**
  * @brief BitBuffer class for bit-level manipulation.
  * Derives from Buffer.
@@ -24,7 +26,11 @@ public:
    */
   BitBuffer(const BitBuffer &other);
 
-  // Assignment operator
+  /**
+   * @brief Copy assignment operator.
+   * @param other The BitBuffer to copy from.
+   * @return Reference to this BitBuffer.
+   */
   BitBuffer &operator=(const BitBuffer &other);
 
   /**
@@ -45,6 +51,12 @@ public:
    * @brief Slice buffers at bit level.
    */
   BitBuffer sliceBits(size_t startBit, size_t bitLength) const;
+
+  /**
+   * @brief Create a view slice at bit level.
+   */
+  std::shared_ptr<BitBufferSlice> sliceBitsView(size_t startBit,
+                                                size_t bitLength);
 
   /**
    * @brief Concatenate BitBuffers.
@@ -73,6 +85,10 @@ public:
   size_t bitSize() const;
 
 private:
+  /**
+   * @brief The number of valid bits in the buffer.
+   * If 0, it means all bits in the underlying Buffer are valid (size() * 8).
+   */
   size_t bitSize_ = 0; // Tracking valid bits
                        // Note: Buffer::data_ holds the bytes.
   // If bitSize_ is 0, we assume it matches size()*8 (wrapping existing buffer).

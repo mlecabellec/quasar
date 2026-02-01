@@ -21,4 +21,4 @@ Without more source code or documentation, it is not possible to identify the sp
 
 *   This directory is incomplete and does not contain enough information to be useful.
 *   To understand this module, the full source code for the API and more complete test code are needed.
-*   The `rfm2g_lkm` directory may contain the corresponding kernel module for this API.
+*   The `rfm2g` directory may contain the corresponding kernel module for this API.

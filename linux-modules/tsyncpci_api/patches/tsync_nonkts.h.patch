@@ -5,7 +5,7 @@
  
  #ifdef LAFAYETTE
 -    #include "tsync_nonkts_lafayette.h"
-+    #include "drast_lkm/tsyncpci_lkm/tsync_nonkts_lafayette.h"
++    #include "drast_lkm/tsyncpci/tsync_nonkts_lafayette.h"
  #endif
  
  #endif  /* _defined_TSYNC_NONKTS_H */

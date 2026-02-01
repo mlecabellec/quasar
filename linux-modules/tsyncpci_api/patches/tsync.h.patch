@@ -15,7 +15,7 @@
  
  
 -#include "tsync_error_codes.h"
-+#include "drast_lkm/tsyncpci_lkm/tsync_error_codes.h"
++#include "drast_lkm/tsyncpci/tsync_error_codes.h"
  
      /*
      ** Handle to the TSync board obj available to the user
@@ -24,7 +24,7 @@
  
      /*** Hardware services ***/
 -#include "tsync_hw.h"
-+#include "drast_lkm/tsyncpci_lkm/tsync_hw.h"
++#include "drast_lkm/tsyncpci/tsync_hw.h"
  
      /*=========================================================================
      TSYNC MATCH OBJECT

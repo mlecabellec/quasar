@@ -10,7 +10,7 @@ This directory contains a user-space API and test suite for the General Standard
 
 ## Functionality
 
-The API provides a set of functions for interacting with the `gsc16ai_lkm` kernel module. These functions allow a user-space application to:
+The API provides a set of functions for interacting with the `gsc16ai` kernel module. These functions allow a user-space application to:
 
 *   Initialize and open the device
 *   Configure the card's parameters (e.g., voltage range, sampling rate)
@@ -19,7 +19,7 @@ The API provides a set of functions for interacting with the `gsc16ai_lkm` kerne
 
 ## Hardware
 
-This API is designed to be used with the General Standards Corporation 16AI64SSA data acquisition card. This card is supported by the `gsc16ai_lkm` kernel module, which must be loaded for this API to function.
+This API is designed to be used with the General Standards Corporation 16AI64SSA data acquisition card. This card is supported by the `gsc16ai` kernel module, which must be loaded for this API to function.
 
 ## Source Code
 
@@ -29,6 +29,6 @@ This API is designed to be used with the General Standards Corporation 16AI64SSA
 
 ## Maintenance Notes
 
-*   This is not a kernel module, but a user-space library that depends on the `gsc16ai_lkm` kernel module.
+*   This is not a kernel module, but a user-space library that depends on the `gsc16ai` kernel module.
 *   The API is used to control the GSC 16AI64SSA card.
 *   The test code provides a good example of how to use the API.

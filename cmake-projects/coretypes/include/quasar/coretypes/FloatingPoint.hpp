@@ -150,7 +150,116 @@ public:
     return FloatingPoint<T>(res);
   }
 
-  // Comparison
+#include <memory>
+
+  // --- Comparison (Virtual) ---
+  int compareTo(const Number &other) const override {
+    // General comparison via double
+    double d1 = static_cast<double>(value_);
+    double d2 = other.toDouble();
+    // Handle NaN for total ordering
+    if (std::isnan(d1) && std::isnan(d2))
+      return 0;
+    if (std::isnan(d1))
+      return 1;
+    if (std::isnan(d2))
+      return -1;
+
+    if (d1 < d2)
+      return -1;
+    if (d1 > d2)
+      return 1;
+    return 0;
+  }
+
+  bool equals(const Number &other) const override {
+    if (std::isnan(value_) && std::isnan(other.toDouble()))
+      return true; // Loose equality for NaNs?
+    return compareTo(other) == 0;
+  }
+
+  // --- Arithmetic (Virtual) ---
+  std::shared_ptr<Number> add(const Number &other) const override {
+    return std::make_shared<FloatingPoint<T>>(value_ +
+                                              static_cast<T>(other.toDouble()));
+  }
+  std::shared_ptr<Number> subtract(const Number &other) const override {
+    return std::make_shared<FloatingPoint<T>>(value_ -
+                                              static_cast<T>(other.toDouble()));
+  }
+  std::shared_ptr<Number> multiply(const Number &other) const override {
+    return std::make_shared<FloatingPoint<T>>(value_ *
+                                              static_cast<T>(other.toDouble()));
+  }
+  std::shared_ptr<Number> divide(const Number &other) const override {
+    double d = other.toDouble();
+    // Floating point division by zero usually Inf/NaN, but lets allow standard
+    // behavior unless safe. Requirement: "Add methods for basic arithmetic".
+    return std::make_shared<FloatingPoint<T>>(value_ / static_cast<T>(d));
+  }
+
+  // --- Safe Arithmetic (Virtual) ---
+  std::shared_ptr<Number> safeAdd(const Number &other) const override {
+    T res = value_ + static_cast<T>(other.toDouble());
+    checkSafe(res);
+    return std::make_shared<FloatingPoint<T>>(res);
+  }
+  std::shared_ptr<Number> safeSubtract(const Number &other) const override {
+    T res = value_ - static_cast<T>(other.toDouble());
+    checkSafe(res);
+    return std::make_shared<FloatingPoint<T>>(res);
+  }
+  std::shared_ptr<Number> safeMultiply(const Number &other) const override {
+    T res = value_ * static_cast<T>(other.toDouble());
+    checkSafe(res);
+    return std::make_shared<FloatingPoint<T>>(res);
+  }
+  std::shared_ptr<Number> safeDivide(const Number &other) const override {
+    T d = static_cast<T>(other.toDouble());
+    if (d == 0.0)
+      throw std::runtime_error("Division by zero");
+    T res = value_ / d;
+    checkSafe(res);
+    return std::make_shared<FloatingPoint<T>>(res);
+  }
+
+  // --- Bitwise (Dummy) ---
+  std::shared_ptr<Number> bitwiseAnd(const Number &) const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+  std::shared_ptr<Number> bitwiseOr(const Number &) const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+  std::shared_ptr<Number> bitwiseXor(const Number &) const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+  std::shared_ptr<Number> bitwiseNot() const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+  std::shared_ptr<Number> bitwiseLeftShift(int) const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+  std::shared_ptr<Number> bitwiseRightShift(int) const override {
+    throw std::runtime_error(
+        "Bitwise operations not supported on FloatingPoint");
+  }
+
+  // --- Introspection ---
+  std::string getType() const override { return "FloatingPoint"; }
+  bool isIntegerType() const override { return false; }
+  bool isSigned() const override { return true; }
+
+  // Specific Comparison
+  /**
+   * @brief Compares with another FloatingPoint.
+   * @param other The other FloatingPoint.
+   * @return -1, 0, or 1.
+   */
   int compareTo(const FloatingPoint<T> &other) const {
     if (value_ < other.value_)
       return -1;
@@ -166,6 +275,11 @@ public:
     return 0;
   }
 
+  /**
+   * @brief Checks equality.
+   * @param other The other FloatingPoint.
+   * @return true if equal.
+   */
   bool equals(const FloatingPoint<T> &other) const {
     // Strict equality? or epsilon? Java Double.equals uses bit representation.
     // For C++, == is standard but handling NaN is tricky (NaN != NaN).
@@ -177,6 +291,12 @@ public:
   // String conversion
   // "methods shall support 10 base, or other arbitrary base"
   // C++ std::to_chars supports hex (base 16) for float.
+  /**
+   * @brief Converts val to string with optional radix (supports 16 for hex).
+   * @param val The value.
+   * @param radix The radix.
+   * @return String representation.
+   */
   static std::string toString(T val, int radix = 10) {
     if (radix == 16) {
       // Hex float format: %a
@@ -188,6 +308,11 @@ public:
     return std::to_string(val);
   }
 
+  /**
+   * @brief Parses a floating point string.
+   * @param s The string.
+   * @return The parsed value.
+   */
   static T parseFloatingPoint(const std::string &s) {
     if (s.empty())
       throw std::invalid_argument("Empty string");
@@ -209,6 +334,9 @@ public:
   }
 
 private:
+  /**
+   * @brief Checks if value is infinite or NaN and throws if so.
+   */
   void checkSafe(T val) const {
     if (std::isinf(val))
       throw std::overflow_error("Floating point overflow (Infinity)");
