@@ -1,4 +1,4 @@
-#include "quasar/named/NamedBoolean.h"
+#include "quasar/named/NamedBoolean.hpp"
 
 namespace quasar::named {
 

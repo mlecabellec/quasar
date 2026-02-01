@@ -1,7 +1,7 @@
-#ifndef QUASAR_NAMED_NAMEDBITBUFFER_H
-#define QUASAR_NAMED_NAMEDBITBUFFER_H
+#ifndef QUASAR_NAMED_NAMEDBITBUFFER_HPP
+#define QUASAR_NAMED_NAMEDBITBUFFER_HPP
 
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 #include "quasar/coretypes/BitBuffer.hpp"
 
 namespace quasar::named {
@@ -19,4 +19,4 @@ public:
 
 } // namespace quasar::named
 
-#endif // QUASAR_NAMED_NAMEDBITBUFFER_H
+#endif // QUASAR_NAMED_NAMEDBITBUFFER_HPP

@@ -1,4 +1,4 @@
-#include "quasar/named/Traversal.h"
+#include "quasar/named/Traversal.hpp"
 #include <algorithm>
 #include <queue>
 #include <stack>

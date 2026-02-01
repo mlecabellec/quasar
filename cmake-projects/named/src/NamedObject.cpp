@@ -1,4 +1,4 @@
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 #include <algorithm>
 #include <iostream>
 #include <regex>

@@ -1,4 +1,4 @@
-#include "quasar/named/NamedBitBufferSlice.h"
+#include "quasar/named/NamedBitBufferSlice.hpp"
 
 namespace quasar::named {
 
@@ -22,14 +22,16 @@ std::shared_ptr<NamedBitBufferSlice> NamedBitBufferSlice::create(
 }
 
 std::shared_ptr<NamedObject> NamedBitBufferSlice::clone() const {
-  return NamedBitBufferSlice::create(getName(), getBuffer(), getStartBit(),
-                                     getBitLength());
+  return NamedBitBufferSlice::create(
+      getName(), quasar::coretypes::BitBufferSlice::getParent(), getOffset(),
+      size());
 }
 
 std::shared_ptr<NamedBitBufferSlice>
 NamedBitBufferSlice::sliceView(size_t startBit, size_t bitLength) const {
-  return NamedBitBufferSlice::create(getName() + "_slice", getBuffer(),
-                                     getStartBit() + startBit, bitLength);
+  return NamedBitBufferSlice::create(
+      getName() + "_slice", quasar::coretypes::BitBufferSlice::getParent(),
+      getOffset() + startBit, bitLength);
 }
 
 } // namespace quasar::named

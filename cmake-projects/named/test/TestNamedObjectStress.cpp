@@ -1,5 +1,5 @@
-#include "quasar/named/NamedObject.h"
-#include "quasar/named/Traversal.h"
+#include "quasar/named/NamedObject.hpp"
+#include "quasar/named/Traversal.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>

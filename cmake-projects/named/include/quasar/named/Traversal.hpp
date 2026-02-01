@@ -1,7 +1,7 @@
-#ifndef QUASAR_NAMED_TRAVERSAL_H
-#define QUASAR_NAMED_TRAVERSAL_H
+#ifndef QUASAR_NAMED_TRAVERSAL_HPP
+#define QUASAR_NAMED_TRAVERSAL_HPP
 
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 #include <functional>
 #include <vector>
 
@@ -77,4 +77,4 @@ deepCopy(const std::shared_ptr<NamedObject> &root,
 
 } // namespace quasar::named::traversal
 
-#endif // QUASAR_NAMED_TRAVERSAL_H
+#endif // QUASAR_NAMED_TRAVERSAL_HPP

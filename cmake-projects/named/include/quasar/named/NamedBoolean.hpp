@@ -1,8 +1,8 @@
-#ifndef QUASAR_NAMED_NAMEDBOOLEAN_H
-#define QUASAR_NAMED_NAMEDBOOLEAN_H
+#ifndef QUASAR_NAMED_NAMEDBOOLEAN_HPP
+#define QUASAR_NAMED_NAMEDBOOLEAN_HPP
 
 #include "quasar/coretypes/Boolean.hpp"
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 
 namespace quasar::named {
 
@@ -42,4 +42,4 @@ public:
 
 } // namespace quasar::named
 
-#endif // QUASAR_NAMED_NAMEDBOOLEAN_H
+#endif // QUASAR_NAMED_NAMEDBOOLEAN_HPP

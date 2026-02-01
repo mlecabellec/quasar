@@ -1,4 +1,4 @@
-#include "quasar/named/NamedBufferSlice.h"
+#include "quasar/named/NamedBufferSlice.hpp"
 
 namespace quasar::named {
 
@@ -21,8 +21,9 @@ std::shared_ptr<NamedBufferSlice> NamedBufferSlice::create(
 
 std::shared_ptr<NamedObject> NamedBufferSlice::clone() const {
   // A clone of a slice is a new slice pointing to the same buffer data
-  return NamedBufferSlice::create(getName(), getBuffer(), getStart(),
-                                  getLength());
+  return NamedBufferSlice::create(
+      getName(), quasar::coretypes::BufferSlice::getParent(), getOffset(),
+      size());
 }
 
 std::shared_ptr<NamedBufferSlice>
@@ -34,8 +35,9 @@ NamedBufferSlice::sliceView(size_t start, size_t length) const {
   // But we need to create a NamedBufferSlice.
 
   // Adjusted start is relative to the current slice's start.
-  return NamedBufferSlice::create(getName() + "_slice", getBuffer(),
-                                  getStart() + start, length);
+  return NamedBufferSlice::create(
+      getName() + "_slice", quasar::coretypes::BufferSlice::getParent(),
+      getOffset() + start, length);
 }
 
 } // namespace quasar::named

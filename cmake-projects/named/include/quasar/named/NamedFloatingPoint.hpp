@@ -1,8 +1,8 @@
-#ifndef QUASAR_NAMED_NAMEDFLOATINGPOINT_H
-#define QUASAR_NAMED_NAMEDFLOATINGPOINT_H
+#ifndef QUASAR_NAMED_NAMEDFLOATINGPOINT_HPP
+#define QUASAR_NAMED_NAMEDFLOATINGPOINT_HPP
 
 #include "quasar/coretypes/FloatingPoint.hpp"
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 
 namespace quasar::named {
 
@@ -52,4 +52,4 @@ public:
 
 } // namespace quasar::named
 
-#endif // QUASAR_NAMED_NAMEDFLOATINGPOINT_H
+#endif // QUASAR_NAMED_NAMEDFLOATINGPOINT_HPP

@@ -1,4 +1,4 @@
-#include "quasar/named/NamedBuffer.h"
+#include "quasar/named/NamedBuffer.hpp"
 
 namespace quasar::named {
 

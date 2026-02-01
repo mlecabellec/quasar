@@ -1,9 +1,9 @@
-#include "quasar/named/Serialization.h"
-#include "quasar/named/NamedBitBuffer.h"
-#include "quasar/named/NamedBoolean.h"
-#include "quasar/named/NamedBuffer.h"
-#include "quasar/named/NamedFloatingPoint.h"
-#include "quasar/named/NamedInteger.h"
+#include "quasar/named/Serialization.hpp"
+#include "quasar/named/NamedBitBuffer.hpp"
+#include "quasar/named/NamedBoolean.hpp"
+#include "quasar/named/NamedBuffer.hpp"
+#include "quasar/named/NamedFloatingPoint.hpp"
+#include "quasar/named/NamedInteger.hpp"
 
 #include <iostream>
 #include <stdexcept>

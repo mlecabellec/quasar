@@ -1,7 +1,7 @@
 #pragma once
 
 #include "quasar/coretypes/BufferSlice.hpp"
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 
 namespace quasar::named {
 

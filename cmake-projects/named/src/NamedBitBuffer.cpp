@@ -1,4 +1,4 @@
-#include "quasar/named/NamedBitBuffer.h"
+#include "quasar/named/NamedBitBuffer.hpp"
 
 namespace quasar::named {
 
@@ -17,7 +17,7 @@ NamedBitBuffer::create(const std::string &name, size_t bitCount,
 }
 
 std::shared_ptr<NamedObject> NamedBitBuffer::clone() const {
-  std::shared_ptr<NamedObject> newObj = create(getName(), bitSize());
+  std::shared_ptr<NamedBitBuffer> newObj = create(getName(), bitSize());
   // Copy the BitBuffer part
   static_cast<quasar::coretypes::BitBuffer &>(*newObj) =
       static_cast<const quasar::coretypes::BitBuffer &>(*this);

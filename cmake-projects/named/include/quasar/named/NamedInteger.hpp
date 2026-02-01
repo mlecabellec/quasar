@@ -1,8 +1,8 @@
-#ifndef QUASAR_NAMED_NAMEDINTEGER_H
-#define QUASAR_NAMED_NAMEDINTEGER_H
+#ifndef QUASAR_NAMED_NAMEDINTEGER_HPP
+#define QUASAR_NAMED_NAMEDINTEGER_HPP
 
 #include "quasar/coretypes/Integer.hpp"
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 
 namespace quasar::named {
 
@@ -51,4 +51,4 @@ public:
 
 } // namespace quasar::named
 
-#endif // QUASAR_NAMED_NAMEDINTEGER_H
+#endif // QUASAR_NAMED_NAMEDINTEGER_HPP

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "quasar/named/NamedObject.h"
-#include "quasar/named/NamedInteger.h"
-#include "quasar/named/NamedBoolean.h"
-#include "quasar/named/Serialization.h"
+#include "quasar/named/NamedObject.hpp"
+#include "quasar/named/NamedInteger.hpp"
+#include "quasar/named/NamedBoolean.hpp"
+#include "quasar/named/Serialization.hpp"
 
 using namespace quasar::named;
 

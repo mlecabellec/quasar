@@ -1,5 +1,5 @@
-#ifndef QUASAR_NAMED_NAMEDOBJECT_H
-#define QUASAR_NAMED_NAMEDOBJECT_H
+#ifndef QUASAR_NAMED_NAMEDOBJECT_HPP
+#define QUASAR_NAMED_NAMEDOBJECT_HPP
 
 #include <list>
 #include <memory>
@@ -132,4 +132,4 @@ private:
 
 } // namespace quasar::named
 
-#endif // QUASAR_NAMED_NAMEDOBJECT_H
+#endif // QUASAR_NAMED_NAMEDOBJECT_HPP

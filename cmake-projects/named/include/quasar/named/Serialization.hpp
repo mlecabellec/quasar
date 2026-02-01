@@ -1,7 +1,7 @@
-#ifndef QUASAR_NAMED_SERIALIZATION_H
-#define QUASAR_NAMED_SERIALIZATION_H
+#ifndef QUASAR_NAMED_SERIALIZATION_HPP
+#define QUASAR_NAMED_SERIALIZATION_HPP
 
-#include "quasar/named/NamedObject.h"
+#include "quasar/named/NamedObject.hpp"
 #include <memory>
 #include <string>
 
@@ -51,4 +51,4 @@ std::shared_ptr<NamedObject> fromJson(const std::string &json);
 
 } // namespace quasar::named::serialization
 
-#endif // QUASAR_NAMED_SERIALIZATION_H
+#endif // QUASAR_NAMED_SERIALIZATION_HPP
