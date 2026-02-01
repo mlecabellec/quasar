@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ["debian:bookworm", "debian:testing"]
+        container: ["debian:bookworm", "debian:trixie"]
 
     container:
       image: ${{ matrix.container }}
