@@ -10,10 +10,11 @@ Quasar shall:
 - Provide API oriented interface for application development.
 - Provide required environnements and integration for hardware in the loop simulation (HILS). Provided environments shall allow to simulate common industrial hardware and standard industrial protocols. It shall be possible to run applications and automations seemlessly in siulated or real environment.
 - Provide API and environements allowing rapid develoment of automations and applications.
-- Have a robust design compatible with DOE-178A class C.
+
 
 
 Quasar should:
+- Have a robust design compatible with DOE-178A class C.
 - Have a secure design compatible with IEC 62443-4-2.
 - Have a reliable design compatible with IEC 61508-3.
 - Have a maintainable design compatible with IEC 61508-3.
