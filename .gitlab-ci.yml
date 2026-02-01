@@ -5,7 +5,7 @@ stages:
   stage: build_and_test
   before_script:
     - apt-get update
-    - apt-get install -y cmake g++ make git pkg-config python3 autoconf automake libtool linux-headers-amd64
+    - apt-get install -y cmake g++ make git pkg-config python3 file autoconf automake libtool linux-headers-amd64
   script:
     - echo "Building cmake-projects..."
     - cmake -S cmake-projects -B build-projects

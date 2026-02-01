@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y cmake g++ make git pkg-config python3 linux-headers-amd64
+          apt-get install -y cmake g++ make git pkg-config python3 file linux-headers-amd64
           # Attempt to install headers for the running kernel if possible, 
           # but in a container on GHA this is usually not matching the distro repo.
           # We install the default headers for the distro to allow compilation 
