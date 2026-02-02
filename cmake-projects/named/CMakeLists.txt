@@ -77,6 +77,7 @@ if (NOT JSONCONS_FOUND)
           GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
           GIT_TAG v0.173.0
         )
+        set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(jsoncons)
         set(JSONCONS_LIBRARIES jsoncons)
         set(JSONCONS_INCLUDE_DIRS ${jsoncons_SOURCE_DIR}/include)
