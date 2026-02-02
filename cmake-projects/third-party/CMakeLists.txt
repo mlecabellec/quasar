@@ -12,11 +12,15 @@ if(QUASAR_ENABLE_RAYLIB)
 endif()
 
 # Configure SymEngine
-set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(WITH_SYMENGINE_THREAD_SAFE ON CACHE BOOL "" FORCE)
-set(INTEGER_CLASS "gmp" CACHE STRING "" FORCE)
-add_subdirectory(symengine)
+option(QUASAR_ENABLE_SYMENGINE "Enable SymEngine" ON)
+
+if(QUASAR_ENABLE_SYMENGINE)
+    set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+    set(WITH_SYMENGINE_THREAD_SAFE ON CACHE BOOL "" FORCE)
+    set(INTEGER_CLASS "gmp" CACHE STRING "" FORCE)
+    add_subdirectory(symengine)
+endif()
 
 # Other libraries
 # Check if they are already added to avoid errors if this is included multiple times or in weird order
@@ -36,6 +40,8 @@ if(NOT TARGET yaml-cpp)
 endif()
 
 # Verifications
-add_subdirectory(symengine-verification)
+if(QUASAR_ENABLE_SYMENGINE)
+    add_subdirectory(symengine-verification)
+endif()
 
 # Note: raylib-verification is missing
