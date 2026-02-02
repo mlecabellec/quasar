@@ -9,7 +9,7 @@
 
 namespace quasar::named {
 
-class NamedObject : public std::enable_shared_from_this<NamedObject> {
+class NamedObject {
 public:
   virtual ~NamedObject();
 
@@ -107,6 +107,12 @@ public:
    */
   virtual std::shared_ptr<NamedObject> clone() const;
 
+  /**
+   * @brief Gets a shared pointer to this object.
+   * @return Shared pointer.
+   */
+  std::shared_ptr<NamedObject> getSelf() const;
+
 protected:
   NamedObject(const std::string &name);
 
@@ -114,6 +120,10 @@ protected:
   void addChild(std::shared_ptr<NamedObject> child);
   // Internal helper to remove a child
   void removeChild(const std::string &name);
+  
+  void setSelf(std::shared_ptr<NamedObject> self) {
+      m_self = self;
+  }
 
 private:
   /** @brief The object name. */
@@ -126,6 +136,9 @@ private:
   std::weak_ptr<NamedObject> m_related;
   /** @brief Mutex for thread safety. */
   mutable std::recursive_mutex m_mutex;
+  
+  /** @brief Manual weak pointer to self. */
+  std::weak_ptr<NamedObject> m_self;
 
   static bool isValidName(const std::string &name);
 };

@@ -2,6 +2,8 @@
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedBoolean.hpp"
+#include "quasar/named/NamedBuffer.hpp"
+#include "quasar/named/NamedBitBuffer.hpp"
 #include "quasar/named/Serialization.hpp"
 
 using namespace quasar::named;
@@ -85,4 +87,32 @@ TEST(NamedObjectTest, SerializationYAML) {
     std::string yaml = serialization::toYaml(root);
     EXPECT_FALSE(yaml.empty());
     EXPECT_NE(yaml.find("name: root"), std::string::npos);
+}
+
+TEST(NamedObjectTest, NamedBuffers) {
+    auto root = NamedObject::create("root");
+    
+    std::vector<uint8_t> data = {0x01, 0x02};
+    auto nb = NamedBuffer::create("buffer", data, root);
+    EXPECT_EQ(nb->size(), 2);
+    EXPECT_EQ(nb->get(0), 0x01);
+    
+    auto nbb = NamedBitBuffer::create("bitbuffer", 16, root);
+    nbb->setBit(0, true);
+    EXPECT_EQ(nbb->bitSize(), 16);
+    EXPECT_TRUE(nbb->getBit(0));
+}
+
+TEST(NamedObjectTest, RelatedObject) {
+    auto obj1 = NamedObject::create("obj1");
+    auto obj2 = NamedObject::create("obj2");
+    
+    EXPECT_EQ(obj1->getRelated(), nullptr);
+    
+    obj1->setRelated(obj2);
+    EXPECT_EQ(obj1->getRelated(), obj2);
+    
+    // Weak reference check: destroying obj2 should result in null related
+    obj2.reset();
+    EXPECT_EQ(obj1->getRelated(), nullptr);
 }

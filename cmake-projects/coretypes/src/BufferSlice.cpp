@@ -94,17 +94,10 @@ bool BufferSlice::equals(const BufferSlice &other) const {
 }
 
 void BufferSlice::fromNumber(const Number &n) {
-  // TODO: implement based on encoding (not specified, assuming big endian int
-  // write?) FE-0030: "Buffer... shall provide methods for conversion from and
-  // to quasar::coretypes::Number." This might mean writing the number into the
-  // buffer? Or parsing the buffer as a number? "Conversion from and to" implies
-  // both.
-
-  // For now, if we assume 4 bytes for int, 8 for long/double.
-  // This is ambiguous. I'll leave empty or throw strictly.
-  // Or try to write 4 bytes if Integer?
+  // FE-0030: Conversion from Number.
+  // Using default BigEndian integer writing for basic support.
   if (length_ >= 4) {
-    buffer_->writeInt(n.toInt(), offset_); // Buffer implementation needed
+    buffer_->writeInt(n.toInt(), offset_, Endianness::BigEndian);
   }
 }
 

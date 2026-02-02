@@ -6,9 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Strict compiler flags
-add_compile_options(-Wall -Wextra -Werror -pedantic)
-
 # Find dependencies
 find_package(PkgConfig REQUIRED)
 
@@ -69,17 +66,44 @@ if(TARGET tinyxml2 AND "${TINYXML2_LIBRARIES}" STREQUAL "")
     set(TINYXML2_LIBRARIES tinyxml2)
 endif()
 
+# Try finding jsoncons
+pkg_check_modules(JSONCONS jsoncons)
+if (NOT JSONCONS_FOUND)
+    set(JSONCONS_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsoncons")
+    if (EXISTS "${JSONCONS_LOCAL_DIR}/CMakeLists.txt")
+        message(STATUS "Using local jsoncons from ${JSONCONS_LOCAL_DIR}")
+        add_subdirectory("${JSONCONS_LOCAL_DIR}" "${CMAKE_BINARY_DIR}/third-party/jsoncons")
+        set(JSONCONS_LIBRARIES jsoncons)
+        set(JSONCONS_INCLUDE_DIRS "${JSONCONS_LOCAL_DIR}/include")
+    else()
+        message(STATUS "jsoncons not found via PkgConfig or local third-party, trying FetchContent...")
+        include(FetchContent)
+        FetchContent_Declare(
+          jsoncons
+          GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+          GIT_TAG v0.173.0
+        )
+        set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(jsoncons)
+        set(JSONCONS_LIBRARIES jsoncons)
+        set(JSONCONS_INCLUDE_DIRS ${jsoncons_SOURCE_DIR}/include)
+    endif()
+endif()
+
 # Find sources
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h")
 
 add_library(quasar_named SHARED ${SOURCES} ${HEADERS})
 
+target_compile_options(quasar_named PRIVATE -Wall -Wextra -Werror -pedantic)
+
 target_include_directories(quasar_named PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${YAML_CPP_INCLUDE_DIRS}
     ${TINYXML2_INCLUDE_DIRS}
+    ${JSONCONS_INCLUDE_DIRS}
 )
 
 # Installation
@@ -99,6 +123,7 @@ target_link_libraries(quasar_named PUBLIC
     quasar_coretypes
     ${YAML_CPP_LIBRARIES}
     ${TINYXML2_LIBRARIES}
+    ${JSONCONS_LIBRARIES}
 )
 
 # Testing

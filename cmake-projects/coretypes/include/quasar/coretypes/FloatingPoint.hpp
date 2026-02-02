@@ -288,6 +288,24 @@ public:
     return value_ == other.value_;
   }
 
+  // Primitive comparison
+  bool equals(T other) const {
+    if (std::isnan(value_) && std::isnan(other)) return true;
+    return value_ == other;
+  }
+  int compareTo(T other) const {
+      if (std::isnan(value_) && std::isnan(other)) return 0;
+      if (std::isnan(value_)) return 1;
+      if (std::isnan(other)) return -1;
+      if (value_ < other) return -1;
+      if (value_ > other) return 1;
+      return 0;
+  }
+  bool operator==(T other) const { return equals(other); }
+  bool operator!=(T other) const { return !equals(other); }
+  bool operator<(T other) const { return compareTo(other) < 0; }
+  bool operator>(T other) const { return compareTo(other) > 0; }
+
   // String conversion
   // "methods shall support 10 base, or other arbitrary base"
   // C++ std::to_chars supports hex (base 16) for float.

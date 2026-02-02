@@ -31,6 +31,7 @@ public:
   create(const std::string &name, T value,
          std::shared_ptr<NamedObject> parent = nullptr) {
     auto obj = std::make_shared<NamedFloatingPoint<T>>(name, value);
+    obj->setSelf(obj);
     if (parent) {
       obj->setParent(parent);
     }

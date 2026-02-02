@@ -13,6 +13,7 @@ std::shared_ptr<NamedBufferSlice> NamedBufferSlice::create(
     size_t start, size_t length, std::shared_ptr<NamedObject> parent) {
   std::shared_ptr<NamedBufferSlice> obj =
       std::make_shared<NamedBufferSlice>(name, buffer, start, length);
+  obj->setSelf(obj);
   if (parent) {
     obj->setParent(parent);
   }

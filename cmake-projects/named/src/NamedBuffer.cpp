@@ -14,6 +14,7 @@ NamedBuffer::create(const std::string &name, size_t size,
                     std::shared_ptr<NamedObject> parent) {
   // Create new instance.
   std::shared_ptr<NamedBuffer> obj = std::make_shared<NamedBuffer>(name, size);
+  obj->setSelf(obj);
   if (parent) {
     // Set parent if provided.
     obj->setParent(parent);
@@ -26,6 +27,7 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
                     std::shared_ptr<NamedObject> parent) {
   // Create new instance.
   std::shared_ptr<NamedBuffer> obj = std::make_shared<NamedBuffer>(name, data);
+  obj->setSelf(obj);
   if (parent) {
     // Set parent if provided.
     obj->setParent(parent);

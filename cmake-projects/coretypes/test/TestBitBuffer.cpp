@@ -1,7 +1,7 @@
+#include <gtest/gtest.h>
 #include "quasar/coretypes/BitBuffer.hpp"
 #include <chrono>
 #include <future>
-#include <gtest/gtest.h>
 #include <thread>
 #include <vector>
 
@@ -108,6 +108,38 @@ TEST(BitBufferTest, OutOfRange) {
 
   // Slice out of range
   EXPECT_THROW(bb.sliceBits(5, 5), std::out_of_range); // 5+5=10 > 8
+}
+
+TEST(BitBufferTest, Equals) {
+  BitBuffer bb1(16);
+  bb1.setBit(0, true);
+  bb1.setBit(15, true);
+
+  BitBuffer bb2(16);
+  bb2.setBit(0, true);
+  bb2.setBit(15, true);
+
+  EXPECT_TRUE(bb1.equals(bb2));
+
+  bb2.setBit(1, true);
+  EXPECT_FALSE(bb1.equals(bb2));
+
+  BitBuffer bb3(15);
+  EXPECT_FALSE(bb1.equals(bb3));
+}
+
+TEST(BitBufferTest, Clone) {
+  BitBuffer bb1(16);
+  bb1.setBit(5, true);
+  
+  BitBuffer bb2 = bb1.clone();
+  EXPECT_EQ(bb2.bitSize(), 16);
+  EXPECT_TRUE(bb2.getBit(5));
+  EXPECT_FALSE(bb2.getBit(0));
+  
+  // Verify deep copy
+  bb1.setBit(5, false);
+  EXPECT_TRUE(bb2.getBit(5));
 }
 
 TEST(BitBufferTest, Performance_GetSet) {

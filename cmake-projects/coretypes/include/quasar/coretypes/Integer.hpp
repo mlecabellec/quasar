@@ -178,6 +178,20 @@ public:
    */
   bool equals(const Integer<T> &other) const { return value_ == other.value_; }
 
+  // Primitive comparison
+  bool equals(T other) const { return value_ == other; }
+  int compareTo(T other) const {
+      if (value_ < other) return -1;
+      if (value_ > other) return 1;
+      return 0;
+  }
+  bool operator==(T other) const { return value_ == other; }
+  bool operator!=(T other) const { return value_ != other; }
+  bool operator<(T other) const { return value_ < other; }
+  bool operator>(T other) const { return value_ > other; }
+  bool operator<=(T other) const { return value_ <= other; }
+  bool operator>=(T other) const { return value_ >= other; }
+
   // --- Arithmetic (Virtual from Number) ---
   std::shared_ptr<Number> add(const Number &other) const override {
     return std::make_shared<Integer<T>>(value_ +

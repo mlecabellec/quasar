@@ -11,6 +11,7 @@ NamedBoolean::create(const std::string &name, bool value,
   // Create new instance.
   std::shared_ptr<NamedBoolean> obj =
       std::make_shared<NamedBoolean>(name, value);
+  obj->setSelf(obj);
   if (parent) {
     // Set parent if provided.
     obj->setParent(parent);

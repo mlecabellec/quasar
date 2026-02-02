@@ -66,6 +66,15 @@ public:
     return Boolean(value != 0);
   }
 
+  // Primitive comparison
+  bool equals(bool other) const { return value_ == other; }
+  int compareTo(bool other) const { 
+      if (value_ == other) return 0;
+      return value_ ? 1 : -1; 
+  }
+  bool operator==(bool other) const { return value_ == other; }
+  bool operator!=(bool other) const { return value_ != other; }
+
 private:
   /**
    * @brief The primitive value.

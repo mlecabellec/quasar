@@ -36,3 +36,15 @@ TEST(BooleanTest, FromNumeric) {
   Boolean b3 = Boolean::fromNumeric(3.14);
   EXPECT_TRUE(b3.booleanValue());
 }
+
+TEST(BooleanTest, PrimitiveComparison) {
+  Boolean b(true);
+  EXPECT_TRUE(b.equals(true));
+  EXPECT_FALSE(b.equals(false));
+  
+  EXPECT_EQ(b.compareTo(true), 0);
+  EXPECT_GT(b.compareTo(false), 0);
+  
+  EXPECT_TRUE(b == true);
+  EXPECT_TRUE(b != false);
+}

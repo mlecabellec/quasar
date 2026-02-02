@@ -10,6 +10,7 @@ NamedBitBuffer::create(const std::string &name, size_t bitCount,
                        std::shared_ptr<NamedObject> parent) {
   std::shared_ptr<NamedBitBuffer> obj =
       std::make_shared<NamedBitBuffer>(name, bitCount);
+  obj->setSelf(obj);
   if (parent) {
     obj->setParent(parent);
   }

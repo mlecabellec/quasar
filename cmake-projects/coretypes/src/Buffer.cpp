@@ -65,6 +65,11 @@ std::string Buffer::toString() const {
   return ss.str();
 }
 
+std::vector<uint8_t> Buffer::toVector() const {
+  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  return data_;
+}
+
 Buffer Buffer::fromString(const std::string &hex) {
   if (hex.length() % 2 != 0) {
     throw std::invalid_argument("Invalid hex string length");
