@@ -14,7 +14,7 @@ find_package(PkgConfig REQUIRED)
 
 # Try finding yaml-cpp
 pkg_check_modules(YAML_CPP yaml-cpp)
-if (NOT YAML_CPP_FOUND)
+if (NOT YAML_CPP_FOUND AND NOT TARGET yaml-cpp)
     set(YAML_CPP_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/yaml-cpp")
     if (EXISTS "${YAML_CPP_LOCAL_DIR}/CMakeLists.txt")
         message(STATUS "Using local yaml-cpp from ${YAML_CPP_LOCAL_DIR}")
@@ -38,10 +38,13 @@ if (NOT YAML_CPP_FOUND)
         set(YAML_CPP_INCLUDE_DIRS ${yaml-cpp_SOURCE_DIR}/include)
     endif()
 endif()
+if(TARGET yaml-cpp AND "${YAML_CPP_LIBRARIES}" STREQUAL "")
+    set(YAML_CPP_LIBRARIES yaml-cpp)
+endif()
 
 # Try finding tinyxml2
 pkg_check_modules(TINYXML2 tinyxml2)
-if (NOT TINYXML2_FOUND)
+if (NOT TINYXML2_FOUND AND NOT TARGET tinyxml2)
     set(TINYXML2_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/tinyxml2")
     if (EXISTS "${TINYXML2_LOCAL_DIR}/CMakeLists.txt")
         message(STATUS "Using local tinyxml2 from ${TINYXML2_LOCAL_DIR}")
@@ -61,6 +64,9 @@ if (NOT TINYXML2_FOUND)
         set(TINYXML2_LIBRARIES tinyxml2)
         set(TINYXML2_INCLUDE_DIRS ${tinyxml2_SOURCE_DIR})
     endif()
+endif()
+if(TARGET tinyxml2 AND "${TINYXML2_LIBRARIES}" STREQUAL "")
+    set(TINYXML2_LIBRARIES tinyxml2)
 endif()
 
 # Find sources

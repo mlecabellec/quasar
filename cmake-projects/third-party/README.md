@@ -9,6 +9,9 @@ These libraries are included to allow building the project without external depe
 -   **googletest** (v1.14.0): Google's C++ testing and mocking framework. Used for unit testing the `coretypes` and `named` projects.
 -   **yaml-cpp** (0.8.0): A YAML parser and emitter in C++. Used by the `named` project.
 -   **tinyxml2** (10.0.0): A simple, small, efficient, C++ XML parser. Used by the `named` project.
+-   **raylib** (5.5+): A simple and easy-to-use library to enjoy videogames programming.
+-   **symengine** (git main): A fast symbolic manipulation library, written in C++.
+
 
 ## Licenses
 

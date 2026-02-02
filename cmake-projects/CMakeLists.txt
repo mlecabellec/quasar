@@ -3,6 +3,7 @@ project(quasar_all)
 
 enable_testing()
 
+add_subdirectory(third-party)
 add_subdirectory(coretypes)
 add_subdirectory(named)
 
