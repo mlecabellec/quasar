@@ -2,10 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Configure Raylib
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
-add_subdirectory(raylib)
+option(QUASAR_ENABLE_RAYLIB "Enable Raylib" ON)
+
+if(QUASAR_ENABLE_RAYLIB)
+    # Configure Raylib
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+    add_subdirectory(raylib)
+endif()
 
 # Configure SymEngine
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
