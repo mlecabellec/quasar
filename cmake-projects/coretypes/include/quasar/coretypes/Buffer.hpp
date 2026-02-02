@@ -81,6 +81,11 @@ public:
   std::string toString() const;
 
   /**
+   * @brief Returns a copy of the internal data as a vector.
+   */
+  std::vector<uint8_t> toVector() const;
+
+  /**
    * @brief Create buffer from hex string.
    */
   static Buffer fromString(const std::string &hex);

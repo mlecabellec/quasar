@@ -5,14 +5,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Strict compiler flags
-add_compile_options(-Wall -Wextra -Werror -pedantic)
-
 # Find sources
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 add_library(quasar_coretypes SHARED ${SOURCES} ${HEADERS})
+
+target_compile_options(quasar_coretypes PRIVATE -Wall -Wextra -Werror -pedantic)
 
 target_include_directories(quasar_coretypes PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

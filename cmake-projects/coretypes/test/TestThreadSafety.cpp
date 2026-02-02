@@ -2,8 +2,8 @@
 #include <thread>
 #include <vector>
 #include <atomic>
-#include "quasar/coretypes/Integer.hpp"
-#include "quasar/coretypes/FloatingPoint.hpp"
+#include "quasar/coretypes/IntegerTypes.hpp"
+#include "quasar/coretypes/FloatingPointTypes.hpp"
 
 using namespace quasar::coretypes;
 

@@ -29,5 +29,8 @@ target_link_libraries(coretypes_test PRIVATE
     GTest::gtest_main
 )
 
+# Disable restrict error for gtest
+target_compile_options(coretypes_test PRIVATE -Wno-error=restrict)
+
 include(GoogleTest)
 gtest_discover_tests(coretypes_test)
