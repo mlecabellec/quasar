@@ -45,6 +45,25 @@ TEST(FloatingPointTest, StringParsing) {
   EXPECT_THROW(Float("1.23xyz"), std::invalid_argument); // Strict check
 }
 
+TEST(FloatingPointTest, PrimitiveComparison) {
+  Double d(3.14);
+  EXPECT_TRUE(d.equals(3.14));
+  EXPECT_FALSE(d.equals(3.15));
+  
+  EXPECT_EQ(d.compareTo(3.14), 0);
+  EXPECT_LT(d.compareTo(3.15), 0);
+  EXPECT_GT(d.compareTo(3.13), 0);
+  
+  EXPECT_TRUE(d == 3.14);
+  EXPECT_TRUE(d != 3.15);
+  EXPECT_TRUE(d < 3.15);
+  EXPECT_TRUE(d > 3.13);
+  
+  // NaN check
+  Double nan(std::numeric_limits<double>::quiet_NaN());
+  EXPECT_TRUE(nan.equals(std::numeric_limits<double>::quiet_NaN()));
+}
+
 TEST(FloatingPointTest, ToStringHex) {
   Float f(15.5f);
   std::string s = Float::toString(15.5f, 16);

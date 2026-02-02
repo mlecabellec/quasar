@@ -80,6 +80,12 @@ public:
   void reverseBits(size_t groupSize);
 
   /**
+   * @brief Clones the BitBuffer.
+   * @return A deep copy of the BitBuffer.
+   */
+  BitBuffer clone() const;
+
+  /**
    * @brief Get size in bits.
    */
   size_t bitSize() const;

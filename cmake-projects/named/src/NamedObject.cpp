@@ -29,12 +29,17 @@ NamedObject::create(const std::string &name,
   };
 
   std::shared_ptr<Helper> obj = std::make_shared<Helper>(name);
+  obj->setSelf(obj);
 
   if (parent) {
     obj->setParent(parent);
   }
 
   return obj;
+}
+
+std::shared_ptr<NamedObject> NamedObject::getSelf() const {
+    return m_self.lock();
 }
 
 void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
@@ -65,7 +70,7 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   if (parent) {
     // Add to new parent. This might throw if name duplicate.
     // The addChild method handles locking of the parent.
-    parent->addChild(shared_from_this());
+    parent->addChild(getSelf());
   }
 
   {
@@ -131,7 +136,7 @@ std::shared_ptr<NamedObject> NamedObject::getPreviousSibling() const {
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   std::list<std::shared_ptr<NamedObject>> &siblings = p->m_children;
   std::list<std::shared_ptr<NamedObject>>::iterator it =
-      std::find(siblings.begin(), siblings.end(), shared_from_this());
+      std::find(siblings.begin(), siblings.end(), getSelf());
 
   // Return the element before this one if it exists.
   if (it != siblings.begin() && it != siblings.end()) {
@@ -147,7 +152,7 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
 
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   auto &siblings = p->m_children;
-  auto it = std::find(siblings.begin(), siblings.end(), shared_from_this());
+  auto it = std::find(siblings.begin(), siblings.end(), getSelf());
 
   if (it != siblings.end() && std::next(it) != siblings.end()) {
     // Return the element after this one if it exists.

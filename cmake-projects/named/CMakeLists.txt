@@ -63,6 +63,29 @@ if (NOT TINYXML2_FOUND)
     endif()
 endif()
 
+# Try finding jsoncons
+pkg_check_modules(JSONCONS jsoncons)
+if (NOT JSONCONS_FOUND)
+    set(JSONCONS_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsoncons")
+    if (EXISTS "${JSONCONS_LOCAL_DIR}/CMakeLists.txt")
+        message(STATUS "Using local jsoncons from ${JSONCONS_LOCAL_DIR}")
+        add_subdirectory("${JSONCONS_LOCAL_DIR}" "${CMAKE_BINARY_DIR}/third-party/jsoncons")
+        set(JSONCONS_LIBRARIES jsoncons)
+        set(JSONCONS_INCLUDE_DIRS "${JSONCONS_LOCAL_DIR}/include")
+    else()
+        message(STATUS "jsoncons not found via PkgConfig or local third-party, trying FetchContent...")
+        include(FetchContent)
+        FetchContent_Declare(
+          jsoncons
+          GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+          GIT_TAG v0.173.0
+        )
+        FetchContent_MakeAvailable(jsoncons)
+        set(JSONCONS_LIBRARIES jsoncons)
+        set(JSONCONS_INCLUDE_DIRS ${jsoncons_SOURCE_DIR}/include)
+    endif()
+endif()
+
 # Find sources
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h")
@@ -74,6 +97,7 @@ target_include_directories(quasar_named PUBLIC
     $<INSTALL_INTERFACE:include>
     ${YAML_CPP_INCLUDE_DIRS}
     ${TINYXML2_INCLUDE_DIRS}
+    ${JSONCONS_INCLUDE_DIRS}
 )
 
 # Installation
@@ -93,6 +117,7 @@ target_link_libraries(quasar_named PUBLIC
     quasar_coretypes
     ${YAML_CPP_LIBRARIES}
     ${TINYXML2_LIBRARIES}
+    ${JSONCONS_LIBRARIES}
 )
 
 # Testing

@@ -115,3 +115,62 @@ TEST(IntegerTest, PrimitiveInitialization) {
   ULong ul(10000000000000000000ULL);
   EXPECT_EQ(ul.value(), 10000000000000000000ULL);
 }
+
+TEST(IntegerTest, BitwiseOperations) {
+  Int a(0b1010); // 10
+  Int b(0b1100); // 12
+
+  // AND
+  // 1010 & 1100 = 1000 (8)
+  EXPECT_EQ(a.bitwiseAnd(b)->toInt(), 8);
+
+  // OR
+  // 1010 | 1100 = 1110 (14)
+  EXPECT_EQ(a.bitwiseOr(b)->toInt(), 14);
+
+  // XOR
+  // 1010 ^ 1100 = 0110 (6)
+  EXPECT_EQ(a.bitwiseXor(b)->toInt(), 6);
+
+  // NOT
+  // ~0...00001010 = 1...11110101
+  // For int32: ~10 = -11
+  EXPECT_EQ(a.bitwiseNot()->toInt(), -11);
+
+  // Shift Left
+  // 10 << 1 = 20
+  EXPECT_EQ(a.bitwiseLeftShift(1)->toInt(), 20);
+
+  // Shift Right
+  // 10 >> 1 = 5
+  EXPECT_EQ(a.bitwiseRightShift(1)->toInt(), 5);
+}
+
+TEST(IntegerTest, Introspection) {
+  Int i(42);
+  EXPECT_EQ(i.getType(), "Integer");
+  EXPECT_TRUE(i.isIntegerType());
+  EXPECT_TRUE(i.isSigned());
+
+  UByte ub(10);
+  EXPECT_EQ(ub.getType(), "Integer");
+  EXPECT_TRUE(ub.isIntegerType());
+  EXPECT_FALSE(ub.isSigned());
+}
+
+TEST(IntegerTest, PrimitiveComparison) {
+  Int i(42);
+  EXPECT_TRUE(i.equals(42));
+  EXPECT_FALSE(i.equals(43));
+  
+  EXPECT_EQ(i.compareTo(42), 0);
+  EXPECT_LT(i.compareTo(43), 0);
+  EXPECT_GT(i.compareTo(41), 0);
+  
+  EXPECT_TRUE(i == 42);
+  EXPECT_TRUE(i != 43);
+  EXPECT_TRUE(i < 43);
+  EXPECT_TRUE(i > 41);
+  EXPECT_TRUE(i <= 42);
+  EXPECT_TRUE(i >= 42);
+}

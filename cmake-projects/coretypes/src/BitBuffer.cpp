@@ -277,6 +277,10 @@ void BitBuffer::reverseBits(size_t groupSize) {
   }
 }
 
+BitBuffer BitBuffer::clone() const {
+  return BitBuffer(*this);
+}
+
 std::shared_ptr<BitBufferSlice> BitBuffer::sliceBitsView(size_t startBit,
                                                          size_t bitLength) {
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);

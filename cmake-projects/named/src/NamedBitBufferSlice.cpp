@@ -15,6 +15,7 @@ std::shared_ptr<NamedBitBufferSlice> NamedBitBufferSlice::create(
     size_t bitLength, std::shared_ptr<NamedObject> parent) {
   std::shared_ptr<NamedBitBufferSlice> obj =
       std::make_shared<NamedBitBufferSlice>(name, buffer, startBit, bitLength);
+  obj->setSelf(obj);
   if (parent) {
     obj->setParent(parent);
   }
