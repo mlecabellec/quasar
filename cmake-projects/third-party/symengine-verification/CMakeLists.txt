@@ -18,3 +18,5 @@ target_include_directories(symengine_test PRIVATE
     ${CMAKE_BINARY_DIR}/third-party/symengine
 )
 target_link_libraries(symengine_test PRIVATE symengine)
+
+add_test(NAME symengine_test COMMAND symengine_test)
