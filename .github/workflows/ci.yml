@@ -19,12 +19,21 @@ jobs:
       image: ${{ matrix.container }}
 
     steps:
+      - name: Pre-install git for checkout
+        run: |
+          apt-get update
+          apt-get install -y git
+
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y cmake g++ make git pkg-config python3 file linux-headers-amd64
+          apt-get install -y cmake g++ make git pkg-config python3 file linux-headers-amd64 \
+                             libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+                             libgmp-dev
           # Attempt to install headers for the running kernel if possible, 
           # but in a container on GHA this is usually not matching the distro repo.
           # We install the default headers for the distro to allow compilation 

@@ -14,7 +14,9 @@ set(INTEGER_CLASS "gmp" CACHE STRING "" FORCE) # Defaulting to GMP, assuming it'
 
 add_executable(symengine_test main.cpp)
 target_include_directories(symengine_test PRIVATE
-    ${CMAKE_SOURCE_DIR}/cmake-projects/third-party/symengine
-    ${CMAKE_BINARY_DIR}/cmake-projects/third-party/symengine
+    ${CMAKE_SOURCE_DIR}/third-party/symengine
+    ${CMAKE_BINARY_DIR}/third-party/symengine
 )
 target_link_libraries(symengine_test PRIVATE symengine)
+
+add_test(NAME symengine_test COMMAND symengine_test)
