@@ -1,9 +1,1 @@
-[submodule "linux-modules/SOEM"]
-	path = linux-modules/SOEM
-	url = https://github.com/OpenEtherCATsociety/SOEM.git
-[submodule "linux-modules/SOES"]
-	path = linux-modules/SOES
-	url = https://github.com/OpenEtherCATsociety/SOES.git
-[submodule "linux-modules/ethercat"]
-	path = linux-modules/ethercat
-	url = https://gitlab.com/etherlab.org/ethercat.git
+
