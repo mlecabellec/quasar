@@ -1,0 +1,15 @@
+PACKAGE_NAME="@DKMS_MODULE_NAME@"
+PACKAGE_VERSION="@ETHERCAT_VERSION@"
+
+BUILT_MODULE_NAME[0]="ec_master"
+DEST_MODULE_LOCATION[0]="/kernel/drivers/ethercat"
+BUILT_MODULE_LOCATION[0]="master"
+
+BUILT_MODULE_NAME[1]="ec_generic"
+DEST_MODULE_LOCATION[1]="/kernel/drivers/ethercat"
+BUILT_MODULE_LOCATION[1]="devices"
+
+MAKE[0]="'./bootstrap' && './configure' --enable-generic --disable-8139too --enable-cycles && make modules"
+CLEAN="make clean"
+
+AUTOINSTALL="yes"
