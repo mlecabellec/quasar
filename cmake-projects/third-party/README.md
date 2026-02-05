@@ -11,6 +11,9 @@ These libraries are included to allow building the project without external depe
 -   **tinyxml2** (10.0.0): A simple, small, efficient, C++ XML parser. Used by the `named` project.
 -   **raylib** (5.5+): A simple and easy-to-use library to enjoy videogames programming.
 -   **symengine** (git main): A fast symbolic manipulation library, written in C++.
+-   **Catch2** (3.12.0): A modern, C++-native, unit test framework.
+-   **sol2** (v3.3.0): A C++ library binding to Lua.
+-   **lua** (5.4.7): A powerful, efficient, lightweight, embeddable scripting language.
 
 
 ## Licenses

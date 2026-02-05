@@ -39,9 +39,39 @@ if(NOT TARGET yaml-cpp)
     add_subdirectory(yaml-cpp)
 endif()
 
+# Configure sol2
+option(QUASAR_ENABLE_SOL2 "Enable sol2" ON)
+
+if(QUASAR_ENABLE_SOL2)
+    set(SOL2_TESTS ON CACHE BOOL "" FORCE)
+    set(SOL2_LUA_VERSION "5.4.7" CACHE STRING "" FORCE)
+    add_subdirectory(sol2)
+endif()
+
+# Configure Lua
+option(QUASAR_ENABLE_LUA "Enable Lua" ON)
+
+if(QUASAR_ENABLE_LUA)
+    add_subdirectory(lua)
+endif()
+
 # Verifications
 if(QUASAR_ENABLE_SYMENGINE)
     add_subdirectory(symengine-verification)
 endif()
 
 # Note: raylib-verification is missing
+
+# Configure Catch2
+option(QUASAR_ENABLE_CATCH2 "Enable Catch2" ON)
+
+if(QUASAR_ENABLE_CATCH2)
+    set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+    set(CATCH_INSTALL_EXTRAS OFF CACHE BOOL "" FORCE)
+    set(CATCH_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(CATCH_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CATCH_BUILD_EXTRA_TESTS OFF CACHE BOOL "" FORCE)
+    set(CATCH_BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
+    set(CATCH_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(Catch2)
+endif()
