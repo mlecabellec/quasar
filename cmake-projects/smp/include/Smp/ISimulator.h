@@ -5,6 +5,7 @@
 #include "Smp/DuplicateUuid.h"
 #include "Smp/IComponent.h"
 #include "Smp/IComposite.h"
+#include "Smp/IFactory.h"
 #include "Smp/InvalidLibrary.h"
 #include "Smp/InvalidObjectName.h"
 #include "Smp/InvalidSimulatorState.h"

@@ -38,7 +38,7 @@ CoEError CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
                    4); // Fixed size for expedited
   } else {
     // Normal/Segmented
-    sdo->command = coe::SDO_DOWNLOAD_NORM_REQ;
+    sdo->command = coe::SDO_DOWNLOAD_INIT;
     // ... Normal download involves size at the end or in header?
     // Actually SOEM: ldata[0] = htoel(psize);
     // We'll stick to expedited for now or research normal format.
@@ -53,7 +53,8 @@ CoEError CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
   // 3. Receive response
   mailbox::Type rx_type;
   std::vector<byte> resp_buf(slave.mbx_in_length);
-  wkc = mailbox_.read(slave, rx_type, resp_buf, timeout);
+  size_t actual_len;
+  wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
   if (wkc <= 0)
     return CoEError::MailboxError;
@@ -103,7 +104,8 @@ CoEError CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
   // 3. Receive response
   mailbox::Type rx_type;
   std::vector<byte> resp_buf(slave.mbx_in_length);
-  wkc = mailbox_.read(slave, rx_type, resp_buf, timeout);
+  size_t actual_len;
+  wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
   if (wkc <= 0)
     return CoEError::MailboxError;
