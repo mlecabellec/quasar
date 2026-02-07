@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xsd:schema xmlns="http://www.ecss.nl/smp/2019/Smdl/Assembly" xmlns:Assembly="http://www.ecss.nl/smp/2019/Smdl/Assembly" xmlns:Catalogue="http://www.ecss.nl/smp/2019/Smdl/Catalogue" xmlns:Elements="http://www.ecss.nl/smp/2019/Core/Elements" xmlns:Types="http://www.ecss.nl/smp/2019/Core/Types" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" ecore:documentRoot="AssemblyDocumentRoot" ecore:nsPrefix="Assembly" ecore:package="Assembly" elementFormDefault="unqualified" targetNamespace="http://www.ecss.nl/smp/2019/Smdl/Assembly">
+  <xsd:annotation>
+    <xsd:documentation>This schema defines all metamodel elements that are needed in order to define an assembly of model instances. This includes mechanisms for creating links between model instances, namely between references and implemented interfaces, between event sources and event sinks, and between output and input fields.</xsd:documentation>
+  </xsd:annotation>
+  <xsd:import namespace="http://www.w3.org/1999/xlink">
+    <xsd:annotation>
+      <xsd:documentation>Schema for the W3C XML Linking Language (XLink).</xsd:documentation>
+    </xsd:annotation>
+  </xsd:import>
+  <xsd:import namespace="http://www.ecss.nl/smp/2019/Smdl/Catalogue">
+    <xsd:annotation>
+      <xsd:documentation>This schema defines all metamodel elements that are needed in order to define models in a catalogue. Catalogues make use of the mechanisms defined in Core Types, e.g. enumerations and structures, and they add reference types (interfaces and components), events and a hierarchical grouping mechanism (namespaces).</xsd:documentation>
+    </xsd:annotation>
+  </xsd:import>
+  <xsd:import namespace="http://www.ecss.nl/smp/2019/Core/Types">
+    <xsd:annotation>
+      <xsd:documentation>This schema provides basic types and typing mechanisms, together with appropriate value specification mechanisms.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:import>
+  <xsd:import namespace="http://www.ecss.nl/smp/2019/Core/Elements">
+    <xsd:annotation>
+      <xsd:documentation>This schema defines base metaclasses and annotation mechanisms used throughout the SMP Metamodel.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:import>
+  <xsd:element name="Assembly" type="Assembly:Assembly">
+    <xsd:annotation>
+      <xsd:documentation>The Assembly element (of type Assembly) is the root element of an SMDL assembly.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:complexType name="Assembly">
+    <xsd:annotation>
+      <xsd:documentation>An Assembly is an assembly node that acts as the root element (top-level node) in an SMDL Assembly document.
+Being an instance node, an Assembly is typed by a Model of a catalogue and can contain model instances, links and field values. Further it can contain service proxies, for use as end points of service links (interface links to services) within the Assembly.
+Being a top-level node, an Assembly does not point to its container (as opposed to a model instance).</xsd:documentation>
+      <xsd:documentation source="">&lt;b&gt;&lt;i&gt;Remark&lt;/i&gt;&lt;/b&gt;: As multiple inheritance cannot be used in the metamodel, the Document features are replicated in the Assembly metaclass.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:InstanceNode">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="ServiceProxy" type="Assembly:ServiceProxy">
+            <xsd:annotation>
+              <xsd:documentation>Collection of service proxies used in the Assembly.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="Title" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Title of the assembly.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Date" type="xsd:dateTime" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Date the assembly has been created or updated.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Creator" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Creator of the assembly.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Version" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Version of the assembly.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType abstract="true" name="Document">
+    <xsd:annotation>
+      <xsd:documentation>A Document is a named element that can be the root element of an XML document. It therefore adds the Title, Date, Creator and Version attributes to allow identification of documents.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Elements:NamedElement">
+        <xsd:attribute name="Title" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Title of the document.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Date" type="xsd:dateTime" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Date the document was created or last updated.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Creator" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Creator of the document.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="Version" type="xsd:string" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Version of the document.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ModelInstance">
+    <xsd:annotation>
+      <xsd:documentation>A ModelInstance represents an instance of a model. It is derived from the abstract base metaclass InstanceNode, which provides most of the functionality. As every model instance is either contained in an assembly, or in another model instance, it has to specify as well in which Container of the parent it is stored.
+In order to allow an assembly to be interpreted without the associated catalogue, the xlink:title attribute of the Container link shall contain the container name.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:InstanceNode">
+        <xsd:sequence>
+          <xsd:element name="Container">
+            <xsd:annotation>
+              <xsd:documentation>Container that the model instance shall be added to.</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:Container</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:Container</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ContainerOfModelInstance">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Container" ecore:reference="Catalogue:Container" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ContainerName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType abstract="true" name="InstanceNode">
+    <xsd:annotation>
+      <xsd:documentation>The InstanceNode metaclass is an abstract base class for both Assembly and ModelInstance that provides the common features of both metaclasses.
+An InstanceNode represents an instance of a model. Therefore, it has to link to a Model. To allow creating a run-time model instance, the instance node needs to specify as well which Implementation shall be used when the assembly is instantiated (loaded) in a Simulation Environment. This is done by specifying a Universally Unique Identifier (UUID).
+Depending on the containers of the referenced model, the instance node can hold any number of child model instances.
+For each field of the referenced model, the instance node can specify a FieldValue to define the initial value of the associated Field.
+An InstanceNode can link its references, event sinks and input fields, which are specified by the referenced model, to other model instances via the Link elements.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:AssemblyNode">
+        <xsd:sequence>
+          <xsd:element name="Model">
+            <xsd:annotation>
+              <xsd:documentation>Model that defines the (base) type that the Implementation has to be of (or derive from).</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:Model</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:Model</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ModelOfInstanceNode">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Model" ecore:reference="Catalogue:Model" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ModelName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="ModelInstance" type="Assembly:ModelInstance">
+            <xsd:annotation>
+              <xsd:documentation>Collection of model instances contained.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="FieldValue" type="Types:Value">
+            <xsd:annotation>
+              <xsd:documentation>Collection of fields values.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" name="Link" type="Assembly:Link">
+            <xsd:annotation>
+              <xsd:documentation>Collection of links to other components.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="Implementation" type="Elements:UUID" use="required">
+          <xsd:annotation>
+            <xsd:documentation>UUID of the model to use for the instance.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="AssemblyInstance">
+    <xsd:annotation>
+      <xsd:documentation>An AssemblyInstance represents a model instance which is specified by an Assembly in &lt;i&gt;another&lt;/i&gt; SMDL Assembly document (a sub-assembly).
+Semantics and constraints:
+&lt;ul&gt;
+&lt;li&gt;The Assembly link must reference an Assembly node in &lt;i&gt;another&lt;/i&gt; SMDL Assembly document.&lt;/li&gt;
+&lt;li&gt;The FieldValue elements owned by the AssemblyInstance node override any FieldValue elements specified in the referenced Assembly node.&lt;/li&gt;
+&lt;li&gt;The Model of both the AssemblyInstance and the referenced Assembly must be identical.&lt;/li&gt;
+&lt;li&gt;The Implementation element of an AssemblyInstance node must be identical with the Implementation specified by the referenced Assembly.&lt;/li&gt;
+&lt;li&gt;Model instances in the sub-assembly defined by the AssemblyInstance can be referenced from assembly nodes (e.g. model instances) in the using assembly via Links, where the AssemblyInstance link points to this.&lt;/li&gt;
+&lt;/ul&gt;
+</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:ModelInstance">
+        <xsd:sequence>
+          <xsd:element name="Assembly">
+            <xsd:annotation>
+              <xsd:documentation>Assembly file that is referenced.</xsd:documentation>
+              <xsd:documentation>Link destination type: Assembly:Assembly</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:Assembly</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="AssemblyOfAssemblyInstance">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Assembly" ecore:reference="Assembly:Assembly" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="AssemblyName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element minOccurs="0" name="Configuration">
+            <xsd:annotation>
+              <xsd:documentation>Configuration to load to configure the Assembly.</xsd:documentation>
+              <xsd:documentation>Link destination type: Configuration:Configuration</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Configuration:Configuration</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ConfigurationOfAssemblyInstance">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Configuration" ecore:reference="Configuration:Configuration" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ConfigurationName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ServiceProxy">
+    <xsd:annotation>
+      <xsd:documentation>A ServiceProxy represents a service which is specified via the Interface link (service type) and the Name attribute (service name). In the Assembly, a service proxy serves as end point for interface links that resolve service references of a model. When the SMDL Assembly is instantiated (loaded), the Simulation Environment must resolve the service proxy (via ISimulator::GetService()) and provide the resolved service interface to using model instances (i.e. model instances that reference the service proxy via an interface link).</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:AssemblyNode">
+        <xsd:sequence>
+          <xsd:element name="Interface">
+            <xsd:annotation>
+              <xsd:documentation>Interface that the service proxy provides.</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:Interface</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:Interface</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="InterfaceOfServiceProxy">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Interface" ecore:reference="Catalogue:Interface" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="InterfaceName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType abstract="true" name="AssemblyNode">
+    <xsd:annotation>
+      <xsd:documentation>The AssemblyNode metaclass is an abstract base class for all nodes in the assembly tree and serves as provider type for interface links. This ensures that the same linking mechanism can be used to resolve model references (via an interface link to an InstanceNode, i.e. Assembly, ModelInstance or AssemblyInstance) and service references (via an interface link to a ServiceProxy).</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Elements:NamedElement"/>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="InterfaceLink">
+    <xsd:annotation>
+      <xsd:documentation>An InterfaceLink resolves a reference of an instance node in an assembly.
+Therefore, it links to the Reference of the corresponding Model to uniquely identify the link source - together with the knowledge of its parent model instance, which defines the Model.
+In order to uniquely identify the link target, the InterfaceLink links to the Provider assembly node, which provides a matching Interface, either via its Model (in case of an InstanceNode) or via its associated service implementation (in case of a ServiceProxy). In the latter case, the Simulation Environment must resolve the service proxy to a service interface when the assembly is instantiated (loaded). 
+In order to allow an assembly to be interpreted without the associated catalogue, the xlink:title attribute of the Reference link shall contain the name of the associated Reference element in the catalogue.
+To be semantically correct, the Interface specified by the Provider must coincide with the Interface that the associated Reference points to, or that is derived from it via interface inheritance.
+If the Provider is an instance node, an Interface of the associated Model must match the Reference's Interface.
+If the Provider is a service proxy, the Interface of the service proxy must match the Reference's Interface. Note that obviously the associated service implementation must implement such a matching interface, which can only be verified when the Simulation Environment instantiates the assembly (i.e. during runtime) and the service proxy is resolved via its Name using the standard SMP service acquisition mechanism.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:Link">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="Consumer">
+            <xsd:annotation>
+              <xsd:documentation>Link destination type: Assembly:InstanceNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:InstanceNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ConsumerOfInterfaceLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Consumer" ecore:reference="Assembly:InstanceNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ConsumerName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Reference">
+            <xsd:annotation>
+              <xsd:documentation>Reference of the corresponding Model to uniquely identify the link source - together with the knowledge of its parent model instance, which defines the Model.</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:Reference</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:Reference</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ReferenceOfInterfaceLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Reference" ecore:reference="Catalogue:Reference" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ReferenceName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Provider">
+            <xsd:annotation>
+              <xsd:documentation>Provider assembly node in order to uniquely identify the link target, which provides a matching Interface, either via its Model (in case of an InstanceNode) or via its associated service implementation (in case of a ServiceProxy).</xsd:documentation>
+              <xsd:documentation>Link destination type: Assembly:AssemblyNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:AssemblyNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ProviderOfInterfaceLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Provider" ecore:reference="Assembly:AssemblyNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ProviderName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="EventLink">
+    <xsd:annotation>
+      <xsd:documentation>An EventLink resolves an event sink of an instance node in an assembly. Therefore, it links to the EventSink of the corresponding Model to uniquely identify the link target - together with the knowledge of its parent model instance, which defines the Model.
+In order to uniquely identify the link source, the EventLink links to an EventSource of an event Provider model instance.
+In order to allow an assembly to be interpreted without the associated catalogue, the xlink:title attribute of the EventSink and EventSource links shall contain the name of the associated EventSink and EventSource elements in the catalogue, respectively.
+To be semantically correct, the EventSource of the Provider and the referenced EventSink need to reference the same EventType.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:Link">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="Consumer">
+            <xsd:annotation>
+              <xsd:documentation>Link destination type: Assembly:InstanceNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:InstanceNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ConsumerOfEventLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Consumer" ecore:reference="Assembly:InstanceNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ConsumerName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="EventSink">
+            <xsd:annotation>
+              <xsd:documentation>EventSink of the corresponding Model to uniquely identify the link target - together with the knowledge of its parent model instance, which defines the Model.</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:EventSink</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:EventSink</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="EventSinkOfEventLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="EventSink" ecore:reference="Catalogue:EventSink" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="EventSinkName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Provider">
+            <xsd:annotation>
+              <xsd:documentation>Event provider.</xsd:documentation>
+              <xsd:documentation>Link destination type: Assembly:InstanceNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:InstanceNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="ProviderOfEventLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Provider" ecore:reference="Assembly:InstanceNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="ProviderName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="EventSource">
+            <xsd:annotation>
+              <xsd:documentation>EventSource of the Provider model instance in order to uniquely identify the link source.</xsd:documentation>
+              <xsd:documentation>Link destination type: Catalogue:EventSource</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Catalogue:EventSource</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="EventSourceOfEventLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="EventSource" ecore:reference="Catalogue:EventSource" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="EventSourceName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType abstract="true" name="Link">
+    <xsd:annotation>
+      <xsd:documentation>The Link metaclass serves as a base metaclass for all links.
+The AssemblyInstance link may reference an assembly instance, to support the case where the Link references into a sub-assembly.
+If the AssemblyInstance is empty (default), the Link must reference into the containing Assembly, which implicitly defines its assembly instance.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Elements:NamedElement">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="TargetAssembly">
+            <xsd:annotation>
+              <xsd:documentation>Optional reference to an assembly instance, to support the case where the Link references into a sub-assembly.
+If the AssemblyInstance is empty (default), the Link must reference into the containing Assembly, which implicitly defines its assembly instance.</xsd:documentation>
+              <xsd:documentation>Link destination type: Assembly:AssemblyInstance</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:AssemblyInstance</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="TargetAssemblyOfLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="TargetAssembly" ecore:reference="Assembly:AssemblyInstance" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="TargetAssemblyName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element minOccurs="0" name="SourceAssembly">
+            <xsd:annotation>
+              <xsd:documentation>Link destination type: Assembly:AssemblyInstance</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:AssemblyInstance</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="SourceAssemblyOfLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="SourceAssembly" ecore:reference="Assembly:AssemblyInstance" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="SourceAssemblyName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FieldLink">
+    <xsd:annotation>
+      <xsd:documentation>A FieldLink resolves an input field of an instance node in an assembly.
+Therefore, it links to the Input of the corresponding Model to uniquely identify the link target - together with the knowledge of its parent model instance, which defines the Model.
+In order to uniquely identify the link source, the FieldLink links to an Output field of a Source model instance.
+The Factor and Offset attributes specify an affine transformation, which is performed when the field link is "executed" via a Transfer in a Schedule:
+&lt;ul&gt;
+&lt;li&gt;InputValue = OutputValue * Factor + Offset&lt;/li&gt;
+&lt;/ul&gt;
+The default transformation is the identity (Factor=1.0, Offset=0.0).
+In order to allow an assembly to be interpreted without the associated catalogue, the xlink:title attribute of the Input and Output links shall contain the name of the associated input and output Field elements in the catalogue, respectively.
+To be semantically correct, the Input field needs to have its Input attribute set to true, the Output field of the Source needs to have its Output attribute set to true, and both fields need to reference the same value type.
+</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Assembly:Link">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" name="Target">
+            <xsd:annotation>
+              <xsd:documentation>Link destination type: Assembly:InstanceNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:InstanceNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="TargetOfFieldLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Target" ecore:reference="Assembly:InstanceNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="TargetName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Input">
+            <xsd:annotation>
+              <xsd:documentation>Input of the corresponding Model to uniquely identify the link target - together with the knowledge of its parent model instance, which defines the Model.</xsd:documentation>
+              <xsd:documentation>Link destination type: Types:Field</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Types:Field</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="InputOfFieldLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Input" ecore:reference="Types:Field" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="InputName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Source">
+            <xsd:annotation>
+              <xsd:documentation>Source model instance.</xsd:documentation>
+              <xsd:documentation>Link destination type: Assembly:InstanceNode</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Assembly:InstanceNode</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="SourceOfFieldLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Source" ecore:reference="Assembly:InstanceNode" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="SourceName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="Output">
+            <xsd:annotation>
+              <xsd:documentation>Output field of the Source model instance in order to uniquely identify the link source.</xsd:documentation>
+              <xsd:documentation>Link destination type: Types:Field</xsd:documentation>
+              <xsd:appinfo source="http://www.w3.org/1999/xlink">Types:Field</xsd:appinfo>
+            </xsd:annotation>
+            <xsd:complexType ecore:name="OutputOfFieldLink">
+              <xsd:attribute fixed="simple" ref="xlink:type" use="prohibited"/>
+              <xsd:attribute ecore:name="Output" ecore:reference="Types:Field" ref="xlink:href" use="required"/>
+              <xsd:attribute ecore:name="OutputName" ref="xlink:title" use="optional"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute default="1.0" name="Factor" type="xsd:double" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Factor of an affine transformation, which is performed when the field link is "executed" via a Transfer in a Schedule (InputValue = OutputValue * Factor + Offset).</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute default="0.0" name="Offset" type="xsd:double" use="optional">
+          <xsd:annotation>
+            <xsd:documentation>Offset of an affine transformation, which is performed when the field link is "executed" via a Transfer in a Schedule (InputValue = OutputValue * Factor + Offset).</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="Service">
+    <xsd:annotation>
+      <xsd:documentation>The Service metaclass is a component and hence inherits all component mechanisms. A Service can reference one or more interfaces via the Interface links (inherited from Component), where at least one of them must be derived from Smp::IService, which qualifies it as a service interface.
+</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Catalogue:Component"/>
+    </xsd:complexContent>
+  </xsd:complexType>
+</xsd:schema>

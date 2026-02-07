@@ -8,8 +8,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(third-party)
+add_subdirectory(smp)
 add_subdirectory(coretypes)
 add_subdirectory(named)
+add_subdirectory(resoem)
 
 # CPack Configuration
 set(CPACK_GENERATOR "DEB")

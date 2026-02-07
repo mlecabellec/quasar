@@ -75,3 +75,18 @@ if(QUASAR_ENABLE_CATCH2)
     set(CATCH_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
     add_subdirectory(Catch2)
 endif()
+
+# Configure libzmq
+option(QUASAR_ENABLE_LIBZMQ "Enable libzmq" ON)
+
+if(QUASAR_ENABLE_LIBZMQ)
+    set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(WITH_PERF_TOOL OFF CACHE BOOL "" FORCE)
+    set(WITH_DOC OFF CACHE BOOL "" FORCE)
+    set(ENABLE_DRAFTS OFF CACHE BOOL "" FORCE)
+    set(WITH_LIBSODIUM OFF CACHE BOOL "" FORCE)
+    set(WITH_GSSAPI_KRB5 OFF CACHE BOOL "" FORCE)
+    add_subdirectory(libzmq)
+endif()
+
+

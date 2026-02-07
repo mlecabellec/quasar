@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ASCII"?>
+<package:Package xmlns:package="http://www.ecss.nl/smp/2019/Smdl/Package" xmlns:xlink="http://www.w3.org/1999/xlink" Id="ecss.smp.smp" Name="ecss_smp_smp" Creator="ECSS E40-07" Title="ecss.smp.smp" Version="1.0">
+  <Description>Specifies the SMP Component Model as SMDL Package.
+This package is generated. DO NOT EDIT.</Description>
+  <Implementation xlink:title="FieldUpdateKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Attributes.FieldUpdateKind"/>
+  <Implementation xlink:title="OperatorKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Attributes.OperatorKind"/>
+  <Implementation xlink:title="ParameterDirectionKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Publication.ParameterDirectionKind"/>
+  <Implementation xlink:title="LogMessageKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Services.LogMessageKind"/>
+  <Implementation xlink:title="TimeKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Services.TimeKind"/>
+  <Implementation xlink:title="EventId" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.Services.EventId"/>
+  <Implementation xlink:title="AccessKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.AccessKind"/>
+  <Implementation xlink:title="ViewKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.ViewKind"/>
+  <Implementation xlink:title="SimulatorStateKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.SimulatorStateKind"/>
+  <Implementation xlink:title="PrimitiveTypeKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.PrimitiveTypeKind"/>
+  <Implementation xlink:title="ComponentStateKind" xlink:href="http://www.esa.int/2008/02/Smdl#Smp.ComponentStateKind"/>
+</package:Package>

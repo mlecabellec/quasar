@@ -36,4 +36,7 @@ This review is a preliminary review of the quasar::coretypes namespace.
 
 ### Issues to be resolved in the future
 
+## Conclusion
+
+Work is not fully compliant with the feature description. Future reviews will focus on the remaining features.
 

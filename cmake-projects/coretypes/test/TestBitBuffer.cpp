@@ -1,85 +1,139 @@
-#include <gtest/gtest.h>
 #include "quasar/coretypes/BitBuffer.hpp"
 #include <chrono>
 #include <future>
+#include <gtest/gtest.h>
+#include <iostream>
 #include <thread>
 #include <vector>
 
 using namespace quasar::coretypes;
 
 TEST(BitBufferTest, GetSetBit) {
+  // Step: Initialize BitBuffer with 16 bits
+  std::cout << "Step: Initialize BitBuffer with 16 bits" << std::endl;
   BitBuffer bb(16); // 2 bytes
+
+  // Step: Set bit 0 to true
+  std::cout << "Step: Set bit 0 to true" << std::endl;
   bb.setBit(0, true);
+
+  // Step: Set bit 15 to true
+  std::cout << "Step: Set bit 15 to true" << std::endl;
   bb.setBit(15, true);
+
+  // Assertion: Check if bit 0 is true
+  std::cout << "Assertion: Check if bit 0 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(0));
+
+  // Assertion: Check if bit 1 is false
+  std::cout << "Assertion: Check if bit 1 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(1));
+
+  // Assertion: Check if bit 15 is true
+  std::cout << "Assertion: Check if bit 15 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(15));
 }
 
 TEST(BitBufferTest, BitSize) {
+  // Step: Initialize BitBuffer with 10 bits
+  std::cout << "Step: Initialize BitBuffer with 10 bits" << std::endl;
   BitBuffer bb(10); // 2 bytes allocated. 10 bits valid.
+
+  // Assertion: Check if bit size is 10
+  std::cout << "Assertion: Check if bit size is 10" << std::endl;
   EXPECT_EQ(bb.bitSize(), 10);
+
+  // Assertion: Check if byte size is 2
+  std::cout << "Assertion: Check if byte size is 2" << std::endl;
   EXPECT_EQ(bb.size(), 2);
 }
 
 TEST(BitBufferTest, SliceBits) {
-  // 0xFO -> 1111 0000
-  // Bits: 0-1-1-1-1-1-0-0
+  // Step: Initialize BitBuffer with 8 bits and set value to 0xF0
+  std::cout << "Step: Initialize BitBuffer with 8 bits and set value to 0xF0"
+            << std::endl;
   BitBuffer bb(8);
   bb.set(0, 0xF0);
 
-  // Slice middle 4 bits: index 2 length 4.
-  // 11[11 00]00
-  //     ^  ^
-  //     bits 2,3,4,5.
-  // 2:1, 3:1, 4:0, 5:0 -> 1100
+  // Step: Slice middle 4 bits: index 2 length 4.
+  std::cout << "Step: Slice middle 4 bits: index 2 length 4" << std::endl;
   BitBuffer sliced = bb.sliceBits(2, 4);
+
+  // Assertion: Check if sliced bit size is 4
+  std::cout << "Assertion: Check if sliced bit size is 4" << std::endl;
   EXPECT_EQ(sliced.bitSize(), 4);
 
-  // 1100 -> 0xC, formatted in byte: 1100 0000 (0xC0) because bits are MSB
-  // aligned? Implementation uses MSB first packing. 1 -> bit 0 -> 0x80 1 -> bit
-  // 1 -> 0x40 0 -> bit 2 0 -> bit 3 0x80 | 0x40 = 0xC0.
+  // Assertion: Check if sliced value matches expectations
+  std::cout << "Assertion: Check if sliced value matches expectations"
+            << std::endl;
   EXPECT_EQ(sliced.get(0) & 0xF0, 0xC0);
 }
 
 TEST(BitBufferTest, ConcatBits) {
-  // A: 11 (2 bits)
-  // B: 00 (2 bits)
-  // Concat -> 1100 (4 bits)
+  // Step: Initialize BitBuffer 'a' with 2 bits and set them to true
+  std::cout << "Step: Initialize BitBuffer 'a' with 2 bits and set them to true"
+            << std::endl;
   BitBuffer a(2);
   a.setBit(0, true);
   a.setBit(1, true);
 
+  // Step: Initialize BitBuffer 'b' with 2 bits and set them to false
+  std::cout
+      << "Step: Initialize BitBuffer 'b' with 2 bits and set them to false"
+      << std::endl;
   BitBuffer b(2);
   b.setBit(0, false);
   b.setBit(1, false);
 
+  // Step: Concatenate 'a' and 'b' to create 'c'
+  std::cout << "Step: Concatenate 'a' and 'b' to create 'c'" << std::endl;
   BitBuffer c = a.concatBits(b);
+
+  // Assertion: Check if 'c' bit size is 4
+  std::cout << "Assertion: Check if 'c' bit size is 4" << std::endl;
   EXPECT_EQ(c.bitSize(), 4);
+
+  // Assertion: Check if bits in 'c' match expectations
+  std::cout << "Assertion: Check if bit 0 in 'c' is true" << std::endl;
   EXPECT_TRUE(c.getBit(0));
+  std::cout << "Assertion: Check if bit 1 in 'c' is true" << std::endl;
   EXPECT_TRUE(c.getBit(1));
+  std::cout << "Assertion: Check if bit 2 in 'c' is false" << std::endl;
   EXPECT_FALSE(c.getBit(2));
+  std::cout << "Assertion: Check if bit 3 in 'c' is false" << std::endl;
   EXPECT_FALSE(c.getBit(3));
 }
 
 TEST(BitBufferTest, ReverseBits) {
-  // 1100 -> 0011
+  // Step: Initialize BitBuffer with 4 bits and set initial pattern 1100
+  std::cout
+      << "Step: Initialize BitBuffer with 4 bits and set initial pattern 1100"
+      << std::endl;
   BitBuffer bb(4);
   bb.setBit(0, true);
   bb.setBit(1, true);
   bb.setBit(2, false);
   bb.setBit(3, false);
 
+  // Step: Reverse bits
+  std::cout << "Step: Reverse bits" << std::endl;
   bb.reverseBits();
+
+  // Assertion: Check if result pattern is 0011
+  std::cout << "Assertion: Check if bit 0 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(0));
+  std::cout << "Assertion: Check if bit 1 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(1));
+  std::cout << "Assertion: Check if bit 2 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(2));
+  std::cout << "Assertion: Check if bit 3 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(3));
 }
 
 TEST(BitBufferTest, ReverseBitsGroup) {
-  // 6 bits: 10 11 00
-  // Rev group 2: 00 11 10
+  // Step: Initialize BitBuffer with 6 bits and set pattern 10 11 00
+  std::cout << "Step: Initialize BitBuffer with 6 bits and set pattern 10 11 00"
+            << std::endl;
   BitBuffer bb(6);
   bb.setBit(0, true);
   bb.setBit(1, false); // 10
@@ -88,29 +142,53 @@ TEST(BitBufferTest, ReverseBitsGroup) {
   bb.setBit(4, false);
   bb.setBit(5, false); // 00
 
+  // Step: Reverse bits in groups of 2
+  std::cout << "Step: Reverse bits in groups of 2" << std::endl;
   bb.reverseBits(2);
-  // 00 -> 0,1
+
+  // Assertion: Check if result pattern is 00 11 10
+  std::cout << "Assertion: Check if bit 0 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(0));
+  std::cout << "Assertion: Check if bit 1 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(1));
-  // 11 -> 2,3
+  std::cout << "Assertion: Check if bit 2 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(2));
+  std::cout << "Assertion: Check if bit 3 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(3));
-  // 10 -> 4,5
+  std::cout << "Assertion: Check if bit 4 is true" << std::endl;
   EXPECT_TRUE(bb.getBit(4));
+  std::cout << "Assertion: Check if bit 5 is false" << std::endl;
   EXPECT_FALSE(bb.getBit(5));
 }
 
 TEST(BitBufferTest, OutOfRange) {
+  // Step: Initialize BitBuffer with 8 bits
+  std::cout << "Step: Initialize BitBuffer with 8 bits" << std::endl;
   BitBuffer bb(8); // 8 bits = 1 byte
+
+  // Assertion: Check if getBit(8) throws out_of_range
+  std::cout << "Assertion: Check if getBit(8) throws out_of_range" << std::endl;
   EXPECT_THROW(bb.getBit(8), std::out_of_range);
+
+  // Assertion: Check if getBit(7) returns false
+  std::cout << "Assertion: Check if getBit(7) returns false" << std::endl;
   EXPECT_FALSE(bb.getBit(7));
+
+  // Assertion: Check if setBit(100) throws out_of_range
+  std::cout << "Assertion: Check if setBit(100) throws out_of_range"
+            << std::endl;
   EXPECT_THROW(bb.setBit(100, true), std::out_of_range);
 
-  // Slice out of range
+  // Assertion: Check if sliceBits(5, 5) throws out_of_range
+  std::cout << "Assertion: Check if sliceBits(5, 5) throws out_of_range"
+            << std::endl;
   EXPECT_THROW(bb.sliceBits(5, 5), std::out_of_range); // 5+5=10 > 8
 }
 
 TEST(BitBufferTest, Equals) {
+  // Step: Initialize bb1 and bb2 with identical patterns
+  std::cout << "Step: Initialize bb1 and bb2 with identical patterns"
+            << std::endl;
   BitBuffer bb1(16);
   bb1.setBit(0, true);
   bb1.setBit(15, true);
@@ -119,33 +197,62 @@ TEST(BitBufferTest, Equals) {
   bb2.setBit(0, true);
   bb2.setBit(15, true);
 
+  // Assertion: Check if bb1 equals bb2
+  std::cout << "Assertion: Check if bb1 equals bb2" << std::endl;
   EXPECT_TRUE(bb1.equals(bb2));
 
+  // Step: Modify bb2
+  std::cout << "Step: Modify bb2" << std::endl;
   bb2.setBit(1, true);
+
+  // Assertion: Check if bb1 no longer equals bb2
+  std::cout << "Assertion: Check if bb1 no longer equals bb2" << std::endl;
   EXPECT_FALSE(bb1.equals(bb2));
 
+  // Step: Initialize bb3 with different size
+  std::cout << "Step: Initialize bb3 with different size" << std::endl;
   BitBuffer bb3(15);
+
+  // Assertion: Check if bb1 no longer equals bb3
+  std::cout << "Assertion: Check if bb1 no longer equals bb3" << std::endl;
   EXPECT_FALSE(bb1.equals(bb3));
 }
 
 TEST(BitBufferTest, Clone) {
+  // Step: Initialize bb1 and set a bit
+  std::cout << "Step: Initialize bb1 and set a bit" << std::endl;
   BitBuffer bb1(16);
   bb1.setBit(5, true);
-  
+
+  // Step: Clone bb1 to bb2
+  std::cout << "Step: Clone bb1 to bb2" << std::endl;
   BitBuffer bb2 = bb1.clone();
+
+  // Assertion: Check if bb2 matches bb1
+  std::cout << "Assertion: Check if bb2 bit size is 16" << std::endl;
   EXPECT_EQ(bb2.bitSize(), 16);
+  std::cout << "Assertion: Check if bit 5 in bb2 is true" << std::endl;
   EXPECT_TRUE(bb2.getBit(5));
+  std::cout << "Assertion: Check if bit 0 in bb2 is false" << std::endl;
   EXPECT_FALSE(bb2.getBit(0));
-  
-  // Verify deep copy
+
+  // Step: Verify deep copy by modifying bb1
+  std::cout << "Step: Verify deep copy by modifying bb1" << std::endl;
   bb1.setBit(5, false);
+
+  // Assertion: Check if bb2 bit 5 is still true
+  std::cout << "Assertion: Check if bb2 bit 5 is still true" << std::endl;
   EXPECT_TRUE(bb2.getBit(5));
 }
 
 TEST(BitBufferTest, Performance_GetSet) {
+  // Step: Initialize BitBuffer for performance test
+  std::cout << "Step: Initialize BitBuffer for performance test" << std::endl;
   BitBuffer bb(1024 * 8); // 1KB
   const int iterations = 1000000;
 
+  // Step: Measure 1M setBit operations
+  std::cout << "Step: Measure 1M setBit operations" << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < iterations; ++i) {
     bb.setBit(i % (1024 * 8), true);
@@ -156,15 +263,20 @@ TEST(BitBufferTest, Performance_GetSet) {
   std::cout << "1M setBit operations took: " << elapsed.count() << " ms"
             << std::endl;
 
-  // Basic sanity check that it was fast enough (e.g. < 500ms for 1M ops).
-  // This is hardware dependent but 1M ops should be very fast.
+  // Assertion: Check if elapsed time is within limits
+  std::cout << "Assertion: Check if elapsed time is less than 1000ms"
+            << std::endl;
   EXPECT_LT(elapsed.count(), 1000.0);
 }
 
 TEST(BitBufferTest, ThreadSafety) {
+  // Step: Initialize BitBuffer and atomic stop flag
+  std::cout << "Step: Initialize BitBuffer and atomic stop flag" << std::endl;
   BitBuffer bb(1024);
   std::atomic<bool> stop{false};
 
+  // Step: Launch writer thread
+  std::cout << "Step: Launch writer thread" << std::endl;
   auto writer = std::async(std::launch::async, [&]() {
     int i = 0;
     while (!stop) {
@@ -173,6 +285,8 @@ TEST(BitBufferTest, ThreadSafety) {
     }
   });
 
+  // Step: Launch reader thread
+  std::cout << "Step: Launch reader thread" << std::endl;
   auto reader = std::async(std::launch::async, [&]() {
     int i = 0;
     while (!stop) {
@@ -183,12 +297,17 @@ TEST(BitBufferTest, ThreadSafety) {
     }
   });
 
+  // Step: Sleep for 100ms
+  std::cout << "Step: Sleep for 100ms" << std::endl;
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  // Step: Signal threads to stop and join
+  std::cout << "Step: Signal threads to stop and join" << std::endl;
   stop = true;
   writer.get();
   reader.get();
 
-  // If we didn't crash or TSAN didn't flag, we assume basic thread safety holds
-  // (locks are working).
+  // Assertion: Thread safety assumed if no crash/TSAN flag
+  std::cout << "Assertion: Thread safety holds" << std::endl;
   SUCCEED();
 }
