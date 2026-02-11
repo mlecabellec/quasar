@@ -18,7 +18,8 @@ public:
     return components.at(name);
   }
   void AddComponent(IComponent *component) override {
-    components.Add(component);
+    if (component)
+      components.Add(std::unique_ptr<IComponent>(component));
   }
   void RemoveComponent(IComponent *component) {
     // Basic implementation - not in IContainer? Wait, IContainer has
@@ -51,13 +52,15 @@ Simulator::Simulator(String8 name, String8 description,
       containers("Containers", "Container Collection", this),
       factories("Factories", "Factory Collection", this) {
 
-  models =
-      new SimulatorContainer(SMP_SimulatorModels, "Models container", this);
-  services =
-      new SimulatorContainer(SMP_SimulatorServices, "Services container", this);
+  auto modelsPtr = std::make_unique<SimulatorContainer>(
+      SMP_SimulatorModels, "Models container", this);
+  models = modelsPtr.get();
+  auto servicesPtr = std::make_unique<SimulatorContainer>(
+      SMP_SimulatorServices, "Services container", this);
+  services = servicesPtr.get();
 
-  containers.Add(models);
-  containers.Add(services);
+  containers.Add(std::move(modelsPtr));
+  containers.Add(std::move(servicesPtr));
 }
 
 void Simulator::Initialise() {
@@ -65,7 +68,7 @@ void Simulator::Initialise() {
     throw InvalidSimulatorState(state);
 
   SetState(SimulatorStateKind::SSK_Initialising);
-  for (auto *ep : initEntryPoints) {
+  for (IEntryPoint *ep : initEntryPoints) {
     if (ep)
       ep->Execute();
   }
@@ -157,7 +160,7 @@ void Simulator::AddService(IService *service) {
 
 IService *Simulator::GetService(String8 name) const {
   if (services) {
-    auto *comp = services->GetComponents()->at(name);
+    IComponent *comp = services->GetComponents()->at(name);
     return dynamic_cast<IService *>(comp);
   }
   return nullptr;
@@ -188,12 +191,13 @@ Services::ILinkRegistry *Simulator::GetLinkRegistry() const {
 }
 
 void Simulator::RegisterFactory(IFactory *componentFactory) {
-  factories.Add(componentFactory);
+  if (componentFactory)
+    factories.Add(std::unique_ptr<IFactory>(componentFactory));
 }
 
 IComponent *Simulator::CreateInstance(Uuid uuid, String8 name,
                                       String8 description, IComposite *parent) {
-  auto *factory = GetFactory(uuid);
+  IFactory *factory = GetFactory(uuid);
   if (factory) {
     return factory->CreateInstance(name, description, parent);
   }
@@ -202,7 +206,7 @@ IComponent *Simulator::CreateInstance(Uuid uuid, String8 name,
 
 IFactory *Simulator::GetFactory(Uuid uuid) const {
   for (size_t i = 0; i < factories.size(); ++i) {
-    auto *f = factories.at(i);
+    IFactory *f = factories.at(i);
     if (f && f->GetUuid() == uuid)
       return f;
   }

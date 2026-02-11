@@ -4,6 +4,7 @@
 #include "Smp/ICollection.h"
 #include "Smp/Object.h"
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,8 @@ public:
   virtual ~Collection() noexcept = default;
 
   T *at(String8 name) const override {
-    auto it = named_members.find(name ? name : "");
+    typename std::map<std::string, T *>::const_iterator it =
+        named_members.find(name ? name : "");
     if (it != named_members.end())
       return it->second;
     return nullptr;
@@ -26,7 +28,7 @@ public:
 
   T *at(size_t index) const override {
     if (index < members.size())
-      return members[index];
+      return members[index].get();
     return nullptr;
   }
 
@@ -40,15 +42,16 @@ public:
     return typename ICollection<T>::const_iterator(*this, size());
   }
 
-  void Add(T *member) {
+  void Add(std::unique_ptr<T> member) {
     if (!member)
       return;
-    members.push_back(member);
-    named_members[member->GetName()] = member;
+    T *ptr = member.get();
+    members.push_back(std::move(member));
+    named_members[ptr->GetName()] = ptr;
   }
 
 private:
-  std::vector<T *> members;
+  std::vector<std::unique_ptr<T>> members;
   std::map<std::string, T *> named_members;
 };
 

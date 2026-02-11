@@ -4,6 +4,7 @@
 #include "Smp/Collection.h"
 #include "Smp/IOperation.h"
 #include "Smp/Object.h"
+#include <memory>
 
 namespace Smp {
 
@@ -23,13 +24,17 @@ public:
     return parameters.at(name);
   }
 
-  void AddParameter(IParameter *parameter) { parameters.Add(parameter); }
-
-  void SetReturnParameter(IParameter *parameter) {
-    returnParameter = parameter;
+  void AddParameter(std::unique_ptr<IParameter> parameter) {
+    parameters.Add(std::move(parameter));
   }
 
-  IParameter *GetReturnParameter() const override { return returnParameter; }
+  void SetReturnParameter(std::unique_ptr<IParameter> parameter) {
+    returnParameter = std::move(parameter);
+  }
+
+  IParameter *GetReturnParameter() const override {
+    return returnParameter.get();
+  }
 
   ViewKind GetView() const override { return view; }
 
@@ -49,7 +54,7 @@ public:
 private:
   ViewKind view;
   Collection<IParameter> parameters;
-  IParameter *returnParameter;
+  std::unique_ptr<IParameter> returnParameter;
 };
 
 } // namespace Smp

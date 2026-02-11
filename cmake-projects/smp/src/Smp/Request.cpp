@@ -15,7 +15,8 @@ Int32 Request::GetParameterCount() const {
 }
 
 Int32 Request::GetParameterIndex(String8 parameterName) const {
-  auto it = parameterMap.find(parameterName ? parameterName : "");
+  std::map<std::string, Int32>::const_iterator it =
+      parameterMap.find(parameterName ? parameterName : "");
   if (it != parameterMap.end())
     return it->second;
   return -1;

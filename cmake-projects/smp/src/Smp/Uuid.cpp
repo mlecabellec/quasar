@@ -52,15 +52,18 @@ Uuid::Uuid(const char *value) {
     throw UuidException("Invalid UUID string format (missing dashes)");
   }
 
-  auto ParseHex = [&](int start, int length, uint64_t &out) {
-    out = 0;
-    for (int i = 0; i < length; ++i) {
-      int val = HexCharToInt(value[start + i]);
-      if (val < 0)
-        throw UuidException("Invalid hex character in UUID");
-      out = (out << 4) | val;
+  struct HexParser {
+    const char *value;
+    void operator()(int start, int length, uint64_t &out) {
+      out = 0;
+      for (int i = 0; i < length; ++i) {
+        int val = HexCharToInt(value[start + i]);
+        if (val < 0)
+          throw UuidException("Invalid hex character in UUID");
+        out = (out << 4) | val;
+      }
     }
-  };
+  } ParseHex{value};
 
   uint64_t temp = 0;
 
@@ -105,7 +108,7 @@ bool Uuid::operator<(const Uuid &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const Uuid &uuid) {
-  auto flags = os.flags();
+  std::ios_base::fmtflags flags = os.flags();
   os << std::hex << std::setfill('0');
   os << std::setw(8) << uuid.Data1 << '-';
   os << std::setw(4) << uuid.Data2[0] << '-';
@@ -127,10 +130,10 @@ size_t hash<Smp::Uuid>::operator()(const Smp::Uuid &uuid) const {
   // Simple hash combination
   size_t h1 = std::hash<uint32_t>{}(uuid.Data1);
   size_t h2 = 0;
-  for (auto v : uuid.Data2)
+  for (uint16_t v : uuid.Data2)
     h2 ^= std::hash<uint16_t>{}(v) + 0x9e3779b9 + (h2 << 6) + (h2 >> 2);
   size_t h3 = 0;
-  for (auto v : uuid.Data3)
+  for (uint8_t v : uuid.Data3)
     h3 ^= std::hash<uint8_t>{}(v) + 0x9e3779b9 + (h3 << 6) + (h3 >> 2);
 
   return h1 ^ (h2 << 1) ^ (h3 << 2);

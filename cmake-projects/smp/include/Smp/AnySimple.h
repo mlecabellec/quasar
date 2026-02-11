@@ -3,6 +3,7 @@
 
 #include "Smp/PrimitiveTypes.h"
 #include <iostream>
+#include <memory>
 
 namespace Smp {
 class AnySimple final {
@@ -70,8 +71,10 @@ public:
     Float64 float64Value;
     Duration durationValue;
     DateTime dateTimeValue;
-    String8 string8Value;
+    // string8Value removed, handled by stringStorage
   };
+
+  std::unique_ptr<char[]> stringStorage;
 
   PrimitiveTypeKind type;
   PrimitiveTypeValue value;

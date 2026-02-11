@@ -16,30 +16,28 @@ AnySimple::AnySimple(PrimitiveTypeKind kind) : type(kind) {
 
 AnySimple::AnySimple(const AnySimple &other)
     : type(other.type), value(other.value) {
-  if (type == PrimitiveTypeKind::PTK_String8 && value.string8Value) {
-    size_t len = std::strlen(other.value.string8Value);
-    std::strcpy(const_cast<char *>(value.string8Value),
-                other.value.string8Value);
+  if (type == PrimitiveTypeKind::PTK_String8 && other.stringStorage) {
+    size_t len = std::strlen(other.stringStorage.get());
+    stringStorage = std::make_unique<char[]>(len + 1);
+    std::strcpy(stringStorage.get(), other.stringStorage.get());
   }
 }
 
-AnySimple::AnySimple(AnySimple &&other) : type(other.type), value(other.value) {
+AnySimple::AnySimple(AnySimple &&other)
+    : type(other.type), value(other.value),
+      stringStorage(std::move(other.stringStorage)) {
   other.type = PrimitiveTypeKind::PTK_None;
-  other.value.string8Value = nullptr;
 }
 
 AnySimple &AnySimple::operator=(const AnySimple &other) {
   if (this != &other) {
-    if (type == PrimitiveTypeKind::PTK_String8) {
-      delete[] value.string8Value;
-    }
     type = other.type;
     value = other.value;
-    if (type == PrimitiveTypeKind::PTK_String8 && value.string8Value) {
-      size_t len = std::strlen(other.value.string8Value);
-      value.string8Value = new Char8[len + 1];
-      std::strcpy(const_cast<char *>(value.string8Value),
-                  other.value.string8Value);
+    stringStorage.reset();
+    if (type == PrimitiveTypeKind::PTK_String8 && other.stringStorage) {
+      size_t len = std::strlen(other.stringStorage.get());
+      stringStorage = std::make_unique<char[]>(len + 1);
+      std::strcpy(stringStorage.get(), other.stringStorage.get());
     }
   }
   return *this;
@@ -47,28 +45,18 @@ AnySimple &AnySimple::operator=(const AnySimple &other) {
 
 AnySimple &AnySimple::operator=(AnySimple &&other) {
   if (this != &other) {
-    if (type == PrimitiveTypeKind::PTK_String8) {
-      delete[] value.string8Value;
-    }
     type = other.type;
     value = other.value;
+    stringStorage = std::move(other.stringStorage);
     other.type = PrimitiveTypeKind::PTK_None;
-    other.value.string8Value = nullptr;
   }
   return *this;
 }
 
-AnySimple::~AnySimple() noexcept {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-  }
-}
+AnySimple::~AnySimple() noexcept {}
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Bool val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Bool:
     value.boolValue = val;
@@ -125,24 +113,17 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Char8 val) {
 void AnySimple::SetValue(PrimitiveTypeKind kind, String8 val) {
   if (kind != PrimitiveTypeKind::PTK_String8)
     throw InvalidAnyType(kind, PrimitiveTypeKind::PTK_String8);
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-  }
+  stringStorage.reset();
   type = kind;
   if (val) {
     size_t len = std::strlen(val);
-    value.string8Value = new Char8[len + 1];
-    std::strcpy(const_cast<char *>(value.string8Value), val);
-  } else {
-    value.string8Value = nullptr;
+    stringStorage = std::make_unique<char[]>(len + 1);
+    std::strcpy(stringStorage.get(), val);
   }
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, UInt8 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_UInt8:
     value.uInt8Value = val;
@@ -184,10 +165,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, UInt8 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, UInt16 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_UInt16:
     value.uInt16Value = val;
@@ -223,10 +201,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, UInt16 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, UInt32 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_UInt32:
     value.uInt32Value = val;
@@ -253,10 +228,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, UInt32 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, UInt64 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_UInt64:
     value.uInt64Value = val;
@@ -268,10 +240,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, UInt64 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Int8 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Int8:
     value.int8Value = val;
@@ -304,10 +273,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Int8 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Int16 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Int16:
     value.int16Value = val;
@@ -337,10 +303,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Int16 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Int32 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Int32:
     value.int32Value = val;
@@ -364,10 +327,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Int32 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Int64 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Int64:
     value.int64Value = val;
@@ -385,10 +345,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Int64 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Float32 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Float32:
     value.float32Value = val;
@@ -403,10 +360,7 @@ void AnySimple::SetValue(PrimitiveTypeKind kind, Float32 val) {
 }
 
 void AnySimple::SetValue(PrimitiveTypeKind kind, Float64 val) {
-  if (type == PrimitiveTypeKind::PTK_String8) {
-    delete[] value.string8Value;
-    value.string8Value = nullptr;
-  }
+  stringStorage.reset();
   switch (kind) {
   case PrimitiveTypeKind::PTK_Float64:
     value.float64Value = val;
@@ -435,7 +389,7 @@ AnySimple::operator Char8() const {
 AnySimple::operator String8() const {
   if (type != PrimitiveTypeKind::PTK_String8)
     throw InvalidAnyType(type, PrimitiveTypeKind::PTK_String8);
-  return value.string8Value;
+  return stringStorage.get();
 }
 
 AnySimple::operator UInt8() const {
@@ -728,10 +682,9 @@ AnySimple::operator Float64() const {
 String8 AnySimple::MoveString() {
   if (type != PrimitiveTypeKind::PTK_String8)
     throw InvalidAnyType(type, PrimitiveTypeKind::PTK_String8);
-  String8 str = value.string8Value;
-  value.string8Value = nullptr;
+  char *ptr = stringStorage.release();
   type = PrimitiveTypeKind::PTK_None;
-  return str;
+  return ptr;
 }
 
 PrimitiveTypeKind AnySimple::GetType() const noexcept { return type; }
@@ -771,9 +724,9 @@ bool AnySimple::operator==(const AnySimple &other) const {
   case PrimitiveTypeKind::PTK_DateTime:
     return value.dateTimeValue == other.value.dateTimeValue;
   case PrimitiveTypeKind::PTK_String8:
-    if (value.string8Value && other.value.string8Value)
-      return std::strcmp(value.string8Value, other.value.string8Value) == 0;
-    return value.string8Value == other.value.string8Value;
+    if (stringStorage && other.stringStorage)
+      return std::strcmp(stringStorage.get(), other.stringStorage.get()) == 0;
+    return stringStorage == other.stringStorage;
   default:
     return false;
   }
@@ -831,8 +784,8 @@ std::ostream &operator<<(std::ostream &os, const AnySimple &obj) {
     os << obj.value.dateTimeValue;
     break;
   case PrimitiveTypeKind::PTK_String8:
-    if (obj.value.string8Value)
-      os << obj.value.string8Value;
+    if (obj.stringStorage)
+      os << obj.stringStorage.get();
     else
       os << "(null)";
     break;

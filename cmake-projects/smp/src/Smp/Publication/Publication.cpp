@@ -17,12 +17,12 @@ void Publication::InternalPublishField(Smp::String8 name,
                                        Smp::PrimitiveTypeKind kind,
                                        Smp::ViewKind view, Smp::Bool state,
                                        Smp::Bool input, Smp::Bool output) {
-  auto type = registry->GetType(kind);
+  IType *type = registry->GetType(kind);
   if (!type)
     throw TypeNotRegistered(kind);
-  auto field = new Smp::SimpleField(name, description, this, address, view,
-                                    state, input, output, type);
-  fields.Add(field);
+  auto field = std::make_unique<Smp::SimpleField>(
+      name, description, this, address, view, state, input, output, type);
+  fields.Add(std::move(field));
 }
 
 void Publication::PublishField(Smp::String8 name, Smp::String8 description,
@@ -137,17 +137,19 @@ void Publication::PublishField(Smp::String8 name, Smp::String8 description,
                                void *address, Uuid typeUuid, Smp::ViewKind view,
                                Smp::Bool state, Smp::Bool input,
                                Smp::Bool output) {
-  auto type = registry->GetType(typeUuid);
+  IType *type = registry->GetType(typeUuid);
   if (!type)
     throw TypeNotRegistered(typeUuid);
-  auto field = new Smp::SimpleField(name, description, this, address, view,
-                                    state, input, output, type);
-  fields.Add(field);
+  auto field = std::make_unique<Smp::SimpleField>(
+      name, description, this, address, view, state, input, output, type);
+  fields.Add(std::move(field));
 }
 
 void Publication::PublishField(Smp::IField *field) {
   if (field)
-    fields.Add(field);
+    // We can't easily unique_ptr wrap a raw pointer without knowing ownership.
+    // Assuming PublishField transfers ownership.
+    fields.Add(std::unique_ptr<IField>(field));
 }
 
 void Publication::PublishArray(Smp::String8 name, Smp::String8 description,
@@ -184,12 +186,12 @@ IPublishOperation *Publication::PublishOperation(Smp::String8 name,
 void Publication::PublishProperty(Smp::String8 name, Smp::String8 description,
                                   Uuid typeUuid, Smp::AccessKind accessKind,
                                   Smp::ViewKind view) {
-  auto type = registry->GetType(typeUuid);
+  IType *type = registry->GetType(typeUuid);
   if (!type)
     throw TypeNotRegistered(typeUuid);
-  auto prop =
-      new Smp::Property(name, description, this, type, accessKind, view);
-  properties.Add(prop);
+  auto prop = std::make_unique<Smp::Property>(name, description, this, type,
+                                              accessKind, view);
+  properties.Add(std::move(prop));
 }
 
 Smp::IField *Publication::GetField(Smp::String8 fullName) const {
@@ -197,7 +199,7 @@ Smp::IField *Publication::GetField(Smp::String8 fullName) const {
 }
 
 Smp::IRequest *Publication::CreateRequest(Smp::String8 operationName) {
-  auto op = operations.at(operationName);
+  Smp::IOperation *op = operations.at(operationName);
   if (op)
     return op->CreateRequest();
   return nullptr;

@@ -7,16 +7,16 @@ namespace Smp::Publication {
 void PublishOperation::PublishParameter(Smp::String8 name,
                                         Smp::String8 description, Uuid typeUuid,
                                         ParameterDirectionKind direction) {
-  auto type = registry->GetType(typeUuid);
+  IType *type = registry->GetType(typeUuid);
   if (!type)
     throw TypeNotRegistered(typeUuid);
 
-  auto parameter =
-      new Smp::Parameter(name, description, operation, type, direction);
+  auto parameter = std::make_unique<Smp::Parameter>(name, description,
+                                                    operation, type, direction);
   if (direction == ParameterDirectionKind::PDK_Return) {
-    operation->SetReturnParameter(parameter);
+    operation->SetReturnParameter(std::move(parameter));
   } else {
-    operation->AddParameter(parameter);
+    operation->AddParameter(std::move(parameter));
   }
 }
 
