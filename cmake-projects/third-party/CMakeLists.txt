@@ -89,4 +89,7 @@ if(QUASAR_ENABLE_LIBZMQ)
     add_subdirectory(libzmq)
 endif()
 
+# Configure SOES
+add_subdirectory(SOES)
+
 

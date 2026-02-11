@@ -3,4 +3,3 @@ project(linux_modules)
 
 add_subdirectory(ethercat)
 add_subdirectory(SOEM)
-add_subdirectory(SOES)
