@@ -25,7 +25,12 @@ int main(int argc, char *argv[]) {
 
     // Step: Perform slave enumeration
     std::cout << "Step: Perform slave enumeration (BRD count)" << std::endl;
-    int count = enumerator.enumerate();
+    auto count_result = enumerator.enumerate();
+    if (!count_result.has_value()) {
+      std::cerr << "Error during enumeration: " << static_cast<int>(count_result.error()) << std::endl;
+      return 1;
+    }
+    size_t count = count_result.value();
 
     // Assertion: Display number of slaves found
     std::cout << "Assertion: Enumeration complete. Slaves found: " << count

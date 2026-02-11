@@ -21,7 +21,12 @@ int main(int argc, char *argv[]) {
 
     // Step: Enumerate slaves to get addresses and mailbox configs
     Enumerator enumerator(socket);
-    int count = enumerator.enumerate();
+    auto count_result = enumerator.enumerate();
+    if (!count_result.has_value()) {
+      std::cerr << "Error during enumeration: " << static_cast<int>(count_result.error()) << std::endl;
+      return 1;
+    }
+    size_t count = count_result.value();
     std::cout << "Found " << count << " slaves\n";
 
     if (count == 0) {
@@ -51,12 +56,12 @@ int main(int argc, char *argv[]) {
       std::cout << "  Reading SDO 0x1008:00 (Device Name)...\n";
       auto err = coe.sdo_read(slave, 0x1008, 0x00, name_buf, actual_size);
 
-      if (err == CoEError::Success) {
+      if (err.error() == ECError::Success) {
         std::string name(reinterpret_cast<char *>(name_buf), actual_size);
         std::cout << "  Assertion: CoE Read Success. Value: \"" << name
                   << "\"\n";
       } else {
-        std::cerr << "  Assertion Failed: CoE Read returned error " << (int)err
+        std::cerr << "  Assertion Failed: CoE Read returned error " << static_cast<int>(err.error())
                   << "\n";
       }
 
@@ -68,11 +73,11 @@ int main(int argc, char *argv[]) {
                        std::span<byte>(reinterpret_cast<byte *>(&vendor_id), 4),
                        actual_size);
 
-      if (err == CoEError::Success && actual_size == 4) {
+      if (err.error() == ECError::Success && actual_size == 4) {
         std::cout << "  Assertion: CoE Read Success. Vendor ID: 0x" << std::hex
                   << vendor_id << std::dec << "\n";
       } else {
-        std::cerr << "  Assertion Failed: CoE Read returned error " << (int)err
+        std::cerr << "  Assertion Failed: CoE Read returned error " << static_cast<int>(err.error())
                   << "\n";
       }
     }

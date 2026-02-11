@@ -40,9 +40,9 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
     int wkc;
     uint16_t status = read_register_fprd<uint16_t>(cfg_addr, regs::AL_STATUS, wkc);
     if (wkc > 0) {
-      uint16_t cur = status & al_status::STATE_MASK;
+      uint16_t cur = status & regs::al_status::STATE_MASK;
       if (cur == state) return cur;
-      if (status & al_status::ERROR_BIT) {
+      if (status & regs::al_status::ERROR_BIT) {
         uint16_t code = read_register_fprd<uint16_t>(cfg_addr, regs::AL_STATUS_CODE, wkc);
         std::cerr << "Slave " << slave_idx + 1 << " AL Status Error: 0x" << std::hex << code << ": " << al_status_code_to_string(code) << std::dec << std::endl;
         write_register_fpwr<uint16_t>(cfg_addr, regs::AL_CONTROL, state | states::ACK);
@@ -61,9 +61,9 @@ Result<> Enumerator::request_state_all(uint16_t state, std::chrono::microseconds
     for (size_t i = 0; i < slaves_.size(); ++i) {
       int wkc;
       uint16_t status = read_register_fprd<uint16_t>(slaves_[i].configured_address, regs::AL_STATUS, wkc);
-      if (wkc > 0 && (status & al_status::STATE_MASK) != state) {
+      if (wkc > 0 && (status & regs::al_status::STATE_MASK) != state) {
         all = false;
-        if (status & al_status::ERROR_BIT) request_state(static_cast<uint16_t>(i), state, std::chrono::milliseconds(100));
+        if (status & regs::al_status::ERROR_BIT) request_state(static_cast<uint16_t>(i), state, std::chrono::milliseconds(100));
       } else if (wkc <= 0) all = false;
     }
     if (all) return {};
@@ -153,7 +153,7 @@ void Enumerator::configure_dc(SlaveInfo &s, uint32_t cyc, int32_t shift) {
 void Enumerator::check_slaves_status() {
   for (auto &s : slaves_) {
     int wkc; uint16_t st = read_register_fprd<uint16_t>(s.configured_address, regs::AL_STATUS, wkc);
-    if (wkc > 0) { s.online = true; s.current_state = st & al_status::STATE_MASK; } else s.online = false;
+    if (wkc > 0) { s.online = true; s.current_state = st & regs::al_status::STATE_MASK; } else s.online = false;
   }
 }
 
