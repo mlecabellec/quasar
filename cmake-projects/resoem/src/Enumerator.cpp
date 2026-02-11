@@ -2,9 +2,11 @@
 #include "resoem/Diagnostics.hpp"
 #include "resoem/EtherCATFrame.hpp"
 #include "resoem/ProcessImage.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <iostream>
+#include <numeric>
 #include <thread>
 
 namespace resoem {
@@ -27,10 +29,12 @@ Result<size_t> Enumerator::enumerate() {
   // Assign unique station addresses to each slave.
   assign_addresses(slave_count);
 
-  // Read information (Vendor, Product, PDOs) from the SII (EEPROM) of each slave.
+  // Read information (Vendor, Product, PDOs) from the SII (EEPROM) of each
+  // slave.
   read_sii_data(slave_count);
 
-  // Request all slaves to move to the PRE-OP state to allow mailbox communication.
+  // Request all slaves to move to the PRE-OP state to allow mailbox
+  // communication.
   std::cout << "Transitioning all slaves to PRE_OP..." << std::endl;
   if (auto res = request_state_all(states::PRE_OP); !res)
     return std::unexpected(res.error());
@@ -38,9 +42,8 @@ Result<size_t> Enumerator::enumerate() {
   return static_cast<size_t>(slave_count);
 }
 
-Result<uint16_t>
-Enumerator::request_state(uint16_t slave_idx, uint16_t state,
-                          std::chrono::microseconds timeout) {
+Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
+                                           std::chrono::microseconds timeout) {
   if (slave_idx >= slaves_.size())
     return std::unexpected(ECError::ProtocolError);
 
@@ -89,7 +92,7 @@ Result<> Enumerator::request_state_all(uint16_t state,
       int wkc;
       uint16_t status = read_register_fprd<uint16_t>(
           slaves_[i].configured_address, regs::AL_STATUS, wkc);
-      
+
       // Check if this slave has reached the target state.
       if (wkc > 0 && (status & regs::al_status::STATE_MASK) != state) {
         all = false;
@@ -115,32 +118,35 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
   for (size_t i = 0; i < slaves_.size(); ++i) {
     SlaveInfo &info = slaves_[i];
     uint32_t out_bits = 0;
-    for (const auto &pdo : info.rx_pdos) {
-      for (const auto &e : pdo.entries)
-        out_bits += e.bit_length;
-    }
+    out_bits = std::accumulate(
+        info.rx_pdos.begin(), info.rx_pdos.end(), 0u,
+        [](uint32_t sum, const PDOInfo &pdo) {
+          return sum + std::accumulate(pdo.entries.begin(), pdo.entries.end(),
+                                       0u,
+                                       [](uint32_t s, const PDOEntryInfo &e) {
+                                         return s + e.bit_length;
+                                       });
+        });
 
     if (out_bits > 0) {
       uint32_t bytes = (out_bits + 7) / 8;
       info.outputs_offset = offset;
       info.outputs_size_bits = out_bits;
 
-      // Create FMMU configuration: map logical address 'offset' to physical memory.
-      FMMUInfo fmmu{offset,
-                    static_cast<uint16_t>(bytes),
-                    0,
-                    static_cast<uint8_t>((out_bits - 1) % 8),
-                    0x1000,
-                    0,
+      // Create FMMU configuration: map logical address 'offset' to physical
+      // memory.
+      FMMUInfo fmmu{offset, static_cast<uint16_t>(bytes),
+                    0,      static_cast<uint8_t>((out_bits - 1) % 8),
+                    0x1000, 0,
                     1,  // Type: Read (from physical)
                     1}; // Active
-      
+
       // Find the appropriate SyncManager for outputs.
-      for (const auto &sm : info.sync_managers) {
-        if (sm.type == 3) {
-          fmmu.physical_start = sm.start_addr;
-          break;
-        }
+      auto sm_it =
+          std::find_if(info.sync_managers.begin(), info.sync_managers.end(),
+                       [](const SyncManagerInfo &sm) { return sm.type == 3; });
+      if (sm_it != info.sync_managers.end()) {
+        fmmu.physical_start = sm_it->start_addr;
       }
 
       write_register_fpwr<FMMUInfo>(info.configured_address, regs::FMMU0, fmmu);
@@ -153,31 +159,33 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
   for (size_t i = 0; i < slaves_.size(); ++i) {
     SlaveInfo &info = slaves_[i];
     uint32_t in_bits = 0;
-    for (const auto &pdo : info.tx_pdos) {
-      for (const auto &e : pdo.entries)
-        in_bits += e.bit_length;
-    }
+    in_bits = std::accumulate(
+        info.tx_pdos.begin(), info.tx_pdos.end(), 0u,
+        [](uint32_t sum, const PDOInfo &pdo) {
+          return sum + std::accumulate(pdo.entries.begin(), pdo.entries.end(),
+                                       0u,
+                                       [](uint32_t s, const PDOEntryInfo &e) {
+                                         return s + e.bit_length;
+                                       });
+        });
 
     if (in_bits > 0) {
       uint32_t bytes = (in_bits + 7) / 8;
       info.inputs_offset = offset;
       info.inputs_size_bits = in_bits;
 
-      FMMUInfo fmmu{offset,
-                    static_cast<uint16_t>(bytes),
-                    0,
-                    static_cast<uint8_t>((in_bits - 1) % 8),
-                    0x1100,
-                    0,
+      FMMUInfo fmmu{offset, static_cast<uint16_t>(bytes),
+                    0,      static_cast<uint8_t>((in_bits - 1) % 8),
+                    0x1100, 0,
                     2,  // Type: Write (to physical)
                     1}; // Active
-      
+
       // Find the appropriate SyncManager for inputs.
-      for (const auto &sm : info.sync_managers) {
-        if (sm.type == 4) {
-          fmmu.physical_start = sm.start_addr;
-          break;
-        }
+      auto sm_it =
+          std::find_if(info.sync_managers.begin(), info.sync_managers.end(),
+                       [](const SyncManagerInfo &sm) { return sm.type == 4; });
+      if (sm_it != info.sync_managers.end()) {
+        fmmu.physical_start = sm_it->start_addr;
       }
 
       // Use FMMU1 if FMMU0 is already taken by outputs.
@@ -200,7 +208,8 @@ Enumerator::exchange_process_data(ProcessImage &image,
     return 0;
 
   std::span<byte> data = image.data();
-  // Use Logical ReadWrite (LRW) to exchange the entire process image in one datagram.
+  // Use Logical ReadWrite (LRW) to exchange the entire process image in one
+  // datagram.
   int wkc = send_receive(cmds::LRW, 0, 0, data);
   if (wkc < 0)
     return std::unexpected(ECError::Timeout);
@@ -224,7 +233,8 @@ void Enumerator::measure_propagation_delays() {
     }
   }
 
-  // Send several broadcast writes to trigger receive time latching on all ports.
+  // Send several broadcast writes to trigger receive time latching on all
+  // ports.
   for (int i = 0; i < 10; ++i) {
     uint32_t z = 0;
     send_receive(cmds::BWR, 0, regs::DC_RECEIVE_TIME_PORT0,
@@ -243,7 +253,7 @@ void Enumerator::measure_propagation_delays() {
     return;
 
   slaves_[ref].propagation_delay = 0;
-  // Calculate delay relative to the reference clock. 
+  // Calculate delay relative to the reference clock.
   // This is a simplified calculation for a linear topology.
   for (size_t i = ref + 1; i < slaves_.size(); ++i) {
     if (!slaves_[i].has_dc)
@@ -251,8 +261,8 @@ void Enumerator::measure_propagation_delays() {
     int wkc;
     uint32_t p1 = read_register_fprd<uint32_t>(
         slaves_[i - 1].configured_address, regs::DC_RECEIVE_TIME_PORT1, wkc);
-    uint32_t c0 = read_register_fprd<uint32_t>(slaves_[i].configured_address,
-                                               regs::DC_RECEIVE_TIME_PORT0, wkc);
+    uint32_t c0 = read_register_fprd<uint32_t>(
+        slaves_[i].configured_address, regs::DC_RECEIVE_TIME_PORT0, wkc);
     slaves_[i].propagation_delay =
         slaves_[i - 1].propagation_delay + (c0 > p1 ? (c0 - p1) : 300);
     write_register_fpwr<uint32_t>(slaves_[i].configured_address,
@@ -290,8 +300,8 @@ void Enumerator::configure_dc(SlaveInfo &s, uint32_t cyc, int32_t shift) {
                                 cyc);
   // 3. Set start time in the future.
   int wkc;
-  uint64_t cur =
-      read_register_fprd<uint64_t>(s.configured_address, regs::DC_SYS_TIME, wkc);
+  uint64_t cur = read_register_fprd<uint64_t>(s.configured_address,
+                                              regs::DC_SYS_TIME, wkc);
   uint64_t start = ((cur + 100'000'000) / cyc) * cyc + shift;
   write_register_fpwr<uint64_t>(s.configured_address, regs::DC_SYNC_START_TIME,
                                 start);
@@ -316,12 +326,12 @@ void Enumerator::check_slaves_status() {
 bool Enumerator::recover_slave(int idx) {
   if (idx >= (int)slaves_.size())
     return false;
-  
+
   // Try to re-assign the configured station address using auto-increment.
   write_register_apwr<uint16_t>(static_cast<uint16_t>(-idx),
                                 regs::CONFIG_STATION_ADDR,
                                 slaves_[idx].configured_address);
-  
+
   // Verify if the slave responds to its configured address.
   int wkc;
   read_register_fprd<uint16_t>(slaves_[idx].configured_address, regs::AL_STATUS,
@@ -334,7 +344,8 @@ bool Enumerator::recover_slave(int idx) {
 }
 
 void Enumerator::reset_to_init() {
-  // Clear any existing aliases and request INIT state with error acknowledgment.
+  // Clear any existing aliases and request INIT state with error
+  // acknowledgment.
   write_register_broadcast<uint8_t>(regs::DL_ALIAS, 0);
   uint16_t al_ctl = states::INIT | states::ACK;
   write_register_broadcast<uint16_t>(regs::AL_CONTROL, al_ctl);
@@ -406,7 +417,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   // Send the frame over the raw socket.
   socket_.send(frame);
 
-  // Wait for the response. 
+  // Wait for the response.
   // TODO: Implement a proper retry/filtering mechanism for better robustness.
   std::vector<byte> rx_buffer(1500);
   size_t received = socket_.receive(rx_buffer);
@@ -421,7 +432,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   uint16_t wkc;
   std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
 
-  // If the datagram was processed (wkc > 0) or it was a read command, 
+  // If the datagram was processed (wkc > 0) or it was a read command,
   // copy the received data back into the provided buffer.
   if (wkc > 0 || (cmd & 0x1))
     std::memcpy(data.data(), rx_buffer.data() + 14 + 2 + 10, data.size());
@@ -446,7 +457,7 @@ int Enumerator::write_register_broadcast(uint16_t reg, const T &value) {
 
 template <typename T>
 int Enumerator::write_register_apwr(uint16_t auto_inc_addr, uint16_t reg,
-                                   const T &value) {
+                                    const T &value) {
   T temp = value;
   std::span<byte> buf(reinterpret_cast<byte *>(&temp), sizeof(T));
   return send_receive(cmds::APWR, auto_inc_addr, reg, buf);
@@ -454,7 +465,7 @@ int Enumerator::write_register_apwr(uint16_t auto_inc_addr, uint16_t reg,
 
 template <typename T>
 T Enumerator::read_register_fprd(uint16_t configured_addr, uint16_t reg,
-                                int &wkc) {
+                                 int &wkc) {
   T val{};
   std::span<byte> buf(reinterpret_cast<byte *>(&val), sizeof(T));
   wkc = send_receive(cmds::FPRD, configured_addr, reg, buf);
@@ -469,13 +480,14 @@ int Enumerator::write_register_fpwr(uint16_t configured_addr, uint16_t reg,
   return send_receive(cmds::FPWR, configured_addr, reg, buf);
 }
 
-uint32_t Enumerator::read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr) {
+uint32_t Enumerator::read_sii_word(uint16_t slave_cfg_addr,
+                                   uint16_t word_addr) {
   int wkc;
-  uint16_t eep_stat =
-      read_register_fprd<uint16_t>(slave_cfg_addr, regs::EEPROM_CONTROL, wkc);
-  
+  (void)read_register_fprd<uint16_t>(slave_cfg_addr, regs::EEPROM_CONTROL, wkc);
+
   // Set address to read from.
-  write_register_fpwr<uint16_t>(slave_cfg_addr, regs::EEPROM_ADDRESS, word_addr);
+  write_register_fpwr<uint16_t>(slave_cfg_addr, regs::EEPROM_ADDRESS,
+                                word_addr);
   // Issue the read command.
   write_register_fpwr<uint16_t>(slave_cfg_addr, regs::EEPROM_CONTROL,
                                 eeprom::CMD_READ);
@@ -531,8 +543,9 @@ std::string Enumerator::read_sii_string(uint16_t slave_cfg_addr,
   uint16_t current_ptr = cat_ptr;
   uint8_t current_offset = 1;
   for (uint8_t i = 1; i <= string_idx; ++i) {
-    uint16_t word = static_cast<uint16_t>(
-        read_sii_word(slave_cfg_addr, current_ptr) >> (8 * (current_offset % 2)));
+    uint16_t word =
+        static_cast<uint16_t>(read_sii_word(slave_cfg_addr, current_ptr) >>
+                              (8 * (current_offset % 2)));
     uint8_t len = static_cast<uint8_t>(word & 0xFF);
     if (i == string_idx) {
       std::string s;
@@ -645,7 +658,10 @@ void Enumerator::map_topology(int count) {
 }
 
 void Enumerator::read_sii_data(int count) {
-  for (int i = 0; i < count; ++i) { read_sii_categories(i); read_sii_pdos(i); }
+  for (int i = 0; i < count; ++i) {
+    read_sii_categories(i);
+    read_sii_pdos(i);
+  }
   map_topology(count);
 }
 

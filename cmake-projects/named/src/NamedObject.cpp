@@ -28,7 +28,7 @@ NamedObject::create(const std::string &name,
                     std::shared_ptr<NamedObject> parent) {
   // Local helper class to allow make_shared with protected constructor.
   struct Helper : public NamedObject {
-    Helper(const std::string &n) : NamedObject(n) {}
+    explicit Helper(const std::string &n) : NamedObject(n) {}
   };
 
   // Create the object and initialize its weak reference to self.
@@ -44,8 +44,8 @@ NamedObject::create(const std::string &name,
 }
 
 std::shared_ptr<NamedObject> NamedObject::getSelf() const {
-    // Lock the weak pointer to obtain a shared_ptr.
-    return m_self.lock();
+  // Lock the weak pointer to obtain a shared_ptr.
+  return m_self.lock();
 }
 
 void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
@@ -136,7 +136,7 @@ std::shared_ptr<NamedObject> NamedObject::getPreviousSibling() const {
   if (!p)
     return nullptr;
 
-  // Siblings are stored in the parent's child list. 
+  // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   std::list<std::shared_ptr<NamedObject>> &siblings = p->m_children;
@@ -155,7 +155,7 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
   if (!p)
     return nullptr;
 
-  // Siblings are stored in the parent's child list. 
+  // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   auto &siblings = p->m_children;

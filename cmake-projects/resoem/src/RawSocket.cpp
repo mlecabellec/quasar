@@ -15,8 +15,8 @@ namespace resoem {
 
 RawSocket::RawSocket(const std::string &interface_name)
     : interface_name_(interface_name) {
-  // Open raw socket for EtherCAT protocol. 
-  // We use AF_PACKET to send/receive at the link layer, and SOCK_RAW 
+  // Open raw socket for EtherCAT protocol.
+  // We use AF_PACKET to send/receive at the link layer, and SOCK_RAW
   // to specify the protocol type (ETHERCAT_ETHERTYPE).
   sock_fd_ = socket(AF_PACKET, SOCK_RAW, htons(ETHERCAT_ETHERTYPE));
   if (sock_fd_ < 0) {
@@ -38,14 +38,16 @@ RawSocket::RawSocket(const std::string &interface_name)
   if_index_ = ifr.ifr_ifindex;
 
   // Bind socket to the specified interface.
-  // This ensures that we only send and receive frames through this network card.
+  // This ensures that we only send and receive frames through this network
+  // card.
   struct sockaddr_ll sll;
   std::memset(&sll, 0, sizeof(sll));
   sll.sll_family = AF_PACKET;
   sll.sll_ifindex = if_index_;
   sll.sll_protocol = htons(ETHERCAT_ETHERTYPE);
 
-  if (bind(sock_fd_, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
+  if (bind(sock_fd_, reinterpret_cast<struct sockaddr *>(&sll), sizeof(sll)) <
+      0) {
     close(sock_fd_);
     throw SocketError("Failed to bind socket to " + interface_name + ": " +
                       strerror(errno));
@@ -93,7 +95,8 @@ size_t RawSocket::send(std::span<const byte> data) {
   // but with our specific socket setup, the kernel helps with the header.
   ssize_t sent = ::send(sock_fd_, data.data(), data.size(), 0);
   if (sent < 0) {
-    // If the send buffer is full, we return 0 instead of throwing to allow retries.
+    // If the send buffer is full, we return 0 instead of throwing to allow
+    // retries.
     if (errno == EAGAIN || errno == EWOULDBLOCK)
       return 0;
     throw SocketError("Failed to send data: " + std::string(strerror(errno)));
@@ -132,7 +135,8 @@ void RawSocket::set_timeout(int timeout_ms) {
                       std::string(strerror(errno)));
   }
 
-  // Also set send timeout to avoid blocking forever if the hardware queue stalls.
+  // Also set send timeout to avoid blocking forever if the hardware queue
+  // stalls.
   if (setsockopt(sock_fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
     throw SocketError("Failed to set send timeout: " +
                       std::string(strerror(errno)));

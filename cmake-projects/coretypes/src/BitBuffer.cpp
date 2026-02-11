@@ -12,16 +12,16 @@ namespace coretypes {
 BitBuffer::BitBuffer(size_t bitCount)
     : Buffer((bitCount + 7) / 8), bitSize_(bitCount) {
   // Initialize the buffer with the calculated number of bytes.
-  // (bitCount + 7) / 8 is a common idiom for ceiling division to get the number of bytes.
-  // The bytes are zero-initialized by the Buffer constructor.
+  // (bitCount + 7) / 8 is a common idiom for ceiling division to get the number
+  // of bytes. The bytes are zero-initialized by the Buffer constructor.
 }
 BitBuffer::BitBuffer(const BitBuffer &other) : Buffer(other) {
   // Lock the source buffer to ensure a consistent snapshot during copy.
   std::lock_guard<std::recursive_timed_mutex> lock(other.mutex_);
   bitSize_ = other.bitSize_;
   if (bitSize_ == 0) {
-    // If bitSize_ is 0, it implies the full buffer is used (wrapping an existing Buffer).
-    // We explicitly calculate the bit capacity.
+    // If bitSize_ is 0, it implies the full buffer is used (wrapping an
+    // existing Buffer). We explicitly calculate the bit capacity.
     bitSize_ = other.size() * 8;
   }
 }
@@ -47,7 +47,8 @@ BitBuffer &BitBuffer::operator=(const BitBuffer &other) {
 size_t BitBuffer::bitSize() const {
   // Thread-safe access to bitSize_.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
-  // If bitSize_ is not explicitly set, we default to the full bit capacity of the underlying byte array.
+  // If bitSize_ is not explicitly set, we default to the full bit capacity of
+  // the underlying byte array.
   if (bitSize_ == 0 && !data_.empty())
     return data_.size() * 8;
   return bitSize_;
@@ -55,7 +56,8 @@ size_t BitBuffer::bitSize() const {
 
 bool BitBuffer::getBit(size_t bitIndex) const {
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
-  // Use bitSize_ if set, otherwise fallback to the full byte buffer's bit capacity.
+  // Use bitSize_ if set, otherwise fallback to the full byte buffer's bit
+  // capacity.
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
   if (bitIndex >= actualSize) {
     throw std::out_of_range("Bit index out of range");
@@ -66,8 +68,8 @@ bool BitBuffer::getBit(size_t bitIndex) const {
   size_t bitOffset = bitIndex % 8;
 
   // We use Big Endian bit numbering: bit 0 is the Most Significant Bit (0x80).
-  // Shift right to move the target bit to the least significant position (bit 0) and mask it.
-  // e.g., for bitOffset 0, we shift by 7.
+  // Shift right to move the target bit to the least significant position (bit
+  // 0) and mask it. e.g., for bitOffset 0, we shift by 7.
   return (data_[byteIndex] >> (7 - bitOffset)) & 1;
 }
 
@@ -88,7 +90,8 @@ void BitBuffer::setBit(size_t bitIndex, bool value) {
     // 1 << (7 - bitOffset) puts the '1' in the correct Big Endian position.
     data_[byteIndex] |= (1 << (7 - bitOffset));
   } else {
-    // Clear the bit: AND with a mask that has a '0' at the target position (using bitwise NOT on the mask).
+    // Clear the bit: AND with a mask that has a '0' at the target position
+    // (using bitwise NOT on the mask).
     data_[byteIndex] &= ~(1 << (7 - bitOffset));
   }
 }
@@ -102,8 +105,8 @@ BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
     throw std::out_of_range("Slice out of range");
   }
 
-  // A bit-level slice requires creating a new buffer and copying bits individually,
-  // as the slice might not start on a byte boundary.
+  // A bit-level slice requires creating a new buffer and copying bits
+  // individually, as the slice might not start on a byte boundary.
   BitBuffer result(bitLength);
 
   for (size_t i = 0; i < bitLength; ++i) {
@@ -153,7 +156,8 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
     }
   }
 
-  // Copy bits from the 'other' buffer, starting at the offset after 'this' bits.
+  // Copy bits from the 'other' buffer, starting at the offset after 'this'
+  // bits.
   size_t offset = effectiveMySize;
   size_t oSize = (other.bitSize_ ? other.bitSize_ : other.data_.size() * 8);
 
@@ -162,8 +166,8 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
     size_t bitOffset = i % 8;
     bool bit = (other.data_[byteIndex] >> (7 - bitOffset)) & 1;
 
-    size_t target = offset + i;
     if (bit) {
+      size_t target = offset + i;
       result.data_[target / 8] |= (1 << (7 - (target % 8)));
     }
   }
@@ -300,7 +304,8 @@ std::shared_ptr<BitBufferSlice> BitBuffer::sliceBitsView(size_t startBit,
   if (startBit + bitLength > actualSize) {
     throw std::out_of_range("Slice out of range");
   }
-  // Create the slice object. shared_from_this() ensures the parent remains alive.
+  // Create the slice object. shared_from_this() ensures the parent remains
+  // alive.
   return std::make_shared<BitBufferSlice>(
       std::static_pointer_cast<BitBuffer>(shared_from_this()), startBit,
       bitLength);
