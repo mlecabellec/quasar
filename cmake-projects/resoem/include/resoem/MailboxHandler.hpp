@@ -27,9 +27,12 @@ public:
            size_t &actual_len,
            std::chrono::microseconds timeout = std::chrono::milliseconds(100));
 
+  void set_retries(int count) { retries_ = count; }
+
 private:
   RawSocket &socket_;
   uint8_t current_idx_ = 0;
+  int retries_ = 3;
 
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                    std::span<byte> data);

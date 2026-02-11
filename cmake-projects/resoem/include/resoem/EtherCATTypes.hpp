@@ -26,14 +26,56 @@ constexpr uint16_t IRQ_MASK = 0x0200;
 constexpr uint16_t RX_ERR = 0x0300;
 
 constexpr uint16_t FMMU0 = 0x0600;
+constexpr uint16_t FMMU1 = 0x0610;
+constexpr uint16_t FMMU2 = 0x0620;
+constexpr uint16_t FMMU3 = 0x0630;
+constexpr uint16_t FMMU4 = 0x0640;
+constexpr uint16_t FMMU5 = 0x0650;
+constexpr uint16_t FMMU6 = 0x0660;
+constexpr uint16_t FMMU7 = 0x0670;
+constexpr uint16_t FMMU8 = 0x0680;
+constexpr uint16_t FMMU9 = 0x0690;
+constexpr uint16_t FMMU10 = 0x06A0;
+constexpr uint16_t FMMU11 = 0x06B0;
+constexpr uint16_t FMMU12 = 0x06C0;
+constexpr uint16_t FMMU13 = 0x06D0;
+constexpr uint16_t FMMU14 = 0x06E0;
+constexpr uint16_t FMMU15 = 0x06F0;
 
 constexpr uint16_t DC_SYNC_ACT = 0x0981;
+constexpr uint16_t DC_RECEIVE_TIME_PORT0 = 0x0900;
+constexpr uint16_t DC_RECEIVE_TIME_PORT1 = 0x0904;
+constexpr uint16_t DC_RECEIVE_TIME_PORT2 = 0x0908;
+constexpr uint16_t DC_RECEIVE_TIME_PORT3 = 0x090C;
 constexpr uint16_t DC_SYS_TIME = 0x0910;
+constexpr uint16_t DC_SYS_TIME_OFFSET = 0x0920;
+constexpr uint16_t DC_SYS_TIME_DELAY = 0x0928;
+constexpr uint16_t DC_SYS_TIME_DIFF = 0x092C;
 constexpr uint16_t DC_SPEED_CNT = 0x0930;
 constexpr uint16_t DC_TIME_FILT = 0x0934;
 
+constexpr uint16_t DC_CYCLIC_UNIT_CTRL = 0x0980;
+constexpr uint16_t DC_SYNC_PULSE_LEN = 0x0982;
+constexpr uint16_t DC_SYNC_START_TIME = 0x0990;
+constexpr uint16_t DC_SYNC0_CYCLE_TIME = 0x09A0;
+constexpr uint16_t DC_SYNC1_CYCLE_TIME = 0x09A4;
+
 constexpr uint16_t SM0 = 0x0800; // SM0
 constexpr uint16_t SM1 = 0x0808; // SM1
+constexpr uint16_t SM2 = 0x0810; // SM2
+constexpr uint16_t SM3 = 0x0818; // SM3
+constexpr uint16_t SM4 = 0x0820; // SM4
+constexpr uint16_t SM5 = 0x0828; // SM5
+constexpr uint16_t SM6 = 0x0830; // SM6
+constexpr uint16_t SM7 = 0x0838; // SM7
+constexpr uint16_t SM8 = 0x0840; // SM8
+constexpr uint16_t SM9 = 0x0848; // SM9
+constexpr uint16_t SM10 = 0x0850; // SM10
+constexpr uint16_t SM11 = 0x0858; // SM11
+constexpr uint16_t SM12 = 0x0860; // SM12
+constexpr uint16_t SM13 = 0x0868; // SM13
+constexpr uint16_t SM14 = 0x0870; // SM14
+constexpr uint16_t SM15 = 0x0878; // SM15
 constexpr uint8_t SM_STATUS_OFFSET = 5;
 
 namespace sm_status {
@@ -43,6 +85,11 @@ constexpr uint8_t MBX_FULL = 0x08; // bit 3
 constexpr uint16_t AL_CONTROL = 0x0120;
 constexpr uint16_t AL_STATUS = 0x0130;
 constexpr uint16_t AL_STATUS_CODE = 0x0134;
+
+namespace al_status {
+constexpr uint16_t STATE_MASK = 0x000F;
+constexpr uint16_t ERROR_BIT = 0x0010;
+} // namespace al_status
 
 constexpr uint16_t PDI_CONTROL = 0x0140;
 constexpr uint16_t PDI_CONFIG = 0x0150; // ?
@@ -161,5 +208,70 @@ struct SDOHeader {
   uint8_t subindex;
 } __attribute__((packed));
 } // namespace coe
+
+namespace foe {
+enum Opcode : uint8_t {
+  RRQ = 1,
+  WRQ = 2,
+  DATA = 3,
+  ACK = 4,
+  ERR = 5,
+  BUSY = 6
+};
+
+struct Header {
+  uint8_t opcode;
+  uint8_t reserved;
+  union {
+    uint32_t password;
+    uint32_t packet_no;
+    uint32_t error_code;
+  };
+} __attribute__((packed));
+
+constexpr uint32_t ERR_NOT_FOUND = 0x8001;
+constexpr uint32_t ERR_ACCESS_DENIED = 0x8002;
+constexpr uint32_t ERR_DISK_FULL = 0x8003;
+constexpr uint32_t ERR_ILLEGAL_OP = 0x8004;
+constexpr uint32_t ERR_UNKNOWN_PACKET = 0x8005;
+constexpr uint32_t ERR_ILLEGAL_FILE = 0x8006;
+constexpr uint32_t ERR_FILE_EXISTS = 0x8007;
+constexpr uint32_t ERR_NO_USER = 0x8008;
+constexpr uint32_t ERR_BOOTSTRAP_ONLY = 0x8009;
+constexpr uint32_t ERR_NOT_IN_BOOTSTRAP = 0x800A;
+constexpr uint32_t ERR_NO_FILE = 0x800B;
+constexpr uint32_t ERR_PROGRAM_ERROR = 0x800C;
+} // namespace foe
+
+namespace eoe {
+enum Type : uint8_t {
+  INIT_REQ = 0,
+  INIT_RESP = 1,
+  SET_IP_REQ = 2,
+  SET_IP_RESP = 3,
+  GET_IP_REQ = 4,
+  GET_IP_RESP = 5,
+  FRAME_DATA = 15
+};
+
+struct Header {
+  uint16_t info1; 
+  uint16_t info2;
+} __attribute__((packed));
+
+// Helpers
+static inline uint16_t make_info1(Type type, uint8_t frag_no, bool last, bool time_req) {
+  return (static_cast<uint8_t>(type) & 0x0F) |
+         ((frag_no & 0x3F) << 8) |
+         (last ? 0x4000 : 0) |
+         (time_req ? 0x8000 : 0);
+}
+
+static inline uint16_t make_info2(bool time_app, uint16_t frame_size_or_offset) {
+  return (time_app ? 0x0001 : 0) |
+         ((frame_size_or_offset & 0x0FFF) << 4);
+}
+
+} // namespace eoe
 
 } // namespace resoem

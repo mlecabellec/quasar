@@ -9,6 +9,9 @@ add_library(resoem STATIC
     src/Enumerator.cpp
     src/MailboxHandler.cpp
     src/CoEHandler.cpp
+    src/FoEHandler.cpp
+    src/EoEHandler.cpp
+    src/Diagnostics.cpp
 )
 # ...
 # Test Executable

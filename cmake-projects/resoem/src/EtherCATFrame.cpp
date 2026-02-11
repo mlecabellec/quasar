@@ -79,6 +79,13 @@ void FrameBuilder::add_datagram(uint8_t cmd, uint8_t idx, uint16_t addr,
   std::memset(ptr + 10 + data_len, 0, 2);
 }
 
+void FrameBuilder::add_datagram_logical(uint8_t cmd, uint8_t idx,
+                                        uint32_t address,
+                                        std::span<const byte> data) {
+  add_datagram(cmd, idx, static_cast<uint16_t>(address & 0xFFFF),
+               static_cast<uint16_t>(address >> 16), data);
+}
+
 std::span<const byte> FrameBuilder::build() {
   // 1. Fill Ethernet Header (Broadcast dest, src, EtherType)
   // Destination: Broadcast (FF:FF:FF:FF:FF:FF)

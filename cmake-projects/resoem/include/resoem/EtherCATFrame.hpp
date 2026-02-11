@@ -43,6 +43,10 @@ public:
   void add_datagram(uint8_t cmd, uint8_t idx, uint16_t addr, uint16_t off,
                     std::span<const byte> data);
 
+  // Add a datagram with a 32-bit logical address
+  void add_datagram_logical(uint8_t cmd, uint8_t idx, uint32_t address,
+                            std::span<const byte> data);
+
   // Finalize the frame and return the buffer ready to send
   std::span<const byte> build();
 

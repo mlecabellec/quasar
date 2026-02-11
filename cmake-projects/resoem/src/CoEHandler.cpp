@@ -1,4 +1,5 @@
 #include "resoem/CoEHandler.hpp"
+#include "resoem/Diagnostics.hpp"
 #include <algorithm>
 #include <cstring>
 #include <iostream>
@@ -7,200 +8,264 @@ namespace resoem {
 
 CoEHandler::CoEHandler(MailboxHandler &mailbox) : mailbox_(mailbox) {}
 
-CoEError CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
+Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
                                uint8_t subindex, std::span<const byte> data,
                                bool complete_access,
                                std::chrono::microseconds timeout) {
-  // 1. Prepare SDO download request
-  std::vector<byte> req_buf(sizeof(uint16_t) + sizeof(coe::SDOHeader) +
-                            data.size());
+  std::vector<byte> req_buf;
+  uint16_t canopen_header = (coe::SDO_REQUEST << 12);
 
-  // CoE Header (CANopen)
-  uint16_t canopen = (coe::SDO_REQUEST << 12);
-  std::memcpy(req_buf.data(), &canopen, 2);
-
-  coe::SDOHeader *sdo = reinterpret_cast<coe::SDOHeader *>(req_buf.data() + 2);
-  sdo->index = index;
-  sdo->subindex =
-      (complete_access)
-          ? 0x01
-          : subindex; // CA uses subindex 1? No, usually subindex 0 with CA flag
-  if (complete_access)
-    sdo->subindex = subindex; // actually SOEM handles this in flags
-
-  // Simplified: Expedited if data <= 4 bytes
   if (data.size() <= 4 && !complete_access) {
-    sdo->command = coe::SDO_DOWNLOAD_EXP_REQ | ((4 - data.size()) << 2) |
-                   0x01; // size indicator
+    req_buf.resize(2 + sizeof(coe::SDOHeader) + 4);
+    std::memcpy(req_buf.data(), &canopen_header, 2);
+
+    coe::SDOHeader *sdo = reinterpret_cast<coe::SDOHeader *>(req_buf.data() + 2);
+    sdo->index = index;
+    sdo->subindex = subindex;
+    sdo->command = coe::SDO_DOWNLOAD_EXP_REQ | ((4 - data.size()) << 2) | 0x01;
     std::memcpy(reinterpret_cast<byte *>(sdo) + sizeof(coe::SDOHeader),
                 data.data(), data.size());
-    req_buf.resize(sizeof(uint16_t) + sizeof(coe::SDOHeader) +
-                   4); // Fixed size for expedited
+
+    int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
+    if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+    mailbox::Type rx_type;
+    std::vector<byte> resp_buf(slave.mbx_in_length);
+    size_t actual_len;
+    wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+
+    if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+    if (rx_type != mailbox::COE || actual_len < 3) return std::unexpected(ECError::InvalidResponse);
+
+    if (resp_buf[2] == coe::SDO_ABORT) {
+      uint32_t abort_code;
+      std::memcpy(&abort_code, resp_buf.data() + 3, 4);
+      handle_sdo_abort(slave.configured_address, index, subindex, abort_code);
+      return std::unexpected(ECError::SDOAbort);
+    }
+    if (resp_buf[2] != coe::SDO_DOWNLOAD_RESP) return std::unexpected(ECError::InvalidResponse);
+
   } else {
-    // Normal/Segmented
-    sdo->command = coe::SDO_DOWNLOAD_INIT;
-    // ... Normal download involves size at the end or in header?
-    // Actually SOEM: ldata[0] = htoel(psize);
-    // We'll stick to expedited for now or research normal format.
-    return CoEError::DataTooLarge;
+    req_buf.resize(2 + sizeof(coe::SDOHeader) + 4);
+    std::memcpy(req_buf.data(), &canopen_header, 2);
+
+    coe::SDOHeader *sdo = reinterpret_cast<coe::SDOHeader *>(req_buf.data() + 2);
+    sdo->index = index;
+    sdo->subindex = complete_access ? 1 : subindex;
+    sdo->command = complete_access ? coe::SDO_DOWNLOAD_INIT_CA : coe::SDO_DOWNLOAD_INIT;
+
+    uint32_t total_size = static_cast<uint32_t>(data.size());
+    std::memcpy(reinterpret_cast<byte *>(sdo) + sizeof(coe::SDOHeader), &total_size, 4);
+
+    size_t max_first_segment = slave.mbx_out_length - 12; // Adjusted for CoE + CANopen
+    size_t first_segment_size = std::min(data.size(), max_first_segment);
+
+    if (first_segment_size > 0) {
+      req_buf.insert(req_buf.end(), data.data(), data.data() + first_segment_size);
+    }
+
+    int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
+    if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+    mailbox::Type rx_type;
+    std::vector<byte> resp_buf(slave.mbx_in_length);
+    size_t actual_len;
+    wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+
+    if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+    if (rx_type != mailbox::COE || actual_len < 3) return std::unexpected(ECError::InvalidResponse);
+
+    if (resp_buf[2] == coe::SDO_ABORT) {
+      uint32_t abort_code;
+      std::memcpy(&abort_code, resp_buf.data() + 3, 4);
+      handle_sdo_abort(slave.configured_address, index, subindex, abort_code);
+      return std::unexpected(ECError::SDOAbort);
+    }
+
+    size_t sent = first_segment_size;
+    uint8_t toggle = 0x00;
+    while (sent < data.size()) {
+      size_t max_seg = slave.mbx_out_length - 3;
+      size_t seg_size = std::min(data.size() - sent, max_seg);
+      bool last_seg = (sent + seg_size == data.size());
+
+      std::vector<byte> seg_buf(2 + 1 + seg_size);
+      std::memcpy(seg_buf.data(), &canopen_header, 2);
+
+      uint8_t cmd = toggle;
+      if (last_seg) {
+        cmd |= 0x01;
+        if (seg_size < max_seg) cmd |= ((max_seg - seg_size) << 1);
+      }
+      seg_buf[2] = cmd;
+      std::memcpy(seg_buf.data() + 3, data.data() + sent, seg_size);
+
+      wkc = mailbox_.write(slave, mailbox::COE, seg_buf, timeout);
+      if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+      wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+      if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+      if (resp_buf[2] == coe::SDO_ABORT) {
+         uint32_t abort_code;
+         std::memcpy(&abort_code, resp_buf.data() + 3, 4);
+         handle_sdo_abort(slave.configured_address, index, subindex, abort_code);
+         return std::unexpected(ECError::SDOAbort);
+      }
+      sent += seg_size;
+      toggle ^= 0x10;
+    }
   }
-
-  // 2. Send via Mailbox
-  int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
-  if (wkc <= 0)
-    return CoEError::MailboxError;
-
-  // 3. Receive response
-  mailbox::Type rx_type;
-  std::vector<byte> resp_buf(slave.mbx_in_length);
-  size_t actual_len;
-  wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
-
-  if (wkc <= 0)
-    return CoEError::MailboxError;
-  if (rx_type != mailbox::COE)
-    return CoEError::InvalidResponse;
-
-  uint16_t resp_canopen;
-  std::memcpy(&resp_canopen, resp_buf.data(), 2);
-  if ((resp_canopen >> 12) != coe::SDO_RESPONSE)
-    return CoEError::InvalidResponse;
-
-  coe::SDOHeader *resp_sdo =
-      reinterpret_cast<coe::SDOHeader *>(resp_buf.data() + 2);
-  if (resp_sdo->command == coe::SDO_ABORT) {
-    uint32_t abort_code;
-    std::memcpy(&abort_code, resp_buf.data() + 2 + sizeof(coe::SDOHeader), 4);
-    return handle_sdo_abort(slave.configured_address, index, subindex,
-                            abort_code);
-  }
-
-  if (resp_sdo->command != coe::SDO_DOWNLOAD_RESP)
-    return CoEError::InvalidResponse;
-
-  return CoEError::Success;
+  return {};
 }
 
-CoEError CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
-                              uint8_t subindex, std::span<byte> data,
-                              size_t &actual_size, bool complete_access,
-                              std::chrono::microseconds timeout) {
-  // 1. Prepare SDO upload request
+Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
+                                    uint8_t subindex, std::span<byte> data,
+                                    bool complete_access,
+                                    std::chrono::microseconds timeout) {
   std::vector<byte> req_buf(sizeof(uint16_t) + sizeof(coe::SDOHeader));
-
-  uint16_t canopen = (coe::SDO_REQUEST << 12);
-  std::memcpy(req_buf.data(), &canopen, 2);
+  uint16_t canopen_header = (coe::SDO_REQUEST << 12);
+  std::memcpy(req_buf.data(), &canopen_header, 2);
 
   coe::SDOHeader *sdo = reinterpret_cast<coe::SDOHeader *>(req_buf.data() + 2);
   sdo->command = complete_access ? coe::SDO_UPLOAD_REQ_CA : coe::SDO_UPLOAD_REQ;
   sdo->index = index;
   sdo->subindex = (complete_access && subindex > 1) ? 1 : subindex;
 
-  // 2. Send via Mailbox
   int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
-  if (wkc <= 0)
-    return CoEError::MailboxError;
+  if (wkc <= 0) return std::unexpected(ECError::MailboxError);
 
-  // 3. Receive response
   mailbox::Type rx_type;
   std::vector<byte> resp_buf(slave.mbx_in_length);
   size_t actual_len;
   wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
-  if (wkc <= 0)
-    return CoEError::MailboxError;
-  if (rx_type != mailbox::COE)
-    return CoEError::InvalidResponse;
+  if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+  if (rx_type != mailbox::COE || actual_len < 3) return std::unexpected(ECError::InvalidResponse);
 
-  uint16_t resp_canopen;
-  std::memcpy(&resp_canopen, resp_buf.data(), 2);
-  if ((resp_canopen >> 12) != coe::SDO_RESPONSE)
-    return CoEError::InvalidResponse;
-
-  coe::SDOHeader *resp_sdo =
-      reinterpret_cast<coe::SDOHeader *>(resp_buf.data() + 2);
+  coe::SDOHeader *resp_sdo = reinterpret_cast<coe::SDOHeader *>(resp_buf.data() + 2);
   if (resp_sdo->command == coe::SDO_ABORT) {
     uint32_t abort_code;
     std::memcpy(&abort_code, resp_buf.data() + 2 + sizeof(coe::SDOHeader), 4);
-    return handle_sdo_abort(slave.configured_address, index, subindex,
-                            abort_code);
+    handle_sdo_abort(slave.configured_address, index, subindex, abort_code);
+    return std::unexpected(ECError::SDOAbort);
   }
 
-  // Expedited or Normal/Segmented response
+  size_t actual_size = 0;
   if (resp_sdo->command & 0x02) {
-    // Expedited
     uint8_t size_ind = (resp_sdo->command >> 2) & 0x03;
-    size_t len = 4 - size_ind;
+    size_t len = 4 - ( (resp_sdo->command & 0x01) ? size_ind : 0);
     actual_size = std::min(len, data.size());
-    std::memcpy(data.data(), resp_buf.data() + 2 + sizeof(coe::SDOHeader),
-                actual_size);
+    std::memcpy(data.data(), resp_buf.data() + 2 + sizeof(coe::SDOHeader), actual_size);
   } else {
-    // Normal/Segmented
     uint32_t total_size;
     std::memcpy(&total_size, resp_buf.data() + 2 + sizeof(coe::SDOHeader), 4);
-
-    if (total_size > data.size()) {
-      return CoEError::DataTooLarge;
-    }
+    if (total_size > data.size()) return std::unexpected(ECError::ProtocolError);
 
     size_t received = 0;
-    // Initial data in this frame?
-    // According to SOEM, Framedatasize = MbxHeader.length - 10
-    // Header (6) + CANopen (2) + SDO Header (3) + SDO Size (4) = 15 bytes total
-    // overhead for 1st frame? Wait, ec_SDOt size is MbxHeader(6) + CANOpen(2) +
-    // Command(1) + Index(2) + SubIndex(1) = 12 bytes. Ldata[0] is at offset 12.
-    // So Framedatasize = MbxHeader.length - 10? No.
-    // SDOHeader in our implementation is 2 + 1 + 2 + 1 = 6 bytes?
-    // Wait, let's look at SDOHeader in EtherCATTypes.hpp
-    /*
-    struct SDOHeader {
-      uint16_t service; // bits 0-8: number, bits 12-15: service
-      uint8_t command;
-      uint16_t index;
-      uint8_t subindex;
-    } __attribute__((packed));
-    */
-    // This is 6 bytes. PLUS the 2 bytes CANopen at the start?
-    // Our CoE frame starts with CANopen(2).
-    // So 2 + 6 = 8 bytes before data.
-    // MbxHeader.length is the size of (CANopen + SDOHeader + data).
-    // So data_in_frame = MbxHeader.length - 8?
-    // Actually, CoE SDO Normal response has 4 bytes size [ldata[0]] then data
-    // [ldata[1]]. So data_in_frame = MbxHeader.length - 8 - 4 =
-    // MbxHeader.length - 12.
+    size_t initial_data_size = actual_len - 10;
+    if (initial_data_size > 0) {
+      size_t to_copy = std::min(initial_data_size, static_cast<size_t>(total_size));
+      std::memcpy(data.data(), resp_buf.data() + 10, to_copy);
+      received = to_copy;
+    }
 
-    // Let's check SOEM's Framedatasize calculation: Framedatasize =
-    // (etohs(aSDOp->MbxHeader.length) - 10); 10 because SOEM's CANopen is 2
-    // bytes, Command is 1 byte, Index 2, SubIndex 1, then ldata[0] is 4 bytes.
-    // Wait, 2+1+2+1+4 = 10. Yes.
+    uint8_t toggle = 0x00;
+    while (received < total_size) {
+      std::vector<byte> seg_req(3);
+      uint16_t can_req = (coe::SDO_REQUEST << 12);
+      std::memcpy(seg_req.data(), &can_req, 2);
+      seg_req[2] = coe::SDO_SEG_UP_REQ | toggle;
 
-    uint16_t current_mbx_len;
-    // We don't have easy access to MbxHeader from resp_buf directly without
-    // re-interpreting. Actually, MailboxHandler::read should probably return
-    // the header or we can find it. For now, let's assume resp_buf contains
-    // everything AFTER MbxHeader. MailboxHandler::read implementation:
-    /*
-      std::vector<byte> full_buf(slave.mbx_in_length + 6);
-      ...
-      std::memcpy(data.data(), full_buf.data() + 6, slave.mbx_in_length);
-    */
-    // So resp_buf is just the payload.
-    // The payload length for Mailbox is in the header, which we don't have
-    // here. BUT we know the slave.mbx_in_length is the MAX. The actual received
-    // bytes from RawSocket::receive is what we need.
+      wkc = mailbox_.write(slave, mailbox::COE, seg_req, timeout);
+      if (wkc <= 0) return std::unexpected(ECError::MailboxError);
 
-    // I should modify MailboxHandler::read to return the actual payload length.
+      wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+      if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+      if (resp_buf[2] == coe::SDO_ABORT) return std::unexpected(ECError::SDOAbort);
+
+      size_t seg_size = actual_len - 3;
+      bool last_seg = (resp_buf[2] & 0x01) != 0;
+      if (last_seg) {
+        uint8_t bytes_not_valid = (resp_buf[2] >> 1) & 0x07;
+        if (seg_size >= bytes_not_valid) seg_size -= bytes_not_valid;
+      }
+      std::memcpy(data.data() + received, resp_buf.data() + 3, seg_size);
+      received += seg_size;
+      if (last_seg) break;
+      toggle ^= 0x10;
+    }
+    actual_size = received;
   }
-
-  return CoEError::Success;
+  return actual_size;
 }
 
-CoEError CoEHandler::handle_sdo_abort(uint16_t slave_addr, uint16_t index,
-                                      uint8_t subindex, uint32_t abort_code) {
+void CoEHandler::handle_sdo_abort(uint16_t slave_addr, uint16_t index,
+                                  uint8_t subindex, uint32_t abort_code) {
   std::cerr << "SDO Abort at slave 0x" << std::hex << slave_addr << " index 0x"
             << index << ":" << (int)subindex << " code 0x" << abort_code
-            << std::dec << std::endl;
-  return CoEError::SDOAbort;
+            << ": " << sdo_abort_to_string(abort_code) << std::dec << std::endl;
+}
+
+Result<std::vector<uint16_t>> CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
+  std::vector<uint16_t> indexes;
+  std::vector<byte> req_buf(8);
+  uint16_t canopen_header = (0x01 << 12);
+  std::memcpy(req_buf.data(), &canopen_header, 2);
+  req_buf[2] = 0x01; // GET_ODLIST_REQ
+  uint16_t list_type = 0x01;
+  std::memcpy(req_buf.data() + 6, &list_type, 2);
+
+  int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
+  if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+  bool more = true;
+  while (more) {
+    mailbox::Type rx_type;
+    std::vector<byte> resp_buf(slave.mbx_in_length);
+    size_t actual_len;
+    wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+    if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+    if (resp_buf[2] == 0x07) return std::unexpected(ECError::ProtocolError);
+
+    uint16_t fragments;
+    std::memcpy(&fragments, resp_buf.data() + 4, 2);
+    more = (fragments > 0);
+
+    size_t n = (actual_len - 6) / 2;
+    for (size_t i = 0; i < n; ++i) {
+      uint16_t idx;
+      std::memcpy(&idx, resp_buf.data() + 6 + i * 2, 2);
+      if (idx != 0) indexes.push_back(idx);
+    }
+  }
+  return indexes;
+}
+
+Result<CoEHandler::ODEntry> CoEHandler::read_od_description(SlaveInfo &slave, uint16_t index, std::chrono::microseconds timeout) {
+  std::vector<byte> req_buf(8);
+  uint16_t canopen_header = (0x01 << 12);
+  std::memcpy(req_buf.data(), &canopen_header, 2);
+  req_buf[2] = 0x03; // GET_OD_REQ
+  std::memcpy(req_buf.data() + 6, &index, 2);
+
+  int wkc = mailbox_.write(slave, mailbox::COE, req_buf, timeout);
+  if (wkc <= 0) return std::unexpected(ECError::MailboxError);
+
+  mailbox::Type rx_type;
+  std::vector<byte> resp_buf(slave.mbx_in_length);
+  size_t actual_len;
+  wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
+  if (wkc <= 0 || resp_buf[2] != 0x04) return std::unexpected(ECError::ProtocolError);
+
+  ODEntry entry;
+  entry.index = index;
+  std::memcpy(&entry.datatype, resp_buf.data() + 8, 2);
+  entry.max_subindex = resp_buf[10];
+  entry.object_code = resp_buf[11];
+  entry.name.assign(reinterpret_cast<char *>(resp_buf.data() + 12), actual_len - 12);
+  return entry;
 }
 
 } // namespace resoem

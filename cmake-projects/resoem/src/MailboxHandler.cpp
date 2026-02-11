@@ -82,30 +82,42 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
 
 int MailboxHandler::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                                  std::span<byte> data) {
-  FrameBuilder builder;
-  uint8_t idx = current_idx_++;
-  builder.add_datagram(cmd, idx, addr, offset, data);
-  auto frame = builder.build();
+  for (int attempt = 0; attempt <= retries_; ++attempt) {
+    FrameBuilder builder;
+    uint8_t idx = current_idx_++;
+    builder.add_datagram(cmd, idx, addr, offset, data);
+    auto frame = builder.build();
 
-  socket_.send(frame);
+    socket_.send(frame);
 
-  std::vector<byte> rx_buffer(1500);
-  size_t received = socket_.receive(rx_buffer);
-  if (received == 0)
-    return -1;
+    std::vector<byte> rx_buffer(1500);
+    size_t received = socket_.receive(rx_buffer);
+    if (received == 0) {
+      if (attempt < retries_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        continue;
+      }
+      return -1; // Final timeout
+    }
 
-  size_t wkc_offset = 14 + 2 + 10 + data.size();
-  if (received < wkc_offset + 2)
-    return -2;
+    size_t wkc_offset = 14 + 2 + 10 + data.size();
+    if (received < wkc_offset + 2) continue;
 
-  uint16_t wkc;
-  std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
+    uint16_t wkc;
+    std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
 
-  if (wkc > 0) {
-    std::memcpy(data.data(), rx_buffer.data() + 14 + 2 + 10, data.size());
+    if (wkc > 0) {
+      std::memcpy(data.data(), rx_buffer.data() + 14 + 2 + 10, data.size());
+      return wkc;
+    }
+    
+    // If wkc == 0, we might want to retry as well (e.g. slave busy)
+    if (attempt < retries_) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 
-  return wkc;
+  return 0; // Failed after retries
 }
 
 bool MailboxHandler::is_mailbox_empty(const SlaveInfo &slave) {
