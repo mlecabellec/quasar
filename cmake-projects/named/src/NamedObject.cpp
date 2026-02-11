@@ -6,11 +6,13 @@
 namespace quasar::named {
 
 bool NamedObject::isValidName(const std::string &name) {
+  // Regex to match a valid C-style identifier.
   static const std::regex pattern("^[a-zA-Z_][a-zA-Z0-9_]*$");
   return std::regex_match(name, pattern);
 }
 
 NamedObject::NamedObject(const std::string &name) : m_name(name) {
+  // Validate name according to naming rules.
   if (name.empty()) {
     throw std::runtime_error("Name cannot be empty");
   }
@@ -24,13 +26,16 @@ NamedObject::~NamedObject() {}
 std::shared_ptr<NamedObject>
 NamedObject::create(const std::string &name,
                     std::shared_ptr<NamedObject> parent) {
+  // Local helper class to allow make_shared with protected constructor.
   struct Helper : public NamedObject {
     Helper(const std::string &n) : NamedObject(n) {}
   };
 
+  // Create the object and initialize its weak reference to self.
   std::shared_ptr<Helper> obj = std::make_shared<Helper>(name);
   obj->setSelf(obj);
 
+  // If a parent is provided, establish the hierarchy.
   if (parent) {
     obj->setParent(parent);
   }
@@ -39,12 +44,13 @@ NamedObject::create(const std::string &name,
 }
 
 std::shared_ptr<NamedObject> NamedObject::getSelf() const {
+    // Lock the weak pointer to obtain a shared_ptr.
     return m_self.lock();
 }
 
 void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   {
-    // Lock this object to check current parent.
+    // Check if the requested parent is already set.
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     std::shared_ptr<NamedObject> currentParent = m_parent.lock();
     if (currentParent == parent) {
@@ -52,11 +58,12 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
     }
   }
 
+  // Prevent an object from being its own parent.
   if (parent.get() == this) {
     throw std::runtime_error("Cannot set self as parent");
   }
 
-  // Check for cycles by traversing up the hierarchy.
+  // Verify that setting the parent doesn't create a cycle in the tree.
   std::shared_ptr<NamedObject> p = parent;
   while (p) {
     if (p.get() == this) {
@@ -68,12 +75,13 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   std::shared_ptr<NamedObject> oldParent;
 
   if (parent) {
-    // Add to new parent. This might throw if name duplicate.
-    // The addChild method handles locking of the parent.
+    // Attempt to add this object as a child of the new parent.
+    // This will throw if there's a name collision.
     parent->addChild(getSelf());
   }
 
   {
+    // Atomically update the parent reference.
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     oldParent = m_parent.lock();
     m_parent = parent;
@@ -81,22 +89,21 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 
   if (oldParent) {
     try {
-      // Remove from old parent.
+      // Remove this object from the old parent's child list.
       oldParent->removeChild(m_name);
     } catch (...) {
-      // Should not happen if logic is consistent, swallow exception during
-      // parent switch cleanup.
+      // Ignore errors during removal from old parent to maintain consistency.
     }
   }
 }
 
 void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
   std::lock_guard<std::recursive_mutex> lock(m_mutex);
-  // Check for duplicate names among children.
+  // Ensure that all children have unique names.
   for (const std::shared_ptr<NamedObject> &c : m_children) {
     if (c->getName() == child->getName()) {
       if (c == child)
-        return; // Already child
+        return; // The object is already a child.
       throw std::runtime_error("Name not unique in parent: " +
                                child->getName());
     }
@@ -106,6 +113,7 @@ void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
 
 void NamedObject::removeChild(const std::string &name) {
   std::lock_guard<std::recursive_mutex> lock(m_mutex);
+  // Remove any child with the matching name.
   m_children.remove_if([&name](const std::shared_ptr<NamedObject> &c) {
     return c->getName() == name;
   });
@@ -128,17 +136,14 @@ std::shared_ptr<NamedObject> NamedObject::getPreviousSibling() const {
   if (!p)
     return nullptr;
 
-  // We need to access parent's children.
-  // We should lock parent.
-  // However, we can't access m_mutex of p directly if it's private?
-  // It is private. But we are NamedObject, so we can access private members of
-  // other NamedObjects.
+  // Siblings are stored in the parent's child list. 
+  // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   std::list<std::shared_ptr<NamedObject>> &siblings = p->m_children;
   std::list<std::shared_ptr<NamedObject>>::iterator it =
       std::find(siblings.begin(), siblings.end(), getSelf());
 
-  // Return the element before this one if it exists.
+  // If found and not the first element, return the previous one.
   if (it != siblings.begin() && it != siblings.end()) {
     return *std::prev(it);
   }
@@ -150,12 +155,14 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
   if (!p)
     return nullptr;
 
+  // Siblings are stored in the parent's child list. 
+  // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
   auto &siblings = p->m_children;
   auto it = std::find(siblings.begin(), siblings.end(), getSelf());
 
+  // If found and not the last element, return the next one.
   if (it != siblings.end() && std::next(it) != siblings.end()) {
-    // Return the element after this one if it exists.
     return *std::next(it);
   }
   return nullptr;
@@ -186,14 +193,17 @@ std::shared_ptr<NamedObject> NamedObject::getRelated() const {
 }
 
 bool NamedObject::operator==(const NamedObject &other) const {
+  // Simple equality based on the object's name.
   return m_name == other.m_name;
 }
 
 bool NamedObject::operator<(const NamedObject &other) const {
+  // Lexicographical order based on the object's name.
   return m_name < other.m_name;
 }
 
 std::shared_ptr<NamedObject> NamedObject::clone() const {
+  // Default implementation creates a new NamedObject with the same name.
   return NamedObject::create(m_name);
 }
 

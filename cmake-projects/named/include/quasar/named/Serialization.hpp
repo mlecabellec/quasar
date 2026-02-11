@@ -1,3 +1,8 @@
+/**
+ * @file Serialization.hpp
+ * @brief Utilities for serializing NamedObject hierarchies to various formats (XML, YAML, JSON).
+ */
+
 #ifndef QUASAR_NAMED_SERIALIZATION_HPP
 #define QUASAR_NAMED_SERIALIZATION_HPP
 
@@ -5,47 +10,54 @@
 #include <memory>
 #include <string>
 
+/**
+ * @namespace quasar::named::serialization
+ * @brief Namespace for object serialization and deserialization.
+ */
 namespace quasar::named::serialization {
 
 /**
- * @brief Serializes a NamedObject to XML string.
- * @param obj The object.
- * @return XML string.
+ * @brief Serializes a NamedObject hierarchy into an XML string.
+ * @param obj The root object of the hierarchy to serialize.
+ * @return A string containing the XML representation.
  */
 std::string toXml(const std::shared_ptr<NamedObject> &obj);
 
 /**
- * @brief Deserializes a NamedObject from XML string.
- * @param xml The XML string.
- * @return Shared pointer to deserialized object.
+ * @brief Deserializes a NamedObject hierarchy from an XML string.
+ * @param xml The XML string to parse.
+ * @return Shared pointer to the root of the reconstructed hierarchy.
+ * @throws std::runtime_error if parsing fails.
  */
 std::shared_ptr<NamedObject> fromXml(const std::string &xml);
 
 /**
- * @brief Serializes a NamedObject to YAML string.
- * @param obj The object.
- * @return YAML string.
+ * @brief Serializes a NamedObject hierarchy into a YAML string.
+ * @param obj The root object of the hierarchy to serialize.
+ * @return A string containing the YAML representation.
  */
 std::string toYaml(const std::shared_ptr<NamedObject> &obj);
 
 /**
- * @brief Deserializes a NamedObject from YAML string.
- * @param yaml The YAML string.
- * @return Shared pointer to deserialized object.
+ * @brief Deserializes a NamedObject hierarchy from a YAML string.
+ * @param yaml The YAML string to parse.
+ * @return Shared pointer to the root of the reconstructed hierarchy.
+ * @throws std::runtime_error if parsing fails.
  */
 std::shared_ptr<NamedObject> fromYaml(const std::string &yaml);
 
 /**
- * @brief Serializes a NamedObject to JSON string.
- * @param obj The object.
- * @return JSON string.
+ * @brief Serializes a NamedObject hierarchy into a JSON string.
+ * @param obj The root object of the hierarchy to serialize.
+ * @return A string containing the JSON representation.
  */
 std::string toJson(const std::shared_ptr<NamedObject> &obj);
 
 /**
- * @brief Deserializes a NamedObject from JSON string.
- * @param json The JSON string.
- * @return Shared pointer to deserialized object.
+ * @brief Deserializes a NamedObject hierarchy from a JSON string.
+ * @param json The JSON string to parse.
+ * @return Shared pointer to the root of the reconstructed hierarchy.
+ * @throws std::runtime_error if parsing fails.
  */
 std::shared_ptr<NamedObject> fromJson(const std::string &json);
 

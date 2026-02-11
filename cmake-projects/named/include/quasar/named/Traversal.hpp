@@ -1,3 +1,8 @@
+/**
+ * @file Traversal.hpp
+ * @brief Utilities for traversing and searching NamedObject hierarchies.
+ */
+
 #ifndef QUASAR_NAMED_TRAVERSAL_HPP
 #define QUASAR_NAMED_TRAVERSAL_HPP
 
@@ -5,47 +10,60 @@
 #include <functional>
 #include <vector>
 
+/**
+ * @namespace quasar::named::traversal
+ * @brief Namespace for tree traversal algorithms.
+ */
 namespace quasar::named::traversal {
 
 /**
- * @brief Traverses the tree depth-first (pre-order) invoking callback on each
- * node. Thread safety is caller's responsibility.
+ * @brief Traverses the tree depth-first (pre-order) invoking a callback on each node.
+ * 
+ * Thread safety: The caller is responsible for ensuring that the tree structure 
+ * is not modified by other threads during traversal.
+ * 
  * @param root The root object to start traversal from.
- * @param callback The callback function to invoke for each node.
+ * @param callback The function to invoke for each visited node.
  */
 void forEachDepthFirst(
     const std::shared_ptr<NamedObject> &root,
     std::function<void(std::shared_ptr<NamedObject>)> callback);
 
 /**
- * @brief Traverses the tree breadth-first invoking callback on each node.
- * Thread safety is caller's responsibility.
+ * @brief Traverses the tree breadth-first invoking a callback on each node.
+ * 
+ * Thread safety: The caller is responsible for ensuring that the tree structure 
+ * is not modified by other threads during traversal.
+ * 
  * @param root The root object to start traversal from.
- * @param callback The callback function to invoke for each node.
+ * @param callback The function to invoke for each visited node.
  */
 void forEachBreadthFirst(
     const std::shared_ptr<NamedObject> &root,
     std::function<void(std::shared_ptr<NamedObject>)> callback);
 
 /**
- * @brief Finds a descendant by name (depth-first search).
+ * @brief Finds a descendant by its name using depth-first search.
+ * 
  * @param root The root of the tree to search.
  * @param name The name of the object to find.
- * @return Shared pointer to the found object, or null if not found.
+ * @return Shared pointer to the found object, or nullptr if not found.
  */
 std::shared_ptr<NamedObject>
 findByName(const std::shared_ptr<NamedObject> &root, const std::string &name);
 
 /**
- * @brief Finds all descendants of a specific type.
+ * @brief Finds all descendants (including the root) that match a specific type.
+ * 
  * @tparam T The type to search for (must derive from NamedObject).
  * @param root The root of the tree to search.
- * @return Vector of shared pointers to found objects.
+ * @return A vector of shared pointers to all found objects of type T.
  */
 template <typename T>
 std::vector<std::shared_ptr<T>>
 findByType(const std::shared_ptr<NamedObject> &root) {
   std::vector<std::shared_ptr<T>> result;
+  // Use depth-first traversal to find matching nodes.
   forEachDepthFirst(root, [&](std::shared_ptr<NamedObject> obj) {
     if (auto casted = std::dynamic_pointer_cast<T>(obj)) {
       result.push_back(casted);
@@ -55,21 +73,13 @@ findByType(const std::shared_ptr<NamedObject> &root) {
 }
 
 /**
- * @brief Creates a deep copy of the tree.
+ * @brief Creates a complete deep copy of an object hierarchy.
+ * 
+ * This function recursively clones each node in the tree using the virtual `clone()` method.
+ * 
  * @param root The root of the tree to copy.
- * @param newParent Optional parent for the new root.
- * @return The new root.
- * Note: Cloning specific derived types (like NamedInteger) requires support in
- * create/clone. Since we rely on factories, generic deepCopy is hard without
- * virtual clone(). We will implement structural copy for NamedObject base, but
- * for derived types we need a clone method. Spec said "Utilities shall be
- * provided for copying...". If NamedObject doesn't have virtual clone, we can't
- * deep copy derived state easily. I will implement a basic structural copy that
- * preserves names/structure but effectively degrades to NamedObject if no clone
- * facility. However, to be compliant, I should probably have added `clone` to
- * NamedObject. Let's see if I can add it now or just do best effort. I'll add a
- * virtual `clone` method to `NamedObject` and override in derived classes? That
- * would be best.
+ * @param newParent Optional parent to attach the newly created root to.
+ * @return The root of the new copied hierarchy.
  */
 std::shared_ptr<NamedObject>
 deepCopy(const std::shared_ptr<NamedObject> &root,

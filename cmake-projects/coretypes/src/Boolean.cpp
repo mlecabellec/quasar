@@ -6,46 +6,50 @@ namespace quasar {
 namespace coretypes {
 
 Boolean::Boolean(bool value) : value_(value) {
-  // Initialize the boolean value directly from the parameter.
+  // Initialize the boolean value directly from the primitive parameter.
+  // This class is immutable, so the value won't change after construction.
 }
 
 Boolean::Boolean(const std::string &s) : value_(parseBoolean(s)) {
   // Initialize the boolean value by parsing the string parameter.
+  // parseBoolean handles the case-insensitive logic.
 }
 
 Boolean::Boolean(const char *s) {
-  // Check for null pointer as per CS-0010.
+  // Defensive check for null pointers.
+  // According to specification (and common Java-like behavior), null strings parse to false.
   if (s == nullptr) {
     value_ = false;
   } else {
-    value_ = parseBoolean(s);
+    // Convert the C-style string to a std::string and then delegate to parseBoolean.
+    value_ = parseBoolean(std::string(s));
   }
 }
 
 bool Boolean::booleanValue() const {
-  // Return the internal primitive boolean value.
+  // Returns the internal primitive bool state.
   return value_;
 }
 
 std::string Boolean::toString() const {
-  // Return "true" if the value is true, "false" otherwise.
+  // Standard string representation: returns "true" or "false".
   return value_ ? "true" : "false";
 }
 
 bool Boolean::parseBoolean(const std::string &s) {
-  // Check if the string length is 4. If not, it cannot be "true".
+  // Fast path: only strings with exactly 4 characters can be "true".
+  // This optimization avoids unnecessary string copies or transformations for other values.
   if (s.length() != 4) {
     return false;
   }
 
-  // Create a lowercase copy of the string to perform case-insensitive
-  // comparison.
+  // Perform a case-insensitive comparison by converting a copy of the input to lowercase.
   std::string lower = s;
   std::transform(lower.begin(), lower.end(), lower.begin(),
                  [](unsigned char c) { return std::tolower(c); });
 
-  // Compare the lowercase string with "true".
-  // If equal, return true; otherwise, return false.
+  // Only the exact lowercase string "true" results in a true boolean value.
+  // All other strings (including "false", "maybe", etc.) result in false.
   return lower == "true";
 }
 

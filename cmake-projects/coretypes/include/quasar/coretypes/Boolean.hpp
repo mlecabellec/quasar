@@ -1,3 +1,8 @@
+/**
+ * @file Boolean.hpp
+ * @brief Definition of the Boolean wrapper class.
+ */
+
 #ifndef QUASAR_CORETYPES_BOOLEAN_HPP
 #define QUASAR_CORETYPES_BOOLEAN_HPP
 
@@ -11,7 +16,11 @@ namespace coretypes {
  * object.
  *
  * An object of type Boolean contains a single field whose type is boolean.
- * This class is immutable and thread-safe.
+ * This class provides a set of methods for converting between boolean, String, 
+ * and numeric types. 
+ * 
+ * This class is immutable and thread-safe. It follows the Java-style Boolean
+ * wrapper conventions.
  */
 class Boolean {
 public:
@@ -24,13 +33,19 @@ public:
   /**
    * @brief Allocates a Boolean object representing the value true if the string
    * argument is not null and is equal, ignoring case, to the string "true".
+   *
+   * Otherwise, allocates a Boolean object representing the value false.
+   *
    * @param s The string to be converted to a Boolean.
    */
   explicit Boolean(const std::string &s);
 
   /**
    * @brief Allocates a Boolean object from a C-string.
-   * @param s The string to be converted to a Boolean.
+   *
+   * Similar to the std::string constructor, it checks for case-insensitive "true".
+   *
+   * @param s The C-string to be converted to a Boolean.
    */
   explicit Boolean(const char *s);
 
@@ -42,12 +57,19 @@ public:
 
   /**
    * @brief Returns a String object representing this Boolean's value.
+   *
+   * Returns "true" if the value is true, and "false" otherwise.
+   *
    * @return a string representation of this object.
    */
   std::string toString() const;
 
   /**
    * @brief Parses the string argument as a boolean.
+   *
+   * The boolean returned represents the value true if the string argument 
+   * is not null and is equal, ignoring case, to the string "true".
+   *
    * @param s the String containing the boolean representation to be parsed.
    * @return the boolean represented by the string argument.
    */
@@ -60,24 +82,53 @@ public:
    *
    * @tparam T The numeric type.
    * @param value The numeric value.
-   * @return Boolean representation.
+   * @return A Boolean instance representing the numeric value.
    */
   template <typename T> static Boolean fromNumeric(T value) {
+    // Standard C convention: 0 is false, everything else is true.
     return Boolean(value != 0);
   }
 
-  // Primitive comparison
-  bool equals(bool other) const { return value_ == other; }
+  /**
+   * @brief Checks if this Boolean's value is equal to a primitive boolean value.
+   * @param other The primitive boolean to compare with.
+   * @return true if both values are the same.
+   */
+  bool equals(bool other) const { 
+    // Direct comparison with the internal primitive value.
+    return value_ == other; 
+  }
+
+  /**
+   * @brief Compares this Boolean value with a primitive boolean value.
+   *
+   * @param other The primitive boolean to compare with.
+   * @return 0 if equal, 1 if this is true and other is false, -1 if this is false and other is true.
+   */
   int compareTo(bool other) const { 
+      // Return 0 if the values are identical.
       if (value_ == other) return 0;
+      // If not equal, 'true' is considered greater than 'false'.
       return value_ ? 1 : -1; 
   }
+
+  /**
+   * @brief Equality operator comparison with a primitive boolean.
+   * @param other The primitive boolean to compare with.
+   * @return true if equal.
+   */
   bool operator==(bool other) const { return value_ == other; }
+
+  /**
+   * @brief Inequality operator comparison with a primitive boolean.
+   * @param other The primitive boolean to compare with.
+   * @return true if not equal.
+   */
   bool operator!=(bool other) const { return value_ != other; }
 
 private:
   /**
-   * @brief The primitive value.
+   * @brief The internal primitive boolean value.
    */
   bool value_;
 };

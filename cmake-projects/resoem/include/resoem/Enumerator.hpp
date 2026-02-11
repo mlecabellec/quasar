@@ -1,3 +1,8 @@
+/**
+ * @file Enumerator.hpp
+ * @brief Class for discovering and configuring EtherCAT slaves on the network.
+ */
+
 #pragma once
 
 #include "resoem/RawSocket.hpp"
@@ -12,76 +17,118 @@ namespace resoem {
 
 class ProcessImage;
 
+/**
+ * @brief Manages the discovery, initialization, and monitoring of EtherCAT slaves.
+ * 
+ * The Enumerator is responsible for scanning the network, assigning station addresses,
+ * reading slave information (SII), and handling state transitions.
+ */
 class Enumerator {
 public:
+  /**
+   * @brief Construct a new Enumerator.
+   * @param socket The raw socket to use for communication.
+   */
   Enumerator(RawSocket &socket);
 
   /**
-   * Run the full enumeration process.
-   * Returns the number of slaves found or an error.
+   * @brief Run the full enumeration process.
+   * 
+   * This includes resetting the network, counting slaves, assigning addresses,
+   * and reading device information from the SII (EEPROM).
+   * 
+   * @return Result<size_t> Number of slaves found or an error code.
    */
   Result<size_t> enumerate();
 
   /**
-   * Request a state transition for a slave.
-   * Returns the actual state reached.
+   * @brief Request a state transition for a specific slave.
+   * 
+   * @param slave_idx Index of the slave in the internal list.
+   * @param state Target AL state (e.g., states::PRE_OP).
+   * @param timeout Maximum time to wait for the transition.
+   * @return Result<uint16_t> The actual state reached or an error.
    */
   Result<uint16_t> request_state(
       uint16_t slave_idx, uint16_t state,
       std::chrono::microseconds timeout = std::chrono::seconds(3));
 
   /**
-   * Request state transition for ALL slaves.
+   * @brief Request a state transition for ALL slaves simultaneously.
+   * 
+   * @param state Target AL state.
+   * @param timeout Maximum time to wait for all slaves to transition.
+   * @return Result<> Success or error.
    */
   Result<> request_state_all(
       uint16_t state,
       std::chrono::microseconds timeout = std::chrono::seconds(3));
 
   /**
-   * Configure FMMUs and return total logical size.
+   * @brief Configure FMMUs (Fieldbus Memory Management Units) for process data.
+   * 
+   * Maps slave physical memory (PDOs) to the logical process image.
+   * 
+   * @param image The process image to configure.
+   * @return Result<uint32_t> Total logical size in bytes.
    */
   Result<uint32_t> configure_fmmu(ProcessImage &image);
 
   /**
-   * Exchange process data logical image.
-   * Returns the Working Counter (WKC).
+   * @brief Exchange process data using a Logical ReadWrite (LRW) command.
+   * 
+   * @param image The process image containing outputs to send and buffer for inputs.
+   * @param timeout Receive timeout.
+   * @return Result<uint16_t> Working Counter (WKC) from the datagram.
    */
   Result<uint16_t> exchange_process_data(
       ProcessImage &image,
       std::chrono::microseconds timeout = std::chrono::milliseconds(2));
 
   /**
-   * Measure propagation delays for Distributed Clocks (DC).
+   * @brief Measure propagation delays between slaves for Distributed Clocks (DC).
    */
   void measure_propagation_delays();
 
   /**
-   * Synchronize slave clocks to the Reference Clock.
+   * @brief Synchronize all slave clocks to the Reference Clock (usually the first DC-capable slave).
    */
   void sync_clocks();
 
   /**
-   * Configure SYNC0/SYNC1 for a slave.
+   * @brief Configure SYNC0/SYNC1 signals for a specific slave.
+   * 
+   * @param slave The slave info structure.
+   * @param cycle_time Sync cycle time in nanoseconds.
+   * @param shift_time Sync shift time in nanoseconds.
    */
   void configure_dc(SlaveInfo &slave, uint32_t cycle_time, int32_t shift_time);
 
   /**
-   * Check status of all slaves and update 'online' and 'current_state' fields.
+   * @brief Check status of all slaves and update 'online' and 'current_state' fields.
    */
   void check_slaves_status();
 
   /**
-   * Attempt to recover a slave that has gone offline or errored.
+   * @brief Attempt to recover a slave that has gone offline or errored.
+   * 
+   * @param slave_idx Index of the slave.
+   * @return true if recovery was successful.
    */
   bool recover_slave(int slave_idx);
 
+  /**
+   * @brief Get the list of discovered slaves.
+   * @return Constant reference to the slave list.
+   */
   const std::vector<SlaveInfo> &slaves() const { return slaves_; }
 
 private:
-  RawSocket &socket_;
-  std::vector<SlaveInfo> slaves_;
-  uint8_t current_idx_ = 0;
+  RawSocket &socket_;             ///< Raw socket reference
+  std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
+  uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
 
+  // Internal helper methods
   int broadcast_read_count();
   void reset_to_init();
   void assign_addresses(int count);

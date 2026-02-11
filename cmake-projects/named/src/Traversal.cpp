@@ -11,6 +11,7 @@ void forEachDepthFirst(
   if (!root)
     return;
 
+  // Use a stack for iterative depth-first traversal.
   std::stack<std::shared_ptr<NamedObject>> stack;
   stack.push(root);
 
@@ -18,9 +19,11 @@ void forEachDepthFirst(
     std::shared_ptr<NamedObject> current = stack.top();
     stack.pop();
 
+    // Execute the user callback on the current node.
     callback(current);
 
-    // Push children in reverse order to process them in correct order.
+    // Push children onto the stack in reverse order so they are processed
+    // in the original forward order (left-to-right).
     std::list<std::shared_ptr<NamedObject>> children = current->getChildren();
     for (std::list<std::shared_ptr<NamedObject>>::reverse_iterator it =
              children.rbegin();
@@ -36,6 +39,7 @@ void forEachBreadthFirst(
   if (!root)
     return;
 
+  // Use a queue for iterative breadth-first (level-order) traversal.
   std::queue<std::shared_ptr<NamedObject>> queue;
   queue.push(root);
 
@@ -43,9 +47,10 @@ void forEachBreadthFirst(
     std::shared_ptr<NamedObject> current = queue.front();
     queue.pop();
 
+    // Execute the user callback.
     callback(current);
 
-    // Enqueue children.
+    // Enqueue all children for processing in the next levels.
     for (const std::shared_ptr<NamedObject> &child : current->getChildren()) {
       queue.push(child);
     }
@@ -54,6 +59,7 @@ void forEachBreadthFirst(
 
 std::shared_ptr<NamedObject>
 findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
+  // Simple iterative search using a stack.
   std::stack<std::shared_ptr<NamedObject>> stack;
   if (root)
     stack.push(root);
@@ -62,11 +68,11 @@ findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
     std::shared_ptr<NamedObject> current = stack.top();
     stack.pop();
 
-    // Check current node.
+    // Return the node if its name matches the search criteria.
     if (current->getName() == name)
       return current;
 
-    // Push children.
+    // Continue search in children.
     std::list<std::shared_ptr<NamedObject>> children = current->getChildren();
     for (std::list<std::shared_ptr<NamedObject>>::reverse_iterator it =
              children.rbegin();
@@ -82,12 +88,15 @@ std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
   if (!root)
     return nullptr;
 
+  // Clone the current node (state only, no children/parent yet).
   std::shared_ptr<NamedObject> newRoot = root->clone();
+  
+  // Link to the provided parent in the new tree.
   if (newParent) {
     newRoot->setParent(newParent);
   }
 
-  // Recursively copy children.
+  // Recursively process and attach all children.
   for (const std::shared_ptr<NamedObject> &child : root->getChildren()) {
     deepCopy(child, newRoot);
   }

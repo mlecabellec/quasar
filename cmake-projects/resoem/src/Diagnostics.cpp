@@ -4,6 +4,7 @@
 namespace resoem {
 
 std::string_view sdo_abort_to_string(uint32_t abort_code) {
+  // Static map of standard SDO abort codes as defined in the EtherCAT specification.
   static const std::map<uint32_t, std::string_view> sdo_error_list = {
       {0x00000000, "No error"},
       {0x05030000, "Toggle bit not changed"},
@@ -38,6 +39,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
       {0x08000023, "Object dictionary dynamic generation fails or no object dictionary is present"},
   };
 
+  // Perform lookup in the error list.
   auto it = sdo_error_list.find(abort_code);
   if (it != sdo_error_list.end()) {
     return it->second;
@@ -46,6 +48,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
 }
 
 std::string_view al_status_code_to_string(uint16_t status_code) {
+  // Static map of Application Layer (AL) Status codes from register 0x0134.
   static const std::map<uint16_t, std::string_view> al_status_list = {
       {0x0000, "No error"},
       {0x0001, "Unspecified error"},
@@ -112,6 +115,7 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x00f0, "Application controller available"},
   };
 
+  // Perform lookup in the AL status list.
   auto it = al_status_list.find(status_code);
   if (it != al_status_list.end()) {
     return it->second;

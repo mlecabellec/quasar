@@ -1,3 +1,8 @@
+/**
+ * @file NamedInteger.hpp
+ * @brief Template class for named integer values.
+ */
+
 #ifndef QUASAR_NAMED_NAMEDINTEGER_HPP
 #define QUASAR_NAMED_NAMEDINTEGER_HPP
 
@@ -7,9 +12,13 @@
 namespace quasar::named {
 
 /**
- * @brief A named integer value.
- * Inherits from NamedObject and coretypes::Integer.
- * @tparam T The underlying integer type.
+ * @class NamedInteger
+ * @brief A named object that holds an integer value.
+ * 
+ * This class combines the hierarchical capabilities of NamedObject with the 
+ * integer value management of coretypes::Integer.
+ * 
+ * @tparam T The underlying integer type (e.g., int, uint32_t, int64_t).
  */
 template <typename T>
 class NamedInteger : public NamedObject, public quasar::coretypes::Integer<T> {
@@ -20,34 +29,47 @@ public:
   virtual ~NamedInteger() = default;
 
   /**
-   * @brief Creates a NamedInteger.
-   * @param name The name.
-   * @param value The initial value.
-   * @param parent The optional parent.
-   * @return Shared pointer to created NamedInteger.
+   * @brief Factory method to create a NamedInteger.
+   * 
+   * @param name The name of the integer object.
+   * @param value The initial integer value.
+   * @param parent Optional parent in the hierarchy.
+   * @return Shared pointer to the new NamedInteger instance.
    */
   static std::shared_ptr<NamedInteger<T>>
   create(const std::string &name, T value,
          std::shared_ptr<NamedObject> parent = nullptr) {
+    // Instantiate the NamedInteger.
     auto obj = std::make_shared<NamedInteger<T>>(name, value);
+    
+    // Initialize self-reference for getSelf().
     obj->setSelf(obj);
+    
+    // Attach to parent if provided.
     if (parent) {
       obj->setParent(parent);
     }
     return obj;
   }
 
+  /**
+   * @brief Creates a clone of this NamedInteger.
+   * @return A new NamedInteger with the same name and value, but no hierarchy.
+   */
   std::shared_ptr<NamedObject> clone() const override {
+    // Return a new instance using the same name and current value.
     return create(this->getName(), this->value());
   }
 
   /**
    * @brief Constructs a NamedInteger.
-   * @param name The name.
+   * @param name The name of the object.
    * @param value The initial value.
    */
   NamedInteger(const std::string &name, T value)
-      : NamedObject(name), quasar::coretypes::Integer<T>(value) {}
+      : NamedObject(name), quasar::coretypes::Integer<T>(value) {
+    // Both base classes are initialized with the provided arguments.
+  }
 };
 
 } // namespace quasar::named

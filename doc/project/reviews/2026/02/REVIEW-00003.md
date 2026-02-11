@@ -1,0 +1,79 @@
+# REVIEW-00003: Review of FE-0030 (Completion of FE-0010 and FE-0020). (WIP)
+
+## Description
+
+This review covers the completion of work started in FE-0010 and FE-0020.
+
+## Review scope
+
+### Reviewed code
+
+- [REVIEW-00003.1] quasar::coretypes and quasar::named namespaces at commit [a723425c3bbdd16325457402ae73075d1ecc2c4f].
+
+### Reviewed features and constraints
+
+- [REVIEW-00003.2] Review of the [FE-0030] feature, including:
+  - [FE-0030.1] Add methods in quasar::coretypes::Number:
+    - [FE-0030.1.1] Add methods for comparison with other Number objects.
+    - [FE-0030.1.2] Add methods for comparison with primitive types.
+    - [FE-0030.1.3] Add methods for basic arithmetic operations.
+    - [FE-0030.1.4] add methods for safe arithmetic operations.
+    - [FE-0030.1.5] add methods for bitwise operations.
+    - [FE-0030.1.6] add methods for safe bitwise operations.
+    - [FE-0030.1.7] add methods for bitwise operations.
+    - [FE-0030.1.8] add methods for safe bitwise operations.
+    - [FE-0030.1.9] Add methods allowing some form of reflection and introspection.
+  - [FE-0030.2] Regarding Numberclass derivatives:
+    - [FE-0030.2.1] Add methods for comparison with other Number objects.
+    - [FE-0030.2.2] Add methods for comparison with primitive types.
+    - [FE-0030.2.3] Add methods for basic arithmetic operations.
+    - [FE-0030.2.4] add methods for safe arithmetic operations.
+    - [FE-0030.2.5] add methods for bitwise operations.
+    - [FE-0030.2.6] add methods for safe bitwise operations.
+    - [FE-0030.2.7] add methods for bitwise operations.
+    - [FE-0030.2.8] add methods for safe bitwise operations.
+  - [FE-0030.3] In quasaer::coretypes, add a String class.
+  - [FE-0030.4] In quasar::named, add support for a named String.
+  - [FE-0030.5] In quasar::coretypes, add methods to Buffer and BitBuffer:
+    - [FE-0030.5.1] Add methods for comparison with other Buffer or BitBuffer objects.
+    - [FE-0030.5.2] Add methods for comparison with primitive types.
+    - [FE-0030.5.3] add methods for bitwise operations.
+    - [FE-0030.5.4] add methods for safe bitwise operations.
+    - [FE-0030.5.5] add methods for concatenation.
+    - [FE-0030.5.6] add methods for slicing at bit level or at byte level depending on the class.
+    - [FE-0030.5.7] Create a BufferSlice and BitBufferSlice class.
+    - [FE-0030.5.8] BitBuffer can be sliced with offset and lengths expressed as a combination of bytes and bits.
+    - [FE-0030.5.9] Buffer, BitBuffer, BufferSlice and BitBufferSlice shall be serializable and deserializable.
+    - [FE-0030.5.10] Buffer, BitBuffer, BufferSlice and BitBufferSlice shall provide methods for conversion from and to std::vector<uint8_t>.
+    - [FE-0030.5.11] Buffer, BitBuffer, BufferSlice and BitBufferSlice shall provide methods for conversion from and to quasar::coretypes::Number.
+    - [FE-0030.5.12] Buffer, BitBuffer, BufferSlice and BitBufferSlice shall provide methods for conversion from and to quasar::coretypes::String.
+  - [FE-0030.6] In quasar::named, add support for a named Buffer and a named BitBuffer.
+  - [FE-0030.7] In quasar::named, add a NamedBufferSlice and a NamedBitBufferSlice class:
+    - [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
+    - [FE-0030.7.2] A slice shall be able to be copied to a new Buffer or BitBuffer.
+    - [FE-0030.7.3] A slice shall be able to be concatenated with other slices.
+    - [FE-0030.7.4] A slice shall be able to be sliced at bit level or at byte level depending on the class.
+    - [FE-0030.7.5] Slices can be created from a Buffer or BitBuffer.
+    - [FE-0030.7.6] Slices can be created from a slice of a Buffer or BitBuffer.
+    - [FE-0030.7.7] Slices can be created from a concatenation of slices of a Buffer or BitBuffer.
+    - [FE-0030.7.8] Tree of slices can be created. Methods for navigating the tree shall be provided.
+  - [FE-0030.8] All methods of all classes shall be thread safe.
+  - [FE-0030.9] All methods of all classes in quasar::coretypes and quasar::named shall be const correct.
+  - [FE-0030.10] All methods of all classes in quasar::coretypes and quasar::named shall be tested.
+  - [FE-0030.11] All methods of all classes in quasar::coretypes and quasar::named shall be documented.
+
+## Review results
+
+- [REVIEW-00003.3] Initial assessment in progress.
+
+### Issues found
+
+### Issues resolved
+
+### Issues not resolved
+
+### Issues to be resolved in the future
+
+## Conclusion
+
+Work is in progress.

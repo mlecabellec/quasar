@@ -11,20 +11,23 @@ MailboxHandler::MailboxHandler(RawSocket &socket) : socket_(socket) {}
 int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
                           std::span<const byte> data,
                           std::chrono::microseconds timeout) {
+  // Check if data fits into the slave's configured output mailbox.
   if (data.size() + sizeof(mailbox::Header) > slave.mbx_out_length) {
     return -1; // Data too large
   }
 
-  // 1. Wait for mailbox to be empty (SM status)
+  // 1. Wait for the output mailbox to be empty. 
+  // The slave sets the 'Full' bit in the SM status register when it's processing data.
   auto start = std::chrono::steady_clock::now();
   while (!is_mailbox_empty(slave)) {
     if (std::chrono::steady_clock::now() - start > timeout) {
-      return 0; // Timeout
+      return 0; // Timeout waiting for slave to clear mailbox
     }
     std::this_thread::sleep_for(std::chrono::microseconds(100));
   }
 
-  // 2. Prepare Mailbox buffer
+  // 2. Prepare the Mailbox datagram.
+  // We must always write the full mailbox length as configured in the SyncManager.
   std::vector<byte> mbx_buffer(slave.mbx_out_length, static_cast<byte>(0));
   mailbox::Header *header =
       reinterpret_cast<mailbox::Header *>(mbx_buffer.data());
@@ -32,17 +35,18 @@ int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
   header->address = 0x0000;
   header->priority = 0x00;
 
-  // Toggle counter
+  // Update and set the cyclic counter [1..7] used for duplicate detection.
   slave.mbx_cnt = (slave.mbx_cnt + 1) % 8;
   if (slave.mbx_cnt == 0)
     slave.mbx_cnt = 1;
 
   header->type = mailbox::set_type_cnt(type, slave.mbx_cnt);
 
+  // Copy payload data after the header.
   std::memcpy(mbx_buffer.data() + sizeof(mailbox::Header), data.data(),
               data.size());
 
-  // 3. Write to SM (FPWR)
+  // 3. Write the entire buffer to the SyncManager physical address.
   return send_receive(cmds::FPWR, slave.configured_address,
                       slave.mbx_out_offset, mbx_buffer);
 }
@@ -50,16 +54,16 @@ int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
 int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
                          std::span<byte> data, size_t &actual_len,
                          std::chrono::microseconds timeout) {
-  // 1. Wait for mailbox to be full (SM status)
+  // 1. Wait for the input mailbox to be full (meaning the slave has placed a response).
   auto start = std::chrono::steady_clock::now();
   while (!is_mailbox_full(slave)) {
     if (std::chrono::steady_clock::now() - start > timeout) {
-      return 0; // Timeout
+      return 0; // Timeout waiting for response
     }
     std::this_thread::sleep_for(std::chrono::microseconds(100));
   }
 
-  // 2. Read from SM (FPRD)
+  // 2. Read the response from the SyncManager input buffer.
   std::vector<byte> mbx_buffer(slave.mbx_in_length + sizeof(mailbox::Header));
   int wkc = send_receive(cmds::FPRD, slave.configured_address,
                          slave.mbx_in_offset, mbx_buffer);
@@ -67,12 +71,13 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
   if (wkc <= 0)
     return wkc;
 
-  // 3. Parse header
+  // 3. Parse the mailbox header to determine protocol and payload length.
   mailbox::Header *header =
       reinterpret_cast<mailbox::Header *>(mbx_buffer.data());
   uint16_t len = header->length;
   type = static_cast<mailbox::Type>(header->type & 0x0F);
 
+  // Clamp the copied length to the user-provided buffer size.
   actual_len = std::min(static_cast<size_t>(len), data.size());
   std::memcpy(data.data(), mbx_buffer.data() + sizeof(mailbox::Header),
               actual_len);
@@ -82,6 +87,7 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
 
 int MailboxHandler::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                                  std::span<byte> data) {
+  // Simple retry loop to handle intermittent network issues.
   for (int attempt = 0; attempt <= retries_; ++attempt) {
     FrameBuilder builder;
     uint8_t idx = current_idx_++;
@@ -93,48 +99,50 @@ int MailboxHandler::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
     std::vector<byte> rx_buffer(1500);
     size_t received = socket_.receive(rx_buffer);
     if (received == 0) {
+      // If no response, wait a bit and retry.
       if (attempt < retries_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         continue;
       }
-      return -1; // Final timeout
+      return -1; // Timeout after all retries
     }
 
     size_t wkc_offset = 14 + 2 + 10 + data.size();
-    if (received < wkc_offset + 2) continue;
+    if (received < wkc_offset + 2) 
+      continue; // Malformed response
 
     uint16_t wkc;
     std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
 
     if (wkc > 0) {
+      // Success: copy received data back to caller.
       std::memcpy(data.data(), rx_buffer.data() + 14 + 2 + 10, data.size());
       return wkc;
     }
     
-    // If wkc == 0, we might want to retry as well (e.g. slave busy)
+    // If WKC is 0, the slave might be busy. Wait and retry.
     if (attempt < retries_) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 
-  return 0; // Failed after retries
+  return 0; // Failed (Working Counter was 0)
 }
 
 bool MailboxHandler::is_mailbox_empty(const SlaveInfo &slave) {
-  // For MbxOut (usually SM0), Status bit 3 (0x08) is set if mailbox is FULL.
-  // We want it EMPTY (0) to write.
+  // In EtherCAT, the Master can only write to a mailbox if it's 'empty'.
+  // The 'Full' bit (bit 3 of SM status register) indicates if the SLAVE has data for the Master.
+  // For Output SyncManagers, it means the slave hasn't read the previous message yet.
   int wkc;
-  // Assuming SM0 is used for MbxOut if configured
   uint8_t status = read_register_fprd<uint8_t>(
       slave.configured_address, regs::SM0 + regs::SM_STATUS_OFFSET, wkc);
   return (wkc > 0) && !(status & regs::sm_status::MBX_FULL);
 }
 
 bool MailboxHandler::is_mailbox_full(const SlaveInfo &slave) {
-  // For MbxIn (usually SM1), Status bit 3 (0x08) is set if mailbox is FULL
-  // (ready to read).
+  // For Input SyncManagers, the 'Full' bit indicates that the slave has placed 
+  // a message in the mailbox for the Master to read.
   int wkc;
-  // Assuming SM1 is used for MbxIn if configured
   uint8_t status = read_register_fprd<uint8_t>(
       slave.configured_address, regs::SM1 + regs::SM_STATUS_OFFSET, wkc);
   return (wkc > 0) && (status & regs::sm_status::MBX_FULL);

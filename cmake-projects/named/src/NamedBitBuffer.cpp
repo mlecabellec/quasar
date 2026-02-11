@@ -3,14 +3,21 @@
 namespace quasar::named {
 
 NamedBitBuffer::NamedBitBuffer(const std::string &name, size_t bitCount)
-    : NamedObject(name), quasar::coretypes::BitBuffer(bitCount) {}
+    : NamedObject(name), quasar::coretypes::BitBuffer(bitCount) {
+    // Constructor initializes the name and allocates the specified number of bits.
+}
 
 std::shared_ptr<NamedBitBuffer>
 NamedBitBuffer::create(const std::string &name, size_t bitCount,
                        std::shared_ptr<NamedObject> parent) {
+  // Factory method to instantiate the bit buffer safely.
   std::shared_ptr<NamedBitBuffer> obj =
       std::make_shared<NamedBitBuffer>(name, bitCount);
+  
+  // Initialize self-reference.
   obj->setSelf(obj);
+  
+  // Link to hierarchy if needed.
   if (parent) {
     obj->setParent(parent);
   }
@@ -18,10 +25,13 @@ NamedBitBuffer::create(const std::string &name, size_t bitCount,
 }
 
 std::shared_ptr<NamedObject> NamedBitBuffer::clone() const {
+  // Create a new NamedBitBuffer with the same dimensions.
   std::shared_ptr<NamedBitBuffer> newObj = create(getName(), bitSize());
-  // Copy the BitBuffer part
+  
+  // Copy the underlying bit content from the current instance.
   static_cast<quasar::coretypes::BitBuffer &>(*newObj) =
       static_cast<const quasar::coretypes::BitBuffer &>(*this);
+      
   return newObj;
 }
 

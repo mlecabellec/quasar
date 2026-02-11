@@ -2,30 +2,49 @@
 
 namespace quasar::coretypes {
 
-String::String() : value_("") {}
+String::String() : value_("") {
+  // Default constructor initializes the internal storage as an empty string.
+}
 
-String::String(const std::string &s) : value_(s) {}
+String::String(const std::string &s) : value_(s) {
+  // Wraps an existing std::string object.
+}
 
-String::String(const char *s) : value_(s ? s : "") {}
+String::String(const char *s) : value_(s ? s : "") {
+  // Defensive check: if a null C-string pointer is provided, initialize as an empty string.
+  // This prevents potential crashes when constructed with NULL.
+}
 
 std::string String::toString() const {
-  // Return a copy of the internal string value.
+  // Returns a deep copy of the internal std::string.
   return value_;
 }
 
-const std::string &String::value() const { return value_; }
+const std::string &String::value() const { 
+  // Provides direct read-only access to the internal representation.
+  // Useful for efficiency to avoid string copies.
+  return value_; 
+}
 
-size_t String::length() const { return value_.length(); }
+size_t String::length() const { 
+  // Delegates to the underlying std::string length() method.
+  // Returns the number of characters in the string.
+  return value_.length(); 
+}
 
-bool String::empty() const { return value_.empty(); }
+bool String::empty() const { 
+  // Efficiently checks if the string contains no characters.
+  return value_.empty(); 
+}
 
 bool String::equals(const String &other) const {
-  // Compare internal string values.
+  // Direct equality comparison of the underlying byte sequences.
   return value_ == other.value_;
 }
 
 int String::compareTo(const String &other) const {
-  // Use std::string::compare for lexicographical comparison.
+  // Performs a standard lexicographical comparison.
+  // Returns < 0 if this is less than other, 0 if equal, and > 0 if greater.
   return value_.compare(other.value_);
 }
 

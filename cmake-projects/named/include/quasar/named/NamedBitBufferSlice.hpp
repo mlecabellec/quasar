@@ -1,3 +1,8 @@
+/**
+ * @file NamedBitBufferSlice.hpp
+ * @brief Class for named views into bit-addressable buffers.
+ */
+
 #pragma once
 
 #include "quasar/coretypes/BitBufferSlice.hpp"
@@ -5,22 +10,59 @@
 
 namespace quasar::named {
 
+/**
+ * @class NamedBitBufferSlice
+ * @brief A named object representing a view (slice) of an existing bit buffer.
+ * 
+ * This class inherits from NamedObject for hierarchy management and 
+ * coretypes::BitBufferSlice for bit-level view operations.
+ */
 class NamedBitBufferSlice : public NamedObject,
                             public quasar::coretypes::BitBufferSlice {
 public:
+  /**
+   * @brief Factory method to create a new NamedBitBufferSlice.
+   * 
+   * @param name The name of the slice object.
+   * @param buffer The underlying bit buffer to view.
+   * @param startBit The starting bit offset within the buffer.
+   * @param bitLength The number of bits in the slice.
+   * @param parent Optional parent in the hierarchy.
+   * @return A shared_ptr to the newly created NamedBitBufferSlice.
+   */
   static std::shared_ptr<NamedBitBufferSlice>
   create(const std::string &name,
          std::shared_ptr<quasar::coretypes::BitBuffer> buffer, size_t startBit,
          size_t bitLength, std::shared_ptr<NamedObject> parent = nullptr);
 
+  /**
+   * @brief Constructs a NamedBitBufferSlice instance.
+   * @param name The name of the object.
+   * @param buffer The underlying bit buffer.
+   * @param startBit Starting bit index.
+   * @param bitLength Number of bits in the slice.
+   */
   NamedBitBufferSlice(const std::string &name,
                       std::shared_ptr<quasar::coretypes::BitBuffer> buffer,
                       size_t startBit, size_t bitLength);
 
+  /**
+   * @brief Virtual destructor.
+   */
   virtual ~NamedBitBufferSlice() = default;
 
+  /**
+   * @brief Creates a standalone copy of this slice.
+   * @return A new NamedBitBufferSlice pointing to the same bit buffer region, with the same name, but no hierarchy.
+   */
   std::shared_ptr<NamedObject> clone() const override;
 
+  /**
+   * @brief Creates a sub-slice view of this bit slice.
+   * @param startBit The relative starting bit offset within this slice.
+   * @param bitLength The length of the new sub-slice in bits.
+   * @return A new NamedBitBufferSlice that is a view into the same underlying bit buffer.
+   */
   std::shared_ptr<NamedBitBufferSlice> sliceView(size_t startBit,
                                                  size_t bitLength) const;
 };
