@@ -9,8 +9,8 @@ macro(AddENI TARGET ENI_FILE)
     
     add_custom_command(
         OUTPUT ${ENI_C_FILE}
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/eniconv.py ${CMAKE_CURRENT_SOURCE_DIR}/${ENI_FILE} > ${ENI_C_FILE}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ENI_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/eniconv.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/eniconv.py ${CMAKE_CURRENT_SOURCE_DIR}/${ENI_FILE} > ${ENI_C_FILE}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${ENI_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/eniconv.py
         COMMENT "Generating ${ENI_NAME}.c from ${ENI_FILE}"
     )
 

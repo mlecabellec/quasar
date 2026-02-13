@@ -12,6 +12,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 
 using namespace resoem;
 
@@ -29,8 +30,8 @@ void print_slave_info(const SlaveInfo &s, int idx) {
   for (size_t i = 0; i < s.fmmu.size(); ++i) {
     const auto &f = s.fmmu[i];
     std::cout << " FMMU" << i << ": LogStart=0x" << std::hex
-              << f.logical_start_addr << " Len=" << f.length_bytes << " Phys=0x"
-              << f.physical_start_bit << " Type=" << (int)f.type << std::dec
+              << f.logical_start << " Len=" << f.length << " Phys=0x"
+              << f.physical_start << " Type=" << (int)f.type << std::dec
               << "\n";
   }
 

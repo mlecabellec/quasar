@@ -1,8 +1,11 @@
 #pragma once
 
+#ifdef __cplusplus
 #include <cstdint>
-
 extern "C" {
+#else
+#include <stdint.h>
+#endif
 
 /** ENI CoE command structure */
 typedef struct ec_enicoecmd {
@@ -56,4 +59,6 @@ typedef struct ec_eni {
 #define ECT_ESMTRANS_PP 0x1000
 #define ECT_ESMTRANS_SS 0x2000
 
+#ifdef __cplusplus
 }
+#endif

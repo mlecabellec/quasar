@@ -667,9 +667,6 @@ void Enumerator::read_sii_data(int count) {
   map_topology(count);
 }
 
-map_topology(count);
-}
-
 uint32_t Enumerator::read_eeprom(uint16_t slave_idx, uint16_t word_addr) {
   if (slave_idx >= slaves_.size())
     return 0xFFFFFFFF;

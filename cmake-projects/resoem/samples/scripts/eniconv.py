@@ -83,9 +83,9 @@ def getOptText(element, path, default = "", /):
 
 def parseCoEInitCmd(element):
    if (element.get("CompleteAccess", "0") == "1"):
-      ca = "TRUE"
+      ca = "1"
    else:
-      ca = "FALSE"
+      ca = "0"
    return {
          "Comment": getOptText(element, "Comment"),
          "Transition": [t.text for t in getElements(element, "Transition")],
@@ -128,7 +128,7 @@ def genCoEData(cg, slave, cmds):
    cName = f"s{slave}_coeData"
    size = sum(len(c["Data"]) for c in cmds)
    if size > 0:
-      cg.open(f"static uint8 {cName}[{size}]")
+      cg.open(f"static uint8_t {cName}[{size}]")
       for data in [c["Data"] for c in cmds if len(c["Data"]) > 0]:
          cg.line(", ".join([f"{b}" for b in data]))
       cg.close()
@@ -186,18 +186,18 @@ def genSlaves(cg, slaves):
       cg.close()
    return (noSlaves, cName)
 
-def genConfig(cg, config):
+def genConfig(cg, config, name):
    slaves = sorted(config["slave"], key = lambda s: s["Slave"])
    slavecount, slave = genSlaves(cg, slaves)
-   cg.open("ec_enit ec_eni")
+   cg.open(f"ec_enit {name}")
    cg.line(f".slave = {slave}")
    cg.line(f".slavecount = {slavecount}")
    cg.close()
 
-def genFile(file, config):
+def genFile(file, config, name):
    cg = CGen(file)
-   cg.prep("include \"soem/soem.h\"")
-   genConfig(cg, config)
+   cg.prep("include \"resoem/soem_eni.hpp\"")
+   genConfig(cg, config, name)
    cg.newline()
 
 ## Interface
@@ -211,7 +211,9 @@ def parseENI(file):
    return parseConfig(getElement(tree, path))
 
 def process(args):
-   genFile(args.outfile, parseENI(args.eni))
+   import os
+   name = os.path.splitext(os.path.basename(args.eni.name))[0].replace("-", "_")
+   genFile(args.outfile, parseENI(args.eni), name)
 
 ## Program execution
 
