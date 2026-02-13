@@ -24,6 +24,9 @@ target_link_libraries(test_enumeration PRIVATE resoem)
 add_executable(test_coe_upload test/test_coe_upload.cpp)
 target_link_libraries(test_coe_upload PRIVATE resoem)
 
+# Samples
+add_subdirectory(samples)
+
 target_include_directories(resoem PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>

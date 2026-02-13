@@ -1,6 +1,8 @@
 #include "resoem/Enumerator.hpp"
+#include "resoem/CoEHandler.hpp"
 #include "resoem/Diagnostics.hpp"
 #include "resoem/EtherCATFrame.hpp"
+#include "resoem/MailboxHandler.hpp"
 #include "resoem/ProcessImage.hpp"
 #include <algorithm>
 #include <chrono>
@@ -663,6 +665,143 @@ void Enumerator::read_sii_data(int count) {
     read_sii_pdos(i);
   }
   map_topology(count);
+}
+
+map_topology(count);
+}
+
+uint32_t Enumerator::read_eeprom(uint16_t slave_idx, uint16_t word_addr) {
+  if (slave_idx >= slaves_.size())
+    return 0xFFFFFFFF;
+  return read_sii_word(slaves_[slave_idx].configured_address, word_addr);
+}
+
+int Enumerator::write_eeprom(uint16_t slave_idx, uint16_t word_addr,
+                             uint16_t data) {
+  if (slave_idx >= slaves_.size())
+    return 0;
+
+  uint16_t config_addr = slaves_[slave_idx].configured_address;
+
+  // 1. Force EEPROM control to Master (if it was PDI)
+  // Check if we need to release PDI control first?
+  // Logic from ecx_eeprom2master:
+  // Write 2 to EEPCFG to force PDI, then 0 to set Master.
+  // Here we just try to claim it.
+  write_register_fpwr<uint8_t>(config_addr, regs::REG_EEPCFG, 2); // Force PDI
+  write_register_fpwr<uint8_t>(config_addr, regs::REG_EEPCFG, 0); // Master
+
+  // 2. Wait for not busy
+  int wkc;
+  for (int i = 0; i < 200; ++i) {
+    uint16_t stat =
+        read_register_fprd<uint16_t>(config_addr, regs::EEPROM_CONTROL, wkc);
+    if (wkc > 0 && !(stat & eeprom::BUSY))
+      break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+
+  // 3. Write Data
+  write_register_fpwr<uint16_t>(config_addr, regs::EEPROM_DATA, data);
+
+  // 4. Issue Write Command
+  // Command: Write (0x200) | Address
+  // Actually Check regs::EEPROM_ADDRESS usage in read_sii_word.
+  // In read_sii_word: write Addr to REG_EEPADR, then Cmd to REG_EEPCTL.
+  // But ecx_writeeepromFP writes:
+  // EEPDAT = data
+  // EEPCTL = CMD_WRITE | Address? No.
+  // SOEM struct ec_eepromt has comm, addr, d2.
+  // The registers are:
+  // 0x502 Control/Status (2 bytes)
+  // 0x504 Address (4 bytes? No, usually 2 or 4).
+  // 0x508 Data (4 or 8 bytes)
+  //
+  // SOEM ecx_writeeepromFP logic:
+  // Write Data to 0x508.
+  // Write {CMD_WRITE, Address} to 0x502?
+  // Wait, ec_eepromt definition:
+  // uint16 comm (0x502)
+  // uint16 addr (0x504)
+  // uint16 d2   (0x506?)
+  //
+  // It writes the WHOLE struct `ec_eepromt` to 0x502?
+  // "wkc = ecx_FPWR(..., ECT_REG_EEPCTL, sizeof(ed), &ed, ...)"
+  // sizeof(ed) = 6 bytes.
+  // ECT_REG_EEPCTL is 0x502.
+  // So it writes 0x502..0x507.
+  // 0x502: Control (2 bytes)
+  // 0x504: Address (2 bytes? or 4?)
+  // SII Address is 32-bit in some, but usually 16-bit word address.
+  //
+  // Let's follow the standard:
+  // Write Address to 0x504.
+  // Write Data to 0x508.
+  // Write Cmd to 0x502.
+
+  write_register_fpwr<uint16_t>(config_addr, regs::EEPROM_ADDRESS, word_addr);
+  write_register_fpwr<uint16_t>(config_addr, regs::EEPROM_CONTROL,
+                                eeprom::CMD_WRITE);
+
+  // 5. Wait for completion (Busy bit clear)
+  for (int i = 0; i < 100; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    uint16_t stat =
+        read_register_fprd<uint16_t>(config_addr, regs::EEPROM_CONTROL, wkc);
+    if (wkc > 0 && !(stat & eeprom::BUSY)) {
+      if (stat & eeprom::ERROR_MASK)
+        return 0; // Error
+      return 1;   // Success
+    }
+  }
+  return 0; // Timeout
+}
+
+void Enumerator::load_eni(const ec_enit *eni) {
+  if (!eni)
+    return;
+
+  std::cout << "Loading ENI configuration..." << std::endl;
+  MailboxHandler mbx(socket_);
+  CoEHandler coe_handler(mbx);
+
+  for (int i = 0; i < eni->slavecount; ++i) {
+    const ec_enislavet &es = eni->slave[i];
+
+    // Match slave by index (assuming 1:1 mapping for now)
+    if (i >= static_cast<int>(slaves_.size())) {
+      std::cerr << "ENI slave index " << i << " out of range." << std::endl;
+      continue;
+    }
+
+    SlaveInfo &info = slaves_[i];
+    // Optional: Verify Identity
+    if (info.vendor_id != es.VendorId) {
+      std::cerr << "Warning: Slave " << i
+                << " Vendor ID mismatch (ENI: " << std::hex << es.VendorId
+                << ", Found: " << info.vendor_id << ")" << std::dec
+                << std::endl;
+    }
+
+    std::cout << "Configuring Slave " << i << " (" << info.name << ")..."
+              << std::endl;
+
+    for (int j = 0; j < es.CoECmdCount; ++j) {
+      const ec_enicoecmdt &cmd = es.CoECmds[j];
+
+      // We apply commands regardless of transition for this test implementation
+      std::span<const uint8_t> data(static_cast<const uint8_t *>(cmd.Data),
+                                    cmd.DataSize);
+
+      auto res =
+          coe_handler.sdo_write(info, cmd.Index, cmd.SubIdx, data, cmd.CA != 0);
+      if (!res) {
+        std::cerr << "Failed to write SDO 0x" << std::hex << cmd.Index << ":"
+                  << (int)cmd.SubIdx << std::dec << " to slave " << i
+                  << std::endl;
+      }
+    }
+  }
 }
 
 } // namespace resoem
