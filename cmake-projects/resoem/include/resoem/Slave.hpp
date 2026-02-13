@@ -6,6 +6,7 @@
 #pragma once
 
 #include "resoem/EtherCATTypes.hpp"
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -52,9 +53,9 @@ struct PDOEntryInfo {
  * @brief Information about a Process Data Object (PDO).
  */
 struct PDOInfo {
-  uint16_t index;               ///< Object index
-  uint8_t sync_manager;        ///< SyncManager index this PDO is assigned to
-  std::string name;             ///< PDO name
+  uint16_t index;       ///< Object index
+  uint8_t sync_manager; ///< SyncManager index this PDO is assigned to
+  std::string name;     ///< PDO name
   std::vector<PDOEntryInfo> entries; ///< List of entries in this PDO
 };
 
@@ -72,28 +73,39 @@ struct SlaveInfo {
 
   std::string name; ///< Device Name
 
-  uint8_t ports_link_status; ///< Link status of ESC ports
-  int parent_index = -1;     ///< Index of the parent slave in the chain
-  bool online = false;       ///< Whether the slave is currently online
+  uint8_t ports_link_status;  ///< Link status of ESC ports
+  int parent_index = -1;      ///< Index of the parent slave in the chain
+  bool online = false;        ///< Whether the slave is currently online
   uint16_t current_state = 0; ///< Current AL State
 
   // Mailbox configuration
   uint16_t mbx_out_offset; ///< Mailbox Output (Master->Slave) offset
   uint16_t mbx_out_length; ///< Mailbox Output length
-  uint16_t mbx_in_offset;  ///< Mailbox Input (Slave->Master) offset
+  uint16_t mbx_in_offset;  ///< Mailbox Input (Master->Slave) offset
   uint16_t mbx_in_length;  ///< Mailbox Input length
   uint16_t mbx_protocols;  ///< Supported mailbox protocols
   uint8_t mbx_cnt = 0;     ///< Current mailbox counter [0..7]
 
+  // Topology
+  struct PortInfo {
+    bool active = false;      ///< Link is up
+    bool loop_closed = false; ///< Loop closed at this port
+    int neighbor_idx = -1;    ///< Index of connected slave (-1 if none/unknown)
+  };
+  std::array<PortInfo, 4> ports;     ///< Status of ports 0-3
+  uint8_t parent_port = 0;           ///< Port on this slave connected to parent
+  uint8_t entry_port = 0;            ///< Port where the frame arrived
+  std::vector<int> children_indices; ///< Indices of child slaves
+
   // Capabilities
-  bool has_dc = false;             ///< Supports Distributed Clocks
-  uint32_t propagation_delay = 0;  ///< DC propagation delay
-  uint8_t coe_details = 0;         ///< CoE details (e.g. SDO info support)
+  bool has_dc = false;            ///< Supports Distributed Clocks
+  uint32_t propagation_delay = 0; ///< DC propagation delay
+  uint8_t coe_details = 0;        ///< CoE details (e.g. SDO info support)
 
   std::vector<SyncManagerInfo> sync_managers; ///< Configured SyncManagers
-  std::vector<FMMUInfo> fmmu;                ///< Configured FMMUs
-  std::vector<PDOInfo> rx_pdos;              ///< Outputs (Master -> Slave)
-  std::vector<PDOInfo> tx_pdos;              ///< Inputs (Slave -> Master)
+  std::vector<FMMUInfo> fmmu;                 ///< Configured FMMUs
+  std::vector<PDOInfo> rx_pdos;               ///< Outputs (Master -> Slave)
+  std::vector<PDOInfo> tx_pdos;               ///< Inputs (Slave -> Master)
 
   // Process data offsets in logical image
   uint32_t inputs_offset = 0;     ///< Offset of inputs in process image

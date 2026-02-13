@@ -83,10 +83,9 @@ public:
    * @param timeout Receive timeout.
    * @return Result<uint16_t> Working Counter (WKC) from the datagram.
    */
-  Result<uint16_t>
-  exchange_process_data(ProcessImage &image,
-                        std::chrono::microseconds timeout =
-                            std::chrono::milliseconds(2));
+  Result<uint16_t> exchange_process_data(
+      ProcessImage &image,
+      std::chrono::microseconds timeout = std::chrono::milliseconds(2));
 
   /**
    * @brief Read a 32-bit word from the slave's SII (EEPROM).
@@ -136,8 +135,7 @@ public:
    * @param cycle_time Sync cycle time in nanoseconds.
    * @param shift_time Sync shift time in nanoseconds.
    */
-  void configure_dc(SlaveInfo &slave, uint32_t cycle_time,
-                    int32_t shift_time);
+  void configure_dc(SlaveInfo &slave, uint32_t cycle_time, int32_t shift_time);
 
   /**
    * @brief Check status of all slaves and update 'online' and
@@ -159,40 +157,40 @@ public:
    */
   const std::vector<SlaveInfo> &slaves() const { return slaves_; }
 
-    private:
-      RawSocket &socket_;             ///< Raw socket reference
-      std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
-      uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
+private:
+  RawSocket &socket_;             ///< Raw socket reference
+  std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
+  uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
 
-      // Internal helper methods
-      int broadcast_read_count();
-      void reset_to_init();
-      void assign_addresses(int count);
-      void read_sii_data(int count);
-      void read_sii_categories(int slave_idx);
-      void read_sii_pdos(int slave_idx);
-      void map_topology(int count);
+  // Internal helper methods
+  int broadcast_read_count();
+  void reset_to_init();
+  void assign_addresses(int count);
+  void read_sii_data(int count);
+  void read_sii_categories(int slave_idx);
+  void read_sii_pdos(int slave_idx);
+  void map_topology(int count);
 
-      int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
-                       std::span<byte> data);
+  int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
+                   std::span<byte> data);
 
-      template <typename T> T read_register_broadcast(uint16_t reg, int &wkc);
-      template <typename T>
-      int write_register_broadcast(uint16_t reg, const T &value);
-      template <typename T>
-      T read_register_aprd(uint16_t auto_inc_addr, uint16_t reg, int &wkc);
-      template <typename T>
-      int write_register_apwr(uint16_t auto_inc_addr, uint16_t reg,
-                              const T &value);
-      template <typename T>
-      T read_register_fprd(uint16_t configured_addr, uint16_t reg, int &wkc);
-      template <typename T>
-      int write_register_fpwr(uint16_t configured_addr, uint16_t reg,
-                              const T &value);
+  template <typename T> T read_register_broadcast(uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_broadcast(uint16_t reg, const T &value);
+  template <typename T>
+  T read_register_aprd(uint16_t auto_inc_addr, uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_apwr(uint16_t auto_inc_addr, uint16_t reg, const T &value);
+  template <typename T>
+  T read_register_fprd(uint16_t configured_addr, uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_fpwr(uint16_t configured_addr, uint16_t reg,
+                          const T &value);
 
-      uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
-      uint16_t find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
-      std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
+  uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
+  uint16_t find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
+  void read_port_status();
+  std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
 };
 
 } // namespace resoem

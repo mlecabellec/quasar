@@ -10,6 +10,7 @@ add_library(resoem STATIC
     src/MailboxHandler.cpp
     src/CoEHandler.cpp
     src/FoEHandler.cpp
+    src/SoEHandler.cpp
     src/EoEHandler.cpp
     src/Diagnostics.cpp
 )
@@ -23,6 +24,18 @@ target_link_libraries(test_enumeration PRIVATE resoem)
 
 add_executable(test_coe_upload test/test_coe_upload.cpp)
 target_link_libraries(test_coe_upload PRIVATE resoem)
+
+add_executable(test_soe_framing test/test_soe_framing.cpp)
+target_link_libraries(test_soe_framing PRIVATE resoem)
+
+add_executable(test_topology test/test_topology.cpp)
+target_link_libraries(test_topology PRIVATE resoem)
+
+add_executable(test_dc_calc test/test_dc_calc.cpp)
+target_link_libraries(test_dc_calc PRIVATE resoem)
+
+add_executable(test_redundancy test/test_redundancy.cpp)
+target_link_libraries(test_redundancy PRIVATE resoem)
 
 # Samples
 add_subdirectory(samples)

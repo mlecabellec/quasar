@@ -219,60 +219,6 @@ Enumerator::exchange_process_data(ProcessImage &image,
   return static_cast<uint16_t>(wkc);
 }
 
-void Enumerator::measure_propagation_delays() {
-  // Check which slaves support Distributed Clocks (DC).
-  for (auto &s : slaves_) {
-    int wkc;
-    uint8_t f = read_register_fprd<uint8_t>(s.configured_address,
-                                            regs::ESC_FEATURES, wkc);
-    s.has_dc = (wkc > 0) && (f & 0x04);
-    if (s.has_dc) {
-      // Clear previous DC settings.
-      write_register_fpwr<uint64_t>(s.configured_address,
-                                    regs::DC_SYS_TIME_OFFSET, 0);
-      write_register_fpwr<uint32_t>(s.configured_address,
-                                    regs::DC_SYS_TIME_DELAY, 0);
-    }
-  }
-
-  // Send several broadcast writes to trigger receive time latching on all
-  // ports.
-  for (int i = 0; i < 10; ++i) {
-    uint32_t z = 0;
-    send_receive(cmds::BWR, 0, regs::DC_RECEIVE_TIME_PORT0,
-                 std::span<byte>(reinterpret_cast<byte *>(&z), 4));
-  }
-
-  // Find the first slave with DC to act as the Reference Clock.
-  int ref = -1;
-  for (size_t i = 0; i < slaves_.size(); ++i) {
-    if (slaves_[i].has_dc) {
-      ref = static_cast<int>(i);
-      break;
-    }
-  }
-  if (ref == -1)
-    return;
-
-  slaves_[ref].propagation_delay = 0;
-  // Calculate delay relative to the reference clock.
-  // This is a simplified calculation for a linear topology.
-  for (size_t i = ref + 1; i < slaves_.size(); ++i) {
-    if (!slaves_[i].has_dc)
-      continue;
-    int wkc;
-    uint32_t p1 = read_register_fprd<uint32_t>(
-        slaves_[i - 1].configured_address, regs::DC_RECEIVE_TIME_PORT1, wkc);
-    uint32_t c0 = read_register_fprd<uint32_t>(
-        slaves_[i].configured_address, regs::DC_RECEIVE_TIME_PORT0, wkc);
-    slaves_[i].propagation_delay =
-        slaves_[i - 1].propagation_delay + (c0 > p1 ? (c0 - p1) : 300);
-    write_register_fpwr<uint32_t>(slaves_[i].configured_address,
-                                  regs::DC_SYS_TIME_DELAY,
-                                  slaves_[i].propagation_delay);
-  }
-}
-
 void Enumerator::sync_clocks() {
   // Find the reference clock.
   int ref = -1;
@@ -416,30 +362,62 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   builder.add_datagram(cmd, idx, addr, offset, data);
   auto frame = builder.build();
 
-  // Send the frame over the raw socket.
-  socket_.send(frame);
+  // Send the frame.
+  // In a full redundancy scenario, we might want to send on both if the loop is
+  // broken. For now, we rely on the primary send, and if the cable is
+  // redundant, it returns on secondary.
+  try {
+    socket_.send(frame);
+  } catch (const SocketError &) {
+    return -1;
+  }
 
-  // Wait for the response.
-  // TODO: Implement a proper retry/filtering mechanism for better robustness.
+  // Wait for the response with matching index.
   std::vector<byte> rx_buffer(1500);
-  size_t received = socket_.receive(rx_buffer);
-  if (received == 0)
-    return -1; // Timeout
+  auto start = std::chrono::steady_clock::now();
 
-  // Extract Working Counter (WKC) from the response datagram.
-  size_t wkc_offset = 14 + 2 + 10 + data.size();
-  if (received < wkc_offset + 2)
-    return -2; // Fragmented or invalid frame
+  while (true) {
+    int port_idx = 0;
+    size_t received = socket_.receive(rx_buffer, &port_idx);
 
-  uint16_t wkc;
-  std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
+    if (received == 0) {
+      // Check timeout
+      auto now = std::chrono::steady_clock::now();
+      if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
+              .count() > 100) {
+        return -1; // Timeout
+      }
+      continue;
+    }
 
-  // If the datagram was processed (wkc > 0) or it was a read command,
-  // copy the received data back into the provided buffer.
-  if (wkc > 0 || (cmd & 0x1))
-    std::memcpy(data.data(), rx_buffer.data() + 14 + 2 + 10, data.size());
+    // Basic size check: Eth(14) + ECat(2) + DgramHeader(10) + WKC(2) = 28
+    if (received < 28)
+      continue;
 
-  return wkc;
+    // Check EtherType (0x88A4) - RawSocket binds to it, but good to be sure if
+    // we used ETH_P_ALL Check Index matches Eth(14) + ECat(2) -> Datagram
+    // starts at 16. Cmd(1) at 16, Idx(1) at 17.
+    uint8_t received_idx = static_cast<uint8_t>(rx_buffer[17]);
+
+    if (received_idx == idx) {
+      // Process this frame.
+      // Note: If we receive on port_idx == 1 (Secondary), it means redundancy
+      // is working!
+
+      size_t wkc_offset = 16 + 10 + data.size(); // 14+2 = 16
+      if (received < wkc_offset + 2)
+        return -2; // Fragmented
+
+      uint16_t wkc;
+      std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
+
+      if (wkc > 0 || (cmd & 0x1) || (cmd == cmds::BWR)) // Read or WKC>0
+        std::memcpy(data.data(), rx_buffer.data() + 16 + 10, data.size());
+
+      return wkc;
+    }
+    // If index doesn't match, loop again (ignore other frames/delayed frames)
+  }
 }
 
 template <typename T>
@@ -651,12 +629,7 @@ void Enumerator::read_sii_pdos(int slave_idx) {
 
   parse(eeprom::CAT_PDO_RX, info.rx_pdos);
   parse(eeprom::CAT_PDO_TX, info.tx_pdos);
-}
-
-void Enumerator::map_topology(int count) {
-  for (int i = 0; i < count; ++i) {
-    slaves_[i].parent_index = (i == 0) ? -1 : i - 1;
-  }
+  parse(eeprom::CAT_PDO_TX, info.tx_pdos);
 }
 
 void Enumerator::read_sii_data(int count) {
@@ -665,6 +638,138 @@ void Enumerator::read_sii_data(int count) {
     read_sii_pdos(i);
   }
   map_topology(count);
+}
+
+void Enumerator::read_port_status() {
+  for (auto &slave : slaves_) {
+    int wkc;
+    // DL Status (0x0110)
+    // Bits 0-3: Port 0 link (0=down, 1=up) ... Port 3 link
+    // Bits 4-7: Loop closed 0..3
+    // Bits 8-11: Signal detect 0..3
+    uint16_t dl_status = read_register_fprd<uint16_t>(slave.configured_address,
+                                                      regs::DL_STATUS, wkc);
+    if (wkc <= 0)
+      continue;
+
+    slave.ports_link_status = dl_status & 0xFFFF; // Store raw value too?
+
+    for (int p = 0; p < 4; ++p) {
+      bool link = (dl_status & (1 << p)) != 0;
+      bool loop = (dl_status & (1 << (p + 4))) != 0;
+      slave.ports[p].active = link;
+      slave.ports[p].loop_closed = loop;
+    }
+  }
+}
+
+void Enumerator::map_topology(int count) {
+  read_port_status();
+
+  if (slaves_.empty())
+    return;
+
+  // Reset topology info
+  for (auto &s : slaves_) {
+    s.parent_index = -1;
+    s.children_indices.clear();
+  }
+
+  // Slave 0 is the root (attached to Master)
+  // We iterate through slaves 1..N and find their parent.
+  // The parent is the first previous slave that has an open, active port.
+  // "Open" means the port is active but not yet closed/consumed?
+  // Actually, standard EtherCAT enumeration follows the wiring order.
+  // 1. Packet goes into Port 0 (Entry).
+  // 2. Internal processing.
+  // 3. Fowarded to Port 3 (if active), then Port 1, then Port 2.
+  // 4. Returns from 2 -> 1 -> 3 -> 0.
+  //
+  // So for slave[i], we trace back to find who sent it the packet.
+  // We need to track which ports on previous slaves have been "consumed" by
+  // slaves [1..i-1].
+
+  // Initialize consumed ports tracking
+  // We can use a temporary valid/available port bitmask for each slave.
+  std::vector<uint8_t> available_ports(count);
+  for (int i = 0; i < count; ++i) {
+    // A port is available for a CHILD if it is active.
+    // Port 0 is usually the entry port from PARENT, so it's not available for
+    // children (except in redundancy, but let's assume Port 0 is entry).
+    // Available output ports order: 3, 1, 2. (ESC logic).
+    // But we just need to know which port connects to the *next* slave in the
+    // auto-inc list.
+
+    // Actually, the simpler SOEM logic:
+    // "scan unconsumed ports in parent, consume and return first open port"
+    // Order: 3 -> 1 -> 2 -> 0.
+
+    uint8_t mask = 0;
+    if (slaves_[i].ports[3].active)
+      mask |= (1 << 3);
+    if (slaves_[i].ports[1].active)
+      mask |= (1 << 1);
+    if (slaves_[i].ports[2].active)
+      mask |= (1 << 2);
+    if (slaves_[i].ports[0].active)
+      mask |= (1 << 0);
+    available_ports[i] = mask;
+  }
+
+  // Slave 0 is the root.
+  // It consumes Port 0 (connected to Master).
+  if (available_ports[0] & 1)
+    available_ports[0] &= ~1;
+  slaves_[0].entry_port = 0;
+
+  for (int i = 1; i < count; ++i) {
+    // Find parent for slave[i]
+    // We look backwards from i-1.
+    // The first slave we find with an available port (in order 3-1-2-0) is the
+    // parent.
+    int parent = -1;
+    uint8_t pport = 0;
+
+    for (int j = i - 1; j >= 0; --j) {
+      uint8_t avail = available_ports[j];
+      if (avail & (1 << 3)) {
+        parent = j;
+        pport = 3;
+        break;
+      }
+      if (avail & (1 << 1)) {
+        parent = j;
+        pport = 1;
+        break;
+      }
+      if (avail & (1 << 2)) {
+        parent = j;
+        pport = 2;
+        break;
+      }
+      if (avail & (1 << 0)) {
+        parent = j;
+        pport = 0;
+        break;
+      }
+    }
+
+    if (parent != -1) {
+      slaves_[i].parent_index = parent;
+      slaves_[i].entry_port = 0; // Assumption: always enters at Port 0
+      slaves_[i].parent_port = pport;
+
+      slaves_[parent].children_indices.push_back(i);
+      slaves_[parent].ports[pport].neighbor_idx = i;
+
+      // Mark port as consumed on parent
+      available_ports[parent] &= ~(1 << pport);
+
+      // Mark entry port as consumed on child (Port 0)
+      if (available_ports[i] & 1)
+        available_ports[i] &= ~1;
+    }
+  }
 }
 
 uint32_t Enumerator::read_eeprom(uint16_t slave_idx, uint16_t word_addr) {
@@ -798,6 +903,129 @@ void Enumerator::load_eni(const ec_enit *eni) {
                   << std::endl;
       }
     }
+  }
+}
+
+// Helper to find the previous active port in the processing order 0 -> 3 -> 1
+// -> 2
+static uint8_t get_prev_port(uint8_t current_port,
+                             const std::array<SlaveInfo::PortInfo, 4> &ports) {
+  // Order: 0 -> 3 -> 1 -> 2 -> 0
+  // Reverse: 2 <- 1 <- 3 <- 0
+
+  if (current_port == 0) {
+    if (ports[2].active)
+      return 2;
+    if (ports[1].active)
+      return 1;
+    if (ports[3].active)
+      return 3;
+    return 0; // Should not happen if 0 is active
+  } else if (current_port == 1) {
+    if (ports[3].active)
+      return 3;
+    if (ports[0].active)
+      return 0;
+    if (ports[2].active)
+      return 2; // Loop back?
+    return 1;
+  } else if (current_port == 2) {
+    if (ports[1].active)
+      return 1;
+    if (ports[3].active)
+      return 3;
+    if (ports[0].active)
+      return 0;
+    return 2;
+  } else if (current_port == 3) {
+    if (ports[0].active)
+      return 0;
+    if (ports[2].active)
+      return 2;
+    if (ports[1].active)
+      return 1;
+    return 3;
+  }
+  return 0;
+}
+
+void Enumerator::measure_propagation_delays() {
+  if (slaves_.empty())
+    return;
+
+  // 1. Latch receive times (BWR to 0x0900)
+  uint32_t val = 0;
+  write_register_broadcast<uint32_t>(regs::DC_RECEIVE_TIME_PORT0, 0);
+
+  // Retrieve receive times for all slaves
+  std::vector<std::array<uint32_t, 4>> recv_times(slaves_.size());
+
+  for (size_t i = 0; i < slaves_.size(); ++i) {
+    int wkc;
+    // Read 0x0900..0x090F (4 x 32-bit)
+    // We can read 16 bytes at once
+    struct RecvTime {
+      uint32_t t[4];
+    };
+    RecvTime rt = read_register_fprd<RecvTime>(
+        slaves_[i].configured_address, regs::DC_RECEIVE_TIME_PORT0, wkc);
+    if (wkc > 0) {
+      recv_times[i][0] = rt.t[0]; // Port 0
+      recv_times[i][1] = rt.t[1]; // Port 1
+      recv_times[i][2] = rt.t[2]; // Port 2
+      recv_times[i][3] = rt.t[3]; // Port 3
+    }
+  }
+
+  // 2. Calculate delays
+  slaves_[0].propagation_delay = 0;
+  slaves_[0].has_dc = true; // Assuming root has DC for now
+
+  for (size_t i = 1; i < slaves_.size(); ++i) {
+    SlaveInfo &slave = slaves_[i];
+    int parent_idx = slave.parent_index;
+    if (parent_idx < 0)
+      continue; // Should not happen for i > 0
+
+    SlaveInfo &parent = slaves_[parent_idx];
+
+    // Calculate internal delay in parent
+    // Delay = ParentDelay + (TimeAtParentExit - TimeAtParentEntry) + WireDelay
+
+    uint8_t pport = slave.parent_port;
+    uint8_t p_entry = parent.entry_port;
+
+    // We need the "previous port" to pport in the processing loop to find valid
+    // time diff? Actually, strictly: TimeAtParentExit =
+    // recv_times[parent][pport] TimeAtParentEntry = recv_times[parent][p_entry]
+    // InternalDelay = TimeAtParentExit - TimeAtParentEntry
+
+    // Note: recv_times are latched at the same instant (BWR).
+    // Wait, BWR latches the *current local time* into the register.
+    // So the difference represents the relative time the frame passed.
+    // Yes.
+
+    uint32_t t_parent_exit = recv_times[parent_idx][pport];
+    uint32_t t_parent_entry = recv_times[parent_idx][p_entry];
+
+    // Check for 32-bit wrap around? Usually times are close.
+    int32_t internal_delay =
+        static_cast<int32_t>(t_parent_exit - t_parent_entry);
+
+    // Wire delay is unknown without return timestamp.
+    // Standard assumption: ~5ns per meter? Or can be measured if loop is
+    // closed. For open branching, we assume valid topology delay is mostly
+    // internal + small wire. Let's add a small constant or 0.
+    int32_t wire_delay = 0;
+
+    slave.propagation_delay =
+        parent.propagation_delay + internal_delay + wire_delay;
+    slave.has_dc = true; // Mark as processed
+
+    // Write delay to 0x0928
+    write_register_fpwr<uint32_t>(slave.configured_address,
+                                  regs::DC_SYS_TIME_DELAY,
+                                  slave.propagation_delay);
   }
 }
 
