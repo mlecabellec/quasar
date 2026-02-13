@@ -138,6 +138,15 @@ public:
   void configure_dc(SlaveInfo &slave, uint32_t cycle_time, int32_t shift_time);
 
   /**
+   * @brief Read the ESC error counters (CRC errors, link loss, etc.) for all
+   * slaves.
+   *
+   * This updates the `error_counters` field in each slave's info structure.
+   * @return Result<void> Success or error.
+   */
+  Result<> read_error_counters();
+
+  /**
    * @brief Check status of all slaves and update 'online' and
    * 'current_state' fields.
    */

@@ -111,6 +111,27 @@ constexpr uint16_t PDI_CONTROL = 0x0140; ///< Process Data Interface Control
 constexpr uint16_t PDI_CONFIG =
     0x0150; ///< Process Data Interface Configuration
 
+// ESC Error Counters
+constexpr uint16_t RX_ERR_COUNT_PORT0 = 0x0300; ///< RX Error Counter Port 0
+constexpr uint16_t RX_ERR_COUNT_PORT1 = 0x0302; ///< RX Error Counter Port 1
+constexpr uint16_t RX_ERR_COUNT_PORT2 = 0x0304; ///< RX Error Counter Port 2
+constexpr uint16_t RX_ERR_COUNT_PORT3 = 0x0306; ///< RX Error Counter Port 3
+constexpr uint16_t FWD_RX_ERR_COUNT_PORT0 =
+    0x0308; ///< Forwarded RX Error Counter Port 0
+constexpr uint16_t FWD_RX_ERR_COUNT_PORT1 =
+    0x0309; ///< Forwarded RX Error Counter Port 1
+constexpr uint16_t FWD_RX_ERR_COUNT_PORT2 =
+    0x030A; ///< Forwarded RX Error Counter Port 2
+constexpr uint16_t FWD_RX_ERR_COUNT_PORT3 =
+    0x030B; ///< Forwarded RX Error Counter Port 3
+constexpr uint16_t PROC_UNIT_ERR_COUNT =
+    0x030C;                                ///< Processing Unit Error Counter
+constexpr uint16_t PDI_ERR_COUNT = 0x030D; ///< PDI Error Counter
+constexpr uint16_t LOST_LINK_COUNT_PORT0 = 0x0310; ///< Lost Link Counter Port 0
+constexpr uint16_t LOST_LINK_COUNT_PORT1 = 0x0311; ///< Lost Link Counter Port 1
+constexpr uint16_t LOST_LINK_COUNT_PORT2 = 0x0312; ///< Lost Link Counter Port 2
+constexpr uint16_t LOST_LINK_COUNT_PORT3 = 0x0313; ///< Lost Link Counter Port 3
+
 // EEPROM (SII) Access Registers
 constexpr uint16_t EEPROM_CONFIG = 0x0500; ///< EEPROM Configuration
 constexpr uint16_t EEPROM_PDI_ACCESS_STATE =

@@ -60,11 +60,33 @@ struct PDOInfo {
 };
 
 /**
+ * @brief ESC Error Counters.
+ */
+struct ErrorCounters {
+  uint8_t rx_err_0 = 0;      ///< RX Error Port 0
+  uint8_t rx_err_1 = 0;      ///< RX Error Port 1
+  uint8_t rx_err_2 = 0;      ///< RX Error Port 2
+  uint8_t rx_err_3 = 0;      ///< RX Error Port 3
+  uint8_t fwd_rx_err_0 = 0;  ///< Forwarded RX Error Port 0
+  uint8_t fwd_rx_err_1 = 0;  ///< Forwarded RX Error Port 1
+  uint8_t fwd_rx_err_2 = 0;  ///< Forwarded RX Error Port 2
+  uint8_t fwd_rx_err_3 = 0;  ///< Forwarded RX Error Port 3
+  uint8_t proc_unit_err = 0; ///< Processing Unit Error
+  uint8_t pdi_err = 0;       ///< PDI Error
+  uint8_t lost_link_0 = 0;   ///< Lost Link Port 0
+  uint8_t lost_link_1 = 0;   ///< Lost Link Port 1
+  uint8_t lost_link_2 = 0;   ///< Lost Link Port 2
+  uint8_t lost_link_3 = 0;   ///< Lost Link Port 3
+};
+
+/**
  * @brief Comprehensive information about an EtherCAT Slave.
  */
 struct SlaveInfo {
   uint16_t configured_address; ///< Configured Station Address
   uint16_t alias_address;      ///< Configured Station Alias
+
+  ErrorCounters error_counters; ///< Error Counters
 
   uint32_t vendor_id;       ///< Vendor ID
   uint32_t product_code;    ///< Product Code

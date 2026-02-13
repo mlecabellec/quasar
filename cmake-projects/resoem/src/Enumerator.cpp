@@ -1029,4 +1029,57 @@ void Enumerator::measure_propagation_delays() {
   }
 }
 
+Result<> Enumerator::read_error_counters() {
+  for (auto &slave : slaves_) {
+    int wkc;
+    // Structure of ESC Error Counters (0x0300 - 0x0313)
+    struct PackedErrorCounters {
+      uint8_t rx_err_0;
+      uint8_t inv_0;
+      uint8_t rx_err_1;
+      uint8_t inv_1;
+      uint8_t rx_err_2;
+      uint8_t inv_2;
+      uint8_t rx_err_3;
+      uint8_t inv_3;     // 0x307
+      uint8_t fwd_rx_0;  // 0x308
+      uint8_t fwd_rx_1;  // 0x309
+      uint8_t fwd_rx_2;  // 0x30A
+      uint8_t fwd_rx_3;  // 0x30B
+      uint8_t proc_unit; // 0x30C
+      uint8_t pdi;       // 0x30D
+      uint8_t res1;
+      uint8_t res2;        // 0x30E-0x30F Reserved
+      uint8_t lost_link_0; // 0x310
+      uint8_t lost_link_1; // 0x311
+      uint8_t lost_link_2; // 0x312
+      uint8_t lost_link_3; // 0x313
+    } __attribute__((packed));
+
+    PackedErrorCounters data = read_register_fprd<PackedErrorCounters>(
+        slave.configured_address, regs::RX_ERR_COUNT_PORT0, wkc);
+
+    if (wkc > 0) {
+      slave.error_counters.rx_err_0 = data.rx_err_0;
+      slave.error_counters.rx_err_1 = data.rx_err_1;
+      slave.error_counters.rx_err_2 = data.rx_err_2;
+      slave.error_counters.rx_err_3 = data.rx_err_3;
+
+      slave.error_counters.fwd_rx_err_0 = data.fwd_rx_0;
+      slave.error_counters.fwd_rx_err_1 = data.fwd_rx_1;
+      slave.error_counters.fwd_rx_err_2 = data.fwd_rx_2;
+      slave.error_counters.fwd_rx_err_3 = data.fwd_rx_3;
+
+      slave.error_counters.proc_unit_err = data.proc_unit;
+      slave.error_counters.pdi_err = data.pdi;
+
+      slave.error_counters.lost_link_0 = data.lost_link_0;
+      slave.error_counters.lost_link_1 = data.lost_link_1;
+      slave.error_counters.lost_link_2 = data.lost_link_2;
+      slave.error_counters.lost_link_3 = data.lost_link_3;
+    }
+  }
+  return {};
+}
+
 } // namespace resoem

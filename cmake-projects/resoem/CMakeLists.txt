@@ -37,6 +37,9 @@ target_link_libraries(test_dc_calc PRIVATE resoem)
 add_executable(test_redundancy test/test_redundancy.cpp)
 target_link_libraries(test_redundancy PRIVATE resoem)
 
+add_executable(test_diagnostics test/test_diagnostics.cpp)
+target_link_libraries(test_diagnostics PRIVATE resoem)
+
 # Samples
 add_subdirectory(samples)
 
