@@ -81,7 +81,7 @@ private:
   Smp::Services::ITimeKeeper *_timeKeeper;
   Smp::Services::ILogger *_logger;
 
-  std::mutex _mutex;
+  mutable std::mutex _mutex;
   Smp::Services::EventId _nextEventId = 1;
   Smp::Int64 _nextSequenceId = 0;
 

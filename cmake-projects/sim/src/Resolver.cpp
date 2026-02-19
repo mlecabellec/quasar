@@ -8,7 +8,60 @@
 
 namespace sim {
 
-Resolver::Resolver() {}
+Resolver::Resolver()
+    : core::Object("Resolver", "SMP Resolver Service", nullptr) {}
+
+Smp::ComponentStateKind Resolver::GetState() const {
+  return Smp::ComponentStateKind::CSK_Connected;
+}
+
+void Resolver::Publish(Smp::IPublication *receiver) {}
+
+void Resolver::Configure(Smp::Services::ILogger *logger,
+                         Smp::Services::ILinkRegistry *linkRegistry) {}
+
+void Resolver::Connect(Smp::ISimulator *simulator) {}
+
+void Resolver::Disconnect() {}
+
+const Smp::Uuid &Resolver::GetUuid() const {
+  static Smp::Uuid uuid = {0, 0, 0, 0, 2}; // Generic Service UUID
+  return uuid;
+}
+
+Smp::IField *Resolver::GetField(Smp::String8 fullName) const { return nullptr; }
+
+const Smp::FieldCollection *Resolver::GetFields() const { return nullptr; }
+
+Smp::AnySimple Resolver::GetSimpleValue(Smp::String8 fullName) const {
+  return Smp::AnySimple();
+}
+
+void Resolver::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {}
+
+void Resolver::GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                   Smp::AnySimple *values,
+                                   Smp::UInt64 startIndex) const {}
+
+void Resolver::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                   Smp::AnySimpleArray values,
+                                   Smp::UInt64 startIndex) {}
+
+Smp::Bool Resolver::AddChild(Smp::IObject *child,
+                             const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::Bool Resolver::RemoveChild(Smp::IObject *child,
+                                const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::IObject *
+Resolver::IsChildInCollection(Smp::String8 child,
+                              const Smp::ICollectionBase *collection) const {
+  return nullptr;
+}
 
 void Resolver::SetSimulator(Smp::ISimulator *simulator) {
   _simulator = simulator;
@@ -30,7 +83,7 @@ static std::vector<std::string> SplitPath(const char *path) {
   return parts;
 }
 
-Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) const {
+Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
   if (!absolutePath || absolutePath[0] != '/') {
     return nullptr;
   }
@@ -41,14 +94,11 @@ Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) const {
 }
 
 Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
-                                        const Smp::IObject *relativeTo) const {
+                                        Smp::IObject *relativeTo) {
   if (!relativeTo)
     return nullptr;
   if (!relativePath || strlen(relativePath) == 0)
-    return const_cast<Smp::IObject *>(relativeTo);
-
-  auto parts = SplitPath(relativePath);
-  Smp::IObject *current = const_cast<Smp::IObject *>(relativeTo);
+    Smp::IObject *current = relativeTo;
 
   for (const auto &part : parts) {
     if (!current)

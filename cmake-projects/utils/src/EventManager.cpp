@@ -1,10 +1,70 @@
+#include "utils/EventManager.hpp"
 #include <algorithm>
 #include <core/StandardExceptions.hpp>
 #include <cstring>
 
 namespace utils {
 
-EventManager::EventManager() { RegisterPredefinedEvents(); }
+EventManager::EventManager()
+    : core::Object("EventManager", "SMP Event Manager Service", nullptr) {
+  RegisterPredefinedEvents();
+}
+
+Smp::ComponentStateKind EventManager::GetState() const {
+  return Smp::ComponentStateKind::CSK_Connected;
+}
+
+void EventManager::Publish(Smp::IPublication *receiver) {}
+
+void EventManager::Configure(Smp::Services::ILogger *logger,
+                             Smp::Services::ILinkRegistry *linkRegistry) {}
+
+void EventManager::Connect(Smp::ISimulator *simulator) {}
+
+void EventManager::Disconnect() {}
+
+const Smp::Uuid &EventManager::GetUuid() const {
+  static Smp::Uuid uuid = {0, 0, 0, 0, 4}; // Generic Service UUID
+  return uuid;
+}
+
+Smp::IField *EventManager::GetField(Smp::String8 fullName) const {
+  return nullptr;
+}
+
+const Smp::FieldCollection *EventManager::GetFields() const { return nullptr; }
+
+Smp::AnySimple EventManager::GetSimpleValue(Smp::String8 fullName) const {
+  return Smp::AnySimple();
+}
+
+void EventManager::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {
+}
+
+void EventManager::GetSimpleArrayValue(Smp::String8 fullName,
+                                       Smp::UInt64 length,
+                                       Smp::AnySimple *values,
+                                       Smp::UInt64 startIndex) const {}
+
+void EventManager::SetSimpleArrayValue(Smp::String8 fullName,
+                                       Smp::UInt64 length,
+                                       Smp::AnySimpleArray values,
+                                       Smp::UInt64 startIndex) {}
+
+Smp::Bool EventManager::AddChild(Smp::IObject *child,
+                                 const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::Bool EventManager::RemoveChild(Smp::IObject *child,
+                                    const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::IObject *EventManager::IsChildInCollection(
+    Smp::String8 child, const Smp::ICollectionBase *collection) const {
+  return nullptr;
+}
 
 void EventManager::RegisterPredefinedEvents() {
   _eventIds[SMP_LeaveConnecting] = SMP_LeaveConnectingId;
@@ -32,7 +92,7 @@ void EventManager::RegisterPredefinedEvents() {
 
 Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
   if (!eventName) {
-    throw core::InvalidEventName("null", "Event name is null");
+    throw core::InvalidEventName("Event name is null");
   }
 
   std::lock_guard<std::mutex> lock(_mutex);
@@ -70,7 +130,7 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   auto &subscribers = _subscriptions[event];
   auto it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
   if (it != subscribers.end()) {
-    throw core::EntryPointAlreadySubscribed(entryPoint, "Unknown",
+    throw core::EntryPointAlreadySubscribed(entryPoint,
                                             "Entry point already subscribed");
   }
   subscribers.push_back(entryPoint);
@@ -84,14 +144,13 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   if (itSub == _subscriptions.end()) {
     // Maybe event doesn't exist or no subs, treat as "not subscribed"
     throw core::EntryPointNotSubscribed(
-        entryPoint, "Unknown",
-        "Entry point not subscribed (event has no subscribers)");
+        entryPoint, "Entry point not subscribed (event has no subscribers)");
   }
 
   auto &subscribers = itSub->second;
   auto it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
   if (it == subscribers.end()) {
-    throw core::EntryPointNotSubscribed(entryPoint, "Unknown",
+    throw core::EntryPointNotSubscribed(entryPoint,
                                         "Entry point not subscribed");
   }
   subscribers.erase(it);

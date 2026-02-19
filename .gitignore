@@ -3,3 +3,5 @@ build-projects/
 build-modules/
 doc/doxydoc/
 tmp/
+build_output.txt
+build_log.txt

@@ -1,16 +1,47 @@
 #pragma once
 
 #include <Smp/Services/ILinkRegistry.h>
+#include <core/Object.hpp>
 #include <core/SimpleCollection.hpp>
 #include <map>
 #include <mutex>
 
 namespace sim {
 
-class LinkRegistry : public Smp::Services::ILinkRegistry {
+class LinkRegistry : public core::Object,
+                     public virtual Smp::Services::ILinkRegistry {
 public:
   LinkRegistry();
   virtual ~LinkRegistry() noexcept = default;
+
+  // IComponent methods
+  Smp::ComponentStateKind GetState() const override;
+  void Publish(Smp::IPublication *receiver) override;
+  void Configure(Smp::Services::ILogger *logger,
+                 Smp::Services::ILinkRegistry *linkRegistry) override;
+  void Connect(Smp::ISimulator *simulator) override;
+  void Disconnect() override;
+  const Smp::Uuid &GetUuid() const override;
+
+  Smp::IField *GetField(Smp::String8 fullName) const override;
+  const Smp::FieldCollection *GetFields() const override;
+  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;
+  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) override;
+  void GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                           Smp::AnySimple *values,
+                           Smp::UInt64 startIndex = 0) const override;
+  void SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                           Smp::AnySimpleArray values,
+                           Smp::UInt64 startIndex = 0) override;
+  Smp::Bool AddChild(Smp::IObject *child,
+                     const Smp::ICollectionBase *collection) override;
+  Smp::Bool RemoveChild(Smp::IObject *child,
+                        const Smp::ICollectionBase *collection) override;
+  Smp::IObject *
+  IsChildInCollection(Smp::String8 child,
+                      const Smp::ICollectionBase *collection) const override;
+
+  // ILinkRegistry methods
 
   void AddLink(Smp::IComponent *source, const Smp::IComponent *target) override;
   Smp::UInt32 GetLinkCount(const Smp::IComponent *source,

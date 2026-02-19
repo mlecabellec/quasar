@@ -13,24 +13,19 @@ Model::Model(Smp::String8 name, Smp::String8 description, Smp::IObject *parent,
 Smp::ComponentStateKind Model::GetState() const { return _state; }
 
 void Model::Publish(Smp::IPublication *receiver) {
-  if (_state != Smp::ComponentStateKind::CSK_Created)
+  if (_state != Smp::ComponentStateKind::CSK_Created) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Created);
-
+  }
   _state = Smp::ComponentStateKind::CSK_Publishing;
-  // Perform publication if needed (subclasses override this then call base?)
-  // In SMP, Publish() is where fields are published.
-  // Base class does nothing by default.
 }
 
 void Model::Configure(Smp::Services::ILogger *logger,
                       Smp::Services::ILinkRegistry *linkRegistry) {
-  if (_state != Smp::ComponentStateKind::CSK_Publishing)
+  if (_state != Smp::ComponentStateKind::CSK_Publishing) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Publishing);
-
-  // Perform configuration
-
+  }
   _state = Smp::ComponentStateKind::CSK_Configured;
 }
 

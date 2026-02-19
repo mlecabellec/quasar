@@ -65,7 +65,7 @@ Smp::String8 Simulator::GetDescription() const {
 Smp::IObject *Simulator::GetParent() const { return nullptr; }
 
 // IComponent methods
-Smp::Publication::IPublication *Simulator::GetPublication() const {
+Smp::IPublication *Simulator::GetPublication() const {
   return nullptr; // TODO
 }
 
@@ -82,17 +82,47 @@ void Simulator::Connect(Smp::ISimulator *simulator) {
 
 void Simulator::Disconnect() {}
 
-Smp::IComponent::ComponentStateKind Simulator::GetState() const {
-  return _compState;
+Smp::ComponentStateKind Simulator::GetState() const { return _compState; }
+
+const Smp::Uuid &Simulator::GetUuid() const {
+  static Smp::Uuid simulatorUuid = {0, 0, 0, 0, 0}; // Generic UUID
+  return simulatorUuid;
 }
 
-Smp::String8 Simulator::GetUuid() const {
-  return nullptr; // This is actually Smp::String8, which is const Char8* in
-                  // some versions, but standard SMP says IComponent::GetUuid
-                  // returns Smp::String8 (UUID as string). Wait, let's check
-                  // IComponent.h.
-  // In many mappings it is a string representation of the UUID.
-  return "00000000-0000-0000-0000-000000000000";
+Smp::IField *Simulator::GetField(Smp::String8 fullName) const {
+  return nullptr;
+}
+
+const Smp::FieldCollection *Simulator::GetFields() const { return nullptr; }
+
+Smp::AnySimple Simulator::GetSimpleValue(Smp::String8 fullName) const {
+  return Smp::AnySimple();
+}
+
+void Simulator::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {}
+
+void Simulator::GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                    Smp::AnySimple *values,
+                                    Smp::UInt64 startIndex) const {}
+
+void Simulator::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                    Smp::AnySimpleArray values,
+                                    Smp::UInt64 startIndex) {}
+
+Smp::Bool Simulator::AddChild(Smp::IObject *child,
+                              const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::Bool Simulator::RemoveChild(Smp::IObject *child,
+                                 const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::IObject *
+Simulator::IsChildInCollection(Smp::String8 child,
+                               const Smp::ICollectionBase *collection) const {
+  return nullptr;
 }
 
 // IComposite methods
@@ -174,16 +204,50 @@ void Simulator::Run() {
 void Simulator::Hold(Smp::Bool immediate) {
   if (_simState != Smp::SimulatorStateKind::SSK_Executing)
     throw core::InvalidSimulatorState(_simState);
-
-  // If immediate, stop now.
-  // Since Run() loop checks state, setting state to Standby will stop it.
+  if (_simState != Smp::SimulatorStateKind::SSK_Executing) {
+    throw core::InvalidSimulatorState(_simState);
+  }
   _simState = Smp::SimulatorStateKind::SSK_Standby;
 }
 
-void Simulator::Store(Smp::String8 filename) {}
-void Simulator::Restore(Smp::String8 filename) {}
-void Simulator::Reconnect(Smp::IComponent *root) {}
-void Simulator::Exit() { _simState = Smp::SimulatorStateKind::SSK_Exiting; }
+void Simulator::Store(Smp::String8 filename) {
+  if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
+    throw core::InvalidSimulatorState(_simState);
+  }
+  _simState = Smp::SimulatorStateKind::SSK_Storing;
+  // TODO: Implement storage logic
+  _simState = Smp::SimulatorStateKind::SSK_Standby;
+}
+
+void Simulator::Restore(Smp::String8 filename) {
+  if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
+    throw core::InvalidSimulatorState(_simState);
+  }
+  _simState = Smp::SimulatorStateKind::SSK_Restoring;
+  // TODO: Implement restore logic
+  _simState = Smp::SimulatorStateKind::SSK_Standby;
+}
+
+void Simulator::Reconnect(Smp::IComponent *root) {
+  if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
+    throw core::InvalidSimulatorState(_simState);
+  }
+  if (!root) {
+    for (auto *component : *_modelsContainer->GetComponents()) {
+      RecursivelyConnect(component);
+    }
+  } else {
+    RecursivelyConnect(root);
+  }
+}
+
+void Simulator::Exit() {
+  if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
+    throw core::InvalidSimulatorState(_simState);
+  }
+  _simState = Smp::SimulatorStateKind::SSK_Exiting;
+}
+
 void Simulator::Abort() { _simState = Smp::SimulatorStateKind::SSK_Aborting; }
 
 Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
@@ -191,7 +255,81 @@ Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
 }
 
 void Simulator::AddInitEntryPoint(Smp::IEntryPoint *entryPoint) {
-  // Add to list
+  if (!entryPoint)
+    return;
+  if (_simState == Smp::SimulatorStateKind::SSK_Building ||
+      _simState == Smp::SimulatorStateKind::SSK_Connecting ||
+      _simState == Smp::SimulatorStateKind::SSK_Standby) {
+    _initEntryPoints.push_back(entryPoint);
+  }
+}
+
+void Simulator::RecursivelyPublish(Smp::IComponent *component) {
+  if (!component)
+    return;
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
+    // component->Publish(nullptr); // Needs real Publication
+  }
+  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
+    for (auto *container : *composite->GetContainers()) {
+      for (auto *child : *container->GetComponents()) {
+        RecursivelyPublish(child);
+      }
+    }
+  }
+}
+
+void Simulator::RecursivelyConfigure(Smp::IComponent *component) {
+  if (!component)
+    return;
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
+    RecursivelyPublish(component);
+  }
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Publishing) {
+    component->Configure(GetLogger(), GetLinkRegistry());
+  }
+  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
+    for (auto *container : *composite->GetContainers()) {
+      for (auto *child : *container->GetComponents()) {
+        RecursivelyConfigure(child);
+      }
+    }
+  }
+}
+
+void Simulator::RecursivelyConnect(Smp::IComponent *component) {
+  if (!component)
+    return;
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Created ||
+      component->GetState() == Smp::ComponentStateKind::CSK_Publishing) {
+    RecursivelyConfigure(component);
+  }
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Configured) {
+    component->Connect(this);
+  }
+  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
+    for (auto *container : *composite->GetContainers()) {
+      for (auto *child : *container->GetComponents()) {
+        RecursivelyConnect(child);
+      }
+    }
+  }
+}
+
+void Simulator::RecursivelyDisconnect(Smp::IComponent *component) {
+  if (!component)
+    return;
+  // Disconnect children first?
+  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
+    for (auto *container : *composite->GetContainers()) {
+      for (auto *child : *container->GetComponents()) {
+        RecursivelyDisconnect(child);
+      }
+    }
+  }
+  if (component->GetState() == Smp::ComponentStateKind::CSK_Connected) {
+    component->Disconnect();
+  }
 }
 
 void Simulator::AddModel(Smp::IModel *model) {
@@ -229,13 +367,12 @@ void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
   if (!componentFactory)
     return;
   // Check for duplicate UUID
-  for (auto *f : _factories) {
+  for (auto *f : this->_factories) {
     if (f->GetUuid() == componentFactory->GetUuid()) {
-      // throw Smp::DuplicateUuid(f, componentFactory->GetUuid());
-      throw core::Exception("DuplicateUuid", "Duplicate factory UUID");
+      throw core::DuplicateUuid(f->GetName(), componentFactory->GetName());
     }
   }
-  _factories.Add(componentFactory);
+  this->_factories.Add(componentFactory);
 }
 
 Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
@@ -249,7 +386,7 @@ Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
 }
 
 Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
-  for (auto *f : _factories) {
+  for (auto *f : this->_factories) {
     if (f->GetUuid() == uuid)
       return f;
   }
@@ -257,7 +394,7 @@ Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
 }
 
 const Smp::FactoryCollection *Simulator::GetFactories() const {
-  return &_factories;
+  return &this->_factories;
 }
 Smp::Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
   return nullptr;

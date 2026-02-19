@@ -15,10 +15,22 @@ public:
 
   virtual ~Exception() noexcept = default;
 
-  Smp::String8 GetMessage() const override { return _message.c_str(); }
+  Smp::String8 GetName() const noexcept override {
+    return core::Object::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Object::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override { return _message.c_str(); }
+
+  const Smp::IObject *GetSender() const noexcept override {
+    return GetParent();
+  }
 
   // For STL compatibility (catch std::exception)
-  virtual const char *what() const noexcept { return _message.c_str(); }
+  virtual const char *what() const noexcept override {
+    return _message.c_str();
+  }
 
 protected:
   std::string _message;

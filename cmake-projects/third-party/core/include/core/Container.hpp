@@ -24,14 +24,23 @@ public:
     return _components.at(name);
   }
 
+  Smp::IObject *GetChild(Smp::String8 name) const override {
+    return _components.at(name);
+  }
+
+  // disambiguation
+  Smp::String8 GetName() const override { return core::Object::GetName(); }
+  Smp::String8 GetDescription() const override {
+    return core::Object::GetDescription();
+  }
+  Smp::IObject *GetParent() const override { return core::Object::GetParent(); }
+
   void AddComponent(Smp::IComponent *component) override {
     if (!component)
       return;
 
     if (_upper != -1 && static_cast<Smp::Int64>(_components.size()) >= _upper) {
-      // throw Smp::ContainerFull(this, _upper); // Need to implement
-      // ContainerFull in core
-      throw core::Exception("ContainerFull", "Container is full");
+      throw core::ContainerFull(GetName(), _upper);
     }
 
     if (_components.at(component->GetName())) {
@@ -46,13 +55,11 @@ public:
       return;
 
     if (!_components.at(component->GetName())) {
-      // throw Smp::NotContained(this, component);
-      throw core::Exception("NotContained", "Component not contained");
+      throw core::NotContained(GetName(), component);
     }
 
     if (static_cast<Smp::Int64>(_components.size()) <= _lower) {
-      // throw Smp::CannotDelete(this, component);
-      throw core::Exception("CannotDelete", "Cannot delete below minimum");
+      throw core::CannotDelete(GetName(), component, _lower);
     }
 
     _components.Remove(component);

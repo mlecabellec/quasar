@@ -3,7 +3,64 @@
 
 namespace sim {
 
-LinkRegistry::LinkRegistry() {}
+LinkRegistry::LinkRegistry()
+    : core::Object("LinkRegistry", "SMP Link Registry Service", nullptr) {}
+
+Smp::ComponentStateKind LinkRegistry::GetState() const {
+  return Smp::ComponentStateKind::CSK_Connected;
+}
+
+void LinkRegistry::Publish(Smp::IPublication *receiver) {}
+
+void LinkRegistry::Configure(Smp::Services::ILogger *logger,
+                             Smp::Services::ILinkRegistry *linkRegistry) {}
+
+void LinkRegistry::Connect(Smp::ISimulator *simulator) {}
+
+void LinkRegistry::Disconnect() {}
+
+const Smp::Uuid &LinkRegistry::GetUuid() const {
+  static Smp::Uuid uuid = {0, 0, 0, 0, 1}; // Generic Service UUID
+  return uuid;
+}
+
+Smp::IField *LinkRegistry::GetField(Smp::String8 fullName) const {
+  return nullptr;
+}
+
+const Smp::FieldCollection *LinkRegistry::GetFields() const { return nullptr; }
+
+Smp::AnySimple LinkRegistry::GetSimpleValue(Smp::String8 fullName) const {
+  return Smp::AnySimple();
+}
+
+void LinkRegistry::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {
+}
+
+void LinkRegistry::GetSimpleArrayValue(Smp::String8 fullName,
+                                       Smp::UInt64 length,
+                                       Smp::AnySimple *values,
+                                       Smp::UInt64 startIndex) const {}
+
+void LinkRegistry::SetSimpleArrayValue(Smp::String8 fullName,
+                                       Smp::UInt64 length,
+                                       Smp::AnySimpleArray values,
+                                       Smp::UInt64 startIndex) {}
+
+Smp::Bool LinkRegistry::AddChild(Smp::IObject *child,
+                                 const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::Bool LinkRegistry::RemoveChild(Smp::IObject *child,
+                                    const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::IObject *LinkRegistry::IsChildInCollection(
+    Smp::String8 child, const Smp::ICollectionBase *collection) const {
+  return nullptr;
+}
 
 void LinkRegistry::AddLink(Smp::IComponent *source,
                            const Smp::IComponent *target) {

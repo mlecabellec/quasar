@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Smp/ISimulator.h>
+#include <core/Container.hpp>
 #include <core/Object.hpp>
+#include <core/SimpleCollection.hpp>
 #include <map>
 #include <string>
 #include <vector>
@@ -32,13 +34,31 @@ public:
   Smp::IObject *GetParent() const override;
 
   // IComponent methods
-  Smp::Publication::IPublication *GetPublication() const override;
+  Smp::IPublication *GetPublication() const override;
   void Configure(Smp::Services::ILogger *logger,
                  Smp::Services::ILinkRegistry *linkRegistry) override;
   void Connect(Smp::ISimulator *simulator) override;
   void Disconnect() override;
-  Smp::IComponent::ComponentStateKind GetState() const override;
-  Smp::String8 GetUuid() const override;
+  Smp::ComponentStateKind GetState() const override;
+  const Smp::Uuid &GetUuid() const override;
+
+  Smp::IField *GetField(Smp::String8 fullName) const override;
+  const Smp::FieldCollection *GetFields() const override;
+  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;
+  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) override;
+  void GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                           Smp::AnySimple *values,
+                           Smp::UInt64 startIndex = 0) const override;
+  void SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                           Smp::AnySimpleArray values,
+                           Smp::UInt64 startIndex = 0) override;
+  Smp::Bool AddChild(Smp::IObject *child,
+                     const Smp::ICollectionBase *collection) override;
+  Smp::Bool RemoveChild(Smp::IObject *child,
+                        const Smp::ICollectionBase *collection) override;
+  Smp::IObject *
+  IsChildInCollection(Smp::String8 child,
+                      const Smp::ICollectionBase *collection) const override;
 
   // IComposite methods
   const Smp::ContainerCollection *GetContainers() const override;
@@ -90,13 +110,21 @@ private:
 
   // State
   Smp::SimulatorStateKind _simState;
-  Smp::IComponent::ComponentStateKind _compState;
+  Smp::ComponentStateKind _compState;
 
   // Collections
   core::SimpleCollection<Smp::IContainer> _containers;
   core::Container *_modelsContainer;
   core::Container *_servicesContainer;
   core::SimpleCollection<Smp::IFactory> _factories;
+  Smp::Publication::ITypeRegistry *_typeRegistry = nullptr;
+  std::vector<Smp::IEntryPoint *> _initEntryPoints;
+
+  // Recursive helpers
+  void RecursivelyPublish(Smp::IComponent *component);
+  void RecursivelyConfigure(Smp::IComponent *component);
+  void RecursivelyConnect(Smp::IComponent *component);
+  void RecursivelyDisconnect(Smp::IComponent *component);
 
   // Helper to resolve GetState ambiguity
   // We might need to implement `IComponent::GetState` and

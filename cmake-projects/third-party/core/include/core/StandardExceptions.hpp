@@ -1,14 +1,24 @@
 #pragma once
 
+#ifndef CORE_STANDARDEXCEPTIONS_HPP_
+#define CORE_STANDARDEXCEPTIONS_HPP_
+
+#include <Smp/CannotDelete.h>
+#include <Smp/ContainerFull.h>
 #include <Smp/DuplicateName.h>
+#include <Smp/DuplicateUuid.h>
 #include <Smp/InvalidComponentState.h>
 #include <Smp/InvalidFieldName.h>
+#include <Smp/InvalidObjectName.h>
 #include <Smp/InvalidObjectType.h>
 #include <Smp/InvalidSimulatorState.h>
+#include <Smp/NotContained.h>
 #include <Smp/Services/EntryPointAlreadySubscribed.h>
 #include <Smp/Services/EntryPointNotSubscribed.h>
+#include <Smp/Services/InvalidCycleTime.h>
 #include <Smp/Services/InvalidEventId.h>
 #include <Smp/Services/InvalidEventName.h>
+#include <Smp/Services/InvalidEventTime.h>
 #include <core/Exception.hpp>
 
 namespace core {
@@ -27,11 +37,13 @@ public:
   }
 
   // Ambiguity resolution
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -58,11 +70,13 @@ public:
     return _eventName.c_str();
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -88,11 +102,13 @@ public:
     return _expected;
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -113,11 +129,13 @@ public:
     return _fieldName.c_str();
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -137,11 +155,13 @@ public:
     return _duplicateName.c_str();
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -161,11 +181,13 @@ public:
     return _id;
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -182,11 +204,13 @@ public:
                (name ? std::string(name) : std::string("null"));
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 };
@@ -210,11 +234,13 @@ public:
     return _eventName.c_str();
   }
 
-  Smp::String8 GetName() const override { return core::Exception::GetName(); }
-  Smp::String8 GetDescription() const override {
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
     return core::Exception::GetDescription();
   }
-  Smp::String8 GetMessage() const override {
+  Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
   }
 
@@ -223,4 +249,178 @@ private:
   std::string _eventName;
 };
 
+class InvalidEventTime : public core::Exception,
+                         public Smp::Services::InvalidEventTime {
+public:
+  InvalidEventTime(Smp::String8 message)
+      : core::Exception("InvalidEventTime", message ? message : "") {
+    _message = message ? message : "";
+  }
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+};
+
+class InvalidCycleTime : public core::Exception,
+                         public Smp::Services::InvalidCycleTime {
+public:
+  InvalidCycleTime(Smp::String8 message)
+      : core::Exception("InvalidCycleTime", message ? message : "") {
+    _message = message ? message : "";
+  }
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+};
+
+class DuplicateUuid : public core::Exception, public Smp::DuplicateUuid {
+public:
+  DuplicateUuid(Smp::String8 oldName, Smp::String8 newName)
+      : core::Exception("DuplicateUuid", "Duplicate UUID"),
+        _oldName(oldName ? oldName : ""), _newName(newName ? newName : "") {}
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+  Smp::String8 GetOldName() const noexcept override { return _oldName.c_str(); }
+  Smp::String8 GetNewName() const noexcept override { return _newName.c_str(); }
+
+  std::string _oldName;
+  std::string _newName;
+};
+
+class InvalidObjectName : public core::Exception,
+                          public Smp::InvalidObjectName {
+public:
+  InvalidObjectName(Smp::String8 name, Smp::String8 message)
+      : core::Exception("InvalidObjectName", message ? message : ""),
+        _invalidName(name ? name : ""), _message(message ? message : "") {}
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+  Smp::String8 GetInvalidName() const noexcept override {
+    return _invalidName.c_str();
+  }
+
+private:
+  std::string _invalidName;
+  std::string _message;
+};
+
+class ContainerFull : public core::Exception, public Smp::ContainerFull {
+public:
+  ContainerFull(Smp::String8 containerName, Smp::Int64 containerSize)
+      : core::Exception("ContainerFull", "Container is full"),
+        _containerName(containerName ? containerName : ""),
+        _containerSize(containerSize) {}
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+  Smp::String8 GetContainerName() const noexcept override {
+    return _containerName.c_str();
+  }
+  Smp::Int64 GetContainerSize() const noexcept override {
+    return _containerSize;
+  }
+
+private:
+  std::string _containerName;
+  Smp::Int64 _containerSize;
+};
+
+class NotContained : public core::Exception, public Smp::NotContained {
+public:
+  NotContained(Smp::String8 containerName, const Smp::IComponent *component)
+      : core::Exception("NotContained", "Component not contained"),
+        _containerName(containerName ? containerName : ""),
+        _component(component) {}
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+  Smp::String8 GetContainerName() const noexcept override {
+    return _containerName.c_str();
+  }
+  const Smp::IComponent *GetComponent() const noexcept override {
+    return _component;
+  }
+
+private:
+  std::string _containerName;
+  const Smp::IComponent *_component;
+};
+
+class CannotDelete : public core::Exception, public Smp::CannotDelete {
+public:
+  CannotDelete(Smp::String8 containerName, const Smp::IComponent *component,
+               Smp::Int64 lowerLimit)
+      : core::Exception("CannotDelete", "Cannot delete below minimum"),
+        _containerName(containerName ? containerName : ""),
+        _component(component), _lowerLimit(lowerLimit) {}
+
+  Smp::String8 GetName() const noexcept override {
+    return core::Exception::GetName();
+  }
+  Smp::String8 GetDescription() const noexcept override {
+    return core::Exception::GetDescription();
+  }
+  Smp::String8 GetMessage() const noexcept override {
+    return core::Exception::GetMessage();
+  }
+  Smp::String8 GetContainerName() const noexcept override {
+    return _containerName.c_str();
+  }
+  const Smp::IComponent *GetComponent() const noexcept override {
+    return _component;
+  }
+  Smp::Int64 GetLowerLimit() const noexcept override { return _lowerLimit; }
+
+private:
+  std::string _containerName;
+  const Smp::IComponent *_component;
+  Smp::Int64 _lowerLimit;
+};
+
 } // namespace core
+
+#endif // CORE_STANDARDEXCEPTIONS_HPP_

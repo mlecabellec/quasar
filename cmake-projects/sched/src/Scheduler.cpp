@@ -1,9 +1,7 @@
 #include "sched/Scheduler.hpp"
 #include <Smp/Services/IEventManager.h>
-#include <Smp/Services/InvalidCycleTime.h>
-#include <Smp/Services/InvalidEventId.h>
-#include <Smp/Services/InvalidEventTime.h>
 #include <algorithm>
+#include <core/StandardExceptions.hpp>
 #include <limits>
 
 namespace sched {
@@ -47,10 +45,10 @@ Scheduler::AddSimulationTimeEvent(const Smp::IEntryPoint *entryPoint,
                                   Smp::Duration simulationTime,
                                   Smp::Duration cycleTime, Smp::Int64 repeat) {
   if (simulationTime < 0) {
-    throw Smp::Services::InvalidEventTime("Simulation time cannot be negative");
+    throw core::InvalidEventTime("Simulation time cannot be negative");
   }
   if (repeat != 0 && cycleTime <= 0) {
-    throw Smp::Services::InvalidCycleTime(
+    throw core::InvalidCycleTime(
         "Cycle time must be positive for cyclic events");
   }
 
@@ -82,10 +80,10 @@ Scheduler::AddMissionTimeEvent(const Smp::IEntryPoint *entryPoint,
   // Check against current mission time? Spec says "If the Mission Time is less
   // than the current mission time... throws InvalidEventTime".
   if (missionTime < _timeKeeper->GetMissionTime()) {
-    throw Smp::Services::InvalidEventTime("Mission time in the past");
+    throw core::InvalidEventTime("Mission time in the past");
   }
   if (repeat != 0 && cycleTime <= 0) {
-    throw Smp::Services::InvalidCycleTime(
+    throw core::InvalidCycleTime(
         "Cycle time must be positive for cyclic events");
   }
 
@@ -144,10 +142,10 @@ Scheduler::AddEpochTimeEvent(const Smp::IEntryPoint *entryPoint,
                              Smp::DateTime epochTime, Smp::Duration cycleTime,
                              Smp::Int64 repeat) {
   if (epochTime < _timeKeeper->GetEpochTime()) {
-    throw Smp::Services::InvalidEventTime("Epoch time in the past");
+    throw core::InvalidEventTime("Epoch time in the past");
   }
   if (repeat != 0 && cycleTime <= 0) {
-    throw Smp::Services::InvalidCycleTime("Cycle time must be positive");
+    throw core::InvalidCycleTime("Cycle time must be positive");
   }
 
   std::lock_guard<std::mutex> lock(_mutex);
@@ -214,7 +212,7 @@ void Scheduler::RemoveEvent(Smp::Services::EventId event) {
   std::lock_guard<std::mutex> lock(_mutex);
   auto it = _events.find(event);
   if (it == _events.end()) {
-    throw Smp::Services::InvalidEventId(event);
+    throw core::InvalidEventId(event);
   }
 
   RemoveFromTimeline(event);
@@ -234,14 +232,14 @@ void Scheduler::SetEventSimulationTime(Smp::Services::EventId event,
   std::lock_guard<std::mutex> lock(_mutex);
   auto it = _events.find(event);
   if (it == _events.end())
-    throw Smp::Services::InvalidEventId(event);
+    throw core::InvalidEventId(event);
   // Check if it IS a sim time event? Spec says "In case an event is registered
   // under the given event Id but it is not a simulation time event, the method
   // throws an exception of type InvalidEventId as well." So we need to store
   // what kind it was created as.
   if (it->second.isMissionTime || it->second.isEpochTime ||
       it->second.isZuluTime) {
-    throw Smp::Services::InvalidEventId(event);
+    throw core::InvalidEventId(event);
   }
 
   if (simulationTime < 0) {

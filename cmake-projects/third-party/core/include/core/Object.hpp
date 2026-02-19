@@ -1,21 +1,27 @@
 #pragma once
 
+#include <Smp/IObject.h>
+#include <string>
+
 namespace core {
 
 /**
  * Base class for core objects.
  */
-class Object {
+class Object : public virtual Smp::IObject {
 public:
-  /**
-   * Default constructor.
-   */
-  Object() = default;
+  Object(Smp::String8 name, Smp::String8 description = "",
+         Smp::IObject *parent = nullptr)
+      : _name(name ? name : ""), _description(description ? description : ""),
+        _parent(parent) {}
 
-  /**
-   * Destructor.
-   */
-  virtual ~Object() = default;
+  virtual ~Object() noexcept = default;
+
+  Smp::String8 GetName() const override { return _name.c_str(); }
+  Smp::String8 GetDescription() const override { return _description.c_str(); }
+  Smp::IObject *GetParent() const override { return _parent; }
+
+  Smp::IObject *GetChild(Smp::String8 name) const override { return nullptr; }
 
   /**
    * Helper to cast this object to a derived type.
@@ -41,6 +47,11 @@ public:
   template <typename T> bool isInstanceOf() const {
     return cast<T>() != nullptr;
   }
+
+protected:
+  std::string _name;
+  std::string _description;
+  Smp::IObject *_parent;
 };
 
 } // namespace core
