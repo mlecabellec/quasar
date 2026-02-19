@@ -4,3 +4,4 @@ project(quasar)
 enable_testing()
 
 add_subdirectory(cmake-projects)
+add_subdirectory(linux-modules)

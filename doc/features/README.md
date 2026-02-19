@@ -18,3 +18,5 @@ Features are splitted by types:
 
 # Features
 
+ [FE-0090.md](FE-0090.md)
+ [FE-0100.md](FE-0100.md)

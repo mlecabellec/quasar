@@ -2,3 +2,4 @@ build/
 build-projects/
 build-modules/
 doc/doxydoc/
+tmp/

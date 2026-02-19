@@ -221,6 +221,8 @@ Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
   return typeRegistry;
 }
 
-void Simulator::LoadLibrary(String8 libraryPath) {}
+void Simulator::LoadLibrary(String8 libraryPath, LibraryLoadingFlag flag) {
+  // Library loading not implemented in this skeleton
+}
 
 } // namespace Smp

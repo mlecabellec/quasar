@@ -7,9 +7,16 @@
 namespace Smp {
 class InvalidFieldName : public virtual Exception {
 public:
+  InvalidFieldName(String8 name)
+      : Exception("InvalidFieldName", "Invalid field name",
+                  "The field name is invalid"),
+        invalidName(name ? name : "") {}
   virtual ~InvalidFieldName() noexcept = default;
 
-  virtual String8 GetFieldName() const noexcept = 0;
+  virtual String8 GetFieldName() const noexcept { return invalidName.c_str(); }
+
+protected:
+  std::string invalidName;
 };
 } // namespace Smp
 

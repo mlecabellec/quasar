@@ -71,7 +71,9 @@ public:
   const ICollection<IFactory> *GetFactories() const override;
 
   Publication::ITypeRegistry *GetTypeRegistry() const override;
-  void LoadLibrary(String8 libraryPath) override;
+  void
+  LoadLibrary(String8 libraryPath,
+              LibraryLoadingFlag flag = LibraryLoadingFlag::LLF_Auto) override;
 
 private:
   SimulatorStateKind state;

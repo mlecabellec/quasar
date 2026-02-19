@@ -4,7 +4,8 @@
 #include "Smp/AnySimple.h"
 
 namespace Smp {
-typedef AnySimple *AnySimpleArray;
-}
+/// Array of AnySimple values.
+using AnySimpleArray = AnySimple *;
+} // namespace Smp
 
 #endif // SMP_ANYSIMPLEARRAY_H

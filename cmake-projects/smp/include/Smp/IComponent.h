@@ -1,15 +1,21 @@
 #ifndef SMP_ICOMPONENT_H
 #define SMP_ICOMPONENT_H
 
+#include "Smp/AnySimple.h"
+#include "Smp/AnySimpleArray.h"
 #include "Smp/ComponentStateKind.h"
 #include "Smp/ICollection.h"
 #include "Smp/IField.h"
 #include "Smp/IObject.h"
+#include "Smp/InvalidArraySize.h"
+#include "Smp/InvalidArrayValue.h"
 #include "Smp/InvalidComponentState.h"
 #include "Smp/InvalidFieldName.h"
+#include "Smp/InvalidFieldValue.h"
 #include "Smp/PrimitiveTypes.h"
 
 namespace Smp {
+class ICollectionBase;
 class IPublication;
 class ISimulator;
 
@@ -126,6 +132,129 @@ public:
   /// Type. This allows retrieving metadata from a Catalogue at run-time.
   /// @return  Universally Unique Identifier of Component.
   virtual const Uuid &GetUuid() const = 0;
+
+  /// Get the value of the field or simple array field element with the
+  /// given path relative to the component.
+  /// This method can only be used for fields of simple types (when it
+  /// can return an AnySimple), not for complex fields (as their value
+  /// cannot be stored into AnySimple).
+  /// This method raises an exception of type InvalidFieldName if called
+  /// with a field name for which no corresponding field exists, or which
+  /// does not represent a simple field.
+  /// @remarks For getting access to simple fields of structure or array
+  ///          types, this method may be called by specifying a full
+  ///          field name, e.g. "MyField.Position[2]" in order to access
+  ///          an array item of a structure.
+  /// @param   fullName Path relative to the component of the field or
+  ///          array field element for which the value is retrieved.
+  /// @return  Value of field with given full name.
+  /// @throws  Smp::InvalidFieldName
+  virtual AnySimple GetSimpleValue(String8 fullName) const = 0;
+
+  /// Path relative to the component of the field or array field element
+  /// for which the value is set.
+  /// This method can only be used for fields of simple types (when it
+  /// can return an AnySimple), not for complex fields (as their value
+  /// cannot be stored into AnySimple).
+  /// This method raises an exception of type InvalidFieldName if called
+  /// with a field name for which no corresponding field exists, or which
+  /// does not represent a simple field.
+  /// @remarks For getting access to simple fields of structure or array
+  ///          types, this method may be called by specifying a full
+  ///          field name, e.g. "MyField.Position[2]" in order to access
+  ///          an array item of a structure.
+  /// @param   fullName Fully qualified field name (relative to the
+  ///          component).
+  /// @param   value New value for field with given full name.
+  /// @throws  Smp::InvalidFieldName
+  /// @throws  Smp::InvalidFieldValue
+  virtual void SetSimpleValue(String8 fullName, AnySimple value) = 0;
+
+  /// Get the values of an array field or a simple array field.
+  /// The array with the values has to be preallocated by the caller, and
+  /// has to be released by the caller as well. Therefore, an in-out
+  /// parameter is used, not a return value of the method.
+  /// This method raises an exception of type InvalidArraySize if the get
+  /// request spans out of the boundaries of the array field.
+  /// This method raises an exception of type InvalidFieldName if called
+  /// with a field name for which no corresponding field exists, or which
+  /// does not represent an array field of simple array items.
+  /// @param   fullName Fully qualified field name (relative to the
+  ///          component).
+  /// @param   length Size of the preallocated values array.
+  /// @param   values Preallocated array of values to store result to.
+  /// @param   startIndex Start index within the simple array for which
+  ///          values are returned.
+  /// @throws  Smp::InvalidArraySize
+  /// @throws  Smp::InvalidFieldName
+  virtual void GetSimpleArrayValue(String8 fullName, UInt64 length,
+                                   AnySimple *values,
+                                   UInt64 startIndex = 0) const = 0;
+
+  /// Set the values of an array field or a simple array field.
+  /// This method raises an exception of type InvalidArrayValue if called
+  /// with values of the wrong primitive type kind.
+  /// This method raises an exception of type InvalidArraySize if the set
+  /// request spans out of the boundaries of the array field.
+  /// This method raises an exception of type InvalidFieldName if called
+  /// with a field name for which no corresponding field exists, or which
+  /// does not represent an array field of simple array items.
+  /// @param   fullName Fully qualified field name (relative to the
+  ///          component).
+  /// @param   length Size of the preallocated values array.
+  /// @param   values Array of values to store in array field.
+  /// @param   startIndex Start index within the simple array for which
+  ///          values are to be set.
+  /// @throws  Smp::InvalidArraySize
+  /// @throws  Smp::InvalidArrayValue
+  /// @throws  Smp::InvalidFieldName
+  virtual void SetSimpleArrayValue(String8 fullName, UInt64 length,
+                                   AnySimpleArray values,
+                                   UInt64 startIndex = 0) = 0;
+
+  /// This operation attempts to register a new object under the
+  /// component.
+  /// If another child with the same name is already present, the
+  /// operation returns false.
+  /// This operation is only to be called when an object is being added
+  /// to one of the collections of this Component that participate in
+  /// name resolution. The insertion shall fail if this method returns
+  /// false.
+  /// @param   child The child being added to the collection.
+  /// @param   collection The collection in which this object is being
+  ///          inserted.
+  /// @return  True if the child was added. False is the child name is
+  ///          duplicated.
+  virtual Bool AddChild(IObject *child, const ICollectionBase *collection) = 0;
+
+  /// This operation attempts to remove a child object from the component.
+  /// If the child is present and the collection is the same that was
+  /// used in AddChild, the operation will succeed and the return value
+  /// is true.
+  /// If the child is not present, or the collection is not the same that
+  /// was used in AddChild, the operation will fail and the return value
+  /// is false.
+  /// This operation is only to be called when an object is being removed
+  /// from one of the collections. Is not required to call this operation
+  /// when the component (and the collections) are being destroyed.
+  /// @param   child The child being removed from the collection.
+  /// @param   collection The collection from which this object is being
+  ///          removed.
+  /// @return  True if the child was removed. False otherwise.
+  virtual Bool RemoveChild(IObject *child,
+                           const ICollectionBase *collection) = 0;
+
+  /// This operation check if a name has been registered under the
+  /// component, and if so returns the registered object.
+  /// This operation can be used by Collections to verify whether a child
+  /// is registered as part of the collection itself.
+  /// @param   child The child being requested.
+  /// @param   collection The collection in which this object was
+  ///          inserted.
+  /// @return  The child object or nullptr.
+  virtual IObject *
+  IsChildInCollection(String8 child,
+                      const ICollectionBase *collection) const = 0;
 };
 
 /// A component collection is an ordered collection of components, which

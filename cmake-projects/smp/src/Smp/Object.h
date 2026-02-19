@@ -15,6 +15,7 @@ public:
   String8 GetName() const override { return name.c_str(); }
   String8 GetDescription() const override { return description.c_str(); }
   IObject *GetParent() const override { return parent; }
+  IObject *GetChild(String8 name) const override { return nullptr; }
 
 protected:
   std::string name;

@@ -92,4 +92,6 @@ endif()
 # Configure SOES
 add_subdirectory(SOES)
 
-
+add_subdirectory(smp)
+add_subdirectory(core)
+add_subdirectory(smp_ext)

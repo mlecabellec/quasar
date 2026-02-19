@@ -9,6 +9,7 @@
 #include "Smp/InvalidLibrary.h"
 #include "Smp/InvalidObjectName.h"
 #include "Smp/InvalidSimulatorState.h"
+#include "Smp/LibraryLoadingFlag.h"
 #include "Smp/LibraryNotFound.h"
 #include "Smp/PrimitiveTypes.h"
 #include "Smp/Publication/ITypeRegistry.h"
@@ -343,9 +344,12 @@ public:
   /// @param   libraryPath Path to the library to load.
   /// This needs to be a valid path name given the constraints of the
   /// operating system.
+  /// @param   flag Library loading flag to use.
   /// @throws  Smp::InvalidLibrary
   /// @throws  Smp::LibraryNotFound
-  virtual void LoadLibrary(String8 libraryPath) = 0;
+  virtual void
+  LoadLibrary(String8 libraryPath,
+              LibraryLoadingFlag flag = LibraryLoadingFlag::LLF_Auto) = 0;
 };
 } // namespace Smp
 

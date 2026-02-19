@@ -1,58 +1,45 @@
 cmake_minimum_required(VERSION 3.10)
-project(ethercat_module NONE)
+project(ethercat_modules NONE)
 
-set(ETHERCAT_VERSION "1.6.8")
-set(DKMS_MODULE_NAME "ethercat")
-set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+include(ExternalProject)
 
-# --- Local Build Target ---
+# Preliminary checks for required tools
+find_program(AUTORECONF_EXECUTABLE autoreconf)
+find_program(MAKE_EXECUTABLE make)
+find_program(GCC_EXECUTABLE gcc)
 
-# Helper target to configure the project
-add_custom_command(
-    OUTPUT ${SOURCE_DIR}/Makefile
-    COMMAND cd ${SOURCE_DIR} && ./bootstrap
-    COMMAND cd ${SOURCE_DIR} && ./configure --enable-generic --disable-8139too --enable-cycles
-    WORKING_DIRECTORY ${SOURCE_DIR}
-    COMMENT "Configuring EtherCAT module..."
+if(NOT AUTORECONF_EXECUTABLE)
+    message(FATAL_ERROR "autoreconf not found! generic-ethercat requires autoreconf.")
+endif()
+
+if(NOT MAKE_EXECUTABLE)
+    message(FATAL_ERROR "make not found! generic-ethercat requires make.")
+endif()
+
+if(NOT GCC_EXECUTABLE)
+    message(FATAL_ERROR "gcc not found! generic-ethercat requires gcc.")
+endif()
+
+ExternalProject_Add(ethercat_external
+    URL ${CMAKE_CURRENT_SOURCE_DIR}
+    DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/src
+    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install
+    
+    # Configure step
+    CONFIGURE_COMMAND ./bootstrap
+              COMMAND ./configure --prefix=<INSTALL_DIR> --enable-generic=yes --enable-8139too=no
+    
+    # Build step
+    BUILD_COMMAND ${MAKE_EXECUTABLE}
+          COMMAND ${MAKE_EXECUTABLE} modules
+    
+    # Install step (optional, can be empty if handled manually)
+    INSTALL_COMMAND ""
+    
+    BUILD_IN_SOURCE 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
 )
 
-# Target to build the modules locally
-add_custom_target(ethercat_module
-    COMMAND make modules
-    WORKING_DIRECTORY ${SOURCE_DIR}
-    COMMENT "Building EtherCAT kernel modules..."
-    DEPENDS ${SOURCE_DIR}/Makefile
-)
-
-# --- DKMS Install Target ---
-
-# Generate dkms.conf
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/dkms.conf.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/dkms.conf
-    @ONLY
-)
-
-# Target to install via DKMS
-# Note: This requires root privileges.
-add_custom_target(ethercat_dkms
-    # 1. Copy source to /usr/src
-    COMMAND ${CMAKE_COMMAND} -E echo "Installing EtherCAT source to /usr/src/${DKMS_MODULE_NAME}-${ETHERCAT_VERSION}..."
-    COMMAND sudo cp -r ${SOURCE_DIR} /usr/src/${DKMS_MODULE_NAME}-${ETHERCAT_VERSION}
-    
-    # 2. Add to DKMS
-    COMMAND ${CMAKE_COMMAND} -E echo "Adding to DKMS..."
-    COMMAND sudo dkms add -m ${DKMS_MODULE_NAME} -v ${ETHERCAT_VERSION} || true
-    
-    # 3. Build via DKMS
-    COMMAND ${CMAKE_COMMAND} -E echo "Building via DKMS..."
-    COMMAND sudo dkms build -m ${DKMS_MODULE_NAME} -v ${ETHERCAT_VERSION}
-    
-    # 4. Install via DKMS
-    COMMAND ${CMAKE_COMMAND} -E echo "Installing via DKMS..."
-    COMMAND sudo dkms install -m ${DKMS_MODULE_NAME} -v ${ETHERCAT_VERSION}
-    
-    COMMENT "Installing EtherCAT module via DKMS (requires sudo)"
-    VERBATIM
-)
+add_custom_target(ethercat_modules ALL DEPENDS ethercat_external)

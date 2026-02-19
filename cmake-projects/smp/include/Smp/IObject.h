@@ -58,6 +58,17 @@ public:
   ///          all other objects should have a parent object.
   /// @return  Parent object of object or null if object has no parent.
   virtual IObject *GetParent() const = 0;
+
+  /// Returns the child object with the given name, or nullptr if no such
+  /// object is present among the children of this object.
+  /// GetChild can be used while adding elements under this object to
+  /// check if a DuplicateName exception has to be raised.
+  /// GetChild has to provide all and only the objects that the Resolver
+  /// shall resolve. The Resolver can be implemented in terms of a chain
+  /// of GetChild and GetParent.
+  /// @param   name The name of the requested child object.
+  /// @return  The children object with the given name, or nullptr.
+  virtual IObject *GetChild(String8 name) const = 0;
 };
 } // namespace Smp
 

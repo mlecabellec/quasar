@@ -24,6 +24,7 @@ public:
     return description.c_str();
   }
   IObject *GetParent() const noexcept override { return nullptr; }
+  IObject *GetChild(String8 name) const override { return nullptr; }
   Uuid GetUuid() const noexcept override { return uuid; }
   Smp::PrimitiveTypeKind GetPrimitiveTypeKind() const noexcept override {
     return kind;
@@ -61,6 +62,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   Smp::Int64 minimum;
@@ -88,6 +92,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   Smp::Float64 minimum;
@@ -112,6 +119,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   Smp::Int64 length;
@@ -142,6 +152,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   Uuid itemTypeUuid;
@@ -175,6 +188,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   std::vector<Literal> literals;
@@ -211,6 +227,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 protected:
   std::vector<FieldInfo> fields;
@@ -228,6 +247,9 @@ public:
     return Type::GetDescription();
   }
   IObject *GetParent() const noexcept override { return Type::GetParent(); }
+  IObject *GetChild(String8 name) const override {
+    return Type::GetChild(name);
+  }
 
 private:
   Uuid baseClassUuid;
