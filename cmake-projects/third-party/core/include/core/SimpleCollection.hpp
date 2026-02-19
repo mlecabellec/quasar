@@ -3,6 +3,7 @@
 #include <Smp/ICollection.h>
 #include <Smp/PrimitiveTypes.h>
 #include <algorithm>
+#include <core/Object.hpp>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -10,12 +11,11 @@
 namespace core {
 
 template <typename T>
-class SimpleCollection : public virtual Smp::ICollection<T> {
+class SimpleCollection : public core::Object,
+                         public virtual Smp::ICollection<T> {
 public:
-  SimpleCollection() = default;
+  SimpleCollection() : core::Object("Collection", "", nullptr) {}
   virtual ~SimpleCollection() noexcept = default;
-
-  // SimpleCollection does not inherit from IObject in this SMP version
 
   T *at(Smp::String8 name) const override {
     if (!name)
@@ -47,7 +47,7 @@ public:
 
   size_t size() const override { return _items.size(); }
 
-  Smp::Bool empty() const override { return _items.empty(); }
+  Smp::Bool empty() const { return _items.empty(); }
 
   typename Smp::ICollection<T>::const_iterator begin() const override {
     return typename Smp::ICollection<T>::const_iterator(*this, 0);

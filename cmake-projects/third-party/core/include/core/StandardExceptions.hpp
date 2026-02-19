@@ -28,12 +28,16 @@ class InvalidSimulatorState : public core::Exception,
 public:
   InvalidSimulatorState(Smp::SimulatorStateKind state)
       : core::Exception("InvalidSimulatorState", "Invalid Simulator State"),
-        _state(state) {
+        Smp::InvalidSimulatorState(state), _state(state) {
     _message = "Invalid Simulator State";
   }
 
   Smp::SimulatorStateKind GetInvalidState() const noexcept override {
     return _state;
+  }
+
+  const char *what() const noexcept override {
+    return core::Exception::what();
   }
 
   // Ambiguity resolution
@@ -45,6 +49,10 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -70,6 +78,10 @@ public:
     return _eventName.c_str();
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -78,6 +90,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -102,6 +117,10 @@ public:
     return _expected;
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -110,6 +129,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -121,12 +143,16 @@ class InvalidFieldName : public core::Exception, public Smp::InvalidFieldName {
 public:
   InvalidFieldName(Smp::String8 name)
       : core::Exception("InvalidFieldName", "Invalid Field Name"),
-        _fieldName(name ? name : "") {
+        Smp::InvalidFieldName(name), _fieldName(name ? name : "") {
     _message = "Invalid Field Name: " + _fieldName;
   }
 
   Smp::String8 GetFieldName() const noexcept override {
     return _fieldName.c_str();
+  }
+
+  const char *what() const noexcept override {
+    return core::Exception::what();
   }
 
   Smp::String8 GetName() const noexcept override {
@@ -137,6 +163,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -155,6 +184,10 @@ public:
     return _duplicateName.c_str();
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -163,6 +196,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -181,6 +217,10 @@ public:
     return _id;
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -189,6 +229,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -204,6 +247,10 @@ public:
                (name ? std::string(name) : std::string("null"));
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -212,6 +259,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 };
 
@@ -234,6 +284,10 @@ public:
     return _eventName.c_str();
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -242,6 +296,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 
 private:
@@ -257,6 +314,10 @@ public:
     _message = message ? message : "";
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -265,6 +326,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 };
 
@@ -276,6 +340,10 @@ public:
     _message = message ? message : "";
   }
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -284,6 +352,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
 };
 
@@ -293,6 +364,10 @@ public:
       : core::Exception("DuplicateUuid", "Duplicate UUID"),
         _oldName(oldName ? oldName : ""), _newName(newName ? newName : "") {}
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -301,6 +376,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
   Smp::String8 GetOldName() const noexcept override { return _oldName.c_str(); }
   Smp::String8 GetNewName() const noexcept override { return _newName.c_str(); }
@@ -316,6 +394,10 @@ public:
       : core::Exception("InvalidObjectName", message ? message : ""),
         _invalidName(name ? name : ""), _message(message ? message : "") {}
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -324,6 +406,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
   Smp::String8 GetInvalidName() const noexcept override {
     return _invalidName.c_str();
@@ -341,6 +426,10 @@ public:
         _containerName(containerName ? containerName : ""),
         _containerSize(containerSize) {}
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -349,6 +438,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
   Smp::String8 GetContainerName() const noexcept override {
     return _containerName.c_str();
@@ -369,6 +461,10 @@ public:
         _containerName(containerName ? containerName : ""),
         _component(component) {}
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -377,6 +473,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
   Smp::String8 GetContainerName() const noexcept override {
     return _containerName.c_str();
@@ -398,6 +497,10 @@ public:
         _containerName(containerName ? containerName : ""),
         _component(component), _lowerLimit(lowerLimit) {}
 
+  const char *what() const noexcept override {
+    return core::Exception::what();
+  }
+
   Smp::String8 GetName() const noexcept override {
     return core::Exception::GetName();
   }
@@ -406,6 +509,9 @@ public:
   }
   Smp::String8 GetMessage() const noexcept override {
     return core::Exception::GetMessage();
+  }
+  const Smp::IObject *GetSender() const noexcept override {
+    return core::Exception::GetSender();
   }
   Smp::String8 GetContainerName() const noexcept override {
     return _containerName.c_str();

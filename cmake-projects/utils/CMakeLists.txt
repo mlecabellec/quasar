@@ -9,4 +9,4 @@ target_include_directories(utils PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(utils PUBLIC ECSS_SMP core)
+target_link_libraries(utils PUBLIC smp core)

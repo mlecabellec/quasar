@@ -140,7 +140,7 @@ void Simulator::Exit() {
 
 void Simulator::Abort() { SetState(SimulatorStateKind::SSK_Aborting); }
 
-SimulatorStateKind Simulator::GetState() const { return state; }
+SimulatorStateKind Simulator::GetSimulatorState() const { return state; }
 
 void Simulator::SetState(SimulatorStateKind newState) { state = newState; }
 

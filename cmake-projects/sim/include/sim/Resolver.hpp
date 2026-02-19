@@ -31,12 +31,12 @@ public:
                            Smp::AnySimpleArray values,
                            Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::ICollectionBase *collection) override;
+                     const Smp::IObject *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::ICollectionBase *collection) override;
+                        const Smp::IObject *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::ICollectionBase *collection) const override;
+                      const Smp::IObject *collection) const override;
 
   // IResolver methods
 
@@ -44,7 +44,7 @@ public:
 
   Smp::IObject *ResolveAbsolute(Smp::String8 absolutePath) override;
   Smp::IObject *ResolveRelative(Smp::String8 relativePath,
-                                Smp::IObject *relativeTo) override;
+                                const Smp::IComponent *sender) override;
 
 private:
   Smp::ISimulator *_simulator = nullptr;

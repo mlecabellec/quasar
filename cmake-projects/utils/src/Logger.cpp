@@ -43,20 +43,22 @@ void Logger::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                  Smp::UInt64 startIndex) {}
 
 Smp::Bool Logger::AddChild(Smp::IObject *child,
-                           const Smp::ICollectionBase *collection) {
+                           const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool Logger::RemoveChild(Smp::IObject *child,
-                              const Smp::ICollectionBase *collection) {
+                              const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *
 Logger::IsChildInCollection(Smp::String8 child,
-                            const Smp::ICollectionBase *collection) const {
+                            const Smp::IObject *collection) const {
   return nullptr;
 }
+
+Smp::IObject *Logger::GetChild(Smp::String8 name) const { return nullptr; }
 
 Smp::Services::LogMessageKind
 Logger::QueryLogMessageKind(Smp::String8 messageKindName) {

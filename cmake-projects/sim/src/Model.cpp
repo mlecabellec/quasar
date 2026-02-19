@@ -91,24 +91,24 @@ void Model::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
 }
 
 Smp::Bool Model::AddChild(Smp::IObject *child,
-                          const Smp::ICollectionBase *collection) {
+                          const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool Model::RemoveChild(Smp::IObject *child,
-                             const Smp::ICollectionBase *collection) {
+                             const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *
 Model::IsChildInCollection(Smp::String8 child,
-                           const Smp::ICollectionBase *collection) const {
+                           const Smp::IObject *collection) const {
   if (!collection)
     return nullptr;
   // Check if collection is one of ours
-  if (collection == &_containers)
+  if (collection == static_cast<const Smp::IObject *>(&_containers))
     return _containers.at(child);
-  if (collection == &_fields)
+  if (collection == static_cast<const Smp::IObject *>(&_fields))
     return _fields.at(child);
   return nullptr;
 }

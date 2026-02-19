@@ -52,19 +52,21 @@ void EventManager::SetSimpleArrayValue(Smp::String8 fullName,
                                        Smp::UInt64 startIndex) {}
 
 Smp::Bool EventManager::AddChild(Smp::IObject *child,
-                                 const Smp::ICollectionBase *collection) {
+                                 const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool EventManager::RemoveChild(Smp::IObject *child,
-                                    const Smp::ICollectionBase *collection) {
+                                    const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *EventManager::IsChildInCollection(
-    Smp::String8 child, const Smp::ICollectionBase *collection) const {
+    Smp::String8 child, const Smp::IObject *collection) const {
   return nullptr;
 }
+
+Smp::IObject *EventManager::GetChild(Smp::String8 name) const { return nullptr; }
 
 void EventManager::RegisterPredefinedEvents() {
   _eventIds[SMP_LeaveConnecting] = SMP_LeaveConnectingId;

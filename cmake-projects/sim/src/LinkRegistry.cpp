@@ -48,17 +48,17 @@ void LinkRegistry::SetSimpleArrayValue(Smp::String8 fullName,
                                        Smp::UInt64 startIndex) {}
 
 Smp::Bool LinkRegistry::AddChild(Smp::IObject *child,
-                                 const Smp::ICollectionBase *collection) {
+                                 const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool LinkRegistry::RemoveChild(Smp::IObject *child,
-                                    const Smp::ICollectionBase *collection) {
+                                    const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *LinkRegistry::IsChildInCollection(
-    Smp::String8 child, const Smp::ICollectionBase *collection) const {
+    Smp::String8 child, const Smp::IObject *collection) const {
   return nullptr;
 }
 

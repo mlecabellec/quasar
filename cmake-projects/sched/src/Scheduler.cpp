@@ -50,20 +50,22 @@ void Scheduler::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                     Smp::UInt64 startIndex) {}
 
 Smp::Bool Scheduler::AddChild(Smp::IObject *child,
-                              const Smp::ICollectionBase *collection) {
+                     const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool Scheduler::RemoveChild(Smp::IObject *child,
-                                 const Smp::ICollectionBase *collection) {
+                                 const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *
 Scheduler::IsChildInCollection(Smp::String8 child,
-                               const Smp::ICollectionBase *collection) const {
+                               const Smp::IObject *collection) const {
   return nullptr;
 }
+
+Smp::IObject *Scheduler::GetChild(Smp::String8 name) const { return nullptr; }
 
 Smp::Services::EventId Scheduler::CreateEventId() { return _nextEventId++; }
 
@@ -235,11 +237,6 @@ Scheduler::AddZuluTimeEvent(const Smp::IEntryPoint *entryPoint,
   // For now, minimal implementation as SimTime is main focus.
   return -1;
 }
-Smp::Services::EventId Scheduler::AddRelativeZuluTimeEvent(
-    const Smp::IEntryPoint *entryPoint, Smp::Duration zuluTimeDelay,
-    Smp::Duration cycleTime, Smp::Int64 repeat) {
-  return -1;
-}
 
 void Scheduler::ScheduleEvent(const SchedulerEvent &evt) {
   // Only schedule if it's a SimTime execution candidate
@@ -329,20 +326,6 @@ Smp::Duration Scheduler::GetNextScheduledEventTime() const {
     return _timeline.begin()->first;
   }
   return std::numeric_limits<Smp::Duration>::max();
-}
-
-Smp::Bool Scheduler::IsEventScheduled(Smp::Services::EventId eventId) const {
-  std::lock_guard<std::mutex> lock(_mutex);
-  // Needs to check if it's in timeline or immediate list
-  if (std::find(_immediateEvents.begin(), _immediateEvents.end(), eventId) !=
-      _immediateEvents.end())
-    return true;
-
-  for (const auto &pair : _timeline) {
-    if (pair.second == eventId)
-      return true;
-  }
-  return false;
 }
 
 Smp::Duration Scheduler::ExecuteNextEvent() {

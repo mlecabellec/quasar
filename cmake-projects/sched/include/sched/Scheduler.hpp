@@ -58,12 +58,14 @@ public:
                            Smp::AnySimpleArray values,
                            Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::ICollectionBase *collection) override;
+                     const Smp::IObject *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::ICollectionBase *collection) override;
+                        const Smp::IObject *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::ICollectionBase *collection) const override;
+                      const Smp::IObject *collection) const override;
+
+  Smp::IObject *GetChild(Smp::String8 name) const override;
 
   // IScheduler methods
   Smp::Services::EventId
@@ -83,9 +85,6 @@ public:
                                           Smp::DateTime zuluTime,
                                           Smp::Duration cycleTime = 0,
                                           Smp::Int64 repeat = 0) override;
-  Smp::Services::EventId AddRelativeZuluTimeEvent(
-      const Smp::IEntryPoint *entryPoint, Smp::Duration zuluTimeDelay,
-      Smp::Duration cycleTime = 0, Smp::Int64 repeat = 0) override;
 
   void SetEventSimulationTime(Smp::Services::EventId event,
                               Smp::Duration simulationTime) override;
@@ -101,7 +100,6 @@ public:
   void RemoveEvent(Smp::Services::EventId event) override;
   Smp::Services::EventId GetCurrentEventId() const override;
   Smp::Duration GetNextScheduledEventTime() const override;
-  Smp::Bool IsEventScheduled(Smp::Services::EventId eventId) const override;
 
   // Custom methods for Simulator
   Smp::Duration ExecuteNextEvent(); // Returns next event time or -1 if none

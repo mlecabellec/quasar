@@ -10,7 +10,7 @@ target_include_directories(sim PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(sim PUBLIC ECSS_SMP core utils sched)
+target_link_libraries(sim PUBLIC smp core utils sched)
 
 # Test executable
 add_executable(test_basic_simulation test/test_basic_simulation.cpp)

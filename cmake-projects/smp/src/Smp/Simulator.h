@@ -51,7 +51,7 @@ public:
   void Exit() override;
   void Abort() override;
 
-  SimulatorStateKind GetState() const override;
+  SimulatorStateKind GetSimulatorState() const override;
   void AddInitEntryPoint(IEntryPoint *entryPoint) override;
   void AddModel(IModel *model) override;
   void AddService(IService *service) override;

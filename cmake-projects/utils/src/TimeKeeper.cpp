@@ -46,20 +46,22 @@ void TimeKeeper::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                      Smp::UInt64 startIndex) {}
 
 Smp::Bool TimeKeeper::AddChild(Smp::IObject *child,
-                               const Smp::ICollectionBase *collection) {
+                               const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool TimeKeeper::RemoveChild(Smp::IObject *child,
-                                  const Smp::ICollectionBase *collection) {
+                                  const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *
 TimeKeeper::IsChildInCollection(Smp::String8 child,
-                                const Smp::ICollectionBase *collection) const {
+                                const Smp::IObject *collection) const {
   return nullptr;
 }
+
+Smp::IObject *TimeKeeper::GetChild(Smp::String8 name) const { return nullptr; }
 
 void TimeKeeper::SetEventManager(Smp::Services::IEventManager *eventManager) {
   std::lock_guard<std::mutex> lock(_mutex);

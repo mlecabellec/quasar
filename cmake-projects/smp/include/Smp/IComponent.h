@@ -225,7 +225,7 @@ public:
   ///          inserted.
   /// @return  True if the child was added. False is the child name is
   ///          duplicated.
-  virtual Bool AddChild(IObject *child, const ICollectionBase *collection) = 0;
+  virtual Bool AddChild(IObject *child, const IObject *collection) = 0;
 
   /// This operation attempts to remove a child object from the component.
   /// If the child is present and the collection is the same that was
@@ -242,7 +242,7 @@ public:
   ///          removed.
   /// @return  True if the child was removed. False otherwise.
   virtual Bool RemoveChild(IObject *child,
-                           const ICollectionBase *collection) = 0;
+                           const IObject *collection) = 0;
 
   /// This operation check if a name has been registered under the
   /// component, and if so returns the registered object.
@@ -254,7 +254,7 @@ public:
   /// @return  The child object or nullptr.
   virtual IObject *
   IsChildInCollection(String8 child,
-                      const ICollectionBase *collection) const = 0;
+                      const IObject *collection) const = 0;
 };
 
 /// A component collection is an ordered collection of components, which

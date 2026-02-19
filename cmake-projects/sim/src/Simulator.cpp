@@ -95,20 +95,32 @@ void Simulator::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                     Smp::UInt64 startIndex) {}
 
 Smp::Bool Simulator::AddChild(Smp::IObject *child,
-                              const Smp::ICollectionBase *collection) {
+                              const Smp::IObject *collection) {
   return false;
 }
 
 Smp::Bool Simulator::RemoveChild(Smp::IObject *child,
-                                 const Smp::ICollectionBase *collection) {
+                                 const Smp::IObject *collection) {
   return false;
 }
 
 Smp::IObject *
 Simulator::IsChildInCollection(Smp::String8 child,
-                               const Smp::ICollectionBase *collection) const {
+                               const Smp::IObject *collection) const {
   return nullptr;
 }
+
+Smp::IObject *Simulator::GetChild(Smp::String8 name) const {
+  if (auto *c = _containers.at(name))
+    return c;
+  return nullptr;
+}
+
+void Simulator::Publish(Smp::IPublication *receiver) {}
+void Simulator::Configure(Smp::Services::ILogger *logger,
+                          Smp::Services::ILinkRegistry *linkRegistry) {}
+void Simulator::Connect(Smp::ISimulator *simulator) {}
+void Simulator::Disconnect() {}
 
 // IComposite methods
 const Smp::ContainerCollection *Simulator::GetContainers() const {
@@ -189,9 +201,6 @@ void Simulator::Run() {
 void Simulator::Hold(Smp::Bool immediate) {
   if (_simState != Smp::SimulatorStateKind::SSK_Executing)
     throw core::InvalidSimulatorState(_simState);
-  if (_simState != Smp::SimulatorStateKind::SSK_Executing) {
-    throw core::InvalidSimulatorState(_simState);
-  }
   _simState = Smp::SimulatorStateKind::SSK_Standby;
 }
 

@@ -7,4 +7,4 @@ target_include_directories(sched PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(sched PUBLIC ECSS_SMP utils)
+target_link_libraries(sched PUBLIC smp utils)

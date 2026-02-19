@@ -32,7 +32,7 @@ class IFactory;
 /// models, and to add and retrieve simulation services.
 /// This is a mandatory interface that every SMP compliant simulation
 /// environment has to implement.
-class ISimulator : public virtual IComposite {
+class ISimulator : public virtual Smp::IComponent, public virtual Smp::IComposite {
 public:
   /// Name of the model container.
   static constexpr Char8 SMP_SimulatorModels[] = "Models";
@@ -165,7 +165,7 @@ public:
 
   /// Return the current simulator state.
   /// @return  Current simulator state.
-  virtual SimulatorStateKind GetState() const = 0;
+  virtual SimulatorStateKind GetSimulatorState() const = 0;
 
   /// This method can be used to add entry points that shall be executed
   /// in the Initialising state.

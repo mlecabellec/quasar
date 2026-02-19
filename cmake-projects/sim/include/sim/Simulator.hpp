@@ -23,7 +23,8 @@ namespace sim {
 class Resolver;
 class LinkRegistry;
 
-class Simulator : public core::Object, public Smp::ISimulator {
+class Simulator : public core::Object,
+                  public virtual Smp::ISimulator {
 public:
   Simulator();
   virtual ~Simulator() noexcept;
@@ -32,29 +33,34 @@ public:
   Smp::String8 GetName() const override;
   Smp::String8 GetDescription() const override;
   Smp::IObject *GetParent() const override;
+  Smp::IObject *GetChild(Smp::String8 name) const override;
 
   // IComponent methods
-  // Internal methods (not overrides from IComponent)
-  Smp::ComponentStateKind GetState() const;
-  const Smp::Uuid &GetUuid() const;
+  Smp::ComponentStateKind GetState() const override;
+  void Publish(Smp::IPublication *receiver) override;
+  void Configure(Smp::Services::ILogger *logger,
+                 Smp::Services::ILinkRegistry *linkRegistry) override;
+  void Connect(Smp::ISimulator *simulator) override;
+  void Disconnect() override;
+  const Smp::Uuid &GetUuid() const override;
 
-  Smp::IField *GetField(Smp::String8 fullName) const;
-  const Smp::FieldCollection *GetFields() const;
-  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const;
-  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value);
+  Smp::IField *GetField(Smp::String8 fullName) const override;
+  const Smp::FieldCollection *GetFields() const override;
+  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;
+  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) override;
   void GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                            Smp::AnySimple *values,
-                           Smp::UInt64 startIndex = 0) const;
+                           Smp::UInt64 startIndex = 0) const override;
   void SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                            Smp::AnySimpleArray values,
-                           Smp::UInt64 startIndex = 0);
+                           Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::ICollectionBase *collection);
+                     const Smp::IObject *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::ICollectionBase *collection);
+                        const Smp::IObject *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::ICollectionBase *collection) const;
+                      const Smp::IObject *collection) const override;
 
   // IComposite methods
   const Smp::ContainerCollection *GetContainers() const override;
@@ -72,7 +78,7 @@ public:
   void Reconnect(Smp::IComponent *root) override;
   void Exit() override;
   void Abort() override;
-  virtual Smp::SimulatorStateKind GetSimulatorState() const override;
+  Smp::SimulatorStateKind GetSimulatorState() const override;
 
   void AddInitEntryPoint(Smp::IEntryPoint *entryPoint) override;
   void AddModel(Smp::IModel *model) override;
