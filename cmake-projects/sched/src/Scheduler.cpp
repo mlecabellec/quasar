@@ -8,7 +8,62 @@ namespace sched {
 
 Scheduler::Scheduler(Smp::Services::ITimeKeeper *timeKeeper,
                      Smp::Services::ILogger *logger)
-    : _timeKeeper(timeKeeper), _logger(logger) {}
+    : core::Object("Scheduler", "SMP Scheduler Service", nullptr),
+      _timeKeeper(timeKeeper), _logger(logger) {}
+
+Smp::ComponentStateKind Scheduler::GetState() const {
+  return Smp::ComponentStateKind::CSK_Connected;
+}
+
+void Scheduler::Publish(Smp::IPublication *receiver) {}
+
+void Scheduler::Configure(Smp::Services::ILogger *logger,
+                          Smp::Services::ILinkRegistry *linkRegistry) {}
+
+void Scheduler::Connect(Smp::ISimulator *simulator) {}
+
+void Scheduler::Disconnect() {}
+
+const Smp::Uuid &Scheduler::GetUuid() const {
+  static Smp::Uuid uuid = {0, 0, 0, 0, 3}; // Generic Service UUID
+  return uuid;
+}
+
+Smp::IField *Scheduler::GetField(Smp::String8 fullName) const {
+  return nullptr;
+}
+
+const Smp::FieldCollection *Scheduler::GetFields() const { return nullptr; }
+
+Smp::AnySimple Scheduler::GetSimpleValue(Smp::String8 fullName) const {
+  return Smp::AnySimple();
+}
+
+void Scheduler::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {}
+
+void Scheduler::GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                    Smp::AnySimple *values,
+                                    Smp::UInt64 startIndex) const {}
+
+void Scheduler::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
+                                    Smp::AnySimpleArray values,
+                                    Smp::UInt64 startIndex) {}
+
+Smp::Bool Scheduler::AddChild(Smp::IObject *child,
+                              const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::Bool Scheduler::RemoveChild(Smp::IObject *child,
+                                 const Smp::ICollectionBase *collection) {
+  return false;
+}
+
+Smp::IObject *
+Scheduler::IsChildInCollection(Smp::String8 child,
+                               const Smp::ICollectionBase *collection) const {
+  return nullptr;
+}
 
 Smp::Services::EventId Scheduler::CreateEventId() { return _nextEventId++; }
 

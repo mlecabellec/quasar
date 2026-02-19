@@ -34,31 +34,27 @@ public:
   Smp::IObject *GetParent() const override;
 
   // IComponent methods
-  Smp::IPublication *GetPublication() const override;
-  void Configure(Smp::Services::ILogger *logger,
-                 Smp::Services::ILinkRegistry *linkRegistry) override;
-  void Connect(Smp::ISimulator *simulator) override;
-  void Disconnect() override;
-  Smp::ComponentStateKind GetState() const override;
-  const Smp::Uuid &GetUuid() const override;
+  // Internal methods (not overrides from IComponent)
+  Smp::ComponentStateKind GetState() const;
+  const Smp::Uuid &GetUuid() const;
 
-  Smp::IField *GetField(Smp::String8 fullName) const override;
-  const Smp::FieldCollection *GetFields() const override;
-  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;
-  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) override;
+  Smp::IField *GetField(Smp::String8 fullName) const;
+  const Smp::FieldCollection *GetFields() const;
+  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const;
+  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value);
   void GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                            Smp::AnySimple *values,
-                           Smp::UInt64 startIndex = 0) const override;
+                           Smp::UInt64 startIndex = 0) const;
   void SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                            Smp::AnySimpleArray values,
-                           Smp::UInt64 startIndex = 0) override;
+                           Smp::UInt64 startIndex = 0);
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::ICollectionBase *collection) override;
+                     const Smp::ICollectionBase *collection);
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::ICollectionBase *collection) override;
+                        const Smp::ICollectionBase *collection);
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::ICollectionBase *collection) const override;
+                      const Smp::ICollectionBase *collection) const;
 
   // IComposite methods
   const Smp::ContainerCollection *GetContainers() const override;

@@ -15,11 +15,7 @@ public:
   SimpleCollection() = default;
   virtual ~SimpleCollection() noexcept = default;
 
-  Smp::String8 GetName() const override { return "Collection"; }
-
-  Smp::String8 GetDescription() const override { return "Simple Collection"; }
-
-  Smp::IObject *GetParent() const override { return nullptr; }
+  // SimpleCollection does not inherit from IObject in this SMP version
 
   T *at(Smp::String8 name) const override {
     if (!name)

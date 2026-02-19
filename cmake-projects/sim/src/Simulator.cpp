@@ -65,22 +65,7 @@ Smp::String8 Simulator::GetDescription() const {
 Smp::IObject *Simulator::GetParent() const { return nullptr; }
 
 // IComponent methods
-Smp::IPublication *Simulator::GetPublication() const {
-  return nullptr; // TODO
-}
-
-void Simulator::Configure(Smp::Services::ILogger *logger,
-                          Smp::Services::ILinkRegistry *linkRegistry) {
-  // Simulator configures itself?
-  // "this method is typically all called by an external component...".
-  // Simulator is the top level.
-}
-
-void Simulator::Connect(Smp::ISimulator *simulator) {
-  // Simulator connects to itself?
-}
-
-void Simulator::Disconnect() {}
+// Internal methods logic
 
 Smp::ComponentStateKind Simulator::GetState() const { return _compState; }
 

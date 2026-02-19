@@ -98,7 +98,10 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
   if (!relativeTo)
     return nullptr;
   if (!relativePath || strlen(relativePath) == 0)
-    Smp::IObject *current = relativeTo;
+    return relativeTo;
+
+  auto parts = SplitPath(relativePath);
+  Smp::IObject *current = relativeTo;
 
   for (const auto &part : parts) {
     if (!current)
