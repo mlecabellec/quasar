@@ -1,9 +1,5 @@
-#include "utils/EventManager.hpp"
-#include <Smp/Services/EntryPointAlreadySubscribed.h>
-#include <Smp/Services/EntryPointNotSubscribed.h>
-#include <Smp/Services/InvalidEventId.h>
-#include <Smp/Services/InvalidEventName.h>
 #include <algorithm>
+#include <core/StandardExceptions.hpp>
 #include <cstring>
 
 namespace utils {
@@ -36,7 +32,7 @@ void EventManager::RegisterPredefinedEvents() {
 
 Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
   if (!eventName) {
-    throw Smp::Services::InvalidEventName("Event name is null");
+    throw core::InvalidEventName("null", "Event name is null");
   }
 
   std::lock_guard<std::mutex> lock(_mutex);
@@ -74,8 +70,8 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   auto &subscribers = _subscriptions[event];
   auto it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
   if (it != subscribers.end()) {
-    throw Smp::Services::EntryPointAlreadySubscribed(
-        entryPoint, "Entry point already subscribed");
+    throw core::EntryPointAlreadySubscribed(entryPoint, "Unknown",
+                                            "Entry point already subscribed");
   }
   subscribers.push_back(entryPoint);
 }
@@ -87,15 +83,16 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   auto itSub = _subscriptions.find(event);
   if (itSub == _subscriptions.end()) {
     // Maybe event doesn't exist or no subs, treat as "not subscribed"
-    throw Smp::Services::EntryPointNotSubscribed(
-        entryPoint, "Entry point not subscribed (event has no subscribers)");
+    throw core::EntryPointNotSubscribed(
+        entryPoint, "Unknown",
+        "Entry point not subscribed (event has no subscribers)");
   }
 
   auto &subscribers = itSub->second;
   auto it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
   if (it == subscribers.end()) {
-    throw Smp::Services::EntryPointNotSubscribed(entryPoint,
-                                                 "Entry point not subscribed");
+    throw core::EntryPointNotSubscribed(entryPoint, "Unknown",
+                                        "Entry point not subscribed");
   }
   subscribers.erase(it);
 }

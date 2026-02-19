@@ -56,27 +56,7 @@ public:
   void Reconnect(Smp::IComponent *root) override;
   void Exit() override;
   void Abort() override;
-  Smp::SimulatorStateKind GetState()
-      const override; // Ambiguous with IComponent::GetState? No, return type
-                      // differs. Wait, C++ doesn't allow overloading by return
-                      // type. IComponent::GetState returns ComponentStateKind.
-                      // ISimulator::GetState returns SimulatorStateKind.
-                      // This is a conflict in the standard mapping if they
-                      // share the same name? Let's check the standard headers.
-                      // IComponent has `GetState()`.
-                      // ISimulator has `GetState()`.
-                      // They have different signatures? No, exact same
-                      // `GetState() const`. The standard C++ mapping resolves
-                      // this by renaming one? Or they are covariant? No,
-                      // different enum types. Let's check `ISimulator.h`.
-                      // `virtual Smp::SimulatorStateKind GetState() const = 0;`
-                      // `IComponent.h`: `virtual ComponentStateKind GetState()
-                      // const = 0;` This is a known issue in C++ binding of
-                      // SMP 1.1? Actually, ISimulator does NOT inherit from
-                      // IComponent directly? ISimulator -> IComposite ->
-                      // IComponent. Yes it does. How does C++ handle this?
-                      // Maybe the standard headers I have are using different
-                      // names? I need to check `IComponent.h`.
+  virtual Smp::SimulatorStateKind GetSimulatorState() const override;
 
   void AddInitEntryPoint(Smp::IEntryPoint *entryPoint) override;
   void AddModel(Smp::IModel *model) override;
@@ -113,7 +93,10 @@ private:
   Smp::IComponent::ComponentStateKind _compState;
 
   // Collections
-  // ...
+  core::SimpleCollection<Smp::IContainer> _containers;
+  core::Container *_modelsContainer;
+  core::Container *_servicesContainer;
+  core::SimpleCollection<Smp::IFactory> _factories;
 
   // Helper to resolve GetState ambiguity
   // We might need to implement `IComponent::GetState` and
