@@ -3,6 +3,8 @@ add_library(sim
     src/Resolver.cpp
     src/LinkRegistry.cpp
     src/Model.cpp
+    src/LibraryLoader.cpp
+    src/TypeRegistry.cpp
 )
 
 target_include_directories(sim PUBLIC
@@ -10,7 +12,7 @@ target_include_directories(sim PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(sim PUBLIC smp core utils sched)
+target_link_libraries(sim PUBLIC smp core utils sched ${CMAKE_DL_LIBS})
 
 # Test executable
 add_executable(test_basic_simulation test/test_basic_simulation.cpp)

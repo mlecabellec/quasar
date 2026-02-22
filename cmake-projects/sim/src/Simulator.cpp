@@ -1,5 +1,6 @@
 #include "sim/Simulator.hpp"
 #include "sched/Scheduler.hpp"
+#include "sim/LibraryLoader.hpp"
 #include "sim/LinkRegistry.hpp"
 #include "sim/Resolver.hpp"
 #include "utils/EventManager.hpp"
@@ -27,6 +28,7 @@ Simulator::Simulator()
   _scheduler = new sched::Scheduler(_timeKeeper, _logger);
   _resolver = new Resolver();
   _linkRegistry = new LinkRegistry();
+  _typeRegistry = new TypeRegistry();
 
   // Configure services
   _timeKeeper->SetEventManager(_eventManager);
@@ -47,6 +49,21 @@ Simulator::Simulator()
 }
 
 Simulator::~Simulator() noexcept {
+  // Finalise loaded libraries
+  for (void *handle : _loadedLibraries) {
+    if (handle) {
+      typedef bool (*FinaliseFunctionPtr)();
+      FinaliseFunctionPtr finalise = reinterpret_cast<FinaliseFunctionPtr>(
+          LibraryLoader::GetInstance().GetSymbolAddress(handle, "Finalise"));
+      if (finalise) {
+        finalise();
+      }
+      LibraryLoader::GetInstance().UnloadLibrary(handle);
+    }
+  }
+  _loadedLibraries.clear();
+
+  delete _typeRegistry;
   delete _resolver;
   delete _scheduler;
   delete _eventManager;
@@ -244,9 +261,7 @@ void Simulator::Exit() {
 
 void Simulator::Abort() { _simState = Smp::SimulatorStateKind::SSK_Aborting; }
 
-Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
-  return _simState;
-}
+Smp::SimulatorStateKind Simulator::GetState() const { return _simState; }
 
 void Simulator::AddInitEntryPoint(Smp::IEntryPoint *entryPoint) {
   if (!entryPoint)
@@ -372,17 +387,27 @@ void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
 Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
                                            Smp::String8 description,
                                            Smp::IComposite *parent) {
-  Smp::IFactory *factory = GetFactory(uuid);
+  const Smp::IFactory *factory = GetFactory(uuid);
   if (factory) {
-    return factory->CreateInstance(name, description, parent);
+    return const_cast<Smp::IFactory *>(factory)->CreateInstance(
+        name, description, parent);
+  }
+  return nullptr;
+}
+Smp::IComponent *Simulator::CreateInstance(const Smp::Uuid implUuid) {
+  for (auto *factory : this->_factories) {
+    if (factory->GetUuid() == implUuid) {
+      return factory->CreateInstance("", "", nullptr);
+    }
   }
   return nullptr;
 }
 
-Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
-  for (auto *f : this->_factories) {
-    if (f->GetUuid() == uuid)
-      return f;
+const Smp::IFactory *Simulator::GetFactory(const Smp::Uuid implUuid) const {
+  for (auto *factory : this->_factories) {
+    if (factory->GetUuid() == implUuid) {
+      return factory;
+    }
   }
   return nullptr;
 }
@@ -390,10 +415,52 @@ Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
 const Smp::FactoryCollection *Simulator::GetFactories() const {
   return &this->_factories;
 }
-Smp::Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
-  return nullptr;
+
+const Smp::FactoryCollection *
+Simulator::GetFactories(const Smp::Uuid specUuid) const {
+  // Return just generic factories, or filter if we had spec UUIDs
+  return &this->_factories;
 }
+
+Smp::Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
+  return _typeRegistry;
+}
+
 void Simulator::LoadLibrary(Smp::String8 libraryPath,
-                            Smp::LibraryLoadingFlag flag) {}
+                            Smp::LibraryLoadingFlag flag) {
+  try {
+    void *handle = LibraryLoader::GetInstance().LoadLibrary(libraryPath);
+    if (!handle) {
+      throw core::Exception(
+          "SimControl",
+          ("Failed to load library " + std::string(libraryPath)).c_str());
+    }
+
+    // Attempt to locate and call Initialise
+    typedef bool (*InitialiseFunctionPtr)(Smp::IDynamicSimulator *,
+                                          Smp::Publication::ITypeRegistry *);
+
+    InitialiseFunctionPtr initFunc = reinterpret_cast<InitialiseFunctionPtr>(
+        LibraryLoader::GetInstance().GetSymbolAddress(handle, "Initialise"));
+
+    if (initFunc) {
+      if (!initFunc(this, _typeRegistry)) {
+        throw core::Exception("SimControl", ("Library Initialise failed for " +
+                                             std::string(libraryPath))
+                                                .c_str());
+      }
+    } else {
+      _logger->Log(this,
+                   ("Library loaded but 'Initialise' entry point not found: " +
+                    std::string(libraryPath))
+                       .c_str(),
+                   1);
+    }
+
+    _loadedLibraries.push_back(handle);
+  } catch (const sim::LibraryException &ex) {
+    throw core::Exception("SimControl", ex.what());
+  }
+}
 
 } // namespace sim

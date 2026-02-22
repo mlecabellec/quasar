@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Smp/ISimulator.h>
+#include "sim/TypeRegistry.hpp"
+#include <Smp/IDynamicSimulator.h>
 #include <core/Container.hpp>
 #include <core/Object.hpp>
 #include <core/SimpleCollection.hpp>
@@ -23,8 +24,7 @@ namespace sim {
 class Resolver;
 class LinkRegistry;
 
-class Simulator : public core::Object,
-                  public virtual Smp::ISimulator {
+class Simulator : public core::Object, public virtual Smp::IDynamicSimulator {
 public:
   Simulator();
   virtual ~Simulator() noexcept;
@@ -66,20 +66,25 @@ public:
   const Smp::ContainerCollection *GetContainers() const override;
   Smp::IContainer *GetContainer(Smp::String8 name) const override;
 
-  // ISimulator methods
+  // ISimulator Methods
   void Initialise() override;
   void Publish() override;
-  void Configure() override;
-  void Connect() override;
   void Run() override;
-  void Hold(Smp::Bool immediate) override;
+  void Run(Smp::Duration time) override;
   void Store(Smp::String8 filename) override;
   void Restore(Smp::String8 filename) override;
-  void Reconnect(Smp::IComponent *root) override;
   void Exit() override;
   void Abort() override;
   Smp::SimulatorStateKind GetSimulatorState() const override;
 
+  // IDynamicSimulator Methods
+  void RegisterFactory(Smp::IFactory *componentFactory) override;
+  Smp::IComponent *CreateInstance(const Smp::Uuid implUuid) override;
+  const Smp::IFactory *GetFactory(const Smp::Uuid implUuid) const override;
+  const Smp::FactoryCollection *
+  GetFactories(const Smp::Uuid specUuid) const override;
+
+  // ISimulator methods (remaining from original ISimulator)
   void AddInitEntryPoint(Smp::IEntryPoint *entryPoint) override;
   void AddModel(Smp::IModel *model) override;
   void AddService(Smp::IService *service) override;
@@ -90,11 +95,9 @@ public:
   Smp::Services::IEventManager *GetEventManager() const override;
   Smp::Services::IResolver *GetResolver() const override;
   Smp::Services::ILinkRegistry *GetLinkRegistry() const override;
-  void RegisterFactory(Smp::IFactory *componentFactory) override;
   Smp::IComponent *CreateInstance(Smp::Uuid uuid, Smp::String8 name,
                                   Smp::String8 description,
                                   Smp::IComposite *parent) override;
-  Smp::IFactory *GetFactory(Smp::Uuid uuid) const override;
   const Smp::FactoryCollection *GetFactories() const override;
   Smp::Publication::ITypeRegistry *GetTypeRegistry() const override;
   void LoadLibrary(Smp::String8 libraryPath,
@@ -119,8 +122,9 @@ private:
   core::Container *_modelsContainer;
   core::Container *_servicesContainer;
   core::SimpleCollection<Smp::IFactory> _factories;
-  Smp::Publication::ITypeRegistry *_typeRegistry = nullptr;
+  TypeRegistry *_typeRegistry;
   std::vector<Smp::IEntryPoint *> _initEntryPoints;
+  std::vector<void *> _loadedLibraries;
 
   // Recursive helpers
   void RecursivelyPublish(Smp::IComponent *component);
