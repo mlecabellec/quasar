@@ -372,7 +372,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   FrameBuilder builder;
   uint8_t idx = current_idx_++;
   builder.add_datagram(cmd, idx, addr, offset, data);
-  std::vector<byte> frame = builder.build();
+  std::span<const byte> frame = builder.build();
 
   // Send the frame.
   // In a full redundancy scenario, we might want to send on both if the loop is
