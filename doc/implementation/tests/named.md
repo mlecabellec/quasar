@@ -38,20 +38,10 @@ The test suite is built using **GoogleTest** and is defined in `CMakeLists.txt`,
     *   **Sequence:** Create `NamedInteger` and `NamedBoolean` children.
     *   **Post-conditions:** Child values are correctly stored and retrieved.
 
-*   **`SerializationXML` / `SerializationYAML`**
-    *   **Pre-conditions:** Tree `root -> val` (NamedInteger).
-    *   **Sequence:** Call `toXml(root)` and `toYaml(root)`.
-    *   **Post-conditions:** Output strings contain expected fragments (`name="root"`, `name: root`).
-
-*   **`NamedBuffers`**
-    *   **Pre-conditions:** Root node.
-    *   **Sequence:** Create `NamedBuffer` and `NamedBitBuffer` objects.
-    *   **Post-conditions:** Byte and bit data are preserved and accessible through the named interface.
-
-*   **`RelatedObject`**
-    *   **Pre-conditions:** Two `NamedObject` instances.
-    *   **Sequence:** Set one as related to the other. Destroy the related object.
-    *   **Post-conditions:** Relationship is initially established. After destruction, the weak reference is automatically cleared (returns `nullptr`).
+*   **Serialization (XML / YAML / JSON)**
+    - **Pre-conditions**: A complex tree containing `NamedInteger`, `NamedBoolean`, `NamedString`, `NamedFloatingPoint`, `NamedBuffer`, and `NamedBitBuffer`.
+    - **Sequence**: Execute round-trip serialization: `toXml`/`fromXml`, `toYaml`/`fromYaml`, `toJson`/`fromJson`.
+    - **Post-conditions**: The restored tree must exactly match the original in terms of names, hierarchy, and values for all data types.
 
 ---
 
@@ -60,19 +50,19 @@ The test suite is built using **GoogleTest** and is defined in `CMakeLists.txt`,
 **Test Cases:**
 
 *   **`NamedBufferSliceTest.CreationAndUsage`**
-    *   **Pre-conditions:** `Buffer` with known data.
-    *   **Sequence:** Create `NamedBufferSlice`. Create a sub-slice from it.
-    *   **Post-conditions:** Slice correctly accesses original buffer data. Sub-slice tracks parent slice and has generated name (e.g., `parent_slice`).
+    - **Pre-conditions**: `Buffer` with known data.
+    - **Sequence**: Create `NamedBufferSlice`. Create a sub-slice from it.
+    - **Post-conditions**: Slice correctly accesses original buffer data. Sub-slice tracks parent slice and has generated name (e.g., `parent_slice`).
 
 *   **`NamedBitBufferSliceTest.CreationAndUsage`**
-    *   **Pre-conditions:** `BitBuffer` with known bits.
-    *   **Sequence:** Create `NamedBitBufferSlice`. Create a sub-slice.
-    *   **Post-conditions:** Slice and sub-slice access correct bit ranges and report correct sizes.
+    - **Pre-conditions**: `BitBuffer` with known bits.
+    - **Sequence**: Create `NamedBitBufferSlice`. Create a sub-slice.
+    - **Post-conditions**: Slice and sub-slice access correct bit ranges and report correct sizes.
 
 *   **`NamedBufferSliceTest.Clone`**
-    *   **Pre-conditions:** `NamedBufferSlice` pointing to buffer data.
-    *   **Sequence:** Call `clone()`.
-    *   **Post-conditions:** Clone is a distinct `NamedBufferSlice` with identical state.
+    - **Pre-conditions**: `NamedBufferSlice` pointing to buffer data.
+    - **Sequence**: Call `clone()`.
+    - **Post-conditions**: Clone is a distinct `NamedBufferSlice` with identical state.
 
 ---
 
@@ -81,19 +71,19 @@ The test suite is built using **GoogleTest** and is defined in `CMakeLists.txt`,
 **Test Cases:**
 
 *   **`CreationAndValue`**
-    *   **Pre-conditions:** None.
-    *   **Sequence:** Create `NamedString` with name and initial content.
-    *   **Post-conditions:** Name, content, and length are correctly reported.
+    - **Pre-conditions**: None.
+    - **Sequence**: Create `NamedString` with name and initial content.
+    - **Post-conditions**: Name, content, and length are correctly reported.
 
 *   **`ParentChild`**
-    *   **Pre-conditions:** Root node.
-    *   **Sequence:** Create `NamedString` as a child of root.
-    *   **Post-conditions:** Parent-child relationship is correctly established in both directions.
+    - **Pre-conditions**: Root node.
+    - **Sequence**: Create `NamedString` as a child of root.
+    - **Post-conditions**: Parent-child relationship is correctly established in both directions.
 
 *   **`Clone`**
-    *   **Pre-conditions:** `NamedString` with content.
-    *   **Sequence:** Call `clone()`.
-    *   **Post-conditions:** Clone has identical name and content.
+    - **Pre-conditions**: `NamedString` with content.
+    - **Sequence**: Call `clone()`.
+    - **Post-conditions**: Clone has identical name and content.
 
 ---
 
@@ -102,14 +92,14 @@ The test suite is built using **GoogleTest** and is defined in `CMakeLists.txt`,
 **Test Cases:**
 
 *   **`DeepHierarchy`**
-    *   **Pre-conditions:** Root node.
-    *   **Sequence:** Iteratively create children 1000 levels deep. Search for "node_999".
-    *   **Post-conditions:** Leaf node is found and has correct name. Stack does not overflow.
+    - **Pre-conditions**: Root node.
+    - **Sequence**: Iteratively create children 1000 levels deep. Search for "node_999".
+    - **Post-conditions**: Leaf node is found and has correct name. Stack does not overflow.
 
 *   **`WideHierarchy`**
-    *   **Pre-conditions:** Root node.
-    *   **Sequence:** Create 5000 children under root. Search for "child_4999".
-    *   **Post-conditions:** Root child count is 5000. Target child is found.
+    - **Pre-conditions**: Root node.
+    - **Sequence**: Create 5000 children under root. Search for "child_4999".
+    - **Post-conditions**: Root child count is 5000. Target child is found.
 
 ---
 
@@ -118,16 +108,32 @@ The test suite is built using **GoogleTest** and is defined in `CMakeLists.txt`,
 **Test Cases:**
 
 *   **`DFS`**
-    *   **Pre-conditions:** Tree `root -> {c1 -> c11, c2}`.
-    *   **Sequence:** Execute `forEachDepthFirst`.
-    *   **Post-conditions:** Visits nodes in order: `root`, `c1`, `c11`, `c2`.
+    - **Pre-conditions**: Tree `root -> {c1 -> c11, c2}`.
+    - **Sequence**: Execute `forEachDepthFirst`.
+    - **Post-conditions**: Visits nodes in order: `root`, `c1`, `c11`, `c2`.
 
 *   **`BFS`**
-    *   **Pre-conditions:** Tree `root -> {c1 -> c11, c2}`.
-    *   **Sequence:** Execute `forEachBreadthFirst`.
-    *   **Post-conditions:** Visits nodes in order: `root`, `c1`, `c2`, `c11`.
+    - **Pre-conditions**: Tree `root -> {c1 -> c11, c2}`.
+    - **Sequence**: Execute `forEachBreadthFirst`.
+    - **Post-conditions**: Visits nodes in order: `root`, `c1`, `c2`, `c11`.
 
 *   **`DeepCopy`**
-    *   **Pre-conditions:** Tree `root -> c1` (NamedInteger 42).
-    *   **Sequence:** Call `deepCopy(root)`. Modify copy (add child).
-    *   **Post-conditions:** Original tree is unchanged. Copy contains a `NamedInteger` with value 42. Copy structure matches original at time of copy.
+    - **Pre-conditions**: Tree `root -> c1` (NamedInteger 42).
+    - **Sequence**: Call `deepCopy(root)`. Modify copy (add child).
+    - **Post-conditions**: Original tree is unchanged. Copy contains a `NamedInteger` with value 42. Copy structure matches original at time of copy.
+
+---
+
+## 6. Thread Safety Tests (`TestNamedObjectThreadSafety.cpp`)
+
+The thread safety tests ensure that concurrent operations on the `NamedObject` tree do not cause deadlocks or race conditions.
+
+### Stress Test Case
+
+- **Setup**: One root `NamedObject` shared among multiple threads.
+- **Concurrent Actions**:
+    - **Adder Threads (2)**: Continually create new child objects with unique IDs.
+    - **Remover Threads (2)**: Randomly select and detach children from the parent.
+    - **Reader Threads (4)**: Continually iterate over the child list and access object names.
+- **Duration**: 1 second of intensive concurrent execution.
+- **Verification**: No crashes, assertion failures, or deadlocks occur during the test period. Objects remains in a consistent state throughout the operations.

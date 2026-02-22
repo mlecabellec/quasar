@@ -54,3 +54,18 @@ The `test_coe_upload` executable verifies the CoE (CANopen over EtherCAT) protoc
     -   Asserts that `sdo_read` returns `CoEError::Success` for supported objects.
     -   Verifies that the read data (Device Name string and Vendor ID integer) matches expected formats (implied by successful decode).
     -   Reports success or failure for each operation.
+
+## test_diagnostics
+
+### Description
+Verifies the `Diagnostics` class functionality, including reading error counters and monitoring port status.
+
+## test_dc_calc
+
+### Description
+Tests the Distributed Clocks (DC) calculations, including propagation delay and offset estimation.
+
+## test_soe_framing
+
+### Description
+Verifies the framing of Servo Profile over EtherCAT (SoE) datagrams.

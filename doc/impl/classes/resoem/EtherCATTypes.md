@@ -50,9 +50,19 @@ Defines Mailbox types.
 
 ### Namespace `coe`
 Defines CANopen over EtherCAT constants.
-- `SDO_REQUEST`, `SDO_RESPONSE`
-- `SDO_DOWNLOAD_...`, `SDO_UPLOAD_...`
-- `SDO_ABORT`
+- `SDO_DOWNLOAD_EXP_REQ` (0x23), `SDO_DOWNLOAD_INIT` (0x21), `SDO_DOWNLOAD_INIT_CA`
+- `SDO_DOWNLOAD_RESP` (0x60)
+- `SDO_UPLOAD_REQ` (0x40), `SDO_UPLOAD_REQ_CA`, `SDO_UPLOAD_EXP_RESP`, `SDO_UPLOAD_NORM_RESP`
+- `SDO_SEG_UP_REQ` (0x60), `SDO_SEG_DOWN_RESP` (0x20)
+- `SDO_ABORT` (0x80)
+
+### Namespace `foe`
+Defines File over EtherCAT opcodes and headers.
+- `RRQ`, `WRQ`, `DATA`, `ACK`, `ERR`, `BUSY`
+
+### Namespace `eoe`
+Defines Ethernet over EtherCAT message types and headers.
+- `INIT_REQ`, `INIT_RESP`, `SET_IP_REQ`, `FRAME_DATA`
 
 ## [IMPL-CLASSES-003] Attributes
 - Constants only.

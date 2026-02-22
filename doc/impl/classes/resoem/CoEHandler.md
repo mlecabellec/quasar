@@ -5,9 +5,11 @@ The `CoEHandler` class implements the CANopen over EtherCAT (CoE) protocol. It p
 
 ## [IMPL-CLASSES-002] Methods
 - `CoEHandler(MailboxHandler &mailbox)`: Constructor.
-- `CoEError sdo_write(SlaveInfo &slave, uint16_t index, uint8_t subindex, std::span<const byte> data, bool complete_access, std::chrono::microseconds timeout)`: Performs an SDO Download (Write).
-- `CoEError sdo_read(SlaveInfo &slave, uint16_t index, uint8_t subindex, std::span<byte> data, size_t &actual_size, bool complete_access, std::chrono::microseconds timeout)`: Performs an SDO Upload (Read).
-- `CoEError handle_sdo_abort(uint16_t slave_addr, uint16_t index, uint8_t subindex, uint32_t abort_code)`: Internal helper to log and handle SDO abort codes.
+- `Result<> sdo_write(SlaveInfo &slave, uint16_t index, uint8_t subindex, std::span<const byte> data, bool complete_access, std::chrono::microseconds timeout)`: Performs an SDO Download (Write). Handles expedited and segmented transfers.
+- `Result<size_t> sdo_read(SlaveInfo &slave, uint16_t index, uint8_t subindex, std::span<byte> data, bool complete_access, std::chrono::microseconds timeout)`: Performs an SDO Upload (Read). Handles expedited and segmented transfers.
+- `Result<std::vector<uint16_t>> read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout)`: Reads the list of all object indexes available in the slave's OD.
+- `Result<ODEntry> read_od_description(SlaveInfo &slave, uint16_t index, std::chrono::microseconds timeout)`: Reads the detailed description of a specific OD entry.
+- `void handle_sdo_abort(uint16_t slave_addr, uint16_t index, uint8_t subindex, uint32_t abort_code)`: Internal helper to log and handle SDO abort codes.
 
 ## [IMPL-CLASSES-003] Attributes
 - `mailbox_`: `MailboxHandler&` - Reference to the mailbox transport handler.
