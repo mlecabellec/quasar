@@ -18,6 +18,13 @@ Smp::String8 Type::GetDescription() const {
   return core::Object::GetDescription();
 }
 Smp::IObject *Type::GetParent() const { return nullptr; }
+Smp::IObject *Type::GetChild(Smp::String8 name) const { return nullptr; }
+
+void Type::Publish(Smp::IPublication *receiver, Smp::String8 name,
+                   Smp::String8 description, void *address, Smp::ViewKind view,
+                   Smp::Bool state, Smp::Bool input, Smp::Bool output) {
+  // Not implemented for stub registry types
+}
 
 // FloatType
 FloatType::FloatType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
@@ -44,11 +51,9 @@ Smp::String8 IntegerType::GetUnit() const { return _unit; }
 // EnumerationType
 EnumerationType::EnumerationType(Smp::String8 name, Smp::String8 desc,
                                  Smp::Uuid uuid, Smp::Int16 memSize)
-    : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_Int32),
-      _memorySize(memSize) {}
+    : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_Int32) {}
 void EnumerationType::AddLiteral(Smp::String8 name, Smp::String8 description,
                                  Smp::Int32 value) { /* Stub */ }
-Smp::Int16 EnumerationType::GetMemorySize() const { return _memorySize; }
 
 // ArrayType
 ArrayType::ArrayType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
@@ -74,16 +79,19 @@ StructureType::StructureType(Smp::String8 name, Smp::String8 desc,
                              Smp::Uuid uuid)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_None) {}
 void StructureType::AddField(Smp::String8 name, Smp::String8 description,
-                             Smp::Uuid uuid, Smp::Int64 offset) { /* Stub */ }
+                             Smp::Uuid uuid, Smp::Int64 offset,
+                             Smp::ViewKind view, Smp::Bool state,
+                             Smp::Bool input, Smp::Bool output) { /* Stub */ }
 
 // ClassType
 ClassType::ClassType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
                      Smp::Uuid baseClassUuid)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_None),
       _baseClassUuid(baseClassUuid) {}
-Smp::Uuid ClassType::GetBaseClass() const { return _baseClassUuid; }
 void ClassType::AddField(Smp::String8 name, Smp::String8 description,
-                         Smp::Uuid uuid, Smp::Int64 offset) { /* Stub */ }
+                         Smp::Uuid uuid, Smp::Int64 offset, Smp::ViewKind view,
+                         Smp::Bool state, Smp::Bool input,
+                         Smp::Bool output) { /* Stub */ }
 
 // TypeRegistry
 TypeRegistry::TypeRegistry()
@@ -137,7 +145,7 @@ TypeRegistry::AddEnumerationType(Smp::String8 name, Smp::String8 description,
                                  Smp::Uuid typeUuid, Smp::Int16 memorySize) {
   _typesByUuid[typeUuid] = std::make_unique<EnumerationType>(
       name, description, typeUuid, memorySize);
-  return static_cast<Smp::Publication::IEnumerationType *>(
+  return dynamic_cast<Smp::Publication::IEnumerationType *>(
       _typesByUuid[typeUuid].get());
 }
 
@@ -149,7 +157,7 @@ TypeRegistry::AddArrayType(Smp::String8 name, Smp::String8 description,
   _typesByUuid[typeUuid] =
       std::make_unique<ArrayType>(name, description, typeUuid, itemTypeUuid,
                                   itemSize, arrayCount, simpleArray);
-  return static_cast<Smp::Publication::IArrayType *>(
+  return dynamic_cast<Smp::Publication::IArrayType *>(
       _typesByUuid[typeUuid].get());
 }
 
@@ -167,7 +175,7 @@ TypeRegistry::AddStructureType(Smp::String8 name, Smp::String8 description,
                                Smp::Uuid typeUuid) {
   _typesByUuid[typeUuid] =
       std::make_unique<StructureType>(name, description, typeUuid);
-  return static_cast<Smp::Publication::IStructureType *>(
+  return dynamic_cast<Smp::Publication::IStructureType *>(
       _typesByUuid[typeUuid].get());
 }
 
@@ -176,7 +184,7 @@ TypeRegistry::AddClassType(Smp::String8 name, Smp::String8 description,
                            Smp::Uuid typeUuid, Smp::Uuid baseClassUuid) {
   _typesByUuid[typeUuid] =
       std::make_unique<ClassType>(name, description, typeUuid, baseClassUuid);
-  return static_cast<Smp::Publication::IClassType *>(
+  return dynamic_cast<Smp::Publication::IClassType *>(
       _typesByUuid[typeUuid].get());
 }
 

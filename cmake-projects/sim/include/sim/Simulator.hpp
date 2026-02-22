@@ -81,12 +81,9 @@ public:
   void Abort() override;
   Smp::SimulatorStateKind GetSimulatorState() const override;
 
-  // IDynamicSimulator Methods
+  // ISimulator factory methods
   void RegisterFactory(Smp::IFactory *componentFactory) override;
-  Smp::IComponent *CreateInstance(const Smp::Uuid implUuid) override;
-  const Smp::IFactory *GetFactory(const Smp::Uuid implUuid) const override;
-  const Smp::FactoryCollection *
-  GetFactories(const Smp::Uuid specUuid) const override;
+  Smp::IFactory *GetFactory(Smp::Uuid uuid) const override;
 
   // ISimulator methods (remaining from original ISimulator)
   void AddInitEntryPoint(Smp::IEntryPoint *entryPoint) override;

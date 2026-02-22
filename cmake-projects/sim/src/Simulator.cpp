@@ -397,18 +397,10 @@ Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
   }
   return nullptr;
 }
-Smp::IComponent *Simulator::CreateInstance(const Smp::Uuid implUuid) {
-  for (auto *factory : this->_factories) {
-    if (factory->GetUuid() == implUuid) {
-      return factory->CreateInstance("", "", nullptr);
-    }
-  }
-  return nullptr;
-}
 
-const Smp::IFactory *Simulator::GetFactory(const Smp::Uuid implUuid) const {
+Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
   for (auto *factory : this->_factories) {
-    if (factory->GetUuid() == implUuid) {
+    if (factory->GetUuid() == uuid) {
       return factory;
     }
   }
@@ -416,12 +408,6 @@ const Smp::IFactory *Simulator::GetFactory(const Smp::Uuid implUuid) const {
 }
 
 const Smp::FactoryCollection *Simulator::GetFactories() const {
-  return &this->_factories;
-}
-
-const Smp::FactoryCollection *
-Simulator::GetFactories(const Smp::Uuid specUuid) const {
-  // Return just generic factories, or filter if we had spec UUIDs
   return &this->_factories;
 }
 
@@ -439,7 +425,7 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
     }
 
     // Attempt to locate and call Initialise
-    typedef bool (*InitialiseFunctionPtr)(Smp::IDynamicSimulator *,
+    typedef bool (*InitialiseFunctionPtr)(Smp::ISimulator *,
                                           Smp::Publication::ITypeRegistry *);
 
     InitialiseFunctionPtr initFunc = reinterpret_cast<InitialiseFunctionPtr>(

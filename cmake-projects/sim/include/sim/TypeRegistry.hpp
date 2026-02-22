@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Smp/IPublication.h>
 #include <Smp/Publication/IFloatType.h>
 #include <Smp/Publication/IIntegerType.h>
 #include <Smp/Publication/IStringType.h>
@@ -24,6 +25,14 @@ public:
   Smp::String8 GetName() const override;
   Smp::String8 GetDescription() const override;
   Smp::IObject *GetParent() const override;
+  Smp::IObject *GetChild(Smp::String8 name) const override;
+
+  // IType overrides
+  void Publish(Smp::IPublication *receiver, Smp::String8 name,
+               Smp::String8 description, void *address,
+               Smp::ViewKind view = Smp::ViewKind::VK_All,
+               Smp::Bool state = true, Smp::Bool input = false,
+               Smp::Bool output = false) override;
 
 protected:
   Smp::Uuid _uuid;
