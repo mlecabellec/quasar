@@ -24,6 +24,7 @@ public:
   virtual ~Simulator() noexcept = default;
 
   // IObject methods
+  const Uuid &GetUuid() const override;
   String8 GetName() const noexcept override { return Object::GetName(); }
   String8 GetDescription() const noexcept override {
     return Object::GetDescription();
@@ -37,6 +38,22 @@ public:
   IContainer *GetContainer(String8 name) const override {
     return containers.at(name);
   }
+
+  // IComponent methods
+  ComponentStateKind GetState() const override;
+  void Publish(IPublication *receiver) override;
+  void Configure(Services::ILogger *logger, Services::ILinkRegistry *linkRegistry = nullptr) override;
+  void Connect(ISimulator *simulator) override;
+  void Disconnect() override;
+  IField *GetField(String8 fullName) const override;
+  const FieldCollection *GetFields() const override;
+  AnySimple GetSimpleValue(String8 fullName) const override;
+  void SetSimpleValue(String8 fullName, AnySimple value) override;
+  void GetSimpleArrayValue(String8 fullName, UInt64 length, AnySimple *values, UInt64 startIndex = 0) const override;
+  void SetSimpleArrayValue(String8 fullName, UInt64 length, AnySimpleArray values, UInt64 startIndex = 0) override;
+  Bool AddChild(IObject *child, const IObject *collection) override;
+  Bool RemoveChild(IObject *child, const IObject *collection) override;
+  IObject *IsChildInCollection(String8 child, const IObject *collection) const override;
 
   // ISimulator methods
   void Initialise() override;
@@ -81,6 +98,8 @@ private:
   Collection<IContainer> containers;
   Collection<IFactory> factories;
   std::vector<IEntryPoint *> initEntryPoints;
+  Uuid uuid;
+  Collection<IField> fields;
 
   // Containers
   IContainer *models;

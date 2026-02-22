@@ -50,7 +50,8 @@ Simulator::Simulator(String8 name, String8 description,
     : Object(name, description, nullptr),
       state(SimulatorStateKind::SSK_Building), typeRegistry(typeRegistry),
       containers("Containers", "Container Collection", this),
-      factories("Factories", "Factory Collection", this) {
+      factories("Factories", "Factory Collection", this),
+      fields("Fields", "Field Collection", this) {
 
   auto modelsPtr = std::make_unique<SimulatorContainer>(
       SMP_SimulatorModels, "Models container", this);
@@ -223,6 +224,59 @@ Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
 
 void Simulator::LoadLibrary(String8 libraryPath, LibraryLoadingFlag flag) {
   // Library loading not implemented in this skeleton
+}
+
+// IObject methods
+const Uuid &Simulator::GetUuid() const { return uuid; }
+
+// IComponent methods
+ComponentStateKind Simulator::GetState() const {
+  switch (state) {
+  case SimulatorStateKind::SSK_Building:
+    return ComponentStateKind::CSK_Created;
+  case SimulatorStateKind::SSK_Connecting:
+  case SimulatorStateKind::SSK_Initialising:
+  case SimulatorStateKind::SSK_Standby:
+  case SimulatorStateKind::SSK_Executing:
+  case SimulatorStateKind::SSK_Storing:
+  case SimulatorStateKind::SSK_Restoring:
+  case SimulatorStateKind::SSK_Exiting:
+  case SimulatorStateKind::SSK_Aborting:
+    return ComponentStateKind::CSK_Connected;
+  default:
+    return ComponentStateKind::CSK_Disconnected;
+  }
+}
+
+void Simulator::Publish(IPublication *receiver) {}
+void Simulator::Configure(Services::ILogger *logger,
+                          Services::ILinkRegistry *linkRegistry) {}
+void Simulator::Connect(ISimulator *simulator) {}
+void Simulator::Disconnect() {}
+
+IField *Simulator::GetField(String8 fullName) const { return nullptr; }
+const FieldCollection *Simulator::GetFields() const { return &fields; }
+
+AnySimple Simulator::GetSimpleValue(String8 fullName) const {
+  return AnySimple();
+}
+void Simulator::SetSimpleValue(String8 fullName, AnySimple value) {}
+
+void Simulator::GetSimpleArrayValue(String8 fullName, UInt64 length,
+                                    AnySimple *values,
+                                    UInt64 startIndex) const {}
+void Simulator::SetSimpleArrayValue(String8 fullName, UInt64 length,
+                                    AnySimpleArray values, UInt64 startIndex) {}
+
+Bool Simulator::AddChild(IObject *child, const IObject *collection) {
+  return false;
+}
+Bool Simulator::RemoveChild(IObject *child, const IObject *collection) {
+  return false;
+}
+IObject *Simulator::IsChildInCollection(String8 child,
+                                        const IObject *collection) const {
+  return nullptr;
 }
 
 } // namespace Smp

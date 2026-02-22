@@ -12,9 +12,9 @@ int main() {
 
   // Test 1: Check initial state
   std::cout << "Test 1: Check initial state (Building)" << std::endl;
-  if (simulator->GetState() != Smp::SimulatorStateKind::SSK_Building) {
+  if (simulator->GetSimulatorState() != Smp::SimulatorStateKind::SSK_Building) {
     std::cout << "Error: Expected state SSK_Building, got "
-              << (int)simulator->GetState() << std::endl;
+              << (int)simulator->GetSimulatorState() << std::endl;
     return 1;
   }
 
@@ -32,25 +32,26 @@ int main() {
 
   std::cout << "Step: Connect()" << std::endl;
   simulator->Connect();
-  if (simulator->GetState() != Smp::SimulatorStateKind::SSK_Standby) {
+  if (simulator->GetSimulatorState() != Smp::SimulatorStateKind::SSK_Standby) {
     std::cout << "Error: Expected state SSK_Standby after Connect(), got "
-              << (int)simulator->GetState() << std::endl;
+              << (int)simulator->GetSimulatorState() << std::endl;
     return 1;
   }
 
   std::cout << "Step: Run()" << std::endl;
   simulator->Run();
-  if (simulator->GetState() != Smp::SimulatorStateKind::SSK_Executing) {
+  if (simulator->GetSimulatorState() !=
+      Smp::SimulatorStateKind::SSK_Executing) {
     std::cout << "Error: Expected state SSK_Executing after Run(), got "
-              << (int)simulator->GetState() << std::endl;
+              << (int)simulator->GetSimulatorState() << std::endl;
     return 1;
   }
 
   std::cout << "Step: Hold()" << std::endl;
   simulator->Hold(true);
-  if (simulator->GetState() != Smp::SimulatorStateKind::SSK_Standby) {
+  if (simulator->GetSimulatorState() != Smp::SimulatorStateKind::SSK_Standby) {
     std::cout << "Error: Expected state SSK_Standby after Hold(), got "
-              << (int)simulator->GetState() << std::endl;
+              << (int)simulator->GetSimulatorState() << std::endl;
     return 1;
   }
 

@@ -158,8 +158,8 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
   // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
-  const std::vector<std::shared_ptr<NamedObject>> &siblings = p->m_children;
-  std::vector<std::shared_ptr<NamedObject>>::const_iterator it =
+  const std::list<std::shared_ptr<NamedObject>> &siblings = p->m_children;
+  std::list<std::shared_ptr<NamedObject>>::const_iterator it =
       std::find(siblings.begin(), siblings.end(), getSelf());
 
   // If found and not the last element, return the next one.
