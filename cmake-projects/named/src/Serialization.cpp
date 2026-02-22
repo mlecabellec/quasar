@@ -47,8 +47,10 @@ createFromTypeAndValue(const std::string &name, const std::string &type,
   } else if (type == "BitBuffer") {
     // BitBuffer reconstruction. Currently assumes byte-aligned data from
     // string.
-    auto buf = quasar::coretypes::Buffer::fromString(valueStr);
-    auto nbb = NamedBitBuffer::create(name, buf.size() * 8, parent);
+    quasar::coretypes::Buffer buf =
+        quasar::coretypes::Buffer::fromString(valueStr);
+    std::shared_ptr<NamedBitBuffer> nbb =
+        NamedBitBuffer::create(name, buf.size() * 8, parent);
     // Copy data byte-by-byte.
     for (size_t i = 0; i < buf.size(); ++i)
       nbb->set(i, buf.get(i));
@@ -72,27 +74,41 @@ void serializeToXml(XMLElement *element,
 
   // Use dynamic_cast to identify the underlying core type and serialize its
   // value.
-  if (auto b = dynamic_cast<const quasar::coretypes::Boolean *>(obj.get())) {
+  const quasar::coretypes::Boolean *b =
+      dynamic_cast<const quasar::coretypes::Boolean *>(obj.get());
+  if (b) {
     element->SetAttribute("type", "Boolean");
     element->SetText(b->toString().c_str());
-  } else if (auto n =
-                 dynamic_cast<const quasar::coretypes::Number *>(obj.get())) {
-    element->SetAttribute("type", n->getType().c_str());
-    element->SetText(n->toString().c_str());
-  } else if (auto bb = dynamic_cast<const quasar::coretypes::BitBuffer *>(
-                 obj.get())) {
-    element->SetAttribute("type", "BitBuffer");
-    element->SetText(bb->toString().c_str());
-  } else if (auto buf =
-                 dynamic_cast<const quasar::coretypes::Buffer *>(obj.get())) {
-    element->SetAttribute("type", "Buffer");
-    element->SetText(buf->toString().c_str());
-  } else if (auto s =
-                 dynamic_cast<const quasar::coretypes::String *>(obj.get())) {
-    element->SetAttribute("type", "String");
-    element->SetText(s->toString().c_str());
   } else {
-    element->SetAttribute("type", "Object");
+    const quasar::coretypes::Number *n =
+        dynamic_cast<const quasar::coretypes::Number *>(obj.get());
+    if (n) {
+      element->SetAttribute("type", n->getType().c_str());
+      element->SetText(n->toString().c_str());
+    } else {
+      const quasar::coretypes::BitBuffer *bb =
+          dynamic_cast<const quasar::coretypes::BitBuffer *>(obj.get());
+      if (bb) {
+        element->SetAttribute("type", "BitBuffer");
+        element->SetText(bb->toString().c_str());
+      } else {
+        const quasar::coretypes::Buffer *buf =
+            dynamic_cast<const quasar::coretypes::Buffer *>(obj.get());
+        if (buf) {
+          element->SetAttribute("type", "Buffer");
+          element->SetText(buf->toString().c_str());
+        } else {
+          const quasar::coretypes::String *s =
+              dynamic_cast<const quasar::coretypes::String *>(obj.get());
+          if (s) {
+            element->SetAttribute("type", "String");
+            element->SetText(s->toString().c_str());
+          } else {
+            element->SetAttribute("type", "Object");
+          }
+        }
+      }
+    }
   }
 
   // Recursively serialize all children as nested elements.
@@ -228,7 +244,7 @@ void deserializeFromYaml(const YAML::Node &node,
       createFromTypeAndValue(name, type, value, parent);
 
   if (node["children"]) {
-    for (const auto &child : node["children"]) {
+    for (const YAML::Node &child : node["children"]) {
       deserializeFromYaml(child, obj);
     }
   }
@@ -247,7 +263,7 @@ std::shared_ptr<NamedObject> fromYaml(const std::string &yaml) {
       createFromTypeAndValue(name, type, value, nullptr);
 
   if (root["children"]) {
-    for (const auto &child : root["children"]) {
+    for (const YAML::Node &child : root["children"]) {
       deserializeFromYaml(child, obj);
     }
   }
@@ -266,33 +282,48 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
   j["name"] = obj->getName();
 
   // Map object properties to JSON fields.
-  if (auto b = dynamic_cast<const quasar::coretypes::Boolean *>(obj.get())) {
+  const quasar::coretypes::Boolean *b =
+      dynamic_cast<const quasar::coretypes::Boolean *>(obj.get());
+  if (b) {
     j["type"] = "Boolean";
     j["value"] = b->toString();
-  } else if (auto n =
-                 dynamic_cast<const quasar::coretypes::Number *>(obj.get())) {
-    j["type"] = n->getType();
-    j["value"] = n->toString();
-  } else if (auto bb = dynamic_cast<const quasar::coretypes::BitBuffer *>(
-                 obj.get())) {
-    j["type"] = "BitBuffer";
-    j["value"] = bb->toString();
-  } else if (auto buf =
-                 dynamic_cast<const quasar::coretypes::Buffer *>(obj.get())) {
-    j["type"] = "Buffer";
-    j["value"] = buf->toString();
-  } else if (auto s =
-                 dynamic_cast<const quasar::coretypes::String *>(obj.get())) {
-    j["type"] = "String";
-    j["value"] = s->toString();
   } else {
-    j["type"] = "Object";
+    const quasar::coretypes::Number *n =
+        dynamic_cast<const quasar::coretypes::Number *>(obj.get());
+    if (n) {
+      j["type"] = n->getType();
+      j["value"] = n->toString();
+    } else {
+      const quasar::coretypes::BitBuffer *bb =
+          dynamic_cast<const quasar::coretypes::BitBuffer *>(obj.get());
+      if (bb) {
+        j["type"] = "BitBuffer";
+        j["value"] = bb->toString();
+      } else {
+        const quasar::coretypes::Buffer *buf =
+            dynamic_cast<const quasar::coretypes::Buffer *>(obj.get());
+        if (buf) {
+          j["type"] = "Buffer";
+          j["value"] = buf->toString();
+        } else {
+          const quasar::coretypes::String *s =
+              dynamic_cast<const quasar::coretypes::String *>(obj.get());
+          if (s) {
+            j["type"] = "String";
+            j["value"] = s->toString();
+          } else {
+            j["type"] = "Object";
+          }
+        }
+      }
+    }
   }
 
   // Process children as a JSON array.
   if (!obj->getChildren().empty()) {
     json children = json::array();
-    auto children_list = obj->getChildren();
+    std::vector<std::shared_ptr<NamedObject>> children_list =
+        obj->getChildren();
     std::transform(children_list.begin(), children_list.end(),
                    std::back_inserter(children),
                    [](const std::shared_ptr<NamedObject> &child) {

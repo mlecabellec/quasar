@@ -25,13 +25,14 @@ public:
          const quasar::coretypes::BitBufferSlice &buffer) {
 
     // Create a root container to hold results
-    auto resultContainer =
+    std::shared_ptr<quasar::named::NamedObject> resultContainer =
         quasar::named::NamedObject::create(schema->getName());
 
-    for (const auto &field : schema->getFields()) {
+    for (const std::shared_ptr<FieldDef> &field : schema->getFields()) {
 
       // Check for conditional presence
-      auto condField = std::dynamic_pointer_cast<ConditionalFieldDef>(field);
+      std::shared_ptr<ConditionalFieldDef> condField =
+          std::dynamic_pointer_cast<ConditionalFieldDef>(field);
       if (condField && !condField->isPresent(resultContainer.get())) {
         continue;
       }
@@ -47,8 +48,9 @@ public:
       // For now assume fixed size or handle exception
 
       try {
-        auto slice = buffer.slice(offset, size);
-        auto decodedValue = field->getCodec()->decode(slice);
+        quasar::coretypes::BitBufferSlice slice = buffer.slice(offset, size);
+        std::shared_ptr<quasar::named::NamedObject> decodedValue =
+            field->getCodec()->decode(slice);
 
         // TODO: Properly attach decodedValue to resultContainer
         // resultContainer->addChild(decodedValue);
@@ -69,7 +71,7 @@ public:
                      quasar::coretypes::BitBufferSlice &buffer) {
 
     // Iterate schema and write fields
-    for (const auto &field : schema->getFields()) {
+    for (const std::shared_ptr<FieldDef> &field : schema->getFields()) {
       // ... encoding logic mirroring decode ...
     }
   }

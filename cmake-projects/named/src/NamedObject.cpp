@@ -151,15 +151,16 @@ std::shared_ptr<NamedObject> NamedObject::getPreviousSibling() const {
 }
 
 std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
-  auto p = getParent();
+  std::shared_ptr<NamedObject> p = getParent();
   if (!p)
     return nullptr;
 
   // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::lock_guard<std::recursive_mutex> lock(p->m_mutex);
-  auto &siblings = p->m_children;
-  auto it = std::find(siblings.begin(), siblings.end(), getSelf());
+  const std::vector<std::shared_ptr<NamedObject>> &siblings = p->m_children;
+  std::vector<std::shared_ptr<NamedObject>>::const_iterator it =
+      std::find(siblings.begin(), siblings.end(), getSelf());
 
   // If found and not the last element, return the next one.
   if (it != siblings.end() && std::next(it) != siblings.end()) {

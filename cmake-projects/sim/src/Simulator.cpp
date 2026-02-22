@@ -2,6 +2,7 @@
 #include "sched/Scheduler.hpp"
 #include "sim/LibraryLoader.hpp"
 #include "sim/LinkRegistry.hpp"
+#include "sim/Publication.hpp"
 #include "sim/Resolver.hpp"
 #include "utils/EventManager.hpp"
 #include "utils/Logger.hpp"
@@ -166,7 +167,9 @@ void Simulator::Publish() {
     throw core::InvalidSimulatorState(_simState);
 
   // Recursively publish
-  // ...
+  for (auto *component : *_modelsContainer->GetComponents()) {
+    RecursivelyPublish(component);
+  }
 
   _simState = Smp::SimulatorStateKind::SSK_Building; // Stays in building?
   // "The Publish() operation will traverse recursively... This method must only
@@ -178,7 +181,9 @@ void Simulator::Configure() {
     throw core::InvalidSimulatorState(_simState);
 
   // Recursively configure
-  // ...
+  for (auto *component : *_modelsContainer->GetComponents()) {
+    RecursivelyConfigure(component);
+  }
 }
 
 void Simulator::Connect() {
@@ -188,7 +193,9 @@ void Simulator::Connect() {
   _simState = Smp::SimulatorStateKind::SSK_Connecting;
 
   // Recursively connect
-  // ...
+  for (auto *component : *_modelsContainer->GetComponents()) {
+    RecursivelyConnect(component);
+  }
 
   _simState = Smp::SimulatorStateKind::SSK_Initialising;
   // Call init entry points
@@ -279,7 +286,10 @@ void Simulator::RecursivelyPublish(Smp::IComponent *component) {
   if (!component)
     return;
   if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
-    // component->Publish(nullptr); // Needs real Publication
+    auto publication = std::make_unique<Publication>(GetTypeRegistry());
+    component->Publish(publication.get());
+    // In a real simulator, we would store this publication context
+    // to allow unpublishing later or for introspection.
   }
   if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
     for (auto *container : *composite->GetContainers()) {

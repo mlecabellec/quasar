@@ -61,13 +61,15 @@ public:
 
   std::shared_ptr<quasar::named::NamedObject>
   decode(const quasar::coretypes::BitBufferSlice &buffer) const override {
-    auto rawValue = m_rawCodec->decode(buffer);
+    std::shared_ptr<quasar::named::NamedObject> rawValue =
+        m_rawCodec->decode(buffer);
     return m_transform(rawValue);
   }
 
   void encode(const std::shared_ptr<quasar::named::NamedObject> &value,
               quasar::coretypes::BitBufferSlice &buffer) const override {
-    auto rawValue = m_reverseTransform(value);
+    std::shared_ptr<quasar::named::NamedObject> rawValue =
+        m_reverseTransform(value);
     m_rawCodec->encode(rawValue, buffer);
   }
 
@@ -75,7 +77,8 @@ public:
 
   size_t getEncodedBitSize(
       const std::shared_ptr<quasar::named::NamedObject> &value) const override {
-    auto rawValue = m_reverseTransform(value);
+    std::shared_ptr<quasar::named::NamedObject> rawValue =
+        m_reverseTransform(value);
     return m_rawCodec->getEncodedBitSize(rawValue);
   }
 

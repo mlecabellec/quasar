@@ -9,7 +9,8 @@ using namespace quasar::coretypes;
 TEST(BitBufferSliceTest, CreationAndGet) {
   // Step: Initialize BitBuffer with 16 bits
   std::cout << "Step: Initialize BitBuffer with 16 bits" << std::endl;
-  auto bb = std::make_shared<BitBuffer>(16); // 16 bits, 2 bytes
+  std::shared_ptr<BitBuffer> bb =
+      std::make_shared<BitBuffer>(16); // 16 bits, 2 bytes
 
   // Step: Set bits index 0 and 15 to true
   std::cout << "Step: Set bits index 0 and 15 to true" << std::endl;
@@ -18,7 +19,7 @@ TEST(BitBufferSliceTest, CreationAndGet) {
 
   // Step: Create slice of the entire buffer
   std::cout << "Step: Create slice of the entire buffer" << std::endl;
-  auto slice = bb->sliceBitsView(0, 16);
+  std::shared_ptr<BitBufferSlice> slice = bb->sliceBitsView(0, 16);
 
   // Assertion: Check slice size is 16
   std::cout << "Assertion: Check slice size is 16" << std::endl;
@@ -37,12 +38,12 @@ TEST(BitBufferSliceTest, SubSlice) {
   // Step: Initialize BitBuffer and set bit index 2 to true
   std::cout << "Step: Initialize BitBuffer and set bit index 2 to true"
             << std::endl;
-  auto bb = std::make_shared<BitBuffer>(16);
+  std::shared_ptr<BitBuffer> bb = std::make_shared<BitBuffer>(16);
   bb->setBit(2, true);
 
   // Step: Create slice from index 1 length 5
   std::cout << "Step: Create slice from index 1 length 5" << std::endl;
-  auto slice = bb->sliceBitsView(1, 5); // bits 1..5
+  std::shared_ptr<BitBufferSlice> slice = bb->sliceBitsView(1, 5); // bits 1..5
 
   // Assertion: Check slice size is 5
   std::cout << "Assertion: Check slice size is 5" << std::endl;
@@ -69,22 +70,22 @@ TEST(BitBufferSliceTest, SubSlice) {
 TEST(BitBufferSliceTest, Concat) {
   // Step: Initialize bb1 with bit 0 set to true
   std::cout << "Step: Initialize bb1 with bit 0 set to true" << std::endl;
-  auto bb1 = std::make_shared<BitBuffer>(4);
+  std::shared_ptr<BitBuffer> bb1 = std::make_shared<BitBuffer>(4);
   bb1->setBit(0, true); // 1000
 
   // Step: Initialize bb2 with bit 3 set to true
   std::cout << "Step: Initialize bb2 with bit 3 set to true" << std::endl;
-  auto bb2 = std::make_shared<BitBuffer>(4);
+  std::shared_ptr<BitBuffer> bb2 = std::make_shared<BitBuffer>(4);
   bb2->setBit(3, true); // 0001
 
   // Step: Create slices from bb1 and bb2
   std::cout << "Step: Create slices from bb1 and bb2" << std::endl;
-  auto s1 = bb1->sliceBitsView(0, 4);
-  auto s2 = bb2->sliceBitsView(0, 4);
+  std::shared_ptr<BitBufferSlice> s1 = bb1->sliceBitsView(0, 4);
+  std::shared_ptr<BitBufferSlice> s2 = bb2->sliceBitsView(0, 4);
 
   // Step: Concatenate slices s1 and s2
   std::cout << "Step: Concatenate slices s1 and s2" << std::endl;
-  auto concat = s1->concat(*s2);
+  std::shared_ptr<BitBuffer> concat = s1->concat(*s2);
 
   // Assertion: Check concatenated bit size is 8
   std::cout << "Assertion: Check concatenated bit size is 8" << std::endl;

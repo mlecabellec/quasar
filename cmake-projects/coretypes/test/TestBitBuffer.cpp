@@ -253,11 +253,13 @@ TEST(BitBufferTest, Performance_GetSet) {
 
   // Step: Measure 1M setBit operations
   std::cout << "Step: Measure 1M setBit operations" << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point start =
+      std::chrono::high_resolution_clock::now();
   for (int i = 0; i < iterations; ++i) {
     bb.setBit(i % (1024 * 8), true);
   }
-  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point end =
+      std::chrono::high_resolution_clock::now();
 
   std::chrono::duration<double, std::milli> elapsed = end - start;
   std::cout << "1M setBit operations took: " << elapsed.count() << " ms"
@@ -277,7 +279,7 @@ TEST(BitBufferTest, ThreadSafety) {
 
   // Step: Launch writer thread
   std::cout << "Step: Launch writer thread" << std::endl;
-  auto writer = std::async(std::launch::async, [&]() {
+  std::future<void> writer = std::async(std::launch::async, [&]() {
     int i = 0;
     while (!stop) {
       bb.setBit(i % 1024, true);
@@ -287,7 +289,7 @@ TEST(BitBufferTest, ThreadSafety) {
 
   // Step: Launch reader thread
   std::cout << "Step: Launch reader thread" << std::endl;
-  auto reader = std::async(std::launch::async, [&]() {
+  std::future<void> reader = std::async(std::launch::async, [&]() {
     int i = 0;
     while (!stop) {
       // Just read to provoke race if any

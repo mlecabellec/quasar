@@ -25,9 +25,10 @@ int main(int argc, char *argv[]) {
 
     // Step: Perform slave enumeration
     std::cout << "Step: Perform slave enumeration (BRD count)" << std::endl;
-    auto count_result = enumerator.enumerate();
+    Result<size_t> count_result = enumerator.enumerate();
     if (!count_result.has_value()) {
-      std::cerr << "Error during enumeration: " << static_cast<int>(count_result.error()) << std::endl;
+      std::cerr << "Error during enumeration: "
+                << static_cast<int>(count_result.error()) << std::endl;
       return 1;
     }
     size_t count = count_result.value();
@@ -38,9 +39,9 @@ int main(int argc, char *argv[]) {
 
     // Step: Process Slaves and display information
     std::cout << "Step: Process Slaves and display information" << std::endl;
-    const auto &slaves = enumerator.slaves();
+    const std::vector<SlaveInfo> &slaves = enumerator.slaves();
     for (size_t i = 0; i < slaves.size(); ++i) {
-      const auto &s = slaves[i];
+      const SlaveInfo &s = slaves[i];
       std::cout << "Slave " << (i + 1) << ": " << s.name << std::endl;
       std::cout << "  Vendor: 0x" << std::hex << s.vendor_id << " Product: 0x"
                 << s.product_code << std::dec << std::endl;
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]) {
       std::cout << "  Step: Enumerate SyncManagers for slave " << (i + 1)
                 << std::endl;
       std::cout << "  SyncManagers: " << s.sync_managers.size() << std::endl;
-      for (const auto &sm : s.sync_managers) {
+      for (const SyncManagerInfo &sm : s.sync_managers) {
         std::cout << "    SM" << (int)sm.type << ": Start=0x" << std::hex
                   << sm.start_addr << " Len=" << sm.length << std::dec
                   << std::endl;

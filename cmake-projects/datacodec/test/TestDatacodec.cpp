@@ -21,24 +21,25 @@ int main() {
 
   // 1. Define Codec
   std::cout << "Creating IntegerCodec..." << std::endl;
-  auto uint8Codec = std::make_shared<IntegerCodec<uint8_t>>(8);
+  std::shared_ptr<IntegerCodec<uint8_t>> uint8Codec =
+      std::make_shared<IntegerCodec<uint8_t>>(8);
 
   // 2. Define Schema
   std::cout << "Creating Schema..." << std::endl;
-  auto schema = ContainerDef::create("TestContainer");
-  auto field1 = FieldDef::create("Field1", uint8Codec, 0);
+  std::shared_ptr<ContainerDef> schema = ContainerDef::create("TestContainer");
+  std::shared_ptr<FieldDef> field1 = FieldDef::create("Field1", uint8Codec, 0);
   schema->addField(field1);
 
   // 3. Create Data
   std::cout << "Creating Data..." << std::endl;
   std::vector<uint8_t> rawData = {0xAB};
-  auto buffer = std::make_shared<BitBuffer>(
+  std::shared_ptr<BitBuffer> buffer = std::make_shared<BitBuffer>(
       rawData.size() * 8); // Should use rawData construction if available
   // Manually setting byte for now since BitBuffer might not have vector ctor in
   // this context
   buffer->setByte(0, 0xAB);
 
-  auto slice = buffer->sliceBits(
+  std::shared_ptr<BitBuffer> slice = buffer->sliceBits(
       0, 8); // sliceBits returns BitBuffer value, we need view?
   // BitBufferSlice constructor wrapper if needed or usage of shared_ptr
   // Assuming BitBufferSlice has a constructor taking shared_ptr<Buffer>
@@ -49,9 +50,10 @@ int main() {
   // header-only/template.
 
   std::cout << "Manual Decode Check..." << std::endl;
-  auto decodedObj =
+  std::shared_ptr<NamedObject> decodedObj =
       uint8Codec->decode(slice); // Assuming slice is compatible interface
-  auto namedInt = std::dynamic_pointer_cast<NamedInteger<uint8_t>>(decodedObj);
+  std::shared_ptr<NamedInteger<uint8_t>> namedInt =
+      std::dynamic_pointer_cast<NamedInteger<uint8_t>>(decodedObj);
 
   if (namedInt && namedInt->value() == 0xAB) {
     std::cout << "SUCCESS: Decoded 0xAB correctly!" << std::endl;

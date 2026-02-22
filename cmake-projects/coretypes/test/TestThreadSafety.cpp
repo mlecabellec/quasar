@@ -16,7 +16,7 @@ TEST(CoreTypesThreadSafety, IntegerImmutable) {
 
   // Step: Define reader lambda
   std::cout << "Step: Define reader lambda" << std::endl;
-  auto reader = [&]() {
+  std::function<void()> reader = [&]() {
     while (!stop) {
       // Assertion: Check if sharedInt value is still 42
       EXPECT_EQ(sharedInt.toInt(), 42);
@@ -41,7 +41,7 @@ TEST(CoreTypesThreadSafety, IntegerImmutable) {
   // Step: Signal threads to stop and join
   std::cout << "Step: Signal threads to stop and join" << std::endl;
   stop = true;
-  for (auto &t : threads)
+  for (std::thread &t : threads)
     t.join();
 
   // Assertion: Thread safety verified if no race detected
@@ -57,7 +57,7 @@ TEST(CoreTypesThreadSafety, FloatingPointImmutable) {
 
   // Step: Define reader lambda
   std::cout << "Step: Define reader lambda" << std::endl;
-  auto reader = [&]() {
+  std::function<void()> reader = [&]() {
     while (!stop) {
       // Assertion: Check if sharedDouble value is 3.14
       EXPECT_DOUBLE_EQ(sharedDouble.toDouble(), 3.14);
@@ -82,7 +82,7 @@ TEST(CoreTypesThreadSafety, FloatingPointImmutable) {
   // Step: Signal threads to stop and join
   std::cout << "Step: Signal threads to stop and join" << std::endl;
   stop = true;
-  for (auto &t : threads)
+  for (std::thread &t : threads)
     t.join();
 
   // Assertion: Thread safety verified

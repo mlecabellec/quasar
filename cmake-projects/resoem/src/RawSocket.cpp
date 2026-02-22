@@ -192,7 +192,7 @@ void RawSocket::set_timeout(int timeout_ms) {
   tv.tv_sec = timeout_ms / 1000;
   tv.tv_usec = (timeout_ms % 1000) * 1000;
 
-  auto set_sock_timeout = [&](int fd) {
+  std::function<void(int)> set_sock_timeout = [&](int fd) {
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
       throw SocketError("Failed to set receive timeout: " +
                         std::string(strerror(errno)));

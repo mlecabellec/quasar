@@ -11,14 +11,15 @@ using namespace quasar::coretypes;
 TEST(NamedBufferSliceTest, CreationAndUsage) {
   // Step: Initialize Buffer and set values
   std::cout << "Step: Initialize Buffer and set values" << std::endl;
-  auto buf = std::make_shared<Buffer>(10);
+  std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(10);
   buf->set(0, 0xAA);
   buf->set(1, 0xBB);
 
   // Step: Create NamedBufferSlice
   std::cout << "Step: Create NamedBufferSlice \"slice1\" from index 0 length 5"
             << std::endl;
-  auto slice = NamedBufferSlice::create("slice1", buf, 0, 5);
+  std::shared_ptr<NamedBufferSlice> slice =
+      NamedBufferSlice::create("slice1", buf, 0, 5);
 
   // Assertion: Check slice name
   std::cout << "Assertion: Check slice name is \"slice1\"" << std::endl;
@@ -34,7 +35,7 @@ TEST(NamedBufferSliceTest, CreationAndUsage) {
 
   // Step: Create sub-slice view
   std::cout << "Step: Create sub-slice view from index 1 length 2" << std::endl;
-  auto subSlice = slice->sliceView(1, 2);
+  std::shared_ptr<NamedBufferSlice> subSlice = slice->sliceView(1, 2);
 
   // Assertion: Check sub-slice name
   std::cout << "Assertion: Check sub-slice name is \"slice1_slice\""
@@ -53,7 +54,7 @@ TEST(NamedBufferSliceTest, CreationAndUsage) {
 TEST(NamedBitBufferSliceTest, CreationAndUsage) {
   // Step: Initialize BitBuffer and set bits
   std::cout << "Step: Initialize BitBuffer and set bits" << std::endl;
-  auto bb = std::make_shared<BitBuffer>(16);
+  std::shared_ptr<BitBuffer> bb = std::make_shared<BitBuffer>(16);
   bb->setBit(0, true);
   bb->setBit(2, true);
 
@@ -61,7 +62,8 @@ TEST(NamedBitBufferSliceTest, CreationAndUsage) {
   std::cout
       << "Step: Create NamedBitBufferSlice \"bitslice1\" from index 0 length 8"
       << std::endl;
-  auto slice = NamedBitBufferSlice::create("bitslice1", bb, 0, 8);
+  std::shared_ptr<NamedBitBufferSlice> slice =
+      NamedBitBufferSlice::create("bitslice1", bb, 0, 8);
 
   // Assertion: Check slice name
   std::cout << "Assertion: Check slice name is \"bitslice1\"" << std::endl;
@@ -83,7 +85,7 @@ TEST(NamedBitBufferSliceTest, CreationAndUsage) {
   std::cout
       << "Step: Create sub-slice view from bit slice from index 1 length 4"
       << std::endl;
-  auto subSlice = slice->sliceView(1, 4);
+  std::shared_ptr<NamedBitBufferSlice> subSlice = slice->sliceView(1, 4);
 
   // Assertion: Check sub-slice name
   std::cout << "Assertion: Check sub-slice name is \"bitslice1_slice\""
@@ -112,15 +114,17 @@ TEST(NamedBufferSliceTest, Clone) {
 
   // Step: Create NamedBufferSlice
   std::cout << "Step: Create NamedBufferSlice \"s\"" << std::endl;
-  auto slice = NamedBufferSlice::create("s", buf, 5, 1);
+  std::shared_ptr<NamedBufferSlice> slice =
+      NamedBufferSlice::create("s", buf, 5, 1);
 
   // Step: Clone the slice
   std::cout << "Step: Clone the slice" << std::endl;
-  auto copy = slice->clone();
+  std::shared_ptr<NamedObject> copy = slice->clone();
 
   // Step: Cast the copy back to NamedBufferSlice
   std::cout << "Step: Cast the copy back to NamedBufferSlice" << std::endl;
-  auto casted = std::dynamic_pointer_cast<NamedBufferSlice>(copy);
+  std::shared_ptr<NamedBufferSlice> casted =
+      std::dynamic_pointer_cast<NamedBufferSlice>(copy);
 
   // Assertion: Check if cast was successful
   std::cout << "Assertion: Check if cast was successful" << std::endl;

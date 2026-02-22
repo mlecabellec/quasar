@@ -14,10 +14,10 @@ namespace quasar::named {
 /**
  * @class NamedFloatingPoint
  * @brief A named object that holds a floating point value.
- * 
- * This class combines hierarchical management from NamedObject with floating point 
- * value handling from coretypes::FloatingPoint.
- * 
+ *
+ * This class combines hierarchical management from NamedObject with floating
+ * point value handling from coretypes::FloatingPoint.
+ *
  * @tparam T The underlying floating point type (e.g., float, double).
  */
 template <typename T>
@@ -31,7 +31,7 @@ public:
 
   /**
    * @brief Factory method to create a NamedFloatingPoint.
-   * 
+   *
    * @param name The name of the floating point object.
    * @param value The initial floating point value.
    * @param parent Optional parent in the hierarchy.
@@ -41,11 +41,12 @@ public:
   create(const std::string &name, T value,
          std::shared_ptr<NamedObject> parent = nullptr) {
     // Instantiate the NamedFloatingPoint.
-    auto obj = std::make_shared<NamedFloatingPoint<T>>(name, value);
-    
+    std::shared_ptr<NamedFloatingPoint<T>> obj =
+        std::make_shared<NamedFloatingPoint<T>>(name, value);
+
     // Initialize self-reference for getSelf().
     obj->setSelf(obj);
-    
+
     // Attach to parent if provided.
     if (parent) {
       obj->setParent(parent);
@@ -55,7 +56,8 @@ public:
 
   /**
    * @brief Creates a clone of this NamedFloatingPoint.
-   * @return A new NamedFloatingPoint with the same name and value, but no hierarchy.
+   * @return A new NamedFloatingPoint with the same name and value, but no
+   * hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override {
     // Return a new instance using the same name and current value.

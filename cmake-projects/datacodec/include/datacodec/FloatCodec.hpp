@@ -48,7 +48,7 @@ public:
   void encode(const std::shared_ptr<quasar::named::NamedObject> &value,
               quasar::coretypes::BitBufferSlice &buffer) const override {
 
-    auto namedFloat =
+    std::shared_ptr<quasar::named::NamedFloatingPoint<T>> namedFloat =
         std::dynamic_pointer_cast<quasar::named::NamedFloatingPoint<T>>(value);
     if (!namedFloat) {
       throw std::invalid_argument("Invalid type for FloatCodec encoding");

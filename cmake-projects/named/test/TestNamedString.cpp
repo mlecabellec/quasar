@@ -9,7 +9,8 @@ TEST(NamedStringTest, CreationAndValue) {
   std::cout
       << "Step: Create NamedString \"myString\" with value \"Hello World\""
       << std::endl;
-  auto ns = NamedString::create("myString", "Hello World");
+  std::shared_ptr<NamedString> ns =
+      NamedString::create("myString", "Hello World");
 
   // Assertion: Check if name matches
   std::cout << "Assertion: Check if name is \"myString\"" << std::endl;
@@ -28,8 +29,9 @@ TEST(NamedStringTest, ParentChild) {
   // Step: Create root NamedObject and NamedString child
   std::cout << "Step: Create root NamedObject and NamedString child"
             << std::endl;
-  auto root = NamedObject::create("root");
-  auto ns = NamedString::create("childString", "Value", root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedString> ns =
+      NamedString::create("childString", "Value", root);
 
   // Assertion: Check if parent is root
   std::cout << "Assertion: Check if parent is root" << std::endl;
@@ -43,8 +45,8 @@ TEST(NamedStringTest, ParentChild) {
 TEST(NamedStringTest, Clone) {
   // Step: Create NamedString and clone it
   std::cout << "Step: Create NamedString and clone it" << std::endl;
-  auto ns = NamedString::create("original", "content");
-  auto copy = ns->clone();
+  std::shared_ptr<NamedString> ns = NamedString::create("original", "content");
+  std::shared_ptr<NamedObject> copy = ns->clone();
 
   // Assertion: Check if clone name matches
   std::cout << "Assertion: Check if clone name is \"original\"" << std::endl;
@@ -52,7 +54,8 @@ TEST(NamedStringTest, Clone) {
 
   // Step: Cast clone to NamedString
   std::cout << "Step: Cast clone to NamedString" << std::endl;
-  auto casted = std::dynamic_pointer_cast<NamedString>(copy);
+  std::shared_ptr<NamedString> casted =
+      std::dynamic_pointer_cast<NamedString>(copy);
 
   // Assertion: Check if cast was successful
   std::cout << "Assertion: Check if cast was successful" << std::endl;

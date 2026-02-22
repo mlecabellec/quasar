@@ -14,10 +14,10 @@ namespace quasar::named {
 /**
  * @class NamedInteger
  * @brief A named object that holds an integer value.
- * 
- * This class combines the hierarchical capabilities of NamedObject with the 
+ *
+ * This class combines the hierarchical capabilities of NamedObject with the
  * integer value management of coretypes::Integer.
- * 
+ *
  * @tparam T The underlying integer type (e.g., int, uint32_t, int64_t).
  */
 template <typename T>
@@ -30,7 +30,7 @@ public:
 
   /**
    * @brief Factory method to create a NamedInteger.
-   * 
+   *
    * @param name The name of the integer object.
    * @param value The initial integer value.
    * @param parent Optional parent in the hierarchy.
@@ -40,11 +40,12 @@ public:
   create(const std::string &name, T value,
          std::shared_ptr<NamedObject> parent = nullptr) {
     // Instantiate the NamedInteger.
-    auto obj = std::make_shared<NamedInteger<T>>(name, value);
-    
+    std::shared_ptr<NamedInteger<T>> obj =
+        std::make_shared<NamedInteger<T>>(name, value);
+
     // Initialize self-reference for getSelf().
     obj->setSelf(obj);
-    
+
     // Attach to parent if provided.
     if (parent) {
       obj->setParent(parent);

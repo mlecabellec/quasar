@@ -24,7 +24,8 @@ public:
   static std::shared_ptr<FieldDef> create(const std::string &name,
                                           std::shared_ptr<ICodec> codec,
                                           size_t bitOffset = 0) {
-    auto obj = std::make_shared<FieldDef>(name, codec, bitOffset);
+    std::shared_ptr<FieldDef> obj =
+        std::make_shared<FieldDef>(name, codec, bitOffset);
     // obj->setSelf(obj); // Assuming NamedObject pattern needs this
     return obj;
   }
@@ -49,7 +50,7 @@ private:
 class ContainerDef : public quasar::named::NamedObject {
 public:
   static std::shared_ptr<ContainerDef> create(const std::string &name) {
-    auto obj = std::make_shared<ContainerDef>(name);
+    std::shared_ptr<ContainerDef> obj = std::make_shared<ContainerDef>(name);
     return obj;
   }
 

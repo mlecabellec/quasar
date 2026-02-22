@@ -43,7 +43,7 @@ public:
   void encode(const std::shared_ptr<quasar::named::NamedObject> &value,
               quasar::coretypes::BitBufferSlice &buffer) const override {
 
-    auto namedStr =
+    std::shared_ptr<quasar::named::NamedString> namedStr =
         std::dynamic_pointer_cast<quasar::named::NamedString>(value);
     if (!namedStr) {
       throw std::invalid_argument("Invalid type for StringCodec encoding");
@@ -61,7 +61,7 @@ public:
     if (m_isFixedLength)
       return m_maxBitSize;
 
-    auto namedStr =
+    std::shared_ptr<quasar::named::NamedString> namedStr =
         std::dynamic_pointer_cast<quasar::named::NamedString>(value);
     // Length + 1 for null terminator, * 8 for bits
     return namedStr ? (namedStr->getValue().length() + 1) * 8 : 0;

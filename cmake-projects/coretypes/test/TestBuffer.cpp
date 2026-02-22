@@ -194,7 +194,7 @@ TEST(BufferTest, Clone) {
 TEST(BufferTest, SliceView) {
   // Step: Initialize shared Buffer and set content
   std::cout << "Step: Initialize shared Buffer and set content" << std::endl;
-  auto b = std::make_shared<Buffer>(10);
+  std::shared_ptr<Buffer> b = std::make_shared<Buffer>(10);
   b->set(0, 0x11);
   b->set(1, 0x22);
 

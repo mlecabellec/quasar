@@ -12,7 +12,7 @@ using namespace quasar::named;
 TEST(NamedObjectTest, Creation) {
   // Step: Create NamedObject "root"
   std::cout << "Step: Create NamedObject \"root\"" << std::endl;
-  auto obj = NamedObject::create("root");
+  std::shared_ptr<NamedObject> obj = NamedObject::create("root");
 
   // Assertion: Check if name is "root"
   std::cout << "Assertion: Check if name is \"root\"" << std::endl;
@@ -41,8 +41,8 @@ TEST(NamedObjectTest, InvalidName) {
 TEST(NamedObjectTest, Hierarchy) {
   // Step: Create root and child1
   std::cout << "Step: Create root and child1" << std::endl;
-  auto root = NamedObject::create("root");
-  auto child1 = NamedObject::create("child1", root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedObject> child1 = NamedObject::create("child1", root);
 
   // Assertion: Check child1 parent is root
   std::cout << "Assertion: Check child1 parent is root" << std::endl;
@@ -58,7 +58,7 @@ TEST(NamedObjectTest, Hierarchy) {
 
   // Step: Create child2 and set parent to root
   std::cout << "Step: Create child2 and set parent to root" << std::endl;
-  auto child2 = NamedObject::create("child2");
+  std::shared_ptr<NamedObject> child2 = NamedObject::create("child2");
   child2->setParent(root);
 
   // Assertion: Check root children size is 2
@@ -89,8 +89,8 @@ TEST(NamedObjectTest, Hierarchy) {
 TEST(NamedObjectTest, Uniqueness) {
   // Step: Create root and child with name "child"
   std::cout << "Step: Create root and child with name \"child\"" << std::endl;
-  auto root = NamedObject::create("root");
-  auto child1 = NamedObject::create("child", root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedObject> child1 = NamedObject::create("child", root);
 
   // Assertion: Check if creating another child with same name throws
   std::cout
@@ -101,7 +101,7 @@ TEST(NamedObjectTest, Uniqueness) {
   // Step: Create standalone child2 with name "child"
   std::cout << "Step: Create standalone child2 with name \"child\""
             << std::endl;
-  auto child2 = NamedObject::create("child");
+  std::shared_ptr<NamedObject> child2 = NamedObject::create("child");
 
   // Assertion: Check if setting parent to root throws due to name collision
   std::cout << "Assertion: Check if setting parent to root throws due to name "
@@ -113,9 +113,9 @@ TEST(NamedObjectTest, Uniqueness) {
 TEST(NamedObjectTest, CycleDetection) {
   // Step: Create p1 -> p2 -> p3 hierarchy
   std::cout << "Step: Create p1 -> p2 -> p3 hierarchy" << std::endl;
-  auto p1 = NamedObject::create("p1");
-  auto p2 = NamedObject::create("p2", p1);
-  auto p3 = NamedObject::create("p3", p2);
+  std::shared_ptr<NamedObject> p1 = NamedObject::create("p1");
+  std::shared_ptr<NamedObject> p2 = NamedObject::create("p2", p1);
+  std::shared_ptr<NamedObject> p3 = NamedObject::create("p3", p2);
 
   // Assertion: Check if setting p1 parent to p3 throws (cycle)
   std::cout << "Assertion: Check if setting p1 parent to p3 throws (cycle)"
@@ -131,9 +131,10 @@ TEST(NamedObjectTest, CycleDetection) {
 TEST(NamedObjectTest, DerivedClasses) {
   // Step: Create root, NamedInteger and NamedBoolean
   std::cout << "Step: Create root, NamedInteger and NamedBoolean" << std::endl;
-  auto root = NamedObject::create("root");
-  auto i = NamedInteger<int>::create("intVal", 42, root);
-  auto b = NamedBoolean::create("boolVal", true, root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedInteger<int>> i =
+      NamedInteger<int>::create("intVal", 42, root);
+  std::shared_ptr<NamedBoolean> b = NamedBoolean::create("boolVal", true, root);
 
   // Assertion: Check NamedInteger value
   std::cout << "Assertion: Check NamedInteger value is 42" << std::endl;
@@ -151,8 +152,9 @@ TEST(NamedObjectTest, DerivedClasses) {
 TEST(NamedObjectTest, SerializationXML) {
   // Step: Create objects for XML serialization
   std::cout << "Step: Create objects for XML serialization" << std::endl;
-  auto root = NamedObject::create("root");
-  auto child = NamedInteger<int>::create("val", 123, root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedInteger<int>> child =
+      NamedInteger<int>::create("val", 123, root);
 
   // Step: Serialize to XML
   std::cout << "Step: Serialize to XML" << std::endl;
@@ -191,9 +193,9 @@ TEST(NamedObjectTest, SerializationYAML) {
 TEST(NamedObjectTest, NamedBuffers) {
   // Step: Create NamedBuffer
   std::cout << "Step: Create NamedBuffer" << std::endl;
-  auto root = NamedObject::create("root");
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
   std::vector<uint8_t> data = {0x01, 0x02};
-  auto nb = NamedBuffer::create("buffer", data, root);
+  std::shared_ptr<NamedBuffer> nb = NamedBuffer::create("buffer", data, root);
 
   // Assertion: Check NamedBuffer size and value
   std::cout << "Assertion: Check NamedBuffer size is 2" << std::endl;
@@ -203,7 +205,8 @@ TEST(NamedObjectTest, NamedBuffers) {
 
   // Step: Create NamedBitBuffer
   std::cout << "Step: Create NamedBitBuffer" << std::endl;
-  auto nbb = NamedBitBuffer::create("bitbuffer", 16, root);
+  std::shared_ptr<NamedBitBuffer> nbb =
+      NamedBitBuffer::create("bitbuffer", 16, root);
   nbb->setBit(0, true);
 
   // Assertion: Check NamedBitBuffer size and value
@@ -216,8 +219,8 @@ TEST(NamedObjectTest, NamedBuffers) {
 TEST(NamedObjectTest, RelatedObject) {
   // Step: Create two objects
   std::cout << "Step: Create two objects" << std::endl;
-  auto obj1 = NamedObject::create("obj1");
-  auto obj2 = NamedObject::create("obj2");
+  std::shared_ptr<NamedObject> obj1 = NamedObject::create("obj1");
+  std::shared_ptr<NamedObject> obj2 = NamedObject::create("obj2");
 
   // Assertion: Initial related object should be null
   std::cout << "Assertion: Initial related object should be nullptr"

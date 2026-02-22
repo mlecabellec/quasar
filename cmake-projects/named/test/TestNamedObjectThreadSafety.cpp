@@ -12,13 +12,13 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Initialize root object and concurrency controls
   std::cout << "Step: Initialize root object and concurrency controls"
             << std::endl;
-  auto root = NamedObject::create("root");
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
   std::atomic<bool> stop{false};
   std::atomic<int> counter{0};
 
   // Step: Define adder lambda (Thread A)
   std::cout << "Step: Define adder lambda (Thread A)" << std::endl;
-  auto adder = [&]() {
+  std::function<void()> adder = [&]() {
     while (!stop) {
       int id = counter++;
       try {
@@ -32,13 +32,13 @@ TEST(NamedObjectThreadSafety, StressTest) {
 
   // Step: Define remover lambda (Thread B)
   std::cout << "Step: Define remover lambda (Thread B)" << std::endl;
-  auto remover = [&]() {
+  std::function<void()> remover = [&]() {
     std::mt19937 rng(std::random_device{}());
     while (!stop) {
-      auto children = root->getChildren();
+      std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
       if (!children.empty()) {
         std::uniform_int_distribution<size_t> dist(0, children.size() - 1);
-        auto it = children.begin();
+        std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin();
         std::advance(it, dist(rng));
         if (*it) {
           // Step: Remove random child
@@ -51,10 +51,10 @@ TEST(NamedObjectThreadSafety, StressTest) {
 
   // Step: Define reader lambda (Thread C)
   std::cout << "Step: Define reader lambda (Thread C)" << std::endl;
-  auto reader = [&]() {
+  std::function<void()> reader = [&]() {
     while (!stop) {
-      auto children = root->getChildren();
-      for (const auto &child : children) {
+      std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
+      for (const std::shared_ptr<NamedObject> &child : children) {
         // Step: Access name to verify object integrity
         volatile size_t l = child->getName().length();
         (void)l;
@@ -81,7 +81,7 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Signal stop and join all threads
   std::cout << "Step: Signal stop and join all threads" << std::endl;
   stop = true;
-  for (auto &t : threads)
+  for (std::thread &t : threads)
     t.join();
 
   // Assertion: Thread safety verified if no crashes occurred

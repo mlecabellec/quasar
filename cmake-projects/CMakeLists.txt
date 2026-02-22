@@ -19,6 +19,8 @@ add_subdirectory(sim)
 add_subdirectory(coretypes)
 add_subdirectory(named)
 add_subdirectory(resoem)
+add_subdirectory(sample-models)
+add_subdirectory(sim-test)
 
 # CPack Configuration
 set(CPACK_GENERATOR "DEB")

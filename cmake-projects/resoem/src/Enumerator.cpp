@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <numeric>
 #include <thread>
@@ -38,7 +39,8 @@ Result<size_t> Enumerator::enumerate() {
   // Request all slaves to move to the PRE-OP state to allow mailbox
   // communication.
   std::cout << "Transitioning all slaves to PRE_OP..." << std::endl;
-  if (auto res = request_state_all(states::PRE_OP); !res)
+  Result<> res = request_state_all(states::PRE_OP);
+  if (!res)
     return std::unexpected(res.error());
 
   return static_cast<size_t>(slave_count);
@@ -54,8 +56,11 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
   // Write requested state to the AL Control register.
   write_register_fpwr<uint16_t>(cfg_addr, regs::AL_CONTROL, state);
 
-  auto start = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start < timeout) {
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
+  for (uint64_t i = 0; i < 1000000; ++i) {
+    if (std::chrono::steady_clock::now() - start >= timeout)
+      break;
     int wkc;
     // Read current state from the AL Status register.
     uint16_t status =
@@ -78,6 +83,8 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
       }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    if (i == 999999)
+      throw std::runtime_error("Hard limit exceeded in request_state");
   }
   return std::unexpected(ECError::Timeout);
 }
@@ -87,20 +94,23 @@ Result<> Enumerator::request_state_all(uint16_t state,
   // Use a broadcast write to request state for all slaves at once.
   write_register_broadcast<uint16_t>(regs::AL_CONTROL, state);
 
-  auto start = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start < timeout) {
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
+  for (uint64_t i = 0; i < 1000000; ++i) {
+    if (std::chrono::steady_clock::now() - start >= timeout)
+      break;
     bool all = true;
-    for (size_t i = 0; i < slaves_.size(); ++i) {
+    for (size_t j = 0; j < slaves_.size(); ++j) {
       int wkc;
       uint16_t status = read_register_fprd<uint16_t>(
-          slaves_[i].configured_address, regs::AL_STATUS, wkc);
+          slaves_[j].configured_address, regs::AL_STATUS, wkc);
 
       // Check if this slave has reached the target state.
       if (wkc > 0 && (status & regs::al_status::STATE_MASK) != state) {
         all = false;
         // If there is an error, try to handle it for this specific slave.
         if (status & regs::al_status::ERROR_BIT)
-          request_state(static_cast<uint16_t>(i), state,
+          request_state(static_cast<uint16_t>(j), state,
                         std::chrono::milliseconds(100));
       } else if (wkc <= 0) {
         all = false;
@@ -109,6 +119,8 @@ Result<> Enumerator::request_state_all(uint16_t state,
     if (all)
       return {};
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    if (i == 999999)
+      throw std::runtime_error("Hard limit exceeded in request_state_all");
   }
   return std::unexpected(ECError::Timeout);
 }
@@ -144,7 +156,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
                     1}; // Active
 
       // Find the appropriate SyncManager for outputs.
-      auto sm_it =
+      std::vector<SyncManagerInfo>::const_iterator sm_it =
           std::find_if(info.sync_managers.begin(), info.sync_managers.end(),
                        [](const SyncManagerInfo &sm) { return sm.type == 3; });
       if (sm_it != info.sync_managers.end()) {
@@ -183,7 +195,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
                     1}; // Active
 
       // Find the appropriate SyncManager for inputs.
-      auto sm_it =
+      std::vector<SyncManagerInfo>::const_iterator sm_it =
           std::find_if(info.sync_managers.begin(), info.sync_managers.end(),
                        [](const SyncManagerInfo &sm) { return sm.type == 4; });
       if (sm_it != info.sync_managers.end()) {
@@ -258,7 +270,7 @@ void Enumerator::configure_dc(SlaveInfo &s, uint32_t cyc, int32_t shift) {
 }
 
 void Enumerator::check_slaves_status() {
-  for (auto &s : slaves_) {
+  for (SlaveInfo &s : slaves_) {
     int wkc;
     uint16_t st = read_register_fprd<uint16_t>(s.configured_address,
                                                regs::AL_STATUS, wkc);
@@ -360,7 +372,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   FrameBuilder builder;
   uint8_t idx = current_idx_++;
   builder.add_datagram(cmd, idx, addr, offset, data);
-  auto frame = builder.build();
+  std::vector<byte> frame = builder.build();
 
   // Send the frame.
   // In a full redundancy scenario, we might want to send on both if the loop is
@@ -374,15 +386,20 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
 
   // Wait for the response with matching index.
   std::vector<byte> rx_buffer(1500);
-  auto start = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
 
   while (true) {
+    static uint64_t loop_count = 0;
+    if (++loop_count > 10'000'000)
+      throw std::runtime_error("Hard limit exceeded in send_receive loop");
     int port_idx = 0;
     size_t received = socket_.receive(rx_buffer, &port_idx);
 
     if (received == 0) {
       // Check timeout
-      auto now = std::chrono::steady_clock::now();
+      std::chrono::steady_clock::time_point now =
+          std::chrono::steady_clock::now();
       if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
               .count() > 100) {
         return -1; // Timeout
@@ -492,7 +509,8 @@ uint16_t Enumerator::find_sii_category(uint16_t slave_cfg_addr,
                                        uint16_t cat_type) {
   // SII categories start at word 0x0040.
   uint16_t ptr = 0x0040;
-  while (ptr < 0xFFFF) {
+  for (uint32_t loop_guard = 0; ptr < 0xFFFF && loop_guard < 10000;
+       ++loop_guard) {
     uint32_t res = read_sii_word(slave_cfg_addr, ptr);
     if (res == 0xFFFFFFFF)
       break;
@@ -503,6 +521,8 @@ uint16_t Enumerator::find_sii_category(uint16_t slave_cfg_addr,
     if (type == cat_type)
       return ptr + 1; // Return pointer to category data
     ptr += size + 1;  // Skip to next category
+    if (loop_guard == 9999)
+      throw std::runtime_error("Hard limit reached in find_sii_category");
   }
   return 0;
 }
@@ -600,32 +620,37 @@ void Enumerator::read_sii_pdos(int slave_idx) {
   uint16_t addr = info.configured_address;
 
   // Lambda to parse RxPDO or TxPDO categories.
-  auto parse = [&](uint16_t cat, std::vector<PDOInfo> &pdos) {
-    uint16_t ptr = find_sii_category(addr, cat);
-    if (ptr == 0)
-      return;
-    uint32_t sz = (read_sii_word(addr, ptr - 1) >> 16) * 2;
-    uint16_t cur = 0;
-    while (cur < sz) {
-      PDOInfo pdo;
-      uint32_t w1 = read_sii_word(addr, ptr + (cur / 2));
-      pdo.index = static_cast<uint16_t>(w1 & 0xFFFF);
-      uint8_t num = static_cast<uint8_t>((w1 >> 16) & 0xFF);
-      pdo.sync_manager = static_cast<uint8_t>((w1 >> 24) & 0xFF);
-      cur += 8;
-      for (uint8_t i = 0; i < num; ++i) {
-        PDOEntryInfo e;
-        uint32_t ew1 = read_sii_word(addr, ptr + (cur / 2));
-        uint32_t ew2 = read_sii_word(addr, ptr + (cur / 2) + 2);
-        e.index = static_cast<uint16_t>(ew1 & 0xFFFF);
-        e.subindex = static_cast<uint8_t>((ew1 >> 16) & 0xFF);
-        e.bit_length = static_cast<uint8_t>((ew2 >> 8) & 0xFF);
-        pdo.entries.push_back(e);
-        cur += 8;
-      }
-      pdos.push_back(pdo);
-    }
-  };
+  std::function<void(uint16_t, std::vector<PDOInfo> &)> parse =
+      [&](uint16_t cat, std::vector<PDOInfo> &pdos) {
+        uint16_t ptr = find_sii_category(addr, cat);
+        if (ptr == 0)
+          return;
+        uint32_t sz = (read_sii_word(addr, ptr - 1) >> 16) * 2;
+        uint16_t cur = 0;
+        for (uint32_t loop_guard = 0; cur < sz && loop_guard < 10000;
+             ++loop_guard) {
+          PDOInfo pdo;
+          uint32_t w1 = read_sii_word(addr, ptr + (cur / 2));
+          pdo.index = static_cast<uint16_t>(w1 & 0xFFFF);
+          uint8_t num = static_cast<uint8_t>((w1 >> 16) & 0xFF);
+          pdo.sync_manager = static_cast<uint8_t>((w1 >> 24) & 0xFF);
+          cur += 8;
+          for (uint8_t i = 0; i < num; ++i) {
+            PDOEntryInfo e;
+            uint32_t ew1 = read_sii_word(addr, ptr + (cur / 2));
+            uint32_t ew2 = read_sii_word(addr, ptr + (cur / 2) + 2);
+            e.index = static_cast<uint16_t>(ew1 & 0xFFFF);
+            e.subindex = static_cast<uint8_t>((ew1 >> 16) & 0xFF);
+            e.bit_length = static_cast<uint8_t>((ew2 >> 8) & 0xFF);
+            pdo.entries.push_back(e);
+            cur += 8;
+          }
+          pdos.push_back(pdo);
+          if (loop_guard == 9999)
+            throw std::runtime_error(
+                "Hard limit reached in read_sii_pdos loop");
+        }
+      };
 
   parse(eeprom::CAT_PDO_RX, info.rx_pdos);
   parse(eeprom::CAT_PDO_TX, info.tx_pdos);
@@ -641,7 +666,7 @@ void Enumerator::read_sii_data(int count) {
 }
 
 void Enumerator::read_port_status() {
-  for (auto &slave : slaves_) {
+  for (SlaveInfo &slave : slaves_) {
     int wkc;
     // DL Status (0x0110)
     // Bits 0-3: Port 0 link (0=down, 1=up) ... Port 3 link
@@ -670,7 +695,7 @@ void Enumerator::map_topology(int count) {
     return;
 
   // Reset topology info
-  for (auto &s : slaves_) {
+  for (SlaveInfo &s : slaves_) {
     s.parent_index = -1;
     s.children_indices.clear();
   }
@@ -895,7 +920,7 @@ void Enumerator::load_eni(const ec_enit *eni) {
       std::span<const uint8_t> data(static_cast<const uint8_t *>(cmd.Data),
                                     cmd.DataSize);
 
-      auto res =
+      Result<> res =
           coe_handler.sdo_write(info, cmd.Index, cmd.SubIdx, data, cmd.CA != 0);
       if (!res) {
         std::cerr << "Failed to write SDO 0x" << std::hex << cmd.Index << ":"
@@ -1030,7 +1055,7 @@ void Enumerator::measure_propagation_delays() {
 }
 
 Result<> Enumerator::read_error_counters() {
-  for (auto &slave : slaves_) {
+  for (SlaveInfo &slave : slaves_) {
     int wkc;
     // Structure of ESC Error Counters (0x0300 - 0x0313)
     struct PackedErrorCounters {

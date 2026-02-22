@@ -62,7 +62,7 @@ public:
   void encode(const std::shared_ptr<quasar::named::NamedObject> &value,
               quasar::coretypes::BitBufferSlice &buffer) const override {
 
-    auto namedInt =
+    std::shared_ptr<quasar::named::NamedInteger<T>> namedInt =
         std::dynamic_pointer_cast<quasar::named::NamedInteger<T>>(value);
     if (!namedInt) {
       throw std::invalid_argument("Invalid type for IntegerCodec encoding");
@@ -86,8 +86,8 @@ public:
   }
 
 private:
-  size_t m_bitSize;
-  bool m_isBigEndian;
+  size_t m_bitSize;   ///< @brief Bit size of the integer.
+  bool m_isBigEndian; ///< @brief Endianness flag.
 };
 
 } // namespace datacodec

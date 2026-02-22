@@ -13,7 +13,7 @@ Result<size_t> SoEHandler::read(SlaveInfo &slave, uint8_t drive_no,
                                 std::chrono::microseconds timeout) {
   // Construct request
   std::vector<byte> tx_buffer(sizeof(SoEHeader));
-  auto *req = reinterpret_cast<SoEHeader *>(tx_buffer.data());
+  SoEHeader *req = reinterpret_cast<SoEHeader *>(tx_buffer.data());
   req->op_code = SOE_READREQ;
   req->incomplete = 0;
   req->error = 0;
@@ -32,8 +32,11 @@ Result<size_t> SoEHandler::read(SlaveInfo &slave, uint8_t drive_no,
   size_t actual_len = 0;
 
   // Polling loop for response
-  auto start = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start < timeout) {
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
+  for (uint64_t i = 0; i < 1000000; ++i) {
+    if (std::chrono::steady_clock::now() - start >= timeout)
+      break;
     int wkc =
         mailbox_.read(slave, recycled_type, rx_buffer, actual_len, timeout);
     if (wkc <= 0)
@@ -46,7 +49,7 @@ Result<size_t> SoEHandler::read(SlaveInfo &slave, uint8_t drive_no,
     if (actual_len < sizeof(SoEHeader))
       continue;
 
-    auto *resp = reinterpret_cast<SoEHeader *>(rx_buffer.data());
+    SoEHeader *resp = reinterpret_cast<SoEHeader *>(rx_buffer.data());
     // Mailbox handler might have stripped the mailbox header, but here we
     // process the SoE payload
     if (resp->drive_no != drive_no || resp->element_flags != element_flags)
@@ -65,6 +68,8 @@ Result<size_t> SoEHandler::read(SlaveInfo &slave, uint8_t drive_no,
                   payload_size);
       return payload_size;
     }
+    if (i == 999999)
+      throw std::runtime_error("Hard limit exceeded in SoEHandler::read");
   }
 
   return std::unexpected(ECError::Timeout);
@@ -76,7 +81,7 @@ Result<> SoEHandler::write(SlaveInfo &slave, uint8_t drive_no,
                            std::chrono::microseconds timeout) {
   // Construct request
   std::vector<byte> tx_buffer(sizeof(SoEHeader) + data.size());
-  auto *req = reinterpret_cast<SoEHeader *>(tx_buffer.data());
+  SoEHeader *req = reinterpret_cast<SoEHeader *>(tx_buffer.data());
   req->op_code = SOE_WRITEREQ;
   req->incomplete = 0; // Simplified: no fragmentation support yet
   req->error = 0;
@@ -96,7 +101,8 @@ Result<> SoEHandler::write(SlaveInfo &slave, uint8_t drive_no,
   mailbox::Type recycled_type;
   size_t actual_len = 0;
 
-  auto start = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
   while (std::chrono::steady_clock::now() - start < timeout) {
     int wkc =
         mailbox_.read(slave, recycled_type, rx_buffer, actual_len, timeout);
@@ -108,7 +114,7 @@ Result<> SoEHandler::write(SlaveInfo &slave, uint8_t drive_no,
     if (actual_len < sizeof(SoEHeader))
       continue;
 
-    auto *resp = reinterpret_cast<SoEHeader *>(rx_buffer.data());
+    SoEHeader *resp = reinterpret_cast<SoEHeader *>(rx_buffer.data());
     if (resp->drive_no != drive_no || resp->element_flags != element_flags)
       continue;
 

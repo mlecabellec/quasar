@@ -5,6 +5,9 @@ add_library(sim
     src/Model.cpp
     src/LibraryLoader.cpp
     src/TypeRegistry.cpp
+    src/Field.cpp
+    src/Publication.cpp
+    src/PublishOperation.cpp
 )
 
 target_include_directories(sim PUBLIC

@@ -4,7 +4,8 @@
 namespace resoem {
 
 std::string_view sdo_abort_to_string(uint32_t abort_code) {
-  // Static map of standard SDO abort codes as defined in the EtherCAT specification.
+  // Static map of standard SDO abort codes as defined in the EtherCAT
+  // specification.
   static const std::map<uint32_t, std::string_view> sdo_error_list = {
       {0x00000000, "No error"},
       {0x05030000, "Toggle bit not changed"},
@@ -14,19 +15,25 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
       {0x06010000, "Unsupported access to an object"},
       {0x06010001, "Attempt to read to a write only object"},
       {0x06010002, "Attempt to write to a read only object"},
-      {0x06010003, "Subindex can not be written, SI0 must be 0 for write access"},
-      {0x06010004, "SDO Complete access not supported for variable length objects"},
+      {0x06010003,
+       "Subindex can not be written, SI0 must be 0 for write access"},
+      {0x06010004,
+       "SDO Complete access not supported for variable length objects"},
       {0x06010005, "Object length exceeds mailbox size"},
       {0x06010006, "Object mapped to RxPDO, SDO download blocked"},
       {0x06020000, "The object does not exist in the object directory"},
       {0x06040041, "The object can not be mapped into the PDO"},
-      {0x06040042, "The number and length of the objects to be mapped would exceed the PDO length"},
+      {0x06040042, "The number and length of the objects to be mapped would "
+                   "exceed the PDO length"},
       {0x06040043, "General parameter incompatibility reason"},
       {0x06040047, "General internal incompatibility in the device"},
       {0x06060000, "Access failed due to a hardware error"},
-      {0x06070010, "Data type does not match, length of service parameter does not match"},
-      {0x06070012, "Data type does not match, length of service parameter too high"},
-      {0x06070013, "Data type does not match, length of service parameter too low"},
+      {0x06070010,
+       "Data type does not match, length of service parameter does not match"},
+      {0x06070012,
+       "Data type does not match, length of service parameter too high"},
+      {0x06070013,
+       "Data type does not match, length of service parameter too low"},
       {0x06090011, "Subindex does not exist"},
       {0x06090030, "Value range of parameter exceeded (only for write access)"},
       {0x06090031, "Value of parameter written too high"},
@@ -34,13 +41,17 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
       {0x06090036, "Maximum value is less than minimum value"},
       {0x08000000, "General error"},
       {0x08000020, "Data cannot be transferred or stored to the application"},
-      {0x08000021, "Data cannot be transferred or stored to the application because of local control"},
-      {0x08000022, "Data cannot be transferred or stored to the application because of the present device state"},
-      {0x08000023, "Object dictionary dynamic generation fails or no object dictionary is present"},
+      {0x08000021, "Data cannot be transferred or stored to the application "
+                   "because of local control"},
+      {0x08000022, "Data cannot be transferred or stored to the application "
+                   "because of the present device state"},
+      {0x08000023, "Object dictionary dynamic generation fails or no object "
+                   "dictionary is present"},
   };
 
   // Perform lookup in the error list.
-  auto it = sdo_error_list.find(abort_code);
+  std::map<uint32_t, std::string_view>::const_iterator it =
+      sdo_error_list.find(abort_code);
   if (it != sdo_error_list.end()) {
     return it->second;
   }
@@ -116,7 +127,8 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
   };
 
   // Perform lookup in the AL status list.
-  auto it = al_status_list.find(status_code);
+  std::map<uint16_t, std::string_view>::const_iterator it =
+      al_status_list.find(status_code);
   if (it != al_status_list.end()) {
     return it->second;
   }

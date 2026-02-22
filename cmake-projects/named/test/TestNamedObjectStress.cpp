@@ -16,13 +16,15 @@ TEST(NamedObjectStress, DeepHierarchy) {
 
   int depth = 1000;
   for (int i = 0; i < depth; ++i) {
-    auto next = NamedObject::create("node_" + std::to_string(i), current);
+    std::shared_ptr<NamedObject> next =
+        NamedObject::create("node_" + std::to_string(i), current);
     current = next;
   }
 
   // Step: Search for the leaf node by name
   std::cout << "Step: Search for the leaf node \"node_999\"" << std::endl;
-  auto leaf = traversal::findByName(root, "node_" + std::to_string(depth - 1));
+  std::shared_ptr<NamedObject> leaf =
+      traversal::findByName(root, "node_" + std::to_string(depth - 1));
 
   // Assertion: Check if leaf was found
   std::cout << "Assertion: Check if leaf node was found" << std::endl;
@@ -51,7 +53,8 @@ TEST(NamedObjectStress, WideHierarchy) {
   // Step: Search for the last child node by name
   std::cout << "Step: Search for the last child node \"child_4999\""
             << std::endl;
-  auto child = traversal::findByName(root, "child_4999");
+  std::shared_ptr<NamedObject> child =
+      traversal::findByName(root, "child_4999");
 
   // Assertion: Check if child was found
   std::cout << "Assertion: Check if child node was found" << std::endl;
