@@ -321,15 +321,11 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
 
   // Process children as a JSON array.
   if (!obj->getChildren().empty()) {
-    json children = json::array();
-    std::vector<std::shared_ptr<NamedObject>> children_list =
-        obj->getChildren();
-    std::transform(children_list.begin(), children_list.end(),
-                   std::back_inserter(children),
-                   [](const std::shared_ptr<NamedObject> &child) {
-                     return serializeToJson(child);
-                   });
-    j["children"] = children;
+    json children_json_array = json::array();
+    for (const std::shared_ptr<NamedObject> &child : obj->getChildren()) {
+      children_json_array.push_back(serializeToJson(child));
+    }
+    j["children"] = children_json_array;
   }
   return j;
 }

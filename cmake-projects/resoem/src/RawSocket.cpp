@@ -1,6 +1,7 @@
 #include "resoem/RawSocket.hpp"
 #include <cerrno>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
