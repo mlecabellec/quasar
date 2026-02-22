@@ -261,7 +261,9 @@ void Simulator::Exit() {
 
 void Simulator::Abort() { _simState = Smp::SimulatorStateKind::SSK_Aborting; }
 
-Smp::SimulatorStateKind Simulator::GetState() const { return _simState; }
+Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
+  return _simState;
+}
 
 void Simulator::AddInitEntryPoint(Smp::IEntryPoint *entryPoint) {
   if (!entryPoint)
@@ -378,7 +380,8 @@ void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
   // Check for duplicate UUID
   for (auto *f : this->_factories) {
     if (f->GetUuid() == componentFactory->GetUuid()) {
-      throw core::DuplicateUuid(f->GetName(), componentFactory->GetName());
+      throw std::runtime_error("Duplicate UUID for factory " +
+                               std::string(componentFactory->GetName()));
     }
   }
   this->_factories.Add(componentFactory);
@@ -431,9 +434,8 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
   try {
     void *handle = LibraryLoader::GetInstance().LoadLibrary(libraryPath);
     if (!handle) {
-      throw core::Exception(
-          "SimControl",
-          ("Failed to load library " + std::string(libraryPath)).c_str());
+      throw std::runtime_error("Failed to load library " +
+                               std::string(libraryPath));
     }
 
     // Attempt to locate and call Initialise
@@ -445,9 +447,8 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
 
     if (initFunc) {
       if (!initFunc(this, _typeRegistry)) {
-        throw core::Exception("SimControl", ("Library Initialise failed for " +
-                                             std::string(libraryPath))
-                                                .c_str());
+        throw std::runtime_error("Library Initialise failed for " +
+                                 std::string(libraryPath));
       }
     } else {
       _logger->Log(this,
@@ -459,7 +460,7 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
 
     _loadedLibraries.push_back(handle);
   } catch (const sim::LibraryException &ex) {
-    throw core::Exception("SimControl", ex.what());
+    throw std::runtime_error(ex.what());
   }
 }
 

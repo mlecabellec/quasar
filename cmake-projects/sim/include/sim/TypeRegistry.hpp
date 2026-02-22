@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Smp/Publication/IFloatType.h>
+#include <Smp/Publication/IIntegerType.h>
+#include <Smp/Publication/IStringType.h>
 #include <Smp/Publication/ITypeRegistry.h>
 #include <core/Object.hpp>
 #include <map>
@@ -68,10 +71,8 @@ public:
                   Smp::Int16 memSize);
   void AddLiteral(Smp::String8 name, Smp::String8 description,
                   Smp::Int32 value) override;
-  Smp::Int16 GetMemorySize() const override;
 
 private:
-  Smp::Int16 _memorySize;
 };
 
 class ArrayType : public Type, public virtual Smp::Publication::IArrayType {
@@ -80,9 +81,7 @@ public:
             Smp::Uuid itemTypeUuid, Smp::Int64 itemSize, Smp::Int64 count,
             Smp::Bool simpleArray);
   Smp::UInt64 GetSize() const override;
-  Smp::Uuid GetItemType() const override;
-  Smp::UInt64 GetItemSize() const override;
-  Smp::Bool IsSimpleArray() const override;
+  const Smp::Publication::IType *GetItemType() const override;
 
 private:
   Smp::Uuid _itemTypeUuid;
@@ -106,16 +105,19 @@ class StructureType : public Type,
 public:
   StructureType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid);
   void AddField(Smp::String8 name, Smp::String8 description, Smp::Uuid uuid,
-                Smp::Int64 offset) override;
+                Smp::Int64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
+                Smp::Bool state = true, Smp::Bool input = false,
+                Smp::Bool output = false) override;
 };
 
 class ClassType : public Type, public virtual Smp::Publication::IClassType {
 public:
   ClassType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
             Smp::Uuid baseClassUuid);
-  Smp::Uuid GetBaseClass() const override;
   void AddField(Smp::String8 name, Smp::String8 description, Smp::Uuid uuid,
-                Smp::Int64 offset) override;
+                Smp::Int64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
+                Smp::Bool state = true, Smp::Bool input = false,
+                Smp::Bool output = false) override;
 
 private:
   Smp::Uuid _baseClassUuid;

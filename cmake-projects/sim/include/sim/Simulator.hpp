@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sim/TypeRegistry.hpp"
-#include <Smp/IDynamicSimulator.h>
+#include <Smp/ISimulator.h>
 #include <core/Container.hpp>
 #include <core/Object.hpp>
 #include <core/SimpleCollection.hpp>
@@ -24,7 +24,7 @@ namespace sim {
 class Resolver;
 class LinkRegistry;
 
-class Simulator : public core::Object, public virtual Smp::IDynamicSimulator {
+class Simulator : public core::Object, public virtual Smp::ISimulator {
 public:
   Simulator();
   virtual ~Simulator() noexcept;
@@ -69,10 +69,14 @@ public:
   // ISimulator Methods
   void Initialise() override;
   void Publish() override;
+  void Configure() override;
+  void Connect() override;
   void Run() override;
-  void Run(Smp::Duration time) override;
+  void Run(Smp::Duration time);
+  void Hold(Smp::Bool immediate) override;
   void Store(Smp::String8 filename) override;
   void Restore(Smp::String8 filename) override;
+  void Reconnect(Smp::IComponent *root) override;
   void Exit() override;
   void Abort() override;
   Smp::SimulatorStateKind GetSimulatorState() const override;

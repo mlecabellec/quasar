@@ -58,9 +58,9 @@ ArrayType::ArrayType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
       _itemTypeUuid(itemTypeUuid), _itemSize(itemSize), _count(count),
       _simpleArray(simpleArray) {}
 Smp::UInt64 ArrayType::GetSize() const { return _itemSize * _count; }
-Smp::Uuid ArrayType::GetItemType() const { return _itemTypeUuid; }
-Smp::UInt64 ArrayType::GetItemSize() const { return _itemSize; }
-Smp::Bool ArrayType::IsSimpleArray() const { return _simpleArray; }
+const Smp::Publication::IType *ArrayType::GetItemType() const {
+  return nullptr;
+}
 
 // StringType
 StringType::StringType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
