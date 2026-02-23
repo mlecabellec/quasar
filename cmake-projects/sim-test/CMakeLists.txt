@@ -7,4 +7,4 @@ target_include_directories(sim-test PRIVATE
     ${PROJECT_SOURCE_DIR}/sample-models/include
 )
 
-target_link_libraries(sim-test PRIVATE smp sim sample-models)
+target_link_libraries(sim-test PRIVATE ECSS_SMP sim sample-models)

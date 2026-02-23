@@ -41,32 +41,8 @@ public:
   Smp::IObject *GetParent() const override;
   Smp::IObject *GetChild(Smp::String8 name) const override;
 
-  // IComponent methods
-  Smp::ComponentStateKind GetState() const override;
-  void Publish(Smp::IPublication *receiver) override;
-  void Configure(Smp::Services::ILogger *logger,
-                 Smp::Services::ILinkRegistry *linkRegistry) override;
-  void Connect(Smp::ISimulator *simulator) override;
-  void Disconnect() override;
-  const Smp::Uuid &GetUuid() const override;
-
-  Smp::IField *GetField(Smp::String8 fullName) const override;
-  const Smp::FieldCollection *GetFields() const override;
-  Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;
-  void SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) override;
-  void GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
-                           Smp::AnySimple *values,
-                           Smp::UInt64 startIndex = 0) const override;
-  void SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
-                           Smp::AnySimpleArray values,
-                           Smp::UInt64 startIndex = 0) override;
-  Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) override;
-  Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::IObject *collection) override;
-  Smp::IObject *
-  IsChildInCollection(Smp::String8 child,
-                      const Smp::IObject *collection) const override;
+  // IComponent methods removed in ECSS standard 1.1 since ISimulator is not an
+  // IComponent
 
   // IComposite methods
   /// [FE-0070.7.32] Return Models and Services containers.

@@ -2,6 +2,7 @@
 #define SIM_PUBLICATION_HPP
 
 #include <Smp/IPublication.h>
+#include <Smp/Publication/IPublishOperation.h>
 #include <Smp/Publication/ITypeRegistry.h>
 #include <core/SimpleCollection.hpp>
 #include <map>
@@ -23,73 +24,73 @@ public:
   Smp::Publication::ITypeRegistry *GetTypeRegistry() const override;
 
   /// [FE-0070.9.17] Publish primitive field.
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Char8 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Bool *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Int8 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Int16 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Int32 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Int64 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::UInt8 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::UInt16 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::UInt32 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::UInt64 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Float32 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
-  void PublishField(Smp::String8 name, Smp::String8 description,
-                    Smp::Float64 *address,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Char8 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Bool *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Int8 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Int16 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Int32 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Int64 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::UInt8 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::UInt16 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::UInt32 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::UInt64 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Float32 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            Smp::Float64 *address,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
 
   /// [FE-0070.9.18] Publish registered type field.
-  void PublishField(Smp::String8 name, Smp::String8 description, void *address,
-                    Smp::Uuid typeUuid,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
+  Smp::IField *PublishField(Smp::String8 name, Smp::String8 description,
+                            void *address, Smp::Uuid typeUuid,
+                            Smp::ViewKind view = Smp::ViewKind::VK_All,
+                            Smp::Bool state = true, Smp::Bool input = false,
+                            Smp::Bool output = false) override;
   /// [FE-0070.9.19] Publish field from IField object.
   void PublishField(Smp::IField *field) override;
 
@@ -97,12 +98,12 @@ public:
   Smp::IPublication *PublishArray(Smp::String8 name, Smp::String8 description,
                                   Smp::ViewKind view = Smp::ViewKind::VK_All,
                                   Smp::Bool state = true) override;
-  void PublishArray(Smp::String8 name, Smp::String8 description,
-                    Smp::Int64 count, void *address,
-                    Smp::PrimitiveTypeKind type,
-                    Smp::ViewKind view = Smp::ViewKind::VK_All,
-                    Smp::Bool state = true, Smp::Bool input = false,
-                    Smp::Bool output = false) override;
+  Smp::ISimpleArrayField *
+  PublishArray(Smp::String8 name, Smp::String8 description, Smp::Int64 count,
+               void *address, Smp::PrimitiveTypeKind type,
+               Smp::ViewKind view = Smp::ViewKind::VK_All,
+               Smp::Bool state = true, Smp::Bool input = false,
+               Smp::Bool output = false) override;
   /// [FE-0070.9.22] Publish structure.
   Smp::IPublication *
   PublishStructure(Smp::String8 name, Smp::String8 description,
@@ -113,10 +114,17 @@ public:
   Smp::Publication::IPublishOperation *
   PublishOperation(Smp::String8 name, Smp::String8 description,
                    Smp::ViewKind view = Smp::ViewKind::VK_None) override;
+  void PublishOperation(Smp::IOperation *operation) override;
+
   /// [FE-0070.9.4] Publish property.
-  void PublishProperty(Smp::String8 name, Smp::String8 description,
-                       Smp::Uuid typeUuid, Smp::AccessKind accessKind,
-                       Smp::ViewKind view = Smp::ViewKind::VK_None) override;
+  Smp::IProperty *
+  PublishProperty(Smp::String8 name, Smp::String8 description,
+                  Smp::Uuid typeUuid, Smp::AccessKind accessKind,
+                  Smp::ViewKind view = Smp::ViewKind::VK_None) override;
+  void PublishProperty(Smp::IProperty *property) override;
+
+  Smp::IProperty *GetProperty(Smp::String8 name) const override;
+  Smp::IOperation *GetOperation(Smp::String8 name) const override;
 
   /// [FE-0070.9.23] Return field by name.
   Smp::IField *GetField(Smp::String8 fullName) const override;
@@ -126,9 +134,6 @@ public:
   const Smp::PropertyCollection *GetProperties() const override;
   /// [FE-0070.9.6] Return published operations.
   const Smp::OperationCollection *GetOperations() const override;
-
-  Smp::IRequest *CreateRequest(Smp::String8 operationName) override;
-  void DeleteRequest(Smp::IRequest *request) override;
 
   /// [FE-0070.9.7] Release published data.
   void Unpublish() override;

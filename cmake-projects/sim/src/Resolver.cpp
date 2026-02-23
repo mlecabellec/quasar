@@ -48,18 +48,18 @@ void Resolver::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                    Smp::UInt64 startIndex) {}
 
 Smp::Bool Resolver::AddChild(Smp::IObject *child,
-                             const Smp::IObject *collection) {
+                             const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::Bool Resolver::RemoveChild(Smp::IObject *child,
-                                const Smp::IObject *collection) {
+                                const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::IObject *
 Resolver::IsChildInCollection(Smp::String8 child,
-                              const Smp::IObject *collection) const {
+                              const Smp::ICollectionBase *collection) const {
   return nullptr;
 }
 
@@ -94,12 +94,12 @@ Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
 }
 
 Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
-                                        const Smp::IComponent *sender) {
+                                        Smp::IObject *relativeRoot) {
   if (!relativePath || strlen(relativePath) == 0)
-    return const_cast<Smp::IComponent *>(sender);
+    return relativeRoot;
 
   auto parts = SplitPath(relativePath);
-  Smp::IObject *current = const_cast<Smp::IComponent *>(sender);
+  Smp::IObject *current = relativeRoot;
   if (!current)
     current = _simulator;
 

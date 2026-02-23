@@ -84,63 +84,14 @@ Smp::String8 Simulator::GetDescription() const {
 
 Smp::IObject *Simulator::GetParent() const { return nullptr; }
 
-// IComponent methods
-// Internal methods logic
-
-Smp::ComponentStateKind Simulator::GetState() const { return _compState; }
-
-const Smp::Uuid &Simulator::GetUuid() const {
-  static Smp::Uuid simulatorUuid = {0, 0, 0, 0, 0}; // Generic UUID
-  return simulatorUuid;
-}
-
-Smp::IField *Simulator::GetField(Smp::String8 fullName) const {
-  return nullptr;
-}
-
-const Smp::FieldCollection *Simulator::GetFields() const { return nullptr; }
-
-Smp::AnySimple Simulator::GetSimpleValue(Smp::String8 fullName) const {
-  return Smp::AnySimple();
-}
-
-void Simulator::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {}
-
-void Simulator::GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
-                                    Smp::AnySimple *values,
-                                    Smp::UInt64 startIndex) const {}
-
-void Simulator::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
-                                    Smp::AnySimpleArray values,
-                                    Smp::UInt64 startIndex) {}
-
-Smp::Bool Simulator::AddChild(Smp::IObject *child,
-                              const Smp::IObject *collection) {
-  return false;
-}
-
-Smp::Bool Simulator::RemoveChild(Smp::IObject *child,
-                                 const Smp::IObject *collection) {
-  return false;
-}
-
-Smp::IObject *
-Simulator::IsChildInCollection(Smp::String8 child,
-                               const Smp::IObject *collection) const {
-  return nullptr;
-}
-
 Smp::IObject *Simulator::GetChild(Smp::String8 name) const {
-  if (auto *c = _containers.at(name))
-    return c;
+  if (auto container = GetContainer(name)) {
+    return container;
+  }
   return nullptr;
 }
 
-void Simulator::Publish(Smp::IPublication *receiver) {}
-void Simulator::Configure(Smp::Services::ILogger *logger,
-                          Smp::Services::ILinkRegistry *linkRegistry) {}
-void Simulator::Connect(Smp::ISimulator *simulator) {}
-void Simulator::Disconnect() {}
+// IComponent methods were here
 
 // IComposite methods
 const Smp::ContainerCollection *Simulator::GetContainers() const {

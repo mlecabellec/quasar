@@ -46,18 +46,18 @@ void TimeKeeper::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                      Smp::UInt64 startIndex) {}
 
 Smp::Bool TimeKeeper::AddChild(Smp::IObject *child,
-                               const Smp::IObject *collection) {
+                               const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::Bool TimeKeeper::RemoveChild(Smp::IObject *child,
-                                  const Smp::IObject *collection) {
+                                  const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::IObject *
 TimeKeeper::IsChildInCollection(Smp::String8 child,
-                                const Smp::IObject *collection) const {
+                                const Smp::ICollectionBase *collection) const {
   return nullptr;
 }
 

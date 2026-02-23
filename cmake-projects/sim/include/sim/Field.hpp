@@ -2,7 +2,6 @@
 #define SIM_FIELD_HPP
 
 #include <Smp/IArrayField.h>
-#include <Smp/IDataflowField.h>
 #include <Smp/IField.h>
 #include <Smp/ISimpleArrayField.h>
 #include <Smp/ISimpleField.h>

@@ -20,10 +20,12 @@ Smp::String8 Type::GetDescription() const {
 Smp::IObject *Type::GetParent() const { return nullptr; }
 Smp::IObject *Type::GetChild(Smp::String8 name) const { return nullptr; }
 
-void Type::Publish(Smp::IPublication *receiver, Smp::String8 name,
-                   Smp::String8 description, void *address, Smp::ViewKind view,
-                   Smp::Bool state, Smp::Bool input, Smp::Bool output) {
+Smp::IField *Type::Publish(Smp::Publication::IPublishField *receiver,
+                           Smp::String8 name, Smp::String8 description,
+                           Smp::Void *address, Smp::ViewKind view,
+                           Smp::Bool state, Smp::Bool input, Smp::Bool output) {
   // Not implemented for stub registry types
+  return nullptr;
 }
 
 // FloatType
@@ -50,15 +52,15 @@ Smp::String8 IntegerType::GetUnit() const { return _unit; }
 
 // EnumerationType
 EnumerationType::EnumerationType(Smp::String8 name, Smp::String8 desc,
-                                 Smp::Uuid uuid, Smp::Int16 memSize)
+                                 Smp::Uuid uuid)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_Int32) {}
 void EnumerationType::AddLiteral(Smp::String8 name, Smp::String8 description,
                                  Smp::Int32 value) { /* Stub */ }
 
 // ArrayType
 ArrayType::ArrayType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
-                     Smp::Uuid itemTypeUuid, Smp::Int64 itemSize,
-                     Smp::Int64 count, Smp::Bool simpleArray)
+                     Smp::Uuid itemTypeUuid, Smp::UInt64 itemSize,
+                     Smp::UInt64 count, Smp::Bool simpleArray)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_None),
       _itemTypeUuid(itemTypeUuid), _itemSize(itemSize), _count(count),
       _simpleArray(simpleArray) {}
@@ -69,17 +71,17 @@ const Smp::Publication::IType *ArrayType::GetItemType() const {
 
 // StringType
 StringType::StringType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
-                       Smp::Int64 length)
+                       Smp::UInt64 length)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_String8),
       _length(length) {}
-Smp::Int64 StringType::GetLength() const { return _length; }
+Smp::UInt64 StringType::GetMaxLength() const { return _length; }
 
 // StructureType
 StructureType::StructureType(Smp::String8 name, Smp::String8 desc,
                              Smp::Uuid uuid)
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_None) {}
 void StructureType::AddField(Smp::String8 name, Smp::String8 description,
-                             Smp::Uuid uuid, Smp::Int64 offset,
+                             Smp::Uuid uuid, Smp::UInt64 offset,
                              Smp::ViewKind view, Smp::Bool state,
                              Smp::Bool input, Smp::Bool output) { /* Stub */ }
 
@@ -89,7 +91,7 @@ ClassType::ClassType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
     : Type(name, desc, uuid, Smp::PrimitiveTypeKind::PTK_None),
       _baseClassUuid(baseClassUuid) {}
 void ClassType::AddField(Smp::String8 name, Smp::String8 description,
-                         Smp::Uuid uuid, Smp::Int64 offset, Smp::ViewKind view,
+                         Smp::Uuid uuid, Smp::UInt64 offset, Smp::ViewKind view,
                          Smp::Bool state, Smp::Bool input,
                          Smp::Bool output) { /* Stub */ }
 
@@ -142,9 +144,9 @@ TypeRegistry::AddIntegerType(Smp::String8 name, Smp::String8 description,
 
 Smp::Publication::IEnumerationType *
 TypeRegistry::AddEnumerationType(Smp::String8 name, Smp::String8 description,
-                                 Smp::Uuid typeUuid, Smp::Int16 memorySize) {
-  _typesByUuid[typeUuid] = std::make_unique<EnumerationType>(
-      name, description, typeUuid, memorySize);
+                                 Smp::Uuid typeUuid) {
+  _typesByUuid[typeUuid] =
+      std::make_unique<EnumerationType>(name, description, typeUuid);
   return dynamic_cast<Smp::Publication::IEnumerationType *>(
       _typesByUuid[typeUuid].get());
 }
@@ -152,7 +154,7 @@ TypeRegistry::AddEnumerationType(Smp::String8 name, Smp::String8 description,
 Smp::Publication::IArrayType *
 TypeRegistry::AddArrayType(Smp::String8 name, Smp::String8 description,
                            Smp::Uuid typeUuid, Smp::Uuid itemTypeUuid,
-                           Smp::Int64 itemSize, Smp::Int64 arrayCount,
+                           Smp::UInt64 itemSize, Smp::UInt64 arrayCount,
                            Smp::Bool simpleArray) {
   _typesByUuid[typeUuid] =
       std::make_unique<ArrayType>(name, description, typeUuid, itemTypeUuid,
@@ -161,13 +163,13 @@ TypeRegistry::AddArrayType(Smp::String8 name, Smp::String8 description,
       _typesByUuid[typeUuid].get());
 }
 
-Smp::Publication::IType *TypeRegistry::AddStringType(Smp::String8 name,
-                                                     Smp::String8 description,
-                                                     Smp::Uuid typeUuid,
-                                                     Smp::Int64 length) {
+Smp::Publication::IStringType *
+TypeRegistry::AddStringType(Smp::String8 name, Smp::String8 description,
+                            Smp::Uuid typeUuid, Smp::UInt64 length) {
   _typesByUuid[typeUuid] =
       std::make_unique<StringType>(name, description, typeUuid, length);
-  return _typesByUuid[typeUuid].get();
+  return dynamic_cast<Smp::Publication::IStringType *>(
+      _typesByUuid[typeUuid].get());
 }
 
 Smp::Publication::IStructureType *

@@ -11,163 +11,193 @@ Smp::Publication::ITypeRegistry *Publication::GetTypeRegistry() const {
   return _typeRegistry;
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Char8 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Char8 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Char8);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Bool *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Bool *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Bool);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Int8 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Int8 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int8);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Int16 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Int16 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int16);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Int32 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Int32 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int32);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Int64 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Int64 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int64);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::UInt8 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::UInt8 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt8);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::UInt16 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::UInt16 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt16);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::UInt32 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::UInt32 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt32);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::UInt64 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::UInt64 *address, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt64);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Float32 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Float32 *address,
+                                       Smp::ViewKind view, Smp::Bool state,
+                                       Smp::Bool input, Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Float32);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               Smp::Float64 *address, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description,
+                                       Smp::Float64 *address,
+                                       Smp::ViewKind view, Smp::Bool state,
+                                       Smp::Bool input, Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Float64);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
-void Publication::PublishField(Smp::String8 name, Smp::String8 description,
-                               void *address, Smp::Uuid typeUuid,
-                               Smp::ViewKind view, Smp::Bool state,
-                               Smp::Bool input, Smp::Bool output) {
+Smp::IField *Publication::PublishField(Smp::String8 name,
+                                       Smp::String8 description, void *address,
+                                       Smp::Uuid typeUuid, Smp::ViewKind view,
+                                       Smp::Bool state, Smp::Bool input,
+                                       Smp::Bool output) {
   const Smp::Publication::IType *type = _typeRegistry->GetType(typeUuid);
   auto field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
+  return _fields.back().get();
 }
 
 void Publication::PublishField(Smp::IField *field) {
-  // Need to handle external field ownership or just wrap it
+  if (field) {
+    auto internalField = dynamic_cast<sim::Field *>(field);
+    if (internalField)
+      _fields.push_back(std::unique_ptr<Smp::IField>(std::move(internalField)));
+  }
 }
 
 Smp::IPublication *Publication::PublishArray(Smp::String8 name,
@@ -177,12 +207,13 @@ Smp::IPublication *Publication::PublishArray(Smp::String8 name,
   return nullptr; // Stub
 }
 
-void Publication::PublishArray(Smp::String8 name, Smp::String8 description,
-                               Smp::Int64 count, void *address,
-                               Smp::PrimitiveTypeKind type, Smp::ViewKind view,
-                               Smp::Bool state, Smp::Bool input,
-                               Smp::Bool output) {
+Smp::ISimpleArrayField *
+Publication::PublishArray(Smp::String8 name, Smp::String8 description,
+                          Smp::Int64 count, void *address,
+                          Smp::PrimitiveTypeKind type, Smp::ViewKind view,
+                          Smp::Bool state, Smp::Bool input, Smp::Bool output) {
   // Stub
+  return nullptr;
 }
 
 Smp::IPublication *Publication::PublishStructure(Smp::String8 name,
@@ -205,10 +236,20 @@ Publication::PublishOperation(Smp::String8 name, Smp::String8 description,
   return opPtr;
 }
 
-void Publication::PublishProperty(Smp::String8 name, Smp::String8 description,
-                                  Smp::Uuid typeUuid,
-                                  Smp::AccessKind accessKind,
-                                  Smp::ViewKind view) {
+void Publication::PublishOperation(Smp::IOperation *operation) {
+  // Stub
+}
+
+Smp::IProperty *Publication::PublishProperty(Smp::String8 name,
+                                             Smp::String8 description,
+                                             Smp::Uuid typeUuid,
+                                             Smp::AccessKind accessKind,
+                                             Smp::ViewKind view) {
+  // Stub
+  return nullptr;
+}
+
+void Publication::PublishProperty(Smp::IProperty *property) {
   // Stub
 }
 
@@ -228,12 +269,12 @@ const Smp::OperationCollection *Publication::GetOperations() const {
   return nullptr; // TODO
 }
 
-Smp::IRequest *Publication::CreateRequest(Smp::String8 operationName) {
+Smp::IProperty *Publication::GetProperty(Smp::String8 name) const {
   return nullptr; // Stub
 }
 
-void Publication::DeleteRequest(Smp::IRequest *request) {
-  // Stub
+Smp::IOperation *Publication::GetOperation(Smp::String8 name) const {
+  return nullptr; // Stub
 }
 
 void Publication::Unpublish() {

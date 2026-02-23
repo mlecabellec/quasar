@@ -62,12 +62,12 @@ public:
                            Smp::AnySimpleArray values,
                            Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) override;
+                     const Smp::ICollectionBase *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::IObject *collection) override;
+                        const Smp::ICollectionBase *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::IObject *collection) const override;
+                      const Smp::ICollectionBase *collection) const override;
 
   Smp::IObject *GetChild(Smp::String8 name) const override;
 
@@ -76,7 +76,8 @@ public:
   Smp::Services::EventId
   AddImmediateEvent(const Smp::IEntryPoint *entryPoint) override;
   /// [FE-0070.3.5] Add an Event at a specific simulation time.
-  /// Contributes to [FE-0070.3.2] (repeat count) and [FE-0070.3.3] (cycle time).
+  /// Contributes to [FE-0070.3.2] (repeat count) and [FE-0070.3.3] (cycle
+  /// time).
   Smp::Services::EventId AddSimulationTimeEvent(
       const Smp::IEntryPoint *entryPoint, Smp::Duration simulationTime,
       Smp::Duration cycleTime = 0, Smp::Int64 repeat = 0) override;
@@ -95,6 +96,10 @@ public:
                                           Smp::DateTime zuluTime,
                                           Smp::Duration cycleTime = 0,
                                           Smp::Int64 repeat = 0) override;
+  /// [FE-0070.3.XX] Add an Event at a relative Zulu time.
+  Smp::Services::EventId AddRelativeZuluTimeEvent(
+      const Smp::IEntryPoint *entryPoint, Smp::Duration deltaZuluTime,
+      Smp::Duration cycleTime = 0, Smp::Int64 repeat = 0) override;
 
   /// [FE-0070.3.12] Update Event simulation time.
   void SetEventSimulationTime(Smp::Services::EventId event,
@@ -115,6 +120,8 @@ public:
   void SetEventRepeat(Smp::Services::EventId event, Smp::Int64 repeat) override;
   /// [FE-0070.3.11] Remove an Event.
   void RemoveEvent(Smp::Services::EventId event) override;
+  /// [FE-0070.3.YY] Check if an Event is scheduled.
+  Smp::Bool IsEventScheduled(Smp::Services::EventId event) const override;
   /// [FE-0070.3.18] Return current EventId.
   Smp::Services::EventId GetCurrentEventId() const override;
   /// [FE-0070.3.19] Return next Event time.

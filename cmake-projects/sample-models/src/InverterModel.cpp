@@ -60,16 +60,15 @@ void InverterModel::SetSimpleArrayValue(Smp::String8 fullName,
                                         Smp::UInt64 startIndex) {}
 
 Smp::Bool InverterModel::AddChild(Smp::IObject *child,
-                                  const Smp::IObject *collection) {
+                                  const Smp::ICollectionBase *collection) {
   return false;
 }
 Smp::Bool InverterModel::RemoveChild(Smp::IObject *child,
-                                     const Smp::IObject *collection) {
+                                     const Smp::ICollectionBase *collection) {
   return false;
 }
-Smp::IObject *
-InverterModel::IsChildInCollection(Smp::String8 child,
-                                   const Smp::IObject *collection) const {
+Smp::IObject *InverterModel::IsChildInCollection(
+    Smp::String8 child, const Smp::ICollectionBase *collection) const {
   return nullptr;
 }
 

@@ -50,18 +50,18 @@ void Scheduler::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                     Smp::UInt64 startIndex) {}
 
 Smp::Bool Scheduler::AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) {
+                              const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::Bool Scheduler::RemoveChild(Smp::IObject *child,
-                                 const Smp::IObject *collection) {
+                                 const Smp::ICollectionBase *collection) {
   return false;
 }
 
 Smp::IObject *
 Scheduler::IsChildInCollection(Smp::String8 child,
-                               const Smp::IObject *collection) const {
+                               const Smp::ICollectionBase *collection) const {
   return nullptr;
 }
 
@@ -123,7 +123,8 @@ Scheduler::AddSimulationTimeEvent(const Smp::IEntryPoint *entryPoint,
   // [FE-0070.3.2] The Scheduler shall support Events with repeat count.
   evt.repeat = repeat;
   evt.count = 0;
-  // [FE-0070.3.4] Events shall be executed first-posted, first-executed. (sequenceId for tie-breaking)
+  // [FE-0070.3.4] Events shall be executed first-posted, first-executed.
+  // (sequenceId for tie-breaking)
   evt.sequenceId = _nextSequenceId++;
   evt.isMissionTime = false;
   evt.isEpochTime = false;
@@ -157,8 +158,8 @@ Scheduler::AddMissionTimeEvent(const Smp::IEntryPoint *entryPoint,
   evt.id = CreateEventId();
   evt.entryPoint = entryPoint;
   evt.missionTime = missionTime;
-// ...
-// (rest of code)
+  // ...
+  // (rest of code)
 
   // Map to Sim Time: SimTime = MissionTime + MissionStartOffset?
   // MissionTime (Duration) is offset from MissionStart.
@@ -250,6 +251,12 @@ Scheduler::AddZuluTimeEvent(const Smp::IEntryPoint *entryPoint,
   return -1;
 }
 
+Smp::Services::EventId Scheduler::AddRelativeZuluTimeEvent(
+    const Smp::IEntryPoint *entryPoint, Smp::Duration deltaZuluTime,
+    Smp::Duration cycleTime, Smp::Int64 repeat) {
+  return -1;
+}
+
 void Scheduler::ScheduleEvent(const SchedulerEvent &evt) {
   // Only schedule if it's a SimTime execution candidate
   // (Zulu events are not on Sim timeline)
@@ -290,6 +297,11 @@ void Scheduler::RemoveEvent(Smp::Services::EventId event) {
   }
 
   _events.erase(it);
+}
+
+Smp::Bool Scheduler::IsEventScheduled(Smp::Services::EventId event) const {
+  std::lock_guard<std::mutex> lock(_mutex);
+  return _events.find(event) != _events.end();
 }
 
 void Scheduler::SetEventSimulationTime(Smp::Services::EventId event,
@@ -346,7 +358,8 @@ Smp::Services::EventId Scheduler::GetCurrentEventId() const {
 }
 
 Smp::Duration Scheduler::GetNextScheduledEventTime() const {
-  // [FE-0070.3.19] IScheduler GetNextScheduledEventTime shall return next Event time.
+  // [FE-0070.3.19] IScheduler GetNextScheduledEventTime shall return next Event
+  // time.
   std::lock_guard<std::mutex> lock(_mutex);
   if (!_timeline.empty()) {
     return _timeline.begin()->first;

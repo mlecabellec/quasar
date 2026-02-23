@@ -1,9 +1,12 @@
 #pragma once
 
 #include <Smp/IPublication.h>
-#include <Smp/Publication/IFloatType.h>
-#include <Smp/Publication/IIntegerType.h>
+#include <Smp/Publication/IArrayType.h>
+#include <Smp/Publication/IClassType.h>
+#include <Smp/Publication/IEnumerationType.h>
 #include <Smp/Publication/IStringType.h>
+#include <Smp/Publication/IStructureType.h>
+#include <Smp/Publication/IType.h>
 #include <Smp/Publication/ITypeRegistry.h>
 #include <core/Object.hpp>
 #include <map>
@@ -33,28 +36,29 @@ public:
 
   // IType overrides
   /// [FE-0070.10.13] Publish new field of this type.
-  void Publish(Smp::IPublication *receiver, Smp::String8 name,
-               Smp::String8 description, void *address,
-               Smp::ViewKind view = Smp::ViewKind::VK_All,
-               Smp::Bool state = true, Smp::Bool input = false,
-               Smp::Bool output = false) override;
+  Smp::IField *Publish(Smp::Publication::IPublishField *receiver,
+                       Smp::String8 name, Smp::String8 description,
+                       Smp::Void *address,
+                       Smp::ViewKind view = Smp::ViewKind::VK_All,
+                       Smp::Bool state = true, Smp::Bool input = false,
+                       Smp::Bool output = false) override;
 
 protected:
   Smp::Uuid _uuid;
   Smp::PrimitiveTypeKind _primitiveTypeKind;
 };
 
-class FloatType : public Type, public virtual Smp::Publication::IFloatType {
+class FloatType : public Type {
 public:
   FloatType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
             Smp::Float64 min, Smp::Float64 max, Smp::Bool minInc,
             Smp::Bool maxInc, Smp::String8 unit, Smp::PrimitiveTypeKind type);
 
-  Smp::Float64 GetMinimum() const override;
-  Smp::Float64 GetMaximum() const override;
-  Smp::Bool IsMinInclusive() const override;
-  Smp::Bool IsMaxInclusive() const override;
-  Smp::String8 GetUnit() const override;
+  Smp::Float64 GetMinimum() const;
+  Smp::Float64 GetMaximum() const;
+  Smp::Bool IsMinInclusive() const;
+  Smp::Bool IsMaxInclusive() const;
+  Smp::String8 GetUnit() const;
 
 private:
   Smp::Float64 _min, _max;
@@ -62,15 +66,15 @@ private:
   Smp::String8 _unit;
 };
 
-class IntegerType : public Type, public virtual Smp::Publication::IIntegerType {
+class IntegerType : public Type {
 public:
   IntegerType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
               Smp::Int64 min, Smp::Int64 max, Smp::String8 unit,
               Smp::PrimitiveTypeKind type);
 
-  Smp::Int64 GetMinimum() const override;
-  Smp::Int64 GetMaximum() const override;
-  Smp::String8 GetUnit() const override;
+  Smp::Int64 GetMinimum() const;
+  Smp::Int64 GetMaximum() const;
+  Smp::String8 GetUnit() const;
 
 private:
   Smp::Int64 _min, _max;
@@ -81,8 +85,7 @@ private:
 class EnumerationType : public Type,
                         public virtual Smp::Publication::IEnumerationType {
 public:
-  EnumerationType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
-                  Smp::Int16 memSize);
+  EnumerationType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid);
   void AddLiteral(Smp::String8 name, Smp::String8 description,
                   Smp::Int32 value) override;
 
@@ -92,26 +95,26 @@ private:
 class ArrayType : public Type, public virtual Smp::Publication::IArrayType {
 public:
   ArrayType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
-            Smp::Uuid itemTypeUuid, Smp::Int64 itemSize, Smp::Int64 count,
+            Smp::Uuid itemTypeUuid, Smp::UInt64 itemSize, Smp::UInt64 count,
             Smp::Bool simpleArray);
   Smp::UInt64 GetSize() const override;
   const Smp::Publication::IType *GetItemType() const override;
 
 private:
   Smp::Uuid _itemTypeUuid;
-  Smp::Int64 _itemSize;
-  Smp::Int64 _count;
+  Smp::UInt64 _itemSize;
+  Smp::UInt64 _count;
   Smp::Bool _simpleArray;
 };
 
 class StringType : public Type, public virtual Smp::Publication::IStringType {
 public:
   StringType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
-             Smp::Int64 length);
-  Smp::Int64 GetLength() const override;
+             Smp::UInt64 length);
+  Smp::UInt64 GetMaxLength() const override;
 
 private:
-  Smp::Int64 _length;
+  Smp::UInt64 _length;
 };
 
 class StructureType : public Type,
@@ -119,7 +122,7 @@ class StructureType : public Type,
 public:
   StructureType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid);
   void AddField(Smp::String8 name, Smp::String8 description, Smp::Uuid uuid,
-                Smp::Int64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
+                Smp::UInt64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
                 Smp::Bool state = true, Smp::Bool input = false,
                 Smp::Bool output = false) override;
 };
@@ -129,7 +132,7 @@ public:
   ClassType(Smp::String8 name, Smp::String8 desc, Smp::Uuid uuid,
             Smp::Uuid baseClassUuid);
   void AddField(Smp::String8 name, Smp::String8 description, Smp::Uuid uuid,
-                Smp::Int64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
+                Smp::UInt64 offset, Smp::ViewKind view = Smp::ViewKind::VK_All,
                 Smp::Bool state = true, Smp::Bool input = false,
                 Smp::Bool output = false) override;
 
@@ -155,7 +158,8 @@ public:
   // ITypeRegistry overrides
   /// [FE-0070.10.3] Return primitive type.
   Smp::Publication::IType *GetType(Smp::PrimitiveTypeKind type) const override;
-  /// [FE-0070.10.4] Return type by UUID. [FE-0070.10.21] Types shall be resolvable by UUID.
+  /// [FE-0070.10.4] Return type by UUID. [FE-0070.10.21] Types shall be
+  /// resolvable by UUID.
   Smp::Publication::IType *GetType(Smp::Uuid typeUuid) const override;
 
   /// [FE-0070.10.5] Add Float type.
@@ -176,19 +180,19 @@ public:
   /// [FE-0070.10.7] Add Enumeration type.
   Smp::Publication::IEnumerationType *
   AddEnumerationType(Smp::String8 name, Smp::String8 description,
-                     Smp::Uuid typeUuid, Smp::Int16 memorySize) override;
+                     Smp::Uuid typeUuid) override;
 
   /// [FE-0070.10.8] Add Array type.
   Smp::Publication::IArrayType *
   AddArrayType(Smp::String8 name, Smp::String8 description, Smp::Uuid typeUuid,
-               Smp::Uuid itemTypeUuid, Smp::Int64 itemSize,
-               Smp::Int64 arrayCount, Smp::Bool simpleArray = false) override;
+               Smp::Uuid itemTypeUuid, Smp::UInt64 itemSize,
+               Smp::UInt64 arrayCount, Smp::Bool simpleArray = false) override;
 
   /// [FE-0070.10.9] Add String type.
-  Smp::Publication::IType *AddStringType(Smp::String8 name,
-                                         Smp::String8 description,
-                                         Smp::Uuid typeUuid,
-                                         Smp::Int64 length) override;
+  Smp::Publication::IStringType *AddStringType(Smp::String8 name,
+                                               Smp::String8 description,
+                                               Smp::Uuid typeUuid,
+                                               Smp::UInt64 length) override;
 
   /// [FE-0070.10.10] Add Structure type.
   Smp::Publication::IStructureType *

@@ -5,4 +5,4 @@ target_include_directories(core INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(core INTERFACE smp)
+target_link_libraries(core INTERFACE ECSS_SMP)

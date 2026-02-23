@@ -33,12 +33,12 @@ public:
                            Smp::AnySimpleArray values,
                            Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) override;
+                     const Smp::ICollectionBase *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::IObject *collection) override;
+                        const Smp::ICollectionBase *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::IObject *collection) const override;
+                      const Smp::ICollectionBase *collection) const override;
 
   Smp::IObject *GetChild(Smp::String8 name) const override;
 

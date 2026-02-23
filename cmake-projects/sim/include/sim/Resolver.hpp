@@ -35,22 +35,24 @@ public:
                            Smp::AnySimpleArray values,
                            Smp::UInt64 startIndex = 0) override;
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) override;
+                     const Smp::ICollectionBase *collection) override;
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::IObject *collection) override;
+                        const Smp::ICollectionBase *collection) override;
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::IObject *collection) const override;
+                      const Smp::ICollectionBase *collection) const override;
 
   // IResolver methods
 
   void SetSimulator(Smp::ISimulator *simulator);
 
-  /// [FE-0070.5.2] Resolve an absolute path. Contributes to [FE-0050.3] (Path string).
+  /// [FE-0070.5.2] Resolve an absolute path. Contributes to [FE-0050.3] (Path
+  /// string).
   Smp::IObject *ResolveAbsolute(Smp::String8 absolutePath) override;
-  /// [FE-0070.5.3] Resolve a relative path. Contributes to [FE-0050.3] (Path string).
+  /// [FE-0070.5.3] Resolve a relative path. Contributes to [FE-0050.3] (Path
+  /// string).
   Smp::IObject *ResolveRelative(Smp::String8 relativePath,
-                                const Smp::IComponent *sender) override;
+                                Smp::IObject *relativeRoot) override;
 
 private:
   Smp::ISimulator *_simulator = nullptr;

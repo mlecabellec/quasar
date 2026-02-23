@@ -11,7 +11,8 @@ namespace sim {
 
 /**
  * @brief Base Model implementation.
- * @details Contributes to [FE-0060.3.18] (IModel interface) and [FE-0060.5.1] (IComposite interface).
+ * @details Contributes to [FE-0060.3.18] (IModel interface) and [FE-0060.5.1]
+ * (IComposite interface).
  */
 class Model : public core::Object,
               public virtual Smp::IModel,
@@ -62,14 +63,14 @@ public:
 
   /// [FE-0060.3.15] Add a new child object.
   Smp::Bool AddChild(Smp::IObject *child,
-                     const Smp::IObject *collection) override;
+                     const Smp::ICollectionBase *collection) override;
   /// [FE-0060.3.16] Remove a child object.
   Smp::Bool RemoveChild(Smp::IObject *child,
-                        const Smp::IObject *collection) override;
+                        const Smp::ICollectionBase *collection) override;
   /// [FE-0060.3.17] Check for child existence.
   Smp::IObject *
   IsChildInCollection(Smp::String8 child,
-                      const Smp::IObject *collection) const override;
+                      const Smp::ICollectionBase *collection) const override;
 
   Smp::IObject *GetChild(Smp::String8 name) const override;
 
