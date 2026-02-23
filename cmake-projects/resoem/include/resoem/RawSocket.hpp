@@ -14,6 +14,7 @@ namespace resoem {
 
 /**
  * @brief Handles raw Ethernet packet communication.
+ * @details Contributes to [FE-0040.1] Transport Layer.
  *
  * This class provides a simple wrapper around Linux raw sockets (AF_PACKET)
  * specifically for EtherCAT (EtherType 0x88A4).
@@ -22,6 +23,7 @@ class RawSocket {
 public:
   /**
    * @brief Construct a new Raw Socket object.
+   * @details [FE-0040.1.1] Uses Linux AF_PACKET sockets with SOCK_RAW.
    * @param interface_name The name of the primary network interface (e.g.,
    * "eth0").
    * @param secondary_interface_name Optional name of the secondary interface
@@ -52,6 +54,7 @@ public:
 
   /**
    * @brief Send a raw frame.
+   * @details [FE-0040.1.3] Implement non-blocking send operation.
    * @param data The data to send.
    * @param use_secondary If true, send through the secondary interface.
    * @return Number of bytes sent.
@@ -61,6 +64,7 @@ public:
 
   /**
    * @brief Receive a raw frame.
+   * @details [FE-0040.1.3] Implement non-blocking receive operation.
    * @param buffer The buffer to store received data.
    * @param out_port_index Optional pointer to store the receiving port index
    * (0=Primary, 1=Secondary).
@@ -71,6 +75,7 @@ public:
 
   /**
    * @brief Set receive and send timeouts.
+   * @details [FE-0040.1.2] Support configurable receive timeouts.
    * @param timeout_ms Timeout in milliseconds.
    */
   void set_timeout(int timeout_ms);
@@ -83,6 +88,7 @@ public:
 
   /**
    * @brief Get the MAC address of the bound interface.
+   * @details [FE-0040.1.2] Interface-specific MAC address retrieval.
    * @param use_secondary If true, get the MAC of the secondary interface.
    * @return 6-byte array containing the MAC address.
    * @throws SocketError if the MAC address cannot be retrieved.

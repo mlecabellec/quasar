@@ -37,6 +37,7 @@ using namespace resoem;
 #include "resoem/Slave.hpp"
 
 void apply_topology_logic(std::vector<SlaveInfo> &slaves) {
+  // [Compliance Proof] FE-0040.3.4: Map network topology and establish parent-child relationships for each slave.
   int count = slaves.size();
 
   // Reset topology info

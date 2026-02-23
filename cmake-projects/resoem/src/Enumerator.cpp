@@ -23,17 +23,16 @@ Result<size_t> Enumerator::enumerate() {
   // Reset the network to a known state (INIT, clear FMMUs/SMs, etc.)
   reset_to_init();
 
-  // Perform a broadcast read to count how many slaves are on the wire.
+  // [FE-0040.3.1] Automatically detect and count slaves on the wire using broadcast read.
   int slave_count = broadcast_read_count();
   std::cout << "Found " << slave_count << " slaves." << std::endl;
   if (slave_count <= 0)
     return 0;
 
-  // Assign unique station addresses to each slave.
+  // [FE-0040.3.2] Assign configured station addresses (starting at 0x1001) to each slave.
   assign_addresses(slave_count);
 
-  // Read information (Vendor, Product, PDOs) from the SII (EEPROM) of each
-  // slave.
+  // [FE-0040.3.3] Parse information (Vendor, Product, PDOs) from the SII (EEPROM) of each slave.
   read_sii_data(slave_count);
 
   // Request all slaves to move to the PRE-OP state to allow mailbox
@@ -128,6 +127,7 @@ Result<> Enumerator::request_state_all(uint16_t state,
 Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
   uint32_t offset = 0;
 
+  // [FE-0040.5.2] Automatically calculate and program FMMU (Fieldbus Memory Management Unit) entries for inputs and outputs.
   // First pass: Configure FMMUs for Outputs (Master -> Slave).
   for (size_t i = 0; i < slaves_.size(); ++i) {
     SlaveInfo &info = slaves_[i];
@@ -210,6 +210,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
     }
   }
 
+  // [FE-0040.5.3] Manage a global ProcessImage buffer with bit-level accessors.
   // Resize the process image to hold all discovered data.
   image.resize(offset);
   return offset;
@@ -221,6 +222,7 @@ Enumerator::exchange_process_data(ProcessImage &image,
   if (image.size() == 0)
     return 0;
 
+  // [FE-0040.5.4] Support cyclic data exchange using the LRW command for atomic read/write updates.
   std::span<byte> data = image.data();
   // Use Logical ReadWrite (LRW) to exchange the entire process image in one
   // datagram.
@@ -232,6 +234,7 @@ Enumerator::exchange_process_data(ProcessImage &image,
 }
 
 void Enumerator::sync_clocks() {
+  // [FE-0040.6.2] designate a Reference Clock (usually the first DC-capable slave) for the network.
   // Find the reference clock.
   int ref = -1;
   for (size_t i = 0; i < slaves_.size(); ++i) {
@@ -243,6 +246,7 @@ void Enumerator::sync_clocks() {
   if (ref == -1)
     return;
 
+  // [FE-0040.6.3] Provide cyclic drift compensation using the ARMW command to 0x0910.
   // Use ARMW to read from reference and write to all others.
   uint64_t t = 0;
   send_receive(cmds::ARMW, static_cast<uint16_t>(-ref), regs::DC_SYS_TIME,
@@ -253,6 +257,7 @@ void Enumerator::configure_dc(SlaveInfo &s, uint32_t cyc, int32_t shift) {
   if (!s.has_dc)
     return;
 
+  // [FE-0040.6.4] Configure SYNC0/SYNC1 signals with specific cycle times and shift offsets.
   // 1. Deactivate sync.
   write_register_fpwr<uint8_t>(s.configured_address, regs::DC_SYNC_ACT, 0);
   // 2. Set cycle time.
@@ -287,6 +292,7 @@ bool Enumerator::recover_slave(int idx) {
   if (idx >= (int)slaves_.size())
     return false;
 
+  // [FE-0040.7.1] Implement "Hot-Connect" support via automated slave recovery.
   // Try to re-assign the configured station address using auto-increment.
   write_register_apwr<uint16_t>(static_cast<uint16_t>(-idx),
                                 regs::CONFIG_STATION_ADDR,
@@ -689,6 +695,7 @@ void Enumerator::read_port_status() {
 }
 
 void Enumerator::map_topology(int count) {
+  // [FE-0040.3.4] Map network topology and establish parent-child relationships for each slave.
   read_port_status();
 
   if (slaves_.empty())
@@ -978,6 +985,7 @@ void Enumerator::measure_propagation_delays() {
   if (slaves_.empty())
     return;
 
+  // [FE-0040.6.1] Implement propagation delay measurement between slaves with nanosecond resolution.
   // 1. Latch receive times (BWR to 0x0900)
   uint32_t val = 0;
   write_register_broadcast<uint32_t>(regs::DC_RECEIVE_TIME_PORT0, 0);

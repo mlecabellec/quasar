@@ -37,6 +37,7 @@ RawSocket::RawSocket(const std::string &interface_name,
 }
 
 void RawSocket::open_socket(const std::string &iface, int &fd, int &idx) {
+  // [FE-0040.1.1] Use Linux AF_PACKET sockets with SOCK_RAW for direct Ethernet frame access.
   fd = socket(AF_PACKET, SOCK_RAW, htons(ETHERCAT_ETHERTYPE));
   if (fd < 0) {
     throw SocketError("Failed to create raw socket for " + iface + ": " +
@@ -60,6 +61,7 @@ void RawSocket::open_socket(const std::string &iface, int &fd, int &idx) {
   sll.sll_ifindex = idx;
   sll.sll_protocol = htons(ETHERCAT_ETHERTYPE);
 
+  // [FE-0040.1.1] Direct Ethernet frame access via bind.
   if (bind(fd, reinterpret_cast<struct sockaddr *>(&sll), sizeof(sll)) < 0) {
     close(fd);
     throw SocketError("Failed to bind socket to " + iface + ": " +
@@ -109,6 +111,7 @@ size_t RawSocket::send(std::span<const byte> data, bool use_secondary) {
   if (fd < 0)
     throw SocketError("Socket not open");
 
+  // [FE-0040.1.3] Implement non-blocking send operation.
   ssize_t sent = ::send(fd, data.data(), data.size(), 0);
   if (sent < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -122,6 +125,7 @@ size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
   if (sock_fd_ < 0)
     throw SocketError("Socket not open");
 
+  // [FE-0040.1.3] Implement non-blocking receive operation with select for timeout.
   // If redundancy is active, we need to poll both sockets.
   if (sock_fd_secondary_ >= 0) {
     struct timeval tv;
@@ -189,6 +193,7 @@ void RawSocket::set_timeout(int timeout_ms) {
   if (sock_fd_ < 0)
     return;
 
+  // [FE-0040.1.2] Support configurable receive timeouts.
   struct timeval tv;
   tv.tv_sec = timeout_ms / 1000;
   tv.tv_usec = (timeout_ms % 1000) * 1000;
@@ -222,6 +227,7 @@ std::array<uint8_t, 6> RawSocket::get_mac_address(bool use_secondary) const {
   std::memset(&ifr, 0, sizeof(ifr));
   std::strncpy(ifr.ifr_name, iface.c_str(), IFNAMSIZ - 1);
 
+  // [FE-0040.1.2] Interface-specific MAC address retrieval.
   if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) {
     throw SocketError("Failed to get MAC address: " +
                       std::string(strerror(errno)));

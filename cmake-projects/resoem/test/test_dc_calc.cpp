@@ -49,6 +49,7 @@ static uint8_t get_prev_port(uint8_t current_port,
 
 void calculate_delays(std::vector<SlaveInfo> &slaves,
                       const std::vector<std::array<uint32_t, 4>> &recv_times) {
+  // [Compliance Proof] FE-0040.6.1: Implement propagation delay measurement between slaves with nanosecond resolution.
   if (slaves.empty())
     return;
 

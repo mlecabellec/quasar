@@ -24,6 +24,7 @@ void FrameBuilder::reset() {
 
 void FrameBuilder::add_datagram(uint8_t cmd, uint8_t idx, uint16_t addr,
                                 uint16_t off, std::span<const byte> data) {
+  // [FE-0040.2.2] Support standard EtherCAT commands (APRD, APWR, etc.).
   size_t current_size = buffer_.size();
   size_t data_len = data.size();
 
@@ -64,6 +65,7 @@ void FrameBuilder::add_datagram(uint8_t cmd, uint8_t idx, uint16_t addr,
 void FrameBuilder::add_datagram_logical(uint8_t cmd, uint8_t idx,
                                         uint32_t address,
                                         std::span<const byte> data) {
+  // [FE-0040.2.4] Support 32-bit logical addressing for process data exchange.
   // For logical addressing, the 32-bit address is split across 
   // the 16-bit address and 16-bit offset fields.
   add_datagram(cmd, idx, static_cast<uint16_t>(address & 0xFFFF),
@@ -95,6 +97,7 @@ std::span<const byte> FrameBuilder::build() {
   std::memcpy(buffer_.data() + 14, &ecat_header, 2);
 
   // 3. Fix up 'More' bits in datagram headers.
+  // [FE-0040.2.3] Implement automatic "More" bit handling.
   // Each datagram (except the last) must have the 'More' bit set 
   // to notify the slaves that another datagram follows in the same frame.
   size_t offset = ETHERNET_HEADER_SIZE + ETHERCAT_HEADER_SIZE;
@@ -116,6 +119,7 @@ std::span<const byte> FrameBuilder::build() {
   }
 
   // 4. Pad the frame to minimum Ethernet size.
+  // [FE-0040.2.3] Implement frame padding to minimum Ethernet size (64 bytes).
   // Standard Ethernet frames must be at least 64 bytes (including 4-byte CRC).
   // Thus, the payload (everything from Dest MAC to end of datagrams) must be 60 bytes.
   if (buffer_.size() < 60) {

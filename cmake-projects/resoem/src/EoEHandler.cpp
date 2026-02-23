@@ -8,6 +8,7 @@ EoEHandler::EoEHandler(MailboxHandler &mailbox) : mailbox_(mailbox) {}
 
 Result<> EoEHandler::send_frame(SlaveInfo &slave, std::span<const byte> frame,
                                 std::chrono::microseconds timeout) {
+  // [FE-0040.4.3.1] Implement Ethernet frame fragmentation.
   // Calculate maximum payload size based on the slave's mailbox capacity.
   size_t max_payload = slave.mbx_out_length - sizeof(eoe::Header);
   uint16_t total_size = static_cast<uint16_t>(frame.size());
@@ -45,6 +46,7 @@ Result<> EoEHandler::send_frame(SlaveInfo &slave, std::span<const byte> frame,
 
 Result<std::vector<byte>>
 EoEHandler::receive_frame(SlaveInfo &slave, std::chrono::microseconds timeout) {
+  // [FE-0040.4.3.1] Implement Ethernet frame reassembly.
   std::vector<byte> frame;
   uint8_t exp_frag = 0;
   std::vector<byte> mbx(slave.mbx_in_length);

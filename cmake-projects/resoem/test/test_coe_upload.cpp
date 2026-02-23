@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
       }
 
       // Step: Attempt SDO Read of Index 0x1008 (Device Name)
+      // [Compliance Proof] FE-0040.4.1.1: Support SDO Read for expedited and normal transfers.
       byte name_buf[64];
       size_t actual_size = 0;
       std::cout << "  Reading SDO 0x1008:00 (Device Name)...\n";

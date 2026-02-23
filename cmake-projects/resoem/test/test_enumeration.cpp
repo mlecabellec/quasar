@@ -24,6 +24,9 @@ int main(int argc, char *argv[]) {
     Enumerator enumerator(socket);
 
     // Step: Perform slave enumeration
+    // [Compliance Proof] FE-0040.3.1: Automatically detect and count slaves on the wire using broadcast read.
+    // [Compliance Proof] FE-0040.3.2: Assign configured station addresses (starting at 0x1001) to each slave.
+    // [Compliance Proof] FE-0040.3.3: Parse the Slave Information Interface (SII/EEPROM) to identify Vendor ID, Product Code, Revision, and Name.
     std::cout << "Step: Perform slave enumeration (BRD count)" << std::endl;
     Result<size_t> count_result = enumerator.enumerate();
     if (!count_result.has_value()) {

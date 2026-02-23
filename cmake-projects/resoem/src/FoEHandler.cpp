@@ -11,6 +11,7 @@ FoEHandler::FoEHandler(MailboxHandler &mailbox) : mailbox_(mailbox) {}
 Result<> FoEHandler::write_file(SlaveInfo &slave, std::string_view filename,
                                 uint32_t password, std::span<const byte> data,
                                 std::chrono::microseconds timeout) {
+  // [FE-0040.4.2.1] Implement file download state machine.
   std::vector<byte> mbx_buffer(slave.mbx_out_length);
   foe::Header *foe_header = reinterpret_cast<foe::Header *>(mbx_buffer.data());
 
@@ -100,6 +101,7 @@ Result<> FoEHandler::write_file(SlaveInfo &slave, std::string_view filename,
 Result<std::vector<byte>>
 FoEHandler::read_file(SlaveInfo &slave, std::string_view filename,
                       uint32_t password, std::chrono::microseconds timeout) {
+  // [FE-0040.4.2.1] Implement file upload state machine.
   std::vector<byte> buffer;
   std::vector<byte> mbx_buffer(slave.mbx_out_length);
   foe::Header *foe_header = reinterpret_cast<foe::Header *>(mbx_buffer.data());

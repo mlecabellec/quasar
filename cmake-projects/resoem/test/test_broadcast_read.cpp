@@ -29,10 +29,12 @@ int main(int argc, char *argv[]) {
 
   try {
     // Step: Open interface
+    // [Compliance Proof] FE-0040.1.1: Use Linux AF_PACKET sockets with SOCK_RAW.
     std::cout << "Step: Opening interface " << ifname << "..." << std::endl;
     RawSocket socket(ifname);
 
     // Step: Retrieve and display MAC address
+    // [Compliance Proof] FE-0040.1.2: Interface-specific MAC address retrieval.
     std::cout << "Step: Retrieve and display MAC address" << std::endl;
     auto mac = socket.get_mac_address();
     std::cout << "Interface opened. MAC: ";
@@ -40,11 +42,12 @@ int main(int argc, char *argv[]) {
       std::cout << std::hex << (int)mac[i] << (i < 5 ? ":" : "\n") << std::dec;
 
     // Step: Initialize FrameBuilder
+    // [Compliance Proof] FE-0040.2.1: Provide a FrameBuilder for constructing multi-datagram Ethernet frames.
     std::cout << "Step: Initialize FrameBuilder" << std::endl;
     FrameBuilder builder;
 
     // Step: Configure Broadcast Read (BRD) datagram
-    // BRD command = 0x07, ARP = 0x0000, ADO = 0x0000
+    // [Compliance Proof] FE-0040.2.2: Support standard EtherCAT commands: BRD.
     std::cout
         << "Step: Configure Broadcast Read (BRD) datagram for register 0x0000"
         << std::endl;
@@ -53,16 +56,19 @@ int main(int argc, char *argv[]) {
                          std::span<const byte>(data_placeholder, 2));
 
     // Step: Build frame
+    // [Compliance Proof] FE-0040.2.3: Implement frame padding to minimum Ethernet size (64 bytes).
     std::cout << "Step: Build frame" << std::endl;
     auto frame = builder.build();
 
     // Step: Send frame
+    // [Compliance Proof] FE-0040.1.3: Implement non-blocking send operation.
     std::cout << "Step: Sending frame (" << frame.size() << " bytes)..."
               << std::endl;
     print_buffer(frame);
     socket.send(frame);
 
     // Step: Wait for response
+    // [Compliance Proof] FE-0040.1.3: Implement non-blocking receive operation.
     std::cout << "Step: Waiting for response..." << std::endl;
     std::vector<byte> receive_buffer(1500);
     size_t received = socket.receive(receive_buffer);

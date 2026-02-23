@@ -41,11 +41,13 @@ struct alignas(1) DatagramHeader {
 
 /**
  * @brief Helper class to construct EtherCAT frames containing one or more datagrams.
+ * @details Contributes to [FE-0040.2] EtherCAT Frame Management.
  */
 class FrameBuilder {
 public:
   /**
    * @brief Construct a new Frame Builder object.
+   * @details [FE-0040.2.1] Provides a FrameBuilder for constructing multi-datagram frames.
    */
   FrameBuilder();
 
@@ -56,6 +58,7 @@ public:
 
   /**
    * @brief Add a datagram with a 16-bit address and offset.
+   * @details [FE-0040.2.2] Support standard EtherCAT commands (APRD, APWR, etc.).
    * 
    * @param cmd Command type (e.g., cmds::APRD).
    * @param idx Datagram index for matching responses.
@@ -68,6 +71,7 @@ public:
 
   /**
    * @brief Add a datagram with a 32-bit logical address.
+   * @details [FE-0040.2.4] Support 32-bit logical addressing for process data exchange.
    * 
    * @param cmd Logical command type (e.g., cmds::LRD, cmds::LWR).
    * @param idx Datagram index.
@@ -79,6 +83,7 @@ public:
 
   /**
    * @brief Finalize the frame, calculating headers and fixing 'More' bits.
+   * @details [FE-0040.2.3] Implement automatic "More" bit handling and frame padding to minimum size.
    * 
    * @return A span pointing to the complete frame data in the internal buffer.
    */

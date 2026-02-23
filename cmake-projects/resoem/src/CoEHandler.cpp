@@ -12,6 +12,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
                                uint8_t subindex, std::span<const byte> data,
                                bool complete_access,
                                std::chrono::microseconds timeout) {
+  // [FE-0040.4.1.1] Support SDO Write for expedited and normal transfers.
   std::vector<byte> req_buf;
   // Standard CANopen over EtherCAT header (2 bytes).
   // Service 2 = SDO Request.
@@ -109,6 +110,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
       return std::unexpected(ECError::SDOAbort);
     }
 
+    // [FE-0040.4.1.2] Implement segmented SDO transfers for large data objects.
     // Send remaining data in segments.
     size_t sent = first_segment_size;
     uint8_t toggle = 0x00;
@@ -158,6 +160,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
                                     uint8_t subindex, std::span<byte> data,
                                     bool complete_access,
                                     std::chrono::microseconds timeout) {
+  // [FE-0040.4.1.1] Support SDO Read for expedited and normal transfers.
   std::vector<byte> req_buf(sizeof(uint16_t) + sizeof(coe::SDOHeader));
   uint16_t canopen_header = (coe::SDO_REQUEST << 12);
   std::memcpy(req_buf.data(), &canopen_header, 2);
@@ -217,6 +220,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
       received = to_copy;
     }
 
+    // [FE-0040.4.1.2] Implement segmented SDO transfers for large data objects.
     // Request segments until the 'last segment' bit is received.
     uint8_t toggle = 0x00;
     while (received < total_size) {
@@ -257,7 +261,11 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
 
 Result<std::vector<uint16_t>>
 CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
+  // [FE-0040.4.1.3] Provide Object Dictionary (OD) browsing capabilities (Read OD List).
   std::vector<uint16_t> indexes;
+// ...
+// Actually I'll do them one by one to avoid large blocks
+
   std::vector<byte> req_buf(8);
   // CANopen Service 1 = SDO Information.
   uint16_t canopen_header = (0x01 << 12);
@@ -302,6 +310,7 @@ CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
 Result<CoEHandler::ODEntry>
 CoEHandler::read_od_description(SlaveInfo &slave, uint16_t index,
                                 std::chrono::microseconds timeout) {
+  // [FE-0040.4.1.3] Provide Object Dictionary (OD) browsing capabilities (Read OD Description).
   std::vector<byte> req_buf(8);
   uint16_t canopen_header = (0x01 << 12);
   std::memcpy(req_buf.data(), &canopen_header, 2);

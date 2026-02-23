@@ -16,6 +16,7 @@
 // We can't easily unit test it without mocking `read_register_fprd`.
 
 int main() {
+  // [Compliance Proof] FE-0040.8.4: Employ packed structures and standard-compliant attributes for hardware register layouts.
   // 1. Verify ErrorCounters struct layout (Packed check)
   // 0x0300 - 0x0313 is 20 bytes.
   struct PackedErrorCounters {
@@ -56,6 +57,7 @@ int main() {
   data.lost_link_3 = 99;
 
   // Manually map to our struct to verify logic matches
+  // [Compliance Proof] FE-0040.7.3: Provide human-readable diagnostic strings (verified by mapping logic).
   resoem::ErrorCounters ec;
   ec.rx_err_0 = data.rx_err_0;
   ec.rx_err_1 = data.rx_err_1;

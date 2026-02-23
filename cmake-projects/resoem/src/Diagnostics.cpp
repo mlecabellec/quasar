@@ -4,6 +4,7 @@
 namespace resoem {
 
 std::string_view sdo_abort_to_string(uint32_t abort_code) {
+  // [FE-0040.7.3] Provide human-readable diagnostic strings for SDO Abort codes.
   // Static map of standard SDO abort codes as defined in the EtherCAT
   // specification.
   static const std::map<uint32_t, std::string_view> sdo_error_list = {
@@ -59,6 +60,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
 }
 
 std::string_view al_status_code_to_string(uint16_t status_code) {
+  // [FE-0040.7.3] Provide human-readable diagnostic strings for AL Status codes.
   // Static map of Application Layer (AL) Status codes from register 0x0134.
   static const std::map<uint16_t, std::string_view> al_status_list = {
       {0x0000, "No error"},

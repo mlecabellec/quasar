@@ -21,6 +21,9 @@ class ProcessImage;
 /**
  * @brief Manages the discovery, initialization, and monitoring of EtherCAT
  * slaves.
+ * @details Contributes to [FE-0040.3] Network Discovery & Enumeration,
+ * [FE-0040.5] Process Data Configuration, [FE-0040.6] DC Synchronization,
+ * and [FE-0040.7] Resilience & Diagnostics.
  *
  * The Enumerator is responsible for scanning the network, assigning station
  * addresses, reading slave information (SII), and handling state transitions.
@@ -35,6 +38,10 @@ public:
 
   /**
    * @brief Run the full enumeration process.
+   * @details [FE-0040.3.1] Automatically detect and count slaves.
+   * [FE-0040.3.2] Assign configured station addresses to each slave.
+   * [FE-0040.3.3] Parse SII to identify Vendor, Product, etc.
+   * [FE-0040.3.4] Map network topology.
    *
    * This includes resetting the network, counting slaves, assigning addresses,
    * and reading device information from the SII (EEPROM).
@@ -67,6 +74,7 @@ public:
 
   /**
    * @brief Configure FMMUs (Fieldbus Memory Management Units) for process data.
+   * @details [FE-0040.5.2] Automatically calculate and program FMMU entries.
    *
    * Maps slave physical memory (PDOs) to the logical process image.
    *
@@ -77,6 +85,7 @@ public:
 
   /**
    * @brief Exchange process data using a Logical ReadWrite (LRW) command.
+   * @details [FE-0040.5.4] Support cyclic data exchange using the LRW command.
    *
    * @param image The process image containing outputs to send and buffer for
    * inputs.
@@ -119,17 +128,21 @@ public:
   /**
    * @brief Measure propagation delays between slaves for Distributed Clocks
    * (DC).
+   * @details [FE-0040.6.1] Implement propagation delay measurement with ns resolution.
    */
   void measure_propagation_delays();
 
   /**
    * @brief Synchronize all slave clocks to the Reference Clock (usually the
    * first DC-capable slave).
+   * @details [FE-0040.6.2] Designate a Reference Clock.
+   * [FE-0040.6.3] Provide cyclic drift compensation using ARMW command.
    */
   void sync_clocks();
 
   /**
    * @brief Configure SYNC0/SYNC1 signals for a specific slave.
+   * @details [FE-0040.6.4] Configure SYNC0/SYNC1 signals with cycle times and offsets.
    *
    * @param slave The slave info structure.
    * @param cycle_time Sync cycle time in nanoseconds.
@@ -154,6 +167,7 @@ public:
 
   /**
    * @brief Attempt to recover a slave that has gone offline or errored.
+   * @details [FE-0040.7.1] Automated slave recovery.
    *
    * @param slave_idx Index of the slave.
    * @return true if recovery was successful.
