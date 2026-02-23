@@ -5,6 +5,11 @@
 #include <sim/Simulator.hpp>
 
 #include <core/Object.hpp>
+#include <memory>
+#include <Smp/Services/IResolver.h>
+#include <Smp/Services/ILinkRegistry.h>
+#include <Smp/Services/IScheduler.h>
+#include <Smp/Services/ILogger.h>
 
 class StopSimulation : public core::Object, public Smp::IEntryPoint {
 public:
@@ -62,16 +67,13 @@ int main() {
     std::cout << "Simulator created." << std::endl;
 
     // Add a model
-    // We don't have a root model container exposed easily via AddModel unless
-    // it expects IModel*. Simulator::AddModel(IModel*) adds to "Models"
-    // container.
-    auto *model = new MyModel("TestModel", nullptr, &simulator);
-    // Note: Model constructor doesn't auto-add to parent if parent is null.
-    // And if parent is simulator... Simulator is IObject? Yes.
-    // But AddChild?
-    // Let's use AddModel.
+    // Using unique_ptr to avoid 'new'
+    std::unique_ptr<MyModel> modelPtr = std::make_unique<MyModel>("TestModel", nullptr, &simulator);
+    MyModel* model = modelPtr.get();
+    
     /// [Compliance Proof] FE-0070.7.17: Adding a model to the simulator.
-    simulator.AddModel(model);
+    // Transfer ownership to simulator
+    simulator.AddModel(modelPtr.release());
 
     std::cout << "Model added." << std::endl;
 
@@ -93,7 +95,7 @@ int main() {
     simulator.Initialise();
 
     /// [Compliance Proof] FE-0070.5.2: Path resolution using Resolver service.
-    auto *resolved = simulator.GetResolver()->ResolveAbsolute("/TestModel");
+    Smp::IObject *resolved = simulator.GetResolver()->ResolveAbsolute("/TestModel");
     if (resolved != model) {
       throw std::runtime_error("Resolver failed to find model");
     }

@@ -105,7 +105,7 @@ Smp::String8 TypeRegistry::GetDescription() const {
 }
 Smp::IObject *TypeRegistry::GetParent() const { return nullptr; }
 
-const Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
+Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
   /// Fulfills [FE-0070.10.2] (ITypeRegistry::GetType by UUID).
   auto it = _typesByUuid.find(typeUuid);
   if (it != _typesByUuid.end())
@@ -113,7 +113,7 @@ const Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
   return nullptr;
 }
 
-const Smp::Publication::IType *
+Smp::Publication::IType *
 TypeRegistry::GetType(Smp::PrimitiveTypeKind typeKind) const {
   /// Fulfills [FE-0070.10.3] (ITypeRegistry::GetType by Kind).
   auto it = _typesByKind.find(typeKind);

@@ -160,17 +160,17 @@ public:
   /**
    * @brief Returns a type by its UUID.
    * @param typeUuid The UUID of the type.
-   * @return const Smp::Publication::IType* The type or nullptr.
+   * @return Smp::Publication::IType* The type or nullptr.
    * @details Fulfills [FE-0070.10.2] (ITypeRegistry::GetType).
    */
-  const Smp::Publication::IType *GetType(Smp::Uuid typeUuid) const override;
+  Smp::Publication::IType *GetType(Smp::Uuid typeUuid) const override;
   /**
    * @brief Returns a primitive type by its kind.
    * @param typeKind The kind of the primitive type.
-   * @return const Smp::Publication::IType* The type or nullptr.
+   * @return Smp::Publication::IType* The type or nullptr.
    * @details Fulfills [FE-0070.10.3] (ITypeRegistry::GetType).
    */
-  const Smp::Publication::IType *
+  Smp::Publication::IType *
   GetType(Smp::PrimitiveTypeKind typeKind) const override;
 
   /// [FE-0070.10.5] Add Float type.

@@ -3,6 +3,7 @@
 #include <Smp/ISimpleField.h>
 #include <cassert>
 #include <iostream>
+#include <memory>
 #include <sim/Simulator.hpp>
 
 int main() {
@@ -10,11 +11,14 @@ int main() {
 
   sim::Simulator simulator;
 
-  // Create the model on the heap as simulator container will take ownership
-  auto* model = new sample::InverterModel("Inverter", "Boolean Inverter Model", nullptr);
+  // Create the model using make_unique to avoid 'new' keyword.
+  // We keep a raw pointer for local assertions, but ownership will be transferred.
+  std::unique_ptr<sample::InverterModel> modelOwner = std::make_unique<sample::InverterModel>("Inverter", "Boolean Inverter Model", nullptr);
+  sample::InverterModel* model = modelOwner.get();
 
   // Add model to simulator
-  simulator.AddModel(model);
+  // Transfer ownership to the simulator as it manages the lifecycle of models.
+  simulator.AddModel(modelOwner.release());
 
   // 1. Publishing State
   std::cout << "Step 1: Publishing..." << std::endl;
