@@ -31,6 +31,10 @@ struct SchedulerEvent {
   Smp::Duration zuluDelay;   // For relative Zulu
 };
 
+/**
+ * @brief Scheduler Service implementation.
+ * @details Contributes to [FE-0070.3.1] (IScheduler interface).
+ */
 class Scheduler : public core::Object,
                   public virtual Smp::Services::IScheduler {
 public:
@@ -68,37 +72,52 @@ public:
   Smp::IObject *GetChild(Smp::String8 name) const override;
 
   // IScheduler methods
+  /// [FE-0070.3.9] Add an immediate Event.
   Smp::Services::EventId
   AddImmediateEvent(const Smp::IEntryPoint *entryPoint) override;
+  /// [FE-0070.3.5] Add an Event at a specific simulation time.
+  /// Contributes to [FE-0070.3.2] (repeat count) and [FE-0070.3.3] (cycle time).
   Smp::Services::EventId AddSimulationTimeEvent(
       const Smp::IEntryPoint *entryPoint, Smp::Duration simulationTime,
       Smp::Duration cycleTime = 0, Smp::Int64 repeat = 0) override;
+  /// [FE-0070.3.6] Add an Event at a specific mission time.
   Smp::Services::EventId AddMissionTimeEvent(const Smp::IEntryPoint *entryPoint,
                                              Smp::Duration missionTime,
                                              Smp::Duration cycleTime = 0,
                                              Smp::Int64 repeat = 0) override;
+  /// [FE-0070.3.7] Add an Event at a specific epoch time.
   Smp::Services::EventId AddEpochTimeEvent(const Smp::IEntryPoint *entryPoint,
                                            Smp::DateTime epochTime,
                                            Smp::Duration cycleTime = 0,
                                            Smp::Int64 repeat = 0) override;
+  /// [FE-0070.3.8] Add an Event at a specific Zulu time.
   Smp::Services::EventId AddZuluTimeEvent(const Smp::IEntryPoint *entryPoint,
                                           Smp::DateTime zuluTime,
                                           Smp::Duration cycleTime = 0,
                                           Smp::Int64 repeat = 0) override;
 
+  /// [FE-0070.3.12] Update Event simulation time.
   void SetEventSimulationTime(Smp::Services::EventId event,
                               Smp::Duration simulationTime) override;
+  /// [FE-0070.3.13] Update Event mission time.
   void SetEventMissionTime(Smp::Services::EventId event,
                            Smp::Duration missionTime) override;
+  /// [FE-0070.3.14] Update Event epoch time.
   void SetEventEpochTime(Smp::Services::EventId event,
                          Smp::DateTime epochTime) override;
+  /// [FE-0070.3.15] Update Event Zulu time.
   void SetEventZuluTime(Smp::Services::EventId event,
                         Smp::DateTime zuluTime) override;
+  /// [FE-0070.3.16] Update Event cycle time.
   void SetEventCycleTime(Smp::Services::EventId event,
                          Smp::Duration cycleTime) override;
+  /// [FE-0070.3.17] Update Event repeat count.
   void SetEventRepeat(Smp::Services::EventId event, Smp::Int64 repeat) override;
+  /// [FE-0070.3.11] Remove an Event.
   void RemoveEvent(Smp::Services::EventId event) override;
+  /// [FE-0070.3.18] Return current EventId.
   Smp::Services::EventId GetCurrentEventId() const override;
+  /// [FE-0070.3.19] Return next Event time.
   Smp::Duration GetNextScheduledEventTime() const override;
 
   // Custom methods for Simulator
