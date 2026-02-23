@@ -7,10 +7,21 @@
 
 namespace utils {
 
+/**
+ * @brief Implementation of the SMP Time Keeper Service.
+ * @details Manages simulation, epoch, mission, and zulu time.
+ */
 class TimeKeeper : public core::Object,
                    public virtual Smp::Services::ITimeKeeper {
 public:
+  /**
+   * @brief Default constructor.
+   */
   TimeKeeper();
+
+  /**
+   * @brief Virtual destructor.
+   */
   virtual ~TimeKeeper() noexcept = default;
 
   // IComponent methods
@@ -44,26 +55,80 @@ public:
 
   // ITimeKeeper methods
 
+  /**
+   * @brief Set the event manager to use for time change events.
+   * @param eventManager The event manager service.
+   */
   void SetEventManager(Smp::Services::IEventManager *eventManager);
 
+  /**
+   * @brief Get current simulation time.
+   * @return Duration since start of simulation.
+   */
   Smp::Duration GetSimulationTime() const override;
+
+  /**
+   * @brief Get current epoch time.
+   * @return Absolute date and time.
+   */
   Smp::DateTime GetEpochTime() const override;
+
+  /**
+   * @brief Get mission start time.
+   * @return Absolute date and time of mission start.
+   */
   Smp::DateTime GetMissionStartTime() const override;
+
+  /**
+   * @brief Get current mission time.
+   * @return Duration since mission start.
+   */
   Smp::Duration GetMissionTime() const override;
+
+  /**
+   * @brief Get current Zulu (wall clock) time.
+   * @return Absolute date and time.
+   */
   Smp::DateTime GetZuluTime() const override;
 
+  /**
+   * @brief Set simulation time.
+   * @param simulationTime New simulation time.
+   */
   void SetSimulationTime(Smp::Duration simulationTime) override;
+
+  /**
+   * @brief Set epoch time.
+   * @param epochTime New epoch time.
+   */
   void SetEpochTime(Smp::DateTime epochTime) override;
+
+  /**
+   * @brief Set mission start time.
+   * @param missionStart New mission start time.
+   */
   void SetMissionStartTime(Smp::DateTime missionStart) override;
+
+  /**
+   * @brief Set mission time.
+   * @param missionTime New mission time.
+   */
   void SetMissionTime(Smp::Duration missionTime) override;
 
 private:
+  /** @brief Pointer to the Event Manager service. */
   Smp::Services::IEventManager *_eventManager = nullptr;
 
+  /** @brief Current simulation time. */
   Smp::Duration _simulationTime = 0;
+  
+  /** @brief Offset between simulation and epoch time. */
   Smp::DateTime _epochOffset = 0;
+  
+  /** @brief Absolute mission start time. */
   Smp::DateTime _missionStart = 0;
 
+  /** @brief Mutex for thread-safe access. */
   mutable std::mutex _mutex;
 };
 

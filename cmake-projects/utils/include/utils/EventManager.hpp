@@ -10,10 +10,22 @@
 
 namespace utils {
 
+/**
+ * @brief Implementation of the SMP Event Manager Service.
+ * @details This class provides mechanisms for event subscription, unsubscription, and emission.
+ * Contributes to [FE-0070.3.1].
+ */
 class EventManager : public core::Object,
                      public virtual Smp::Services::IEventManager {
 public:
+  /**
+   * @brief Default constructor.
+   */
   EventManager();
+
+  /**
+   * @brief Virtual destructor.
+   */
   virtual ~EventManager() noexcept = default;
 
   // IComponent methods
@@ -47,24 +59,56 @@ public:
 
   // IEventManager methods
 
+  /**
+   * @brief Query the event ID for a given event name.
+   * @param eventName Name of the event.
+   * @return EventId associated with the name.
+   */
   Smp::Services::EventId QueryEventId(Smp::String8 eventName) override;
 
+  /**
+   * @brief Subscribe an entry point to an event.
+   * @param event The event ID.
+   * @param entryPoint The entry point to subscribe.
+   */
   void Subscribe(Smp::Services::EventId event,
                  const Smp::IEntryPoint *entryPoint) override;
+
+  /**
+   * @brief Unsubscribe an entry point from an event.
+   * @param event The event ID.
+   * @param entryPoint The entry point to unsubscribe.
+   */
   void Unsubscribe(Smp::Services::EventId event,
                    const Smp::IEntryPoint *entryPoint) override;
+
+  /**
+   * @brief Emit an event.
+   * @param event The event ID.
+   * @param synchronous Whether the emission is synchronous.
+   */
   void Emit(Smp::Services::EventId event,
             Smp::Bool synchronous = true) override;
 
 private:
-  Smp::Services::EventId _nextEventId = 20; // Start after pre-defined events
+  /** @brief Next available event ID for dynamic creation. */
+  Smp::Services::EventId _nextEventId = 20;
+  
+  /** @brief Mapping from event name to event ID. */
   std::map<std::string, Smp::Services::EventId> _eventIds;
+  
+  /** @brief Mapping from event ID to event name. */
   std::map<Smp::Services::EventId, std::string> _eventNames;
-  std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>>
-      _subscriptions;
+  
+  /** @brief Subscription list for each event ID. */
+  std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>> _subscriptions;
 
+  /** @brief Mutex for thread-safe access. */
   mutable std::mutex _mutex;
 
+  /**
+   * @brief Register standard SMP predefined events.
+   */
   void RegisterPredefinedEvents();
 };
 

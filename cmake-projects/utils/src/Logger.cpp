@@ -4,20 +4,31 @@
 
 namespace utils {
 
+/**
+ * @brief Constructor for Logger.
+ */
 Logger::Logger() : core::Object("Logger", "SMP Logger Service", nullptr) {}
 
 Smp::ComponentStateKind Logger::GetState() const {
   return Smp::ComponentStateKind::CSK_Connected;
 }
 
-void Logger::Publish(Smp::IPublication *receiver) {}
+void Logger::Publish(Smp::IPublication *receiver) {
+  // [CS-0010.16] Check for null pointers
+  if (!receiver) {
+    return;
+  }
+}
 
 void Logger::Configure(Smp::Services::ILogger *logger,
-                       Smp::Services::ILinkRegistry *linkRegistry) {}
+                       Smp::Services::ILinkRegistry *linkRegistry) {
+}
 
-void Logger::Connect(Smp::ISimulator *simulator) {}
+void Logger::Connect(Smp::ISimulator *simulator) {
+}
 
-void Logger::Disconnect() {}
+void Logger::Disconnect() {
+}
 
 const Smp::Uuid &Logger::GetUuid() const {
   static Smp::Uuid uuid = {0, 0, 0, 0, 3}; // Generic Service UUID
@@ -62,6 +73,12 @@ Smp::IObject *Logger::GetChild(Smp::String8 name) const { return nullptr; }
 
 Smp::Services::LogMessageKind
 Logger::QueryLogMessageKind(Smp::String8 messageKindName) {
+  // [CS-0010.16] Check for null pointers
+  if (!messageKindName) {
+    return -1;
+  }
+
+  // Compare message kind names to their constant IDs
   if (std::strcmp(messageKindName,
                   Smp::Services::ILogger::LMK_InformationName) == 0)
     return Smp::Services::ILogger::LMK_Information;
@@ -79,8 +96,15 @@ Logger::QueryLogMessageKind(Smp::String8 messageKindName) {
 
 void Logger::Log(const Smp::IObject *sender, Smp::String8 message,
                  Smp::Services::LogMessageKind kind) {
+  // [CS-0010.16] Check for null pointers
+  if (!message) {
+    return;
+  }
+
+  // Use RAII for mutex [CS-0010.22]
   std::lock_guard<std::mutex> lock(_mutex);
 
+  // Determine string representation of the log kind
   std::string kindStr;
   switch (kind) {
   case Smp::Services::ILogger::LMK_Information:
@@ -103,6 +127,7 @@ void Logger::Log(const Smp::IObject *sender, Smp::String8 message,
     break;
   }
 
+  // Output the formatted log message
   std::cout << "[" << kindStr << "] ";
   if (sender) {
     std::cout << "[" << sender->GetName() << "] ";

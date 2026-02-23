@@ -62,6 +62,10 @@ Simulator::Simulator()
  * @details Cleans up loaded libraries.
  */
 Simulator::~Simulator() noexcept {
+  // Clear containers first to ensure objects are deleted while library code is still loaded
+  _modelsContainer.reset();
+  _servicesContainer.reset();
+
   // Finalise loaded libraries
   for (void *handle : _loadedLibraries) {
     if (handle) {

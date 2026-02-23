@@ -8,9 +8,20 @@
 
 namespace utils {
 
+/**
+ * @brief Implementation of the SMP Logger Service.
+ * @details Provides message logging capabilities to stdout.
+ */
 class Logger : public core::Object, public virtual Smp::Services::ILogger {
 public:
+  /**
+   * @brief Default constructor.
+   */
   Logger();
+
+  /**
+   * @brief Virtual destructor.
+   */
   virtual ~Logger() noexcept = default;
 
   // IComponent methods
@@ -44,13 +55,25 @@ public:
 
   // ILogger methods
 
+  /**
+   * @brief Query the log message kind ID for a given name.
+   * @param messageKindName Name of the message kind.
+   * @return LogMessageKind associated with the name.
+   */
   Smp::Services::LogMessageKind
   QueryLogMessageKind(Smp::String8 messageKindName) override;
 
+  /**
+   * @brief Log a message.
+   * @param sender The object sending the message.
+   * @param message The message text.
+   * @param kind The kind of message.
+   */
   void Log(const Smp::IObject *sender, Smp::String8 message,
            Smp::Services::LogMessageKind kind = 0) override;
 
 private:
+  /** @brief Mutex for thread-safe logging. */
   std::mutex _mutex;
 };
 
