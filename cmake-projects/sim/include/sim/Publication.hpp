@@ -10,13 +10,19 @@
 
 namespace sim {
 
+/**
+ * @brief Publication implementation.
+ * @details Contributes to [FE-0070.9.1] (IPublication interface).
+ */
 class Publication : public virtual Smp::IPublication {
 public:
   Publication(Smp::Publication::ITypeRegistry *typeRegistry);
   virtual ~Publication() noexcept = default;
 
+  /// [FE-0070.9.2] Return Type Registry.
   Smp::Publication::ITypeRegistry *GetTypeRegistry() const override;
 
+  /// [FE-0070.9.17] Publish primitive field.
   void PublishField(Smp::String8 name, Smp::String8 description,
                     Smp::Char8 *address,
                     Smp::ViewKind view = Smp::ViewKind::VK_All,
@@ -78,13 +84,16 @@ public:
                     Smp::Bool state = true, Smp::Bool input = false,
                     Smp::Bool output = false) override;
 
+  /// [FE-0070.9.18] Publish registered type field.
   void PublishField(Smp::String8 name, Smp::String8 description, void *address,
                     Smp::Uuid typeUuid,
                     Smp::ViewKind view = Smp::ViewKind::VK_All,
                     Smp::Bool state = true, Smp::Bool input = false,
                     Smp::Bool output = false) override;
+  /// [FE-0070.9.19] Publish field from IField object.
   void PublishField(Smp::IField *field) override;
 
+  /// [FE-0070.9.20] Publish array.
   Smp::IPublication *PublishArray(Smp::String8 name, Smp::String8 description,
                                   Smp::ViewKind view = Smp::ViewKind::VK_All,
                                   Smp::Bool state = true) override;
@@ -94,26 +103,34 @@ public:
                     Smp::ViewKind view = Smp::ViewKind::VK_All,
                     Smp::Bool state = true, Smp::Bool input = false,
                     Smp::Bool output = false) override;
+  /// [FE-0070.9.22] Publish structure.
   Smp::IPublication *
   PublishStructure(Smp::String8 name, Smp::String8 description,
                    Smp::ViewKind view = Smp::ViewKind::VK_All,
                    Smp::Bool state = true) override;
 
+  /// [FE-0070.9.3] Publish operation.
   Smp::Publication::IPublishOperation *
   PublishOperation(Smp::String8 name, Smp::String8 description,
                    Smp::ViewKind view = Smp::ViewKind::VK_None) override;
+  /// [FE-0070.9.4] Publish property.
   void PublishProperty(Smp::String8 name, Smp::String8 description,
                        Smp::Uuid typeUuid, Smp::AccessKind accessKind,
                        Smp::ViewKind view = Smp::ViewKind::VK_None) override;
 
+  /// [FE-0070.9.23] Return field by name.
   Smp::IField *GetField(Smp::String8 fullName) const override;
+  /// [FE-0070.9.24] Return all published fields.
   const Smp::FieldCollection *GetFields() const override;
+  /// [FE-0070.9.5] Return published properties.
   const Smp::PropertyCollection *GetProperties() const override;
+  /// [FE-0070.9.6] Return published operations.
   const Smp::OperationCollection *GetOperations() const override;
 
   Smp::IRequest *CreateRequest(Smp::String8 operationName) override;
   void DeleteRequest(Smp::IRequest *request) override;
 
+  /// [FE-0070.9.7] Release published data.
   void Unpublish() override;
 
 private:

@@ -8,6 +8,10 @@
 
 namespace sim {
 
+/**
+ * @brief Link Registry Service implementation.
+ * @details Contributes to [FE-0070.6.1] (ILinkRegistry interface).
+ */
 class LinkRegistry : public core::Object,
                      public virtual Smp::Services::ILinkRegistry {
 public:
@@ -43,14 +47,20 @@ public:
 
   // ILinkRegistry methods
 
+  /// [FE-0070.6.2] Increment link count between source and target.
   void AddLink(Smp::IComponent *source, const Smp::IComponent *target) override;
+  /// [FE-0070.6.3] Return link count between source and target.
   Smp::UInt32 GetLinkCount(const Smp::IComponent *source,
                            const Smp::IComponent *target) const override;
+  /// [FE-0070.6.4] Decrement link count between source and target.
   Smp::Bool RemoveLink(Smp::IComponent *source,
                        const Smp::IComponent *target) override;
+  /// [FE-0070.6.5] Return source components for given target.
   const Smp::ComponentCollection *
   GetLinkSources(const Smp::IComponent *target) const override;
+  /// [FE-0070.6.6] Check if removal is possible.
   Smp::Bool CanRemove(const Smp::IComponent *target) override;
+  /// [FE-0070.6.7] Remove links from target.
   void RemoveLinks(const Smp::IComponent *target) override;
 
 private:

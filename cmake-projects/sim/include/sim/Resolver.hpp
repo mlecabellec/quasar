@@ -6,6 +6,10 @@
 
 namespace sim {
 
+/**
+ * @brief Resolver Service implementation.
+ * @details Contributes to [FE-0070.5.1] (IResolver interface).
+ */
 class Resolver : public core::Object, public virtual Smp::Services::IResolver {
 public:
   Resolver();
@@ -42,7 +46,9 @@ public:
 
   void SetSimulator(Smp::ISimulator *simulator);
 
+  /// [FE-0070.5.2] Resolve an absolute path. Contributes to [FE-0050.3] (Path string).
   Smp::IObject *ResolveAbsolute(Smp::String8 absolutePath) override;
+  /// [FE-0070.5.3] Resolve a relative path. Contributes to [FE-0050.3] (Path string).
   Smp::IObject *ResolveRelative(Smp::String8 relativePath,
                                 const Smp::IComponent *sender) override;
 

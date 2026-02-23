@@ -5,19 +5,23 @@
 
 namespace sim {
 
+/**
+ * @brief Helper for dynamic library loading.
+ * @details Contributes to [FE-0080.7] (Package to Library Mapping) and [FE-0070.7.31] (ISimulator::LoadLibrary).
+ */
 class LibraryLoader {
 public:
   static LibraryLoader &GetInstance();
 
   ~LibraryLoader();
 
-  // Load a dynamic library by name
+  /// [FE-0080.7.5/6] Load a dynamic library (.so or .dll).
   void *LoadLibrary(const std::string &libraryPath);
 
   // Unload a dynamic library
   bool UnloadLibrary(void *handle);
 
-  // Get a symbol from a loaded library
+  /// [FE-0080.7.2/3] Get a symbol (e.g., Initialise, Finalise) from a loaded library.
   void *GetSymbolAddress(void *handle, const std::string &symbolName);
 
   // Also provide a helper that finds the symbol across all loaded libraries if

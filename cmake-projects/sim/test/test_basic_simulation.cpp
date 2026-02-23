@@ -55,6 +55,7 @@ int main() {
   std::cout << "Starting Simulation Test..." << std::endl;
 
   try {
+    /// [Compliance Proof] FE-0070.7.1: Simulator creation and service initialization.
     sim::Simulator simulator;
 
     std::cout << "Simulator created." << std::endl;
@@ -68,33 +69,41 @@ int main() {
     // And if parent is simulator... Simulator is IObject? Yes.
     // But AddChild?
     // Let's use AddModel.
+    /// [Compliance Proof] FE-0070.7.17: Adding a model to the simulator.
     simulator.AddModel(model);
 
     std::cout << "Model added." << std::endl;
 
     // Lifecycle
+    /// [Compliance Proof] FE-0070.7.3/4: Simulator Publish lifecycle phase.
     std::cout << "Publishing..." << std::endl;
     simulator.Publish();
 
+    /// [Compliance Proof] FE-0070.7.3/5: Simulator Configure lifecycle phase.
     std::cout << "Configuring..." << std::endl;
     simulator.Configure();
 
+    /// [Compliance Proof] FE-0070.7.3/6: Simulator Connect lifecycle phase.
     std::cout << "Connecting..." << std::endl;
     simulator.Connect();
 
+    /// [Compliance Proof] FE-0070.7.3/7: Simulator Initialise lifecycle phase.
     std::cout << "Initialising..." << std::endl;
     simulator.Initialise();
 
     // Schedule stop event
+    /// [Compliance Proof] FE-0070.3.5: Adding a simulation time event to the scheduler.
     StopSimulation stop(&simulator);
     simulator.GetScheduler()->AddSimulationTimeEvent(
         &stop, 1000); // 1 sec? Time unit generic.
 
+    /// [Compliance Proof] FE-0070.7.8: Simulator Run (transition to Executing state).
     std::cout << "Running..." << std::endl;
     simulator.Run();
 
     std::cout << "Simulation finished." << std::endl;
 
+    /// [Compliance Proof] FE-0070.7.13: Simulator Exit.
     simulator.Exit();
 
   } catch (const std::exception &e) {

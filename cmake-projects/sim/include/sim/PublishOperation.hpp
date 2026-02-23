@@ -8,12 +8,17 @@
 
 namespace sim {
 
+/**
+ * @brief Operation publication implementation.
+ * @details Contributes to [FE-0070.9.14] (IPublishOperation interface).
+ */
 class PublishOperation : public virtual Smp::Publication::IPublishOperation {
 public:
   PublishOperation(Smp::String8 name, Smp::String8 description,
                    Smp::Publication::ITypeRegistry *typeRegistry);
   virtual ~PublishOperation() noexcept = default;
 
+  /// [FE-0070.9.15] Publish parameter.
   void PublishParameter(
       Smp::String8 name, Smp::String8 description, Smp::Uuid typeUuid,
       Smp::Publication::ParameterDirectionKind direction =
