@@ -9,8 +9,9 @@
 namespace sim {
 
 /**
- * @brief Link Registry Service implementation.
- * @details Contributes to [FE-0070.6.1] (ILinkRegistry interface).
+ * @brief Link Registry service implementation.
+ * @details This service manages links between components.
+ * Fulfills [FE-0070.6.1] (ILinkRegistry Interface).
  */
 class LinkRegistry : public core::Object,
                      public virtual Smp::Services::ILinkRegistry {
@@ -47,21 +48,52 @@ public:
 
   // ILinkRegistry methods
 
-  /// [FE-0070.6.2] Increment link count between source and target.
+  /**
+   * @brief Adds a link between two components.
+   * @param source The source component.
+   * @param target The target component.
+   * @details Fulfills [FE-0070.6.2] (ILinkRegistry::AddLink).
+   */
   void AddLink(Smp::IComponent *source, const Smp::IComponent *target) override;
-  /// [FE-0070.6.3] Return link count between source and target.
+  /**
+   * @brief Returns the number of links between source and target.
+   * @param source The source component.
+   * @param target The target component.
+   * @return Smp::UInt32 The number of links.
+   * @details Fulfills [FE-0070.6.3] (ILinkRegistry::GetLinkCount).
+   */
   Smp::UInt32 GetLinkCount(const Smp::IComponent *source,
                            const Smp::IComponent *target) const override;
-  /// [FE-0070.6.4] Decrement link count between source and target.
+  /**
+   * @brief Removes a link between two components.
+   * @param source The source component.
+   * @param target The target component.
+   * @return Smp::Bool True if the link was removed, false otherwise.
+   * @details Fulfills [FE-0070.6.4] (ILinkRegistry::RemoveLink).
+   */
   Smp::Bool RemoveLink(Smp::IComponent *source,
                        const Smp::IComponent *target) override;
-  /// [FE-0070.6.5] Return source components for given target.
+  /**
+   * @brief Returns the collection of source components linked to a target.
+   * @param target The target component.
+   * @return const Smp::ComponentCollection* The source components.
+   * @details Fulfills [FE-0070.6.5] (ILinkRegistry::GetLinkSources).
+   */
   const Smp::ComponentCollection *
   GetLinkSources(const Smp::IComponent *target) const override;
-  /// [FE-0070.6.6] Check if removal is possible.
-  Smp::Bool CanRemove(const Smp::IComponent *target) override;
-  /// [FE-0070.6.7] Remove links from target.
-  void RemoveLinks(const Smp::IComponent *target) override;
+  /**
+   * @brief Checks if a component can be removed.
+   * @param component The component to check.
+   * @return Smp::Bool True if it can be removed, false otherwise.
+   * @details Fulfills [FE-0070.6.6] (ILinkRegistry::CanRemove).
+   */
+  Smp::Bool CanRemove(const Smp::IComponent *component) override;
+  /**
+   * @brief Removes all links associated with a component.
+   * @param component The component.
+   * @details Fulfills [FE-0070.6.7] (ILinkRegistry::RemoveLinks).
+   */
+  void RemoveLinks(const Smp::IComponent *component) override;
 
 private:
   // Target -> (Source -> Count)

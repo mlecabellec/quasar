@@ -13,14 +13,20 @@ namespace sim {
 
 /**
  * @brief Publication implementation.
- * @details Contributes to [FE-0070.9.1] (IPublication interface).
+ * @details This class provides the mechanism for models to publish their
+ * features (fields, operations, properties).
+ * Fulfills [FE-0070.9.1] (IPublication Interface).
  */
 class Publication : public virtual Smp::IPublication {
 public:
   Publication(Smp::Publication::ITypeRegistry *typeRegistry);
   virtual ~Publication() noexcept = default;
 
-  /// [FE-0070.9.2] Return Type Registry.
+  /**
+   * @brief Returns the type registry associated with this publication.
+   * @return Smp::Publication::ITypeRegistry* The type registry.
+   * @details Fulfills [FE-0070.9.2] (IPublication::GetTypeRegistry).
+   */
   Smp::Publication::ITypeRegistry *GetTypeRegistry() const override;
 
   /// [FE-0070.9.17] Publish primitive field.

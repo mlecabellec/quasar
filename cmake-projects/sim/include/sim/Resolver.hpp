@@ -7,8 +7,9 @@
 namespace sim {
 
 /**
- * @brief Resolver Service implementation.
- * @details Contributes to [FE-0070.5.1] (IResolver interface).
+ * @brief Resolver service implementation.
+ * @details This service resolves object paths within the simulator.
+ * Fulfills [FE-0070.5.1] (IResolver Interface).
  */
 class Resolver : public core::Object, public virtual Smp::Services::IResolver {
 public:
@@ -46,13 +47,22 @@ public:
 
   void SetSimulator(Smp::ISimulator *simulator);
 
-  /// [FE-0070.5.2] Resolve an absolute path. Contributes to [FE-0050.3] (Path
-  /// string).
+  /**
+   * @brief Resolves an absolute path to an object.
+   * @param absolutePath The absolute path.
+   * @return Smp::IObject* The resolved object or nullptr.
+   * @details Fulfills [FE-0070.5.2] (IResolver::ResolveAbsolute).
+   */
   Smp::IObject *ResolveAbsolute(Smp::String8 absolutePath) override;
-  /// [FE-0070.5.3] Resolve a relative path. Contributes to [FE-0050.3] (Path
-  /// string).
+  /**
+   * @brief Resolves a relative path to an object starting from a root.
+   * @param relativePath The relative path.
+   * @param startingObject The root object for resolution.
+   * @return Smp::IObject* The resolved object or nullptr.
+   * @details Fulfills [FE-0070.5.3] (IResolver::ResolveRelative).
+   */
   Smp::IObject *ResolveRelative(Smp::String8 relativePath,
-                                Smp::IObject *relativeRoot) override;
+                                Smp::IObject *startingObject) override;
 
 private:
   Smp::ISimulator *_simulator = nullptr;

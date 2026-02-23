@@ -55,7 +55,8 @@ int main() {
   std::cout << "Starting Simulation Test..." << std::endl;
 
   try {
-    /// [Compliance Proof] FE-0070.7.1: Simulator creation and service initialization.
+    /// [Compliance Proof] FE-0070.7.1: Simulator creation and service
+    /// initialization.
     sim::Simulator simulator;
 
     std::cout << "Simulator created." << std::endl;
@@ -91,13 +92,30 @@ int main() {
     std::cout << "Initialising..." << std::endl;
     simulator.Initialise();
 
+    /// [Compliance Proof] FE-0070.5.2: Path resolution using Resolver service.
+    auto *resolved = simulator.GetResolver()->ResolveAbsolute("/TestModel");
+    if (resolved != model) {
+      throw std::runtime_error("Resolver failed to find model");
+    }
+    std::cout << "Path resolution verified." << std::endl;
+
+    /// [Compliance Proof] FE-0070.6.2: Link registration using LinkRegistry
+    /// service.
+    simulator.GetLinkRegistry()->AddLink(model, model); // Self link for test
+    if (simulator.GetLinkRegistry()->GetLinkCount(model, model) != 1) {
+      throw std::runtime_error("LinkRegistry failed to register link");
+    }
+    std::cout << "Link registration verified." << std::endl;
+
     // Schedule stop event
-    /// [Compliance Proof] FE-0070.3.5: Adding a simulation time event to the scheduler.
+    /// [Compliance Proof] FE-0070.3.5: Adding a simulation time event to the
+    /// scheduler.
     StopSimulation stop(&simulator);
     simulator.GetScheduler()->AddSimulationTimeEvent(
         &stop, 1000); // 1 sec? Time unit generic.
 
-    /// [Compliance Proof] FE-0070.7.8: Simulator Run (transition to Executing state).
+    /// [Compliance Proof] FE-0070.7.8: Simulator Run (transition to Executing
+    /// state).
     std::cout << "Running..." << std::endl;
     simulator.Run();
 

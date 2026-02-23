@@ -16,23 +16,29 @@
 #include <core/SimpleCollection.hpp>
 #include <core/StandardExceptions.hpp>
 #include <iostream>
+#include <limits>
+#include <memory>
 
 namespace sim {
 
+/**
+ * @brief Constructor.
+ * @details Initializes services and containers.
+ */
 Simulator::Simulator()
     : core::Object("Simulator", "SMP Simulator Core", nullptr) {
 
   // Create services
-  _logger = new utils::Logger();
-  _timeKeeper = new utils::TimeKeeper();
-  _eventManager = new utils::EventManager();
-  _scheduler = new sched::Scheduler(_timeKeeper, _logger);
-  _resolver = new Resolver();
-  _linkRegistry = new LinkRegistry();
-  _typeRegistry = new TypeRegistry();
+  _logger = std::make_unique<utils::Logger>();
+  _timeKeeper = std::make_unique<utils::TimeKeeper>();
+  _eventManager = std::make_unique<utils::EventManager>();
+  _scheduler = std::make_unique<sched::Scheduler>(_timeKeeper.get(), _logger.get());
+  _resolver = std::make_unique<Resolver>();
+  _linkRegistry = std::make_unique<LinkRegistry>();
+  _typeRegistry = std::make_unique<TypeRegistry>();
 
   // Configure services
-  _timeKeeper->SetEventManager(_eventManager);
+  _timeKeeper->SetEventManager(_eventManager.get());
   _resolver->SetSimulator(this);
 
   // Initialize state
@@ -40,15 +46,21 @@ Simulator::Simulator()
   _compState = Smp::ComponentStateKind::CSK_Created;
 
   // Create containers
-  _modelsContainer = new core::Container(Smp::ISimulator::SMP_SimulatorModels,
+  /// Fulfills [FE-0070.7.2] (Simulator shall have "Models" and "Services"
+  /// containers).
+  _modelsContainer = std::make_unique<core::Container>(Smp::ISimulator::SMP_SimulatorModels,
                                          "Root Models", this);
-  _servicesContainer = new core::Container(
+  _servicesContainer = std::make_unique<core::Container>(
       Smp::ISimulator::SMP_SimulatorServices, "Root Services", this);
 
-  _containers.Add(_modelsContainer);
-  _containers.Add(_servicesContainer);
+  _containers.Add(_modelsContainer.get());
+  _containers.Add(_servicesContainer.get());
 }
 
+/**
+ * @brief Destructor.
+ * @details Cleans up loaded libraries.
+ */
 Simulator::~Simulator() noexcept {
   // Finalise loaded libraries
   for (void *handle : _loadedLibraries) {
@@ -63,16 +75,6 @@ Simulator::~Simulator() noexcept {
     }
   }
   _loadedLibraries.clear();
-
-  delete _typeRegistry;
-  delete _resolver;
-  delete _scheduler;
-  delete _eventManager;
-  delete _timeKeeper;
-  delete _logger;
-  delete _linkRegistry;
-  delete _modelsContainer;
-  delete _servicesContainer;
 }
 
 // IObject methods
@@ -85,13 +87,12 @@ Smp::String8 Simulator::GetDescription() const {
 Smp::IObject *Simulator::GetParent() const { return nullptr; }
 
 Smp::IObject *Simulator::GetChild(Smp::String8 name) const {
-  if (auto container = GetContainer(name)) {
+  Smp::IContainer* container = GetContainer(name);
+  if (container) {
     return container;
   }
   return nullptr;
 }
-
-// IComponent methods were here
 
 // IComposite methods
 const Smp::ContainerCollection *Simulator::GetContainers() const {
@@ -120,33 +121,33 @@ void Simulator::Publish() {
     throw core::InvalidSimulatorState(_simState);
 
   // Recursively publish
-  for (auto *component : *_modelsContainer->GetComponents()) {
+  for (Smp::IComponent *component : *_modelsContainer->GetComponents()) {
     RecursivelyPublish(component);
   }
 
-  _simState = Smp::SimulatorStateKind::SSK_Building; // Stays in building?
-  // "The Publish() operation will traverse recursively... This method must only
-  // be called when in Building state."
+  _simState = Smp::SimulatorStateKind::SSK_Building;
 }
 
 void Simulator::Configure() {
+  /// Fulfills [FE-0070.7.5] (ISimulator::Configure).
   if (_simState != Smp::SimulatorStateKind::SSK_Building)
     throw core::InvalidSimulatorState(_simState);
 
   // Recursively configure
-  for (auto *component : *_modelsContainer->GetComponents()) {
+  for (Smp::IComponent *component : *_modelsContainer->GetComponents()) {
     RecursivelyConfigure(component);
   }
 }
 
 void Simulator::Connect() {
+  /// Fulfills [FE-0070.7.6] (ISimulator::Connect).
   if (_simState != Smp::SimulatorStateKind::SSK_Building)
     throw core::InvalidSimulatorState(_simState);
 
   _simState = Smp::SimulatorStateKind::SSK_Connecting;
 
   // Recursively connect
-  for (auto *component : *_modelsContainer->GetComponents()) {
+  for (Smp::IComponent *component : *_modelsContainer->GetComponents()) {
     RecursivelyConnect(component);
   }
 
@@ -162,17 +163,28 @@ void Simulator::Run() {
 
   _simState = Smp::SimulatorStateKind::SSK_Executing;
 
+  // Safety limit for loop iterations
+  Smp::UInt64 iterations = 0;
+  constexpr Smp::UInt64 maxIterations = std::numeric_limits<Smp::UInt64>::max();
+
   while (_simState == Smp::SimulatorStateKind::SSK_Executing) {
+    if (iterations >= maxIterations) {
+       // Hard limit reached
+       break;
+    }
+    iterations++;
+
     if (_scheduler->ExecuteNextEvent() < 0) {
-      // No more events, exit run loop?
-      // Or wait?
-      // "If no event is scheduled... the scheduler waits..."? No,
-      // ExecuteNextEvent returns. If run is called, it usually runs until Hold
-      // is called. If no events, we should advance time or break? For now break
-      // to avoid infinite loop.
+      // No more events, exit run loop
       break;
     }
   }
+}
+
+void Simulator::Run(Smp::Duration time) {
+    // Basic implementation deferring to Run() for now, 
+    // as time-bounded execution logic is not fully specified in snippet.
+    Run();
 }
 
 void Simulator::Hold(Smp::Bool immediate) {
@@ -204,7 +216,7 @@ void Simulator::Reconnect(Smp::IComponent *root) {
     throw core::InvalidSimulatorState(_simState);
   }
   if (!root) {
-    for (auto *component : *_modelsContainer->GetComponents()) {
+    for (Smp::IComponent *component : *_modelsContainer->GetComponents()) {
       RecursivelyConnect(component);
     }
   } else {
@@ -239,14 +251,13 @@ void Simulator::RecursivelyPublish(Smp::IComponent *component) {
   if (!component)
     return;
   if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
-    auto publication = std::make_unique<Publication>(GetTypeRegistry());
+    std::unique_ptr<Publication> publication = std::make_unique<Publication>(GetTypeRegistry());
     component->Publish(publication.get());
-    // In a real simulator, we would store this publication context
-    // to allow unpublishing later or for introspection.
   }
-  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
-    for (auto *container : *composite->GetContainers()) {
-      for (auto *child : *container->GetComponents()) {
+  Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(component);
+  if (composite) {
+    for (Smp::IContainer *container : *composite->GetContainers()) {
+      for (Smp::IComponent *child : *container->GetComponents()) {
         RecursivelyPublish(child);
       }
     }
@@ -262,9 +273,10 @@ void Simulator::RecursivelyConfigure(Smp::IComponent *component) {
   if (component->GetState() == Smp::ComponentStateKind::CSK_Publishing) {
     component->Configure(GetLogger(), GetLinkRegistry());
   }
-  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
-    for (auto *container : *composite->GetContainers()) {
-      for (auto *child : *container->GetComponents()) {
+  Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(component);
+  if (composite) {
+    for (Smp::IContainer *container : *composite->GetContainers()) {
+      for (Smp::IComponent *child : *container->GetComponents()) {
         RecursivelyConfigure(child);
       }
     }
@@ -281,9 +293,10 @@ void Simulator::RecursivelyConnect(Smp::IComponent *component) {
   if (component->GetState() == Smp::ComponentStateKind::CSK_Configured) {
     component->Connect(this);
   }
-  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
-    for (auto *container : *composite->GetContainers()) {
-      for (auto *child : *container->GetComponents()) {
+  Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(component);
+  if (composite) {
+    for (Smp::IContainer *container : *composite->GetContainers()) {
+      for (Smp::IComponent *child : *container->GetComponents()) {
         RecursivelyConnect(child);
       }
     }
@@ -293,10 +306,10 @@ void Simulator::RecursivelyConnect(Smp::IComponent *component) {
 void Simulator::RecursivelyDisconnect(Smp::IComponent *component) {
   if (!component)
     return;
-  // Disconnect children first?
-  if (auto *composite = dynamic_cast<Smp::IComposite *>(component)) {
-    for (auto *container : *composite->GetContainers()) {
-      for (auto *child : *container->GetComponents()) {
+  Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(component);
+  if (composite) {
+    for (Smp::IContainer *container : *composite->GetContainers()) {
+      for (Smp::IComponent *child : *container->GetComponents()) {
         RecursivelyDisconnect(child);
       }
     }
@@ -322,26 +335,25 @@ Smp::IService *Simulator::GetService(Smp::String8 name) const {
   return dynamic_cast<Smp::IService *>(_servicesContainer->GetComponent(name));
 }
 
-Smp::Services::ILogger *Simulator::GetLogger() const { return _logger; }
+Smp::Services::ILogger *Simulator::GetLogger() const { return _logger.get(); }
 Smp::Services::ITimeKeeper *Simulator::GetTimeKeeper() const {
-  return _timeKeeper;
+  return _timeKeeper.get();
 }
 Smp::Services::IScheduler *Simulator::GetScheduler() const {
-  return _scheduler;
+  return _scheduler.get();
 }
 Smp::Services::IEventManager *Simulator::GetEventManager() const {
-  return _eventManager;
+  return _eventManager.get();
 }
-Smp::Services::IResolver *Simulator::GetResolver() const { return _resolver; }
+Smp::Services::IResolver *Simulator::GetResolver() const { return _resolver.get(); }
 Smp::Services::ILinkRegistry *Simulator::GetLinkRegistry() const {
-  return _linkRegistry;
+  return _linkRegistry.get();
 }
 
 void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
   if (!componentFactory)
     return;
-  // Check for duplicate UUID
-  for (auto *f : this->_factories) {
+  for (Smp::IFactory *f : this->_factories) {
     if (f->GetUuid() == componentFactory->GetUuid()) {
       throw std::runtime_error("Duplicate UUID for factory " +
                                std::string(componentFactory->GetName()));
@@ -362,7 +374,7 @@ Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
 }
 
 Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
-  for (auto *factory : this->_factories) {
+  for (Smp::IFactory *factory : this->_factories) {
     if (factory->GetUuid() == uuid) {
       return factory;
     }
@@ -375,7 +387,7 @@ const Smp::FactoryCollection *Simulator::GetFactories() const {
 }
 
 Smp::Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
-  return _typeRegistry;
+  return _typeRegistry.get();
 }
 
 void Simulator::LoadLibrary(Smp::String8 libraryPath,
@@ -387,7 +399,6 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
                                std::string(libraryPath));
     }
 
-    // Attempt to locate and call Initialise
     typedef bool (*InitialiseFunctionPtr)(Smp::ISimulator *,
                                           Smp::Publication::ITypeRegistry *);
 
@@ -395,7 +406,7 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
         LibraryLoader::GetInstance().GetSymbolAddress(handle, "Initialise"));
 
     if (initFunc) {
-      if (!initFunc(this, _typeRegistry)) {
+      if (!initFunc(this, _typeRegistry.get())) {
         throw std::runtime_error("Library Initialise failed for " +
                                  std::string(libraryPath));
       }

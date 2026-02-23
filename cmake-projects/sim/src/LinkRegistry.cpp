@@ -64,6 +64,7 @@ Smp::IObject *LinkRegistry::IsChildInCollection(
 
 void LinkRegistry::AddLink(Smp::IComponent *source,
                            const Smp::IComponent *target) {
+  /// Fulfills [FE-0070.6.2] (ILinkRegistry::AddLink).
   std::lock_guard<std::mutex> lock(_mutex);
 
   auto &targetCounts = _counts[target];

@@ -84,6 +84,7 @@ static std::vector<std::string> SplitPath(const char *path) {
 }
 
 Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
+  /// Fulfills [FE-0070.5.2] (IResolver::ResolveAbsolute).
   if (!absolutePath || absolutePath[0] != '/') {
     return nullptr;
   }
@@ -94,12 +95,14 @@ Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
 }
 
 Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
-                                        Smp::IObject *relativeRoot) {
-  if (!relativePath || strlen(relativePath) == 0)
-    return relativeRoot;
+                                        Smp::IObject *startingObject) {
+  /// Fulfills [FE-0070.5.3] (IResolver::ResolveRelative).
+  if (!relativePath || !startingObject) {
+    return nullptr;
+  }
 
   auto parts = SplitPath(relativePath);
-  Smp::IObject *current = relativeRoot;
+  Smp::IObject *current = startingObject;
   if (!current)
     current = _simulator;
 

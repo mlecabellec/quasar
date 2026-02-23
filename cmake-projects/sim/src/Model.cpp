@@ -13,6 +13,7 @@ Model::Model(Smp::String8 name, Smp::String8 description, Smp::IObject *parent,
 Smp::ComponentStateKind Model::GetState() const { return _state; }
 
 void Model::Publish(Smp::IPublication *receiver) {
+  /// Fulfills [FE-0060.3.4] (IComponent::Publish).
   if (_state != Smp::ComponentStateKind::CSK_Created) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Created);
@@ -22,6 +23,7 @@ void Model::Publish(Smp::IPublication *receiver) {
 
 void Model::Configure(Smp::Services::ILogger *logger,
                       Smp::Services::ILinkRegistry *linkRegistry) {
+  /// Fulfills [FE-0060.3.5] (IComponent::Configure).
   if (_state != Smp::ComponentStateKind::CSK_Publishing) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Publishing);
@@ -30,6 +32,7 @@ void Model::Configure(Smp::Services::ILogger *logger,
 }
 
 void Model::Connect(Smp::ISimulator *simulator) {
+  /// Fulfills [FE-0060.3.6] (IComponent::Connect).
   if (_state != Smp::ComponentStateKind::CSK_Configured)
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Configured);

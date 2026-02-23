@@ -105,18 +105,20 @@ Smp::String8 TypeRegistry::GetDescription() const {
 }
 Smp::IObject *TypeRegistry::GetParent() const { return nullptr; }
 
-Smp::Publication::IType *
-TypeRegistry::GetType(Smp::PrimitiveTypeKind type) const {
-  auto it = _typesByKind.find(type);
-  if (it != _typesByKind.end())
-    return it->second;
-  return nullptr;
-}
-
-Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
+const Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
+  /// Fulfills [FE-0070.10.2] (ITypeRegistry::GetType by UUID).
   auto it = _typesByUuid.find(typeUuid);
   if (it != _typesByUuid.end())
     return it->second.get();
+  return nullptr;
+}
+
+const Smp::Publication::IType *
+TypeRegistry::GetType(Smp::PrimitiveTypeKind typeKind) const {
+  /// Fulfills [FE-0070.10.3] (ITypeRegistry::GetType by Kind).
+  auto it = _typesByKind.find(typeKind);
+  if (it != _typesByKind.end())
+    return it->second;
   return nullptr;
 }
 
@@ -145,6 +147,7 @@ TypeRegistry::AddIntegerType(Smp::String8 name, Smp::String8 description,
 Smp::Publication::IEnumerationType *
 TypeRegistry::AddEnumerationType(Smp::String8 name, Smp::String8 description,
                                  Smp::Uuid typeUuid) {
+  /// Fulfills [FE-0070.10.4] (ITypeRegistry::AddEnumerationType).
   _typesByUuid[typeUuid] =
       std::make_unique<EnumerationType>(name, description, typeUuid);
   return dynamic_cast<Smp::Publication::IEnumerationType *>(

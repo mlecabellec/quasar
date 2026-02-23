@@ -10,9 +10,11 @@
 namespace sim {
 
 /**
- * @brief Base Model implementation.
- * @details Contributes to [FE-0060.3.18] (IModel interface) and [FE-0060.5.1]
- * (IComposite interface).
+ * @brief Base class for simulation models.
+ * @details This class implements the core interfaces for models within the SMP
+ * ecosystem.
+ * Fulfills [FE-0060.3.1] (IComponent Interface) and [FE-0060.3.18] (IModel
+ * Interface).
  */
 class Model : public core::Object,
               public virtual Smp::IModel,
@@ -23,22 +25,51 @@ public:
   virtual ~Model() noexcept = default;
 
   // IComposite methods
-  /// [FE-0060.5.3] Return all containers.
+  /**
+   * @brief Returns the collection of containers within this composite.
+   * @return const Smp::ContainerCollection* The containers.
+   * @details Fulfills [FE-0060.5.2] (IComposite::GetContainers).
+   */
   const Smp::ContainerCollection *GetContainers() const override;
-  /// [FE-0060.5.2] Return a container by name.
+  /**
+   * @brief Returns a container by name.
+   * @param name The name of the container.
+   * @return Smp::IContainer* The container or nullptr.
+   * @details Fulfills [FE-0060.5.3] (IComposite::GetContainer).
+   */
   Smp::IContainer *GetContainer(Smp::String8 name) const override;
 
   // IComponent methods
-  /// [FE-0060.3.2] Return current state of the component.
+  /**
+   * @brief Returns the current state of the component.
+   * @return Smp::ComponentStateKind The component state.
+   * @details Fulfills [FE-0060.3.2] (IComponent::GetState).
+   */
   Smp::ComponentStateKind GetState() const override;
-  /// [FE-0060.3.4] Used to publish fields, properties and operations.
+  /**
+   * @brief Publishes the model's fields and operations.
+   * @param receiver The publication receiver.
+   * @details Fulfills [FE-0060.3.4] (IComponent::Publish).
+   */
   void Publish(Smp::IPublication *receiver) override;
-  /// [FE-0060.3.5] Used to perform initial configuration.
+  /**
+   * @brief Configures the model.
+   * @param logger The logger service.
+   * @param linkRegistry The link registry service.
+   * @details Fulfills [FE-0060.3.5] (IComponent::Configure).
+   */
   void Configure(Smp::Services::ILogger *logger,
                  Smp::Services::ILinkRegistry *linkRegistry) override;
-  /// [FE-0060.3.6] Allow connecting to the simulator environment.
+  /**
+   * @brief Connects the model to the simulator.
+   * @param simulator The simulator instance.
+   * @details Fulfills [FE-0060.3.6] (IComponent::Connect).
+   */
   void Connect(Smp::ISimulator *simulator) override;
-  /// [FE-0060.3.7] Disconnect the component.
+  /**
+   * @brief Disconnects the model.
+   * @details Fulfills [FE-0060.3.7] (IComponent::Disconnect).
+   */
   void Disconnect() override;
 
   /// [FE-0060.3.8] Provide access to fields.

@@ -16,6 +16,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Char8 *address, Smp::ViewKind view,
                                        Smp::Bool state, Smp::Bool input,
                                        Smp::Bool output) {
+  /// Fulfills [FE-0070.9.17] (IPublication::PublishField).
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Char8);
   auto field = std::make_unique<SimpleField>(
@@ -226,6 +227,7 @@ Smp::IPublication *Publication::PublishStructure(Smp::String8 name,
 Smp::Publication::IPublishOperation *
 Publication::PublishOperation(Smp::String8 name, Smp::String8 description,
                               Smp::ViewKind view) {
+  /// Fulfills [FE-0070.9.3] (IPublication::PublishOperation).
   auto op =
       std::make_unique<sim::PublishOperation>(name, description, _typeRegistry);
   Smp::Publication::IPublishOperation *opPtr = op.get();

@@ -141,8 +141,9 @@ private:
 };
 
 /**
- * @brief Type Registry implementation.
- * @details Contributes to [FE-0070.10.1] (ITypeRegistry interface).
+ * @brief Type Registry service implementation.
+ * @details This service manages registered types within the simulator.
+ * Fulfills [FE-0070.10.1] (ITypeRegistry Interface).
  */
 class TypeRegistry : public core::Object,
                      public virtual Smp::Publication::ITypeRegistry {
@@ -156,11 +157,21 @@ public:
   Smp::IObject *GetParent() const override;
 
   // ITypeRegistry overrides
-  /// [FE-0070.10.3] Return primitive type.
-  Smp::Publication::IType *GetType(Smp::PrimitiveTypeKind type) const override;
-  /// [FE-0070.10.4] Return type by UUID. [FE-0070.10.21] Types shall be
-  /// resolvable by UUID.
-  Smp::Publication::IType *GetType(Smp::Uuid typeUuid) const override;
+  /**
+   * @brief Returns a type by its UUID.
+   * @param typeUuid The UUID of the type.
+   * @return const Smp::Publication::IType* The type or nullptr.
+   * @details Fulfills [FE-0070.10.2] (ITypeRegistry::GetType).
+   */
+  const Smp::Publication::IType *GetType(Smp::Uuid typeUuid) const override;
+  /**
+   * @brief Returns a primitive type by its kind.
+   * @param typeKind The kind of the primitive type.
+   * @return const Smp::Publication::IType* The type or nullptr.
+   * @details Fulfills [FE-0070.10.3] (ITypeRegistry::GetType).
+   */
+  const Smp::Publication::IType *
+  GetType(Smp::PrimitiveTypeKind typeKind) const override;
 
   /// [FE-0070.10.5] Add Float type.
   Smp::Publication::IType *
@@ -177,7 +188,14 @@ public:
       Smp::Int64 minimum, Smp::Int64 maximum, Smp::String8 unit,
       Smp::PrimitiveTypeKind type = Smp::PrimitiveTypeKind::PTK_Int32) override;
 
-  /// [FE-0070.10.7] Add Enumeration type.
+  /**
+   * @brief Adds an enumeration type.
+   * @param name The name.
+   * @param description The description.
+   * @param typeUuid The UUID.
+   * @return Smp::Publication::IEnumerationType* The created type.
+   * @details Fulfills [FE-0070.10.4] (ITypeRegistry::AddEnumerationType).
+   */
   Smp::Publication::IEnumerationType *
   AddEnumerationType(Smp::String8 name, Smp::String8 description,
                      Smp::Uuid typeUuid) override;
