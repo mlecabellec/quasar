@@ -34,7 +34,7 @@ class LinkRegistry;
 class Simulator : public core::Object, public virtual Smp::ISimulator {
 public:
   Simulator();
-  virtual ~Simulator() noexcept;
+  virtual ~Simulator() noexcept override;
 
   // IObject methods (overriding core::Object where necessary or using it)
   /**

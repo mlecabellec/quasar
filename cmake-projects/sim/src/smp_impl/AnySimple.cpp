@@ -6,12 +6,10 @@
 
 namespace Smp {
 
-AnySimple::AnySimple() : type(PrimitiveTypeKind::PTK_None) {
-  std::memset(&value, 0, sizeof(value));
+AnySimple::AnySimple() : type(PrimitiveTypeKind::PTK_None), value{} {
 }
 
-AnySimple::AnySimple(PrimitiveTypeKind kind) : type(kind) {
-  std::memset(&value, 0, sizeof(value));
+AnySimple::AnySimple(PrimitiveTypeKind kind) : type(kind), value{} {
 }
 
 AnySimple::AnySimple(const AnySimple &other)

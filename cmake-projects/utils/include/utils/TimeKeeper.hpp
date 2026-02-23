@@ -22,7 +22,7 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  virtual ~TimeKeeper() noexcept = default;
+  virtual ~TimeKeeper() noexcept override = default;
 
   // IComponent methods
   Smp::ComponentStateKind GetState() const override;
@@ -129,7 +129,7 @@ private:
   Smp::DateTime _missionStart = 0;
 
   /** @brief Mutex for thread-safe access. */
-  mutable std::mutex _mutex;
+  mutable std::timed_mutex _mutex;
 };
 
 } // namespace utils

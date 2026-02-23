@@ -65,7 +65,10 @@ Smp::IObject *LinkRegistry::IsChildInCollection(
 void LinkRegistry::AddLink(Smp::IComponent *source,
                            const Smp::IComponent *target) {
   /// Fulfills [FE-0070.6.2] (ILinkRegistry::AddLink).
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+  }
 
   auto &targetCounts = _counts[target];
   if (targetCounts[source] == 0) {
@@ -76,7 +79,10 @@ void LinkRegistry::AddLink(Smp::IComponent *source,
 
 Smp::UInt32 LinkRegistry::GetLinkCount(const Smp::IComponent *source,
                                        const Smp::IComponent *target) const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+  }
 
   auto itTarget = _counts.find(target);
   if (itTarget != _counts.end()) {
@@ -91,7 +97,10 @@ Smp::UInt32 LinkRegistry::GetLinkCount(const Smp::IComponent *source,
 
 Smp::Bool LinkRegistry::RemoveLink(Smp::IComponent *source,
                                    const Smp::IComponent *target) {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+  }
 
   auto itTarget = _counts.find(target);
   if (itTarget != _counts.end()) {
@@ -115,7 +124,10 @@ Smp::Bool LinkRegistry::RemoveLink(Smp::IComponent *source,
 
 const Smp::ComponentCollection *
 LinkRegistry::GetLinkSources(const Smp::IComponent *target) const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+  }
 
   auto it = _collections.find(target);
   if (it != _collections.end()) {
@@ -137,7 +149,10 @@ LinkRegistry::GetLinkSources(const Smp::IComponent *target) const {
 }
 
 Smp::Bool LinkRegistry::CanRemove(const Smp::IComponent *target) {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+  }
 
   auto itCollection = _collections.find(target);
   if (itCollection == _collections.end()) {
@@ -158,7 +173,10 @@ void LinkRegistry::RemoveLinks(const Smp::IComponent *target) {
   std::vector<Smp::ILinkingComponent *> sourcesToRemove;
 
   {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+    if (!lock.owns_lock()) {
+      throw std::runtime_error("Timeout acquiring LinkRegistry lock");
+    }
     auto itCollection = _collections.find(target);
     if (itCollection != _collections.end()) {
       for (auto *source : itCollection->second) {

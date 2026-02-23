@@ -23,7 +23,7 @@ class Type : public core::Object, public virtual Smp::Publication::IType {
 public:
   Type(Smp::String8 name, Smp::String8 description, Smp::Uuid uuid,
        Smp::PrimitiveTypeKind primitiveTypeKind);
-  virtual ~Type() noexcept = default;
+  virtual ~Type() noexcept override = default;
 
   Smp::PrimitiveTypeKind GetPrimitiveTypeKind() const override;
   Smp::Uuid GetUuid() const override;
@@ -149,7 +149,7 @@ class TypeRegistry : public core::Object,
                      public virtual Smp::Publication::ITypeRegistry {
 public:
   TypeRegistry();
-  virtual ~TypeRegistry() noexcept = default;
+  virtual ~TypeRegistry() noexcept override = default;
 
   // IObject overrides
   Smp::String8 GetName() const override;

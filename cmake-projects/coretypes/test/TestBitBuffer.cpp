@@ -106,6 +106,15 @@ TEST(BitBufferTest, ConcatBits) {
   EXPECT_FALSE(c.getBit(2));
   std::cout << "Assertion: Check if bit 3 in 'c' is false" << std::endl;
   EXPECT_FALSE(c.getBit(3));
+
+  // Step: Self concatenation
+  std::cout << "Step: Self concatenate 'a'" << std::endl;
+  BitBuffer selfConcat = a.concatBits(a);
+  EXPECT_EQ(selfConcat.bitSize(), 4);
+  EXPECT_TRUE(selfConcat.getBit(0));
+  EXPECT_TRUE(selfConcat.getBit(1));
+  EXPECT_TRUE(selfConcat.getBit(2));
+  EXPECT_TRUE(selfConcat.getBit(3));
 }
 
 TEST(BitBufferTest, ReverseBits) {

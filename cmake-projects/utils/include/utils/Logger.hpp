@@ -22,7 +22,7 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  virtual ~Logger() noexcept = default;
+  virtual ~Logger() noexcept override = default;
 
   // IComponent methods
   Smp::ComponentStateKind GetState() const override;
@@ -74,7 +74,7 @@ public:
 
 private:
   /** @brief Mutex for thread-safe logging. */
-  std::mutex _mutex;
+  std::timed_mutex _mutex;
 };
 
 } // namespace utils

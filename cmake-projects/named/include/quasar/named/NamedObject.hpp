@@ -241,7 +241,7 @@ private:
   /** @brief Weak pointer to a related object. */
   std::weak_ptr<NamedObject> m_related;
   /** @brief Mutex for ensuring thread-safe access to internal state. */
-  mutable std::recursive_mutex m_mutex;
+  mutable std::recursive_timed_mutex m_mutex;
   
   /** @brief Internal weak pointer to self, used for retrieving a shared_ptr from this. */
   std::weak_ptr<NamedObject> m_self;

@@ -72,27 +72,42 @@ Smp::IObject *TimeKeeper::GetChild(Smp::String8 name) const { return nullptr; }
 
 void TimeKeeper::SetEventManager(Smp::Services::IEventManager *eventManager) {
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   _eventManager = eventManager;
 }
 
 Smp::Duration TimeKeeper::GetSimulationTime() const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   return _simulationTime;
 }
 
 Smp::DateTime TimeKeeper::GetEpochTime() const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   return _epochOffset + _simulationTime;
 }
 
 Smp::DateTime TimeKeeper::GetMissionStartTime() const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   return _missionStart;
 }
 
 Smp::Duration TimeKeeper::GetMissionTime() const {
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   return (GetEpochTime() - _missionStart);
 }
 
@@ -106,14 +121,20 @@ Smp::DateTime TimeKeeper::GetZuluTime() const {
 
 void TimeKeeper::SetSimulationTime(Smp::Duration simulationTime) {
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+  }
   _simulationTime = simulationTime;
 }
 
 void TimeKeeper::SetEpochTime(Smp::DateTime epochTime) {
   // Set the new epoch time and calculate the offset
   {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+    if (!lock.owns_lock()) {
+      throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+    }
     _epochOffset = epochTime - _simulationTime;
   }
   
@@ -126,7 +147,10 @@ void TimeKeeper::SetEpochTime(Smp::DateTime epochTime) {
 void TimeKeeper::SetMissionStartTime(Smp::DateTime missionStart) {
   // Set the mission start time
   {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+    if (!lock.owns_lock()) {
+      throw std::runtime_error("Timeout acquiring TimeKeeper lock");
+    }
     _missionStart = missionStart;
   }
   

@@ -13,7 +13,7 @@ class InverterModel : public virtual Smp::IModel, public virtual core::Object {
 public:
   InverterModel(Smp::String8 name, Smp::String8 description,
                 Smp::IComposite *parent);
-  virtual ~InverterModel() noexcept = default;
+  virtual ~InverterModel() noexcept override = default;
 
   // IComponent methods
   Smp::ComponentStateKind GetState() const override;

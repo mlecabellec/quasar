@@ -107,7 +107,7 @@ private:
   std::map<const Smp::IComponent *, core::SimpleCollection<Smp::IComponent>>
       _collections;
 
-  mutable std::mutex _mutex;
+  mutable std::timed_mutex _mutex;
 };
 
 } // namespace sim

@@ -81,7 +81,7 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  virtual ~Scheduler() noexcept = default;
+  virtual ~Scheduler() noexcept override = default;
 
   // IComponent methods
   Smp::ComponentStateKind GetState() const override;
@@ -170,7 +170,7 @@ private:
   Smp::Services::ILogger *_logger = nullptr;
 
   /** @brief Mutex for thread-safe access. */
-  mutable std::mutex _mutex;
+  mutable std::timed_mutex _mutex;
   
   /** @brief ID counter for new events. */
   Smp::Services::EventId _nextEventId = 1;

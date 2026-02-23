@@ -26,7 +26,7 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  virtual ~EventManager() noexcept = default;
+  virtual ~EventManager() noexcept override = default;
 
   // IComponent methods
   Smp::ComponentStateKind GetState() const override;
@@ -104,7 +104,7 @@ private:
   std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>> _subscriptions;
 
   /** @brief Mutex for thread-safe access. */
-  mutable std::mutex _mutex;
+  mutable std::timed_mutex _mutex;
 
   /**
    * @brief Register standard SMP predefined events.

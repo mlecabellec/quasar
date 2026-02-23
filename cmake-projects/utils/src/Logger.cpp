@@ -102,7 +102,11 @@ void Logger::Log(const Smp::IObject *sender, Smp::String8 message,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    // If we cannot acquire the lock, we skip logging to avoid blocking.
+    return;
+  }
 
   // Determine string representation of the log kind
   std::string kindStr;

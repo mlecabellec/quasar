@@ -119,7 +119,10 @@ Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring EventManager lock");
+  }
 
   // Search for existing event by name
   // [CS-0010.35] Forbidden auto replaced with explicit type
@@ -143,7 +146,10 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring EventManager lock");
+  }
 
   // [CS-0010.35] Forbidden auto replaced with explicit type
   std::vector<const Smp::IEntryPoint *>& subscribers = _subscriptions[event];
@@ -167,7 +173,10 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring EventManager lock");
+  }
 
   // [CS-0010.35] Forbidden auto replaced with explicit type
   std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>>::iterator itSub = _subscriptions.find(event);
@@ -195,7 +204,10 @@ void EventManager::Emit(Smp::Services::EventId event, Smp::Bool synchronous) {
   // [CS-0010.35] Forbidden auto replaced with explicit type
   std::vector<const Smp::IEntryPoint *> subscribersCopy;
   {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+    if (!lock.owns_lock()) {
+      throw std::runtime_error("Timeout acquiring EventManager lock");
+    }
     std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>>::iterator it = _subscriptions.find(event);
     if (it != _subscriptions.end()) {
       subscribersCopy = it->second;

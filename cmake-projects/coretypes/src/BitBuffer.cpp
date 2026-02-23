@@ -167,8 +167,10 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
     size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
     for (size_t i = 0; i < effectiveSize; ++i) {
       bool bit = (data_[i / 8] >> (7 - (i % 8))) & 1;
-      if (bit) result.setBit(i, true);
-      if (bit) result.setBit(effectiveSize + i, true);
+      if (bit) {
+        result.setBit(i, true);
+        result.setBit(effectiveSize + i, true);
+      }
     }
     return result;
   }

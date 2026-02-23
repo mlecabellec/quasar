@@ -82,7 +82,10 @@ Smp::Services::EventId Scheduler::CreateEventId() { return _nextEventId++; }
 
 bool Scheduler::HasEvents() const {
   // Check if any events are pending execution
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in HasEvents");
+  }
   return !_timeline.empty() || !_immediateEvents.empty();
 }
 
@@ -94,7 +97,10 @@ Scheduler::AddImmediateEvent(const Smp::IEntryPoint *entryPoint) {
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in AddImmediateEvent");
+  }
 
   // Initialize event structure
   SchedulerEvent evt;
@@ -136,7 +142,10 @@ Scheduler::AddSimulationTimeEvent(const Smp::IEntryPoint *entryPoint,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in AddSimulationTimeEvent");
+  }
 
   // Initialize event structure
   SchedulerEvent evt;
@@ -178,7 +187,10 @@ Scheduler::AddMissionTimeEvent(const Smp::IEntryPoint *entryPoint,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in AddMissionTimeEvent");
+  }
 
   // Initialize event structure
   SchedulerEvent evt;
@@ -225,7 +237,10 @@ Scheduler::AddEpochTimeEvent(const Smp::IEntryPoint *entryPoint,
   }
 
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in AddEpochTimeEvent");
+  }
 
   // Initialize event structure
   SchedulerEvent evt;
@@ -288,7 +303,10 @@ void Scheduler::RemoveFromTimeline(Smp::Services::EventId id) {
 
 void Scheduler::RemoveEvent(Smp::Services::EventId event) {
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in RemoveEvent");
+  }
   
   // Find event in collection
   std::map<Smp::Services::EventId, SchedulerEvent>::iterator it = _events.find(event);
@@ -311,14 +329,20 @@ void Scheduler::RemoveEvent(Smp::Services::EventId event) {
 
 Smp::Bool Scheduler::IsEventScheduled(Smp::Services::EventId event) const {
   // Check existence in event map
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in IsEventScheduled");
+  }
   return _events.find(event) != _events.end();
 }
 
 void Scheduler::SetEventSimulationTime(Smp::Services::EventId event,
                                        Smp::Duration simulationTime) {
   // Use RAII for mutex [CS-0010.22]
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in SetEventSimulationTime");
+  }
   
   // Find and update event simulation time
   std::map<Smp::Services::EventId, SchedulerEvent>::iterator it = _events.find(event);
@@ -333,9 +357,11 @@ void Scheduler::SetEventSimulationTime(Smp::Services::EventId event,
 
   // Remove if time is negative (standard behavior)
   if (simulationTime < 0) {
-    _mutex.unlock();
+    lock.unlock();
     RemoveEvent(event);
-    _mutex.lock();
+    if (!lock.try_lock_for(std::chrono::seconds(1))) {
+      throw std::runtime_error("Timeout re-acquiring scheduler lock in SetEventSimulationTime");
+    }
     return;
   }
 
@@ -367,7 +393,10 @@ Smp::Services::EventId Scheduler::GetCurrentEventId() const {
 
 Smp::Duration Scheduler::GetNextScheduledEventTime() const {
   // Return the time of the first event in the timeline
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in GetNextScheduledEventTime");
+  }
   if (!_timeline.empty()) {
     return _timeline.begin()->first;
   }
@@ -376,7 +405,10 @@ Smp::Duration Scheduler::GetNextScheduledEventTime() const {
 
 Smp::Duration Scheduler::ExecuteNextEvent() {
   // Process scheduled events
-  std::lock_guard<std::mutex> lock(_mutex);
+  std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring scheduler lock in ExecuteNextEvent");
+  }
 
   // 1. Process immediate events first
   if (!_immediateEvents.empty()) {
@@ -389,9 +421,11 @@ Smp::Duration Scheduler::ExecuteNextEvent() {
       const Smp::IEntryPoint* ep = it->second.entryPoint;
       if (ep) {
         // Unlock while executing to prevent deadlocks and allow additions
-        _mutex.unlock();
+        lock.unlock();
         ep->Execute();
-        _mutex.lock();
+        if (!lock.try_lock_for(std::chrono::seconds(1))) {
+          throw std::runtime_error("Timeout re-acquiring scheduler lock in ExecuteNextEvent (immediate)");
+        }
       }
       _currentEventId = -1;
       _events.erase(id); // Immediate events are one-shot
@@ -407,11 +441,13 @@ Smp::Duration Scheduler::ExecuteNextEvent() {
     Smp::Services::EventId id = itTimeline->second;
 
     // Advance simulation time to the event time
-    _mutex.unlock();
+    lock.unlock();
     if (time > _timeKeeper->GetSimulationTime()) {
       _timeKeeper->SetSimulationTime(time);
     }
-    _mutex.lock();
+    if (!lock.try_lock_for(std::chrono::seconds(1))) {
+      throw std::runtime_error("Timeout re-acquiring scheduler lock in ExecuteNextEvent (timeline advance)");
+    }
 
     // Find and execute the event
     std::map<Smp::Services::EventId, SchedulerEvent>::iterator itEvt = _events.find(id);
@@ -422,11 +458,13 @@ Smp::Duration Scheduler::ExecuteNextEvent() {
       const Smp::IEntryPoint* ep = itEvt->second.entryPoint;
 
       // Unlock for execution
-      _mutex.unlock();
+      lock.unlock();
       if (ep) {
         ep->Execute();
       }
-      _mutex.lock();
+      if (!lock.try_lock_for(std::chrono::seconds(1))) {
+        throw std::runtime_error("Timeout re-acquiring scheduler lock in ExecuteNextEvent (timeline execute)");
+      }
 
       _currentEventId = -1;
 
