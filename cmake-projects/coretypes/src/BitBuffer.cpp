@@ -1,6 +1,7 @@
 #include "quasar/coretypes/BitBuffer.hpp"
 #include "quasar/coretypes/BitBufferSlice.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <mutex>
@@ -16,32 +17,41 @@ BitBuffer::BitBuffer(size_t bitCount)
   // (bitCount + 7) / 8 is a common idiom for ceiling division to get the number
   // of bytes. The bytes are zero-initialized by the Buffer constructor.
 }
-BitBuffer::BitBuffer(const BitBuffer &other) : Buffer(other) {
+BitBuffer::BitBuffer(const BitBuffer &other) : Buffer() {
   // Fulfills [FE-0030.8] usage of recursive_timed_mutex for thread safety.
-  // Lock the source buffer to ensure a consistent snapshot during copy.
-  std::lock_guard<std::recursive_timed_mutex> lock(other.mutex_);
+  // Lock the source buffer to ensure a consistent snapshot of both data and size.
+  std::unique_lock<std::recursive_timed_mutex> lock(other.mutex_,
+                                                     std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring lock on source bit buffer");
+  }
+  data_ = other.data_;
   bitSize_ = other.bitSize_;
   if (bitSize_ == 0) {
-    // If bitSize_ is 0, it implies the full buffer is used (wrapping an
-    // existing Buffer). We explicitly calculate the bit capacity.
-    bitSize_ = other.size() * 8;
+    // If bitSize_ is 0, it implies the full buffer is used.
+    bitSize_ = data_.size() * 8;
   }
 }
 
 BitBuffer &BitBuffer::operator=(const BitBuffer &other) {
   if (this != &other) {
     // Fulfills [FE-0030.8] thread safety during assignment.
-    // Call the base class assignment operator to copy the buffer data.
-    // Buffer::operator= handles the data copy and its own locking.
-    Buffer::operator=(other);
+    // Avoid deadlock by using address-based ordering.
+    std::recursive_timed_mutex *first = &mutex_ < &other.mutex_ ? &mutex_ : &other.mutex_;
+    std::recursive_timed_mutex *second = &mutex_ < &other.mutex_ ? &other.mutex_ : &mutex_;
 
-    // Lock the other buffer to safely access its bitSize.
-    std::lock_guard<std::recursive_timed_mutex> lock(other.mutex_);
+    std::unique_lock<std::recursive_timed_mutex> lock1(*first, std::chrono::seconds(1));
+    if (!lock1.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (1)");
+    std::unique_lock<std::recursive_timed_mutex> lock2(*second, std::chrono::seconds(1));
+    if (!lock2.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (2)");
+
+    // Copy both data and bitSize atomically.
+    data_ = other.data_;
     bitSize_ = other.bitSize_;
 
     // If the other buffer has bitSize_ 0, calculate it from its byte size.
     if (bitSize_ == 0) {
-      bitSize_ = other.size() * 8;
+      bitSize_ = data_.size() * 8;
     }
   }
   return *this;
@@ -49,8 +59,8 @@ BitBuffer &BitBuffer::operator=(const BitBuffer &other) {
 
 size_t BitBuffer::bitSize() const {
   // Fulfills [FE-0030.8] thread safe access.
-  // Thread-safe access to bitSize_.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   // If bitSize_ is not explicitly set, we default to the full bit capacity of
   // the underlying byte array.
   if (bitSize_ == 0 && !data_.empty())
@@ -60,7 +70,8 @@ size_t BitBuffer::bitSize() const {
 
 bool BitBuffer::getBit(size_t bitIndex) const {
   // Fulfills [FE-0010.4.2] operations at bit level.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   // Use bitSize_ if set, otherwise fallback to the full byte buffer's bit
   // capacity.
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
@@ -80,7 +91,8 @@ bool BitBuffer::getBit(size_t bitIndex) const {
 
 void BitBuffer::setBit(size_t bitIndex, bool value) {
   // Fulfills [FE-0010.4.2] operations at bit level.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   // Validate index against actual bit capacity.
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
   if (bitIndex >= actualSize) {
@@ -105,7 +117,8 @@ void BitBuffer::setBit(size_t bitIndex, bool value) {
 BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
   // Fulfills [FE-0010.4.3] slicing with bit granularity.
   // Fulfills [FE-0030.5.8] offset and lengths as combination of bytes and bits.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
 
   // Range validation for the requested slice.
@@ -140,43 +153,48 @@ BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
 
 BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
   // Fulfills [FE-0010.4.4] concatenation of buffers.
-  // Determine final sizes before locking to minimize critical section.
+  // Determine final sizes before locking.
   size_t mySize = this->bitSize();
   size_t otherSize = other.bitSize();
 
   // Create a new BitBuffer large enough to hold the sum of bits.
   BitBuffer result(mySize + otherSize);
 
-  // Lock both buffers simultaneously to prevent deadlocks.
-  std::unique_lock<std::recursive_timed_mutex> lock1(mutex_, std::defer_lock);
-  std::unique_lock<std::recursive_timed_mutex> lock2(other.mutex_,
-                                                     std::defer_lock);
-  std::lock(lock1, lock2);
+  if (this == &other) {
+    std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
+    
+    size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
+    for (size_t i = 0; i < effectiveSize; ++i) {
+      bool bit = (data_[i / 8] >> (7 - (i % 8))) & 1;
+      if (bit) result.setBit(i, true);
+      if (bit) result.setBit(effectiveSize + i, true);
+    }
+    return result;
+  }
 
-  // Copy bits from 'this' buffer into the beginning of the result.
+  // Lock both buffers simultaneously to prevent deadlocks.
+  std::recursive_timed_mutex *first = &mutex_ < &other.mutex_ ? &mutex_ : &other.mutex_;
+  std::recursive_timed_mutex *second = &mutex_ < &other.mutex_ ? &other.mutex_ : &mutex_;
+
+  std::unique_lock<std::recursive_timed_mutex> lock1(*first, std::chrono::seconds(1));
+  if (!lock1.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (1)");
+  std::unique_lock<std::recursive_timed_mutex> lock2(*second, std::chrono::seconds(1));
+  if (!lock2.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (2)");
+
+  // Copy bits from 'this' buffer.
   size_t effectiveMySize = (bitSize_ ? bitSize_ : data_.size() * 8);
   for (size_t i = 0; i < effectiveMySize; ++i) {
-    size_t byteIndex = i / 8;
-    size_t bitOffset = i % 8;
-    bool bit = (data_[byteIndex] >> (7 - bitOffset)) & 1;
-
-    if (bit) {
+    if ((data_[i / 8] >> (7 - (i % 8))) & 1) {
       result.data_[i / 8] |= (1 << (7 - (i % 8)));
     }
   }
 
-  // Copy bits from the 'other' buffer, starting at the offset after 'this'
-  // bits.
-  size_t offset = effectiveMySize;
+  // Copy bits from the 'other' buffer.
   size_t oSize = (other.bitSize_ ? other.bitSize_ : other.data_.size() * 8);
-
   for (size_t i = 0; i < oSize; ++i) {
-    size_t byteIndex = i / 8;
-    size_t bitOffset = i % 8;
-    bool bit = (other.data_[byteIndex] >> (7 - bitOffset)) & 1;
-
-    if (bit) {
-      size_t target = offset + i;
+    if ((other.data_[i / 8] >> (7 - (i % 8))) & 1) {
+      size_t target = effectiveMySize + i;
       result.data_[target / 8] |= (1 << (7 - (target % 8)));
     }
   }
@@ -190,39 +208,35 @@ bool BitBuffer::equals(const BitBuffer &other) const {
   if (this == &other)
     return true;
 
-  // Initial size check (potentially locking via bitSize() call).
+  // Initial size check.
   size_t s1 = this->bitSize();
   size_t s2 = other.bitSize();
   if (s1 != s2)
     return false;
 
   // Lock both buffers for content comparison.
-  std::unique_lock<std::recursive_timed_mutex> lock1(mutex_, std::defer_lock);
-  std::unique_lock<std::recursive_timed_mutex> lock2(other.mutex_,
-                                                     std::defer_lock);
-  std::lock(lock1, lock2);
+  std::recursive_timed_mutex *first = &mutex_ < &other.mutex_ ? &mutex_ : &other.mutex_;
+  std::recursive_timed_mutex *second = &mutex_ < &other.mutex_ ? &other.mutex_ : &mutex_;
+
+  std::unique_lock<std::recursive_timed_mutex> lock1(*first, std::chrono::seconds(1));
+  if (!lock1.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (1)");
+  std::unique_lock<std::recursive_timed_mutex> lock2(*second, std::chrono::seconds(1));
+  if (!lock2.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (2)");
 
   size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
 
-  // Bit-by-bit comparison ensures that even if bitSize_ is not a multiple of 8,
-  // we only compare valid bits and ignore any padding in the last byte.
   for (size_t i = 0; i < effectiveSize; ++i) {
-    size_t b = i / 8;
-    size_t o = i % 8;
-
-    bool v1 = (data_[b] >> (7 - o)) & 1;
-    bool v2 = (other.data_[b] >> (7 - o)) & 1;
-
-    if (v1 != v2) {
-      return false;
-    }
+    bool v1 = (data_[i / 8] >> (7 - (i % 8))) & 1;
+    bool v2 = (other.data_[i / 8] >> (7 - (i % 8))) & 1;
+    if (v1 != v2) return false;
   }
   return true;
 }
 
 void BitBuffer::reverseBits() {
   // Fulfills [FE-0010.4.7] reversing at bit level.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   size_t size = (bitSize_ ? bitSize_ : data_.size() * 8);
   // Swap bits from outer edges moving towards the center.
   // Efficiency: we only need to iterate half-way.
@@ -260,7 +274,8 @@ void BitBuffer::reverseBits(size_t groupSize) {
   // If groupSize is 0, no operation is defined.
   if (groupSize == 0)
     return;
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   size_t size = (bitSize_ ? bitSize_ : data_.size() * 8);
 
   // Reversing groups requires the total size to be divisible by groupSize.
@@ -312,7 +327,8 @@ BitBuffer BitBuffer::clone() const {
 std::shared_ptr<BitBufferSlice> BitBuffer::sliceBitsView(size_t startBit,
                                                          size_t bitLength) {
   // Fulfills [FE-0030.5.7] bit-level view creation.
-  std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
   // Bounds check for the view.
   if (startBit + bitLength > actualSize) {
