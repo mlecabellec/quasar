@@ -14,7 +14,11 @@ public:
             Smp::Int64 lower = 0, Smp::Int64 upper = -1)
       : core::Object(name, description, parent), _lower(lower), _upper(upper) {}
 
-  virtual ~Container() noexcept = default;
+  virtual ~Container() noexcept {
+    for (auto *component : _components) {
+      delete component;
+    }
+  }
 
   const Smp::ComponentCollection *GetComponents() const override {
     return &_components;

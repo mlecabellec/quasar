@@ -71,6 +71,8 @@ Simulator::~Simulator() noexcept {
   delete _timeKeeper;
   delete _logger;
   delete _linkRegistry;
+  delete _modelsContainer;
+  delete _servicesContainer;
 }
 
 // IObject methods
