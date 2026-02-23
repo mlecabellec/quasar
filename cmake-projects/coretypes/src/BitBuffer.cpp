@@ -11,11 +11,13 @@ namespace coretypes {
 
 BitBuffer::BitBuffer(size_t bitCount)
     : Buffer((bitCount + 7) / 8), bitSize_(bitCount) {
+  // Fulfills [FE-0010.4.8] associated memory allocation.
   // Initialize the buffer with the calculated number of bytes.
   // (bitCount + 7) / 8 is a common idiom for ceiling division to get the number
   // of bytes. The bytes are zero-initialized by the Buffer constructor.
 }
 BitBuffer::BitBuffer(const BitBuffer &other) : Buffer(other) {
+  // Fulfills [FE-0030.8] usage of recursive_timed_mutex for thread safety.
   // Lock the source buffer to ensure a consistent snapshot during copy.
   std::lock_guard<std::recursive_timed_mutex> lock(other.mutex_);
   bitSize_ = other.bitSize_;
@@ -28,6 +30,7 @@ BitBuffer::BitBuffer(const BitBuffer &other) : Buffer(other) {
 
 BitBuffer &BitBuffer::operator=(const BitBuffer &other) {
   if (this != &other) {
+    // Fulfills [FE-0030.8] thread safety during assignment.
     // Call the base class assignment operator to copy the buffer data.
     // Buffer::operator= handles the data copy and its own locking.
     Buffer::operator=(other);
@@ -45,6 +48,7 @@ BitBuffer &BitBuffer::operator=(const BitBuffer &other) {
 }
 
 size_t BitBuffer::bitSize() const {
+  // Fulfills [FE-0030.8] thread safe access.
   // Thread-safe access to bitSize_.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // If bitSize_ is not explicitly set, we default to the full bit capacity of
@@ -55,6 +59,7 @@ size_t BitBuffer::bitSize() const {
 }
 
 bool BitBuffer::getBit(size_t bitIndex) const {
+  // Fulfills [FE-0010.4.2] operations at bit level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Use bitSize_ if set, otherwise fallback to the full byte buffer's bit
   // capacity.
@@ -74,6 +79,7 @@ bool BitBuffer::getBit(size_t bitIndex) const {
 }
 
 void BitBuffer::setBit(size_t bitIndex, bool value) {
+  // Fulfills [FE-0010.4.2] operations at bit level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Validate index against actual bit capacity.
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
@@ -97,6 +103,8 @@ void BitBuffer::setBit(size_t bitIndex, bool value) {
 }
 
 BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
+  // Fulfills [FE-0010.4.3] slicing with bit granularity.
+  // Fulfills [FE-0030.5.8] offset and lengths as combination of bytes and bits.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
 
@@ -131,6 +139,7 @@ BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
 }
 
 BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
+  // Fulfills [FE-0010.4.4] concatenation of buffers.
   // Determine final sizes before locking to minimize critical section.
   size_t mySize = this->bitSize();
   size_t otherSize = other.bitSize();
@@ -176,6 +185,7 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
 }
 
 bool BitBuffer::equals(const BitBuffer &other) const {
+  // Fulfills [FE-0010.4.5] comparison.
   // Reference equality check.
   if (this == &other)
     return true;
@@ -211,6 +221,7 @@ bool BitBuffer::equals(const BitBuffer &other) const {
 }
 
 void BitBuffer::reverseBits() {
+  // Fulfills [FE-0010.4.7] reversing at bit level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   size_t size = (bitSize_ ? bitSize_ : data_.size() * 8);
   // Swap bits from outer edges moving towards the center.
@@ -245,6 +256,7 @@ void BitBuffer::reverseBits() {
 }
 
 void BitBuffer::reverseBits(size_t groupSize) {
+  // Fulfills [FE-0010.4.7] reversing at bit level.
   // If groupSize is 0, no operation is defined.
   if (groupSize == 0)
     return;
@@ -292,12 +304,14 @@ void BitBuffer::reverseBits(size_t groupSize) {
 }
 
 BitBuffer BitBuffer::clone() const {
+  // Fulfills [FE-0010.4.8] cloning with memory allocation.
   // Delegation to copy constructor which handles deep copy and thread safety.
   return BitBuffer(*this);
 }
 
 std::shared_ptr<BitBufferSlice> BitBuffer::sliceBitsView(size_t startBit,
                                                          size_t bitLength) {
+  // Fulfills [FE-0030.5.7] bit-level view creation.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   size_t actualSize = (bitSize_ == 0) ? data_.size() * 8 : bitSize_;
   // Bounds check for the view.

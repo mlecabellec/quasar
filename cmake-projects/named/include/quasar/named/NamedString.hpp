@@ -17,6 +17,9 @@ namespace quasar::named {
  * 
  * This class inherits from NamedObject for hierarchy management and 
  * coretypes::String for string value operations.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.4] support for a named String.
  */
 class NamedString : public NamedObject, public quasar::coretypes::String {
 public:
@@ -27,6 +30,8 @@ public:
 
   /**
    * @brief Factory method to create a new NamedString.
+   * 
+   * Fulfills [FE-0020.6] static method "create".
    * 
    * @param name The name of the object.
    * @param value The initial string value.
@@ -39,6 +44,9 @@ public:
 
   /**
    * @brief Creates a standalone copy of this NamedString.
+   * 
+   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+   * 
    * @return A new NamedString with the same name and value, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override {

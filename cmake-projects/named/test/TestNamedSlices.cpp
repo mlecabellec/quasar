@@ -9,6 +9,9 @@ using namespace quasar::named;
 using namespace quasar::coretypes;
 
 TEST(NamedBufferSliceTest, CreationAndUsage) {
+  // Proof of compliance: [FE-0030.7] Create a NamedBufferSlice class.
+  // Proof of compliance: [FE-0030.7.5] Slices can be created from a Buffer.
+  // Proof of compliance: [FE-0030.7.6] Slices can be created from a slice.
   // Step: Initialize Buffer and set values
   std::cout << "Step: Initialize Buffer and set values" << std::endl;
   std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(10);
@@ -52,6 +55,8 @@ TEST(NamedBufferSliceTest, CreationAndUsage) {
 }
 
 TEST(NamedBitBufferSliceTest, CreationAndUsage) {
+  // Proof of compliance: [FE-0030.7] Create a NamedBitBufferSlice class.
+  // Proof of compliance: [FE-0030.7.5] Slices can be created from a BitBuffer.
   // Step: Initialize BitBuffer and set bits
   std::cout << "Step: Initialize BitBuffer and set bits" << std::endl;
   std::shared_ptr<BitBuffer> bb = std::make_shared<BitBuffer>(16);
@@ -106,6 +111,7 @@ TEST(NamedBitBufferSliceTest, CreationAndUsage) {
 }
 
 TEST(NamedBufferSliceTest, Clone) {
+  // Proof of compliance: [FE-0030.7.2] A slice shall be able to be copied.
   // Step: Initialize Buffer and set value for cloning test
   std::cout << "Step: Initialize Buffer and set value for cloning test"
             << std::endl;

@@ -16,6 +16,9 @@ namespace quasar::named {
  * @brief A named object that holds a boolean value.
  * 
  * Inherits from NamedObject for hierarchy and coretypes::Boolean for boolean state.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0020.4] Derivated class for Boolean core type.
  */
 class NamedBoolean : public NamedObject, public quasar::coretypes::Boolean {
 public:
@@ -26,6 +29,8 @@ public:
 
   /**
    * @brief Factory method to create a new NamedBoolean.
+   * 
+   * Fulfills [FE-0020.6] static method "create".
    * 
    * @param name The name of the object.
    * @param value The initial boolean value.
@@ -38,6 +43,9 @@ public:
 
   /**
    * @brief Creates a standalone copy of this NamedBoolean.
+   * 
+   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+   * 
    * @return A new NamedBoolean with the same name and value, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override {

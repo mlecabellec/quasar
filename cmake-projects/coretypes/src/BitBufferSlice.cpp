@@ -6,6 +6,7 @@ namespace quasar::coretypes {
 BitBufferSlice::BitBufferSlice(std::shared_ptr<BitBuffer> buffer,
                                size_t startBit, size_t bitLength)
     : buffer_(buffer), startBit_(startBit), bitLength_(bitLength) {
+  // Fulfills [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
   // Validate buffer is not null.
   if (!buffer) {
     throw std::invalid_argument("Buffer cannot be null");
@@ -48,6 +49,7 @@ void BitBufferSlice::setBit(size_t index, bool value) {
 }
 
 BitBufferSlice BitBufferSlice::slice(size_t index, size_t subLength) const {
+  // Fulfills [FE-0030.7.6] Slices can be created from a slice.
   // Validate sub-slice boundaries relative to this slice's current bit length.
   if (index + subLength > bitLength_) {
     throw std::out_of_range("Sub-slice out of bounds");
@@ -58,6 +60,7 @@ BitBufferSlice BitBufferSlice::slice(size_t index, size_t subLength) const {
 
 std::shared_ptr<BitBuffer>
 BitBufferSlice::concat(const BitBufferSlice &other) const {
+  // Fulfills [FE-0030.7.3] A slice shall be able to be concatenated with other slices.
   // Determine the total size of the resulting concatenated buffer.
   size_t resSize = bitLength_ + other.bitLength_;
   // Create a new BitBuffer instance to hold the result.
@@ -76,6 +79,7 @@ BitBufferSlice::concat(const BitBufferSlice &other) const {
 }
 
 std::vector<uint8_t> BitBufferSlice::toVector() const {
+  // Fulfills [FE-0030.5.10] Methods for conversion from and to std::vector<uint8_t>.
   // Determine how many bytes are needed to store the bits of this slice.
   // Ceiling division (bits + 7) / 8.
   size_t byteCount = (bitLength_ + 7) / 8;

@@ -7,6 +7,7 @@
 using namespace quasar::named;
 
 TEST(TraversalTest, DFS) {
+  // Proof of compliance: [FE-0020.12.1] Depth-first iteration.
   // Step: Create tree for DFS traversal
   std::cout << "Step: Create tree for DFS traversal" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -34,6 +35,7 @@ TEST(TraversalTest, DFS) {
 }
 
 TEST(TraversalTest, BFS) {
+  // Proof of compliance: [FE-0020.12.1] Breadth-first iteration.
   // Step: Create tree for BFS traversal
   std::cout << "Step: Create tree for BFS traversal" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -61,6 +63,7 @@ TEST(TraversalTest, BFS) {
 }
 
 TEST(TraversalTest, FindByName) {
+  // Proof of compliance: [FE-0020.13] Search the tree by name.
   // Step: Create tree for search
   std::cout << "Step: Create tree for search" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -85,6 +88,7 @@ TEST(TraversalTest, FindByName) {
 }
 
 TEST(TraversalTest, DeepCopy) {
+  // Proof of compliance: [FE-0020.14] deep copy.
   // Step: Create tree for deep copy
   std::cout << "Step: Create tree for deep copy" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");

@@ -26,6 +26,11 @@ namespace coretypes {
  * and double. It inherits from Number and implements polymorphic arithmetic, 
  * comparison, and conversion methods. 
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.1] Provide, for each basic numeric type, a class which is assignable to its basic type.
+ * - Fulfills [FE-0010.1.2] Each class related to a basic numeric type shall be derivated from a common "Number" base class.
+ * - Fulfills [FE-0030.8] All methods are thread safe.
+ * 
  * The class is immutable and thread-safe. It handles special floating-point 
  * values like NaN (Not-a-Number) and Infinity according to IEEE 754 standards,
  * while providing "safe" versions of arithmetic operations that throw exceptions
@@ -40,12 +45,17 @@ template <typename T> class FloatingPoint : public Number {
 public:
   /**
    * @brief Constructs a FloatingPoint object from a primitive value.
+   * 
+   * Fulfills [FE-0010.1.1] Constructor which takes a value of the basic type.
+   * 
    * @param value The primitive floating point value.
    */
   explicit FloatingPoint(T value) : value_(value) {}
 
   /**
    * @brief Constructs a FloatingPoint object by parsing a string.
+   * 
+   * Fulfills [FE-0010.1.7] Methods for decoding values from a string.
    * 
    * @param s The string containing the numeric value to parse.
    * @throws std::invalid_argument If the string cannot be parsed as a floating point number.
@@ -57,6 +67,8 @@ public:
    * @brief Converts the floating point value to a 32-bit integer.
    * 
    * Truncates the fractional part. Performs bounds checking.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
    * 
    * @return The integer representation.
    * @throws std::runtime_error If the value is NaN.
@@ -93,6 +105,8 @@ public:
    * 
    * Truncates the fractional part. Performs bounds checking.
    * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The long representation.
    * @throws std::runtime_error If the value is NaN.
    * @throws std::overflow_error If the value is Infinite or outside the range of long.
@@ -116,6 +130,8 @@ public:
   /**
    * @brief Converts the floating point value to a float.
    * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The float representation.
    * @throws std::overflow_error If converting from double and the value exceeds float range.
    */
@@ -136,6 +152,9 @@ public:
 
   /**
    * @brief Converts the floating point value to a double.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The double representation.
    */
   double toDouble() const override {
@@ -145,6 +164,9 @@ public:
   
   /**
    * @brief Returns a string representation of the floating point value.
+   * 
+   * Fulfills [FE-0010.1.7] Methods for encoding values to a string.
+   * 
    * @return A string representing the value.
    */
   std::string toString() const override { 
@@ -160,6 +182,9 @@ public:
 
   /**
    * @brief Adds another FloatingPoint object of the same type.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for addition.
+   * 
    * @param other The value to add.
    * @return A new FloatingPoint instance containing the sum.
    */
@@ -169,6 +194,9 @@ public:
 
   /**
    * @brief Subtracts another FloatingPoint object of the same type.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for subtraction.
+   * 
    * @param other The value to subtract.
    * @return A new FloatingPoint instance containing the difference.
    */
@@ -178,6 +206,9 @@ public:
 
   /**
    * @brief Multiplies by another FloatingPoint object of the same type.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for multiplication.
+   * 
    * @param other The value to multiply by.
    * @return A new FloatingPoint instance containing the product.
    */
@@ -187,6 +218,9 @@ public:
 
   /**
    * @brief Divides by another FloatingPoint object of the same type.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for division.
+   * 
    * @param other The value to divide by.
    * @return A new FloatingPoint instance containing the quotient.
    */
@@ -196,6 +230,8 @@ public:
 
   /**
    * @brief Adds another FloatingPoint object with safety checks.
+   * 
+   * Fulfills [FE-0010.1.4] Methods for safe addition.
    * 
    * @param other The value to add.
    * @return A new FloatingPoint instance containing the sum.
@@ -211,6 +247,8 @@ public:
   /**
    * @brief Subtracts another FloatingPoint object with safety checks.
    * 
+   * Fulfills [FE-0010.1.4] Methods for safe subtraction.
+   * 
    * @param other The value to subtract.
    * @return A new FloatingPoint instance containing the difference.
    * @throws std::overflow_error If the result is Infinite.
@@ -225,6 +263,8 @@ public:
   /**
    * @brief Multiplies by another FloatingPoint object with safety checks.
    * 
+   * Fulfills [FE-0010.1.4] Methods for safe multiplication.
+   * 
    * @param other The value to multiply by.
    * @return A new FloatingPoint instance containing the product.
    * @throws std::overflow_error If the result is Infinite.
@@ -238,6 +278,8 @@ public:
 
   /**
    * @brief Divides by another FloatingPoint object with safety checks.
+   * 
+   * Fulfills [FE-0010.1.4] Methods for safe division.
    * 
    * @param other The value to divide by.
    * @return A new FloatingPoint instance containing the quotient.
@@ -256,6 +298,8 @@ public:
 
   /**
    * @brief Compares this FloatingPoint with another Number.
+   * 
+   * Fulfills [FE-0030.1.1] Methods for comparison with other Number objects.
    * 
    * Implements total ordering:
    * - -1 if this < other
@@ -293,6 +337,9 @@ public:
 
   /**
    * @brief Checks equality with another Number.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for comparison.
+   * 
    * @param other The number to compare with.
    * @return true if both values represent the same numeric value (or both are NaN).
    */
@@ -306,6 +353,9 @@ public:
 
   /**
    * @brief Polymorphic addition.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
+   * 
    * @param other The number to add.
    * @return Shared pointer to a new FloatingPoint containing the sum.
    */
@@ -316,6 +366,9 @@ public:
 
   /**
    * @brief Polymorphic subtraction.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
+   * 
    * @param other The number to subtract.
    * @return Shared pointer to a new FloatingPoint containing the difference.
    */
@@ -326,6 +379,9 @@ public:
 
   /**
    * @brief Polymorphic multiplication.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
+   * 
    * @param other The number to multiply by.
    * @return Shared pointer to a new FloatingPoint containing the product.
    */
@@ -336,6 +392,9 @@ public:
 
   /**
    * @brief Polymorphic division.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
+   * 
    * @param other The number to divide by.
    * @return Shared pointer to a new FloatingPoint containing the quotient.
    */
@@ -346,6 +405,9 @@ public:
 
   /**
    * @brief Polymorphic safe addition.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
+   * 
    * @param other The number to add.
    * @return Shared pointer to a new FloatingPoint.
    * @throws std::overflow_error If result is Infinite.
@@ -359,6 +421,9 @@ public:
 
   /**
    * @brief Polymorphic safe subtraction.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
+   * 
    * @param other The number to subtract.
    * @return Shared pointer to a new FloatingPoint.
    */
@@ -370,6 +435,9 @@ public:
 
   /**
    * @brief Polymorphic safe multiplication.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
+   * 
    * @param other The number to multiply by.
    * @return Shared pointer to a new FloatingPoint.
    */
@@ -381,6 +449,9 @@ public:
 
   /**
    * @brief Polymorphic safe division.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
+   * 
    * @param other The number to divide by.
    * @return Shared pointer to a new FloatingPoint.
    * @throws std::runtime_error If division by zero occurs.
@@ -458,18 +529,27 @@ public:
   // --- Introspection ---
   /**
    * @brief Returns the type name.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return "FloatingPoint"
    */
   std::string getType() const override { return "FloatingPoint"; }
 
   /**
    * @brief Checks if this is an integer type.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return false
    */
   bool isIntegerType() const override { return false; }
 
   /**
    * @brief Checks if this is a signed type.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return true (floating point types are signed).
    */
   bool isSigned() const override { return true; }
@@ -499,6 +579,9 @@ public:
   // Primitive comparison
   /**
    * @brief Checks equality with a primitive value.
+   * 
+   * Fulfills [FE-0030.1.2] Methods for comparison with primitive types.
+   * 
    * @param other The primitive value.
    * @return true if equal.
    */
@@ -509,6 +592,9 @@ public:
 
   /**
    * @brief Compares with a primitive value.
+   * 
+   * Fulfills [FE-0030.1.2] Methods for comparison with primitive types.
+   * 
    * @param other The primitive value.
    * @return -1, 0, or 1.
    */

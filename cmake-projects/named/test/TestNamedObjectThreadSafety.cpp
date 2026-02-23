@@ -9,6 +9,7 @@
 using namespace quasar::named;
 
 TEST(NamedObjectThreadSafety, StressTest) {
+  // Proof of compliance: [FE-0020.5] Operations on named objects shall be thread safe.
   // Step: Initialize root object and concurrency controls
   std::cout << "Step: Initialize root object and concurrency controls"
             << std::endl;

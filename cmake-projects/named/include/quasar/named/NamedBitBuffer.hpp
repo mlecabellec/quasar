@@ -17,6 +17,9 @@ namespace quasar::named {
  * 
  * This class inherits from NamedObject for hierarchy and coretypes::BitBuffer 
  * for bit-level operations.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.6] support for a named BitBuffer.
  */
 class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer {
 public:
@@ -28,6 +31,8 @@ public:
     /**
      * @brief Factory method to create a new NamedBitBuffer.
      * 
+     * Fulfills [FE-0020.6] static method "create".
+     * 
      * @param name The name of the bit buffer object.
      * @param bitCount The capacity of the buffer in bits.
      * @param parent Optional parent in the hierarchy.
@@ -37,6 +42,9 @@ public:
 
     /**
      * @brief Creates a standalone copy of this NamedBitBuffer.
+     * 
+     * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+     * 
      * @return A new NamedBitBuffer with the same name and bit content, but no hierarchy.
      */
     std::shared_ptr<NamedObject> clone() const override;

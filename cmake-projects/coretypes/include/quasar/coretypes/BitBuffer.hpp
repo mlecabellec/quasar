@@ -20,6 +20,12 @@ class BitBufferSlice;
  * It is essential for handling bit-packed data formats common in network 
  * protocols, compressed files, and low-level hardware interfaces.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.4] Provide a BitBuffer class.
+ * - Fulfills [FE-0010.4.1] Derived from the Buffer class.
+ * - Fulfills [FE-0030.8] All methods are thread safe.
+ * - Fulfills [FE-0030.9] All methods are const correct.
+ * 
  * **Bit Numbering Convention**: 
  * This class follows the Big Endian (Network Order) bit numbering convention:
  * - Bit 0 is the Most Significant Bit (MSB) of the first byte (byte index 0).
@@ -69,6 +75,8 @@ public:
    * @brief Retrieves the value of the bit at the specified index.
    *
    * Uses Big Endian bit numbering (bit 0 is MSB of first byte).
+   * 
+   * Fulfills [FE-0010.4.2] Operations at bit level.
    *
    * @param bitIndex The zero-based bit index (0 to bitSize() - 1).
    * @return true if the bit is set (1), false otherwise (0).
@@ -80,6 +88,8 @@ public:
    * @brief Sets the value of the bit at the specified index.
    *
    * Modifies the underlying byte data to reflect the new bit value.
+   * 
+   * Fulfills [FE-0010.4.2] Operations at bit level.
    *
    * @param bitIndex The zero-based bit index.
    * @param value The value to set (true for 1, false for 0).
@@ -91,6 +101,9 @@ public:
    * @brief Creates a new BitBuffer containing a range of bits from this buffer.
    *
    * The slice is a deep copy of the requested range.
+   * 
+   * Fulfills [FE-0010.4.3] Slicing the buffer with bit granularity.
+   * Fulfills [FE-0030.5.6] Slicing at bit level.
    *
    * @param startBit The starting bit index (inclusive).
    * @param bitLength The number of bits to include in the slice.
@@ -104,6 +117,8 @@ public:
    *
    * Unlike sliceBits, this creates a lightweight view (BitBufferSlice) that 
    * points to the original data. Modifications through the view affect this buffer.
+   * 
+   * Fulfills [FE-0030.5.7] Creation of BitBufferSlice views.
    *
    * @param startBit The starting bit index for the view.
    * @param bitLength The number of bits in the view.
@@ -118,6 +133,9 @@ public:
    *
    * Creates a new BitBuffer that contains all bits of this buffer followed 
    * by all bits of @p other.
+   * 
+   * Fulfills [FE-0010.4.4] Concatenation of buffers.
+   * Fulfills [FE-0030.5.5] Concatenation.
    *
    * @param other The BitBuffer to append.
    * @return A new BitBuffer containing the combined bits.
@@ -128,6 +146,9 @@ public:
    * @brief Checks if two BitBuffers are equal at the bit level.
    *
    * Comparison is done bit-by-bit up to the bitSize() of both buffers.
+   * 
+   * Fulfills [FE-0010.4.5] Comparison.
+   * Fulfills [FE-0030.5.1] Comparison with other BitBuffer objects.
    *
    * @param other The BitBuffer to compare with.
    * @return true if both have the same bit size and identical bit values.
@@ -138,6 +159,8 @@ public:
    * @brief Reverses the order of all bits in the buffer.
    *
    * The first bit becomes the last, the second becomes the second-to-last, etc.
+   * 
+   * Fulfills [FE-0010.4.7] Reversing at bit level.
    */
   void reverseBits();
 
@@ -146,6 +169,8 @@ public:
    *
    * Useful for swapping bit-endianness in sub-byte fields. For example, 
    * reversing with groupSize=4 in a byte buffer swaps the nibbles.
+   * 
+   * Fulfills [FE-0010.4.7] Reversing at bit level.
    *
    * @param groupSize The number of bits in each group to swap.
    * @throws std::invalid_argument If the buffer's bit size is not a multiple of @p groupSize.
@@ -156,6 +181,8 @@ public:
    * @brief Creates a deep copy of the BitBuffer.
    *
    * Equivalent to using the copy constructor.
+   * 
+   * Fulfills [FE-0010.4.8] Cloning the buffer with memory allocation.
    *
    * @return A new BitBuffer instance with the same data and bit size.
    */

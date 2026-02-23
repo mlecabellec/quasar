@@ -6,6 +6,7 @@ namespace quasar::coretypes {
 BufferSlice::BufferSlice(std::shared_ptr<Buffer> buffer, size_t offset,
                          size_t length)
     : buffer_(buffer), offset_(offset), length_(length) {
+  // Fulfills [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
   // Validate input buffer is not null.
   if (!buffer) {
     throw std::invalid_argument("Buffer cannot be null");
@@ -43,6 +44,7 @@ void BufferSlice::set(size_t index, uint8_t value) {
 }
 
 std::vector<uint8_t> BufferSlice::toVector() const {
+  // Fulfills [FE-0030.5.10] Methods for conversion from and to std::vector<uint8_t>.
   std::vector<uint8_t> vec;
   // Pre-allocate memory to avoid multiple reallocations during push_back.
   vec.reserve(length_);
@@ -54,6 +56,7 @@ std::vector<uint8_t> BufferSlice::toVector() const {
 }
 
 std::string BufferSlice::toString() const {
+  // Fulfills [FE-0030.5.12] Methods for conversion from and to quasar::coretypes::String.
   // We reuse the parent Buffer's hex string conversion logic.
   // By using Buffer::slice, we get a temporary deep-copy Buffer containing the 
   // slice's data, which we then convert to a hex string.
@@ -61,6 +64,7 @@ std::string BufferSlice::toString() const {
 }
 
 BufferSlice BufferSlice::slice(size_t index, size_t subLength) const {
+  // Fulfills [FE-0030.7.6] Slices can be created from a slice of a Buffer.
   // Validate sub-slice bounds relative to this slice's current length.
   if (index + subLength > length_) {
     throw std::out_of_range("Sub-slice out of bounds");
@@ -71,6 +75,7 @@ BufferSlice BufferSlice::slice(size_t index, size_t subLength) const {
 }
 
 std::shared_ptr<Buffer> BufferSlice::concat(const BufferSlice &other) const {
+  // Fulfills [FE-0030.7.3] A slice shall be able to be concatenated with other slices.
   // Create a brand new Buffer large enough to hold both slices.
   std::shared_ptr<Buffer> newBuf =
       std::make_shared<Buffer>(length_ + other.length_);
@@ -97,6 +102,7 @@ size_t BufferSlice::getOffset() const {
 }
 
 bool BufferSlice::equals(const BufferSlice &other) const {
+  // Fulfills [FE-0030.5.1] Comparison.
   // Performance optimization: different sizes cannot be equal.
   if (length_ != other.length_)
     return false;
@@ -109,6 +115,7 @@ bool BufferSlice::equals(const BufferSlice &other) const {
 }
 
 void BufferSlice::fromNumber(const Number &n) {
+  // Fulfills [FE-0030.5.11] Methods for conversion from and to quasar::coretypes::Number.
   // Support for writing numeric values into the slice window.
   // We currently assume 32-bit integer writing and require at least 4 bytes of space.
   if (length_ >= 4) {

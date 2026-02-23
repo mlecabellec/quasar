@@ -20,12 +20,16 @@ namespace coretypes {
 /**
  * @brief 32-bit floating point wrapper.
  * Equivalent to Java's Float class.
+ * 
+ * Fulfills [FE-0050.1.3] Mapping for SMP "Float32" Primitive Type.
  */
 using Float = FloatingPoint<float>;
 
 /**
  * @brief 64-bit floating point wrapper.
  * Equivalent to Java's Double class.
+ * 
+ * Fulfills [FE-0050.1.3] Mapping for SMP "Float64" Primitive Type.
  */
 using Double = FloatingPoint<double>;
 

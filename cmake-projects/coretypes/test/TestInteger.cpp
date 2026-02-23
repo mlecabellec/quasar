@@ -6,6 +6,7 @@
 using namespace quasar::coretypes;
 
 TEST(IntegerTest, Arithmetic) {
+  // Proof of compliance: [FE-0010.1.3] methods for addition, subtraction, multiplication, division.
   // Step: Initialize Integers 'a' and 'b'
   std::cout << "Step: Initialize Integers 'a' and 'b'" << std::endl;
   Int a(10);
@@ -29,6 +30,7 @@ TEST(IntegerTest, Arithmetic) {
 }
 
 TEST(IntegerTest, SafeArithmeticOverflow) {
+  // Proof of compliance: [FE-0010.1.4] methods for safe addition, subtraction, multiplication, division.
   // Step: Initialize max Int and one
   std::cout << "Step: Initialize max Int and one" << std::endl;
   Int max(std::numeric_limits<int32_t>::max());
@@ -59,6 +61,7 @@ TEST(IntegerTest, SafeArithmeticOverflow) {
 }
 
 TEST(IntegerTest, DivisionByZero) {
+  // Proof of compliance: [FE-0010.1.4] prevent unhandled zero division.
   // Step: Initialize Int and zero
   std::cout << "Step: Initialize Int and zero" << std::endl;
   Int a(10);
@@ -76,6 +79,7 @@ TEST(IntegerTest, DivisionByZero) {
 }
 
 TEST(IntegerTest, StringRadix) {
+  // Proof of compliance: [FE-0010.1.7] methods for encoding and decoding values to and from a string.
   // Step: Parse Int from "ff" base 16
   std::cout << "Step: Parse Int from \"ff\" base 16" << std::endl;
   Int i = Int::valueOf("ff", 16);
@@ -95,6 +99,7 @@ TEST(IntegerTest, StringRadix) {
 }
 
 TEST(IntegerTest, ParseIntExceptions) {
+  // Proof of compliance: [FE-0010.1.7] methods for encoding and decoding values to and from a string.
   // Assertion: Check if parsing "foo" throws invalid_argument
   std::cout << "Assertion: Check if parsing \"foo\" throws invalid_argument"
             << std::endl;
@@ -107,6 +112,7 @@ TEST(IntegerTest, ParseIntExceptions) {
 }
 
 TEST(IntegerTest, CompareTo) {
+  // Proof of compliance: [FE-0010.1.3] methods for comparison.
   // Step: Initialize Integers 'a' and 'b'
   std::cout << "Step: Initialize Integers 'a' and 'b'" << std::endl;
   Int a(5);
@@ -131,6 +137,7 @@ TEST(IntegerTest, CompareTo) {
 
 // New tests for templates
 TEST(IntegerTest, LongType) {
+  // Proof of compliance: [FE-0050.1.3] Mapping for SMP "Int64" Primitive Type.
   // Step: Initialize Longs 'l' and 'l2'
   std::cout << "Step: Initialize Longs 'l' and 'l2'" << std::endl;
   Long l(100L);
@@ -151,6 +158,7 @@ TEST(IntegerTest, LongType) {
 }
 
 TEST(IntegerTest, UByteType) {
+  // Proof of compliance: [FE-0050.1.3] Mapping for SMP "UInt8" Primitive Type.
   // Step: Initialize UBytes 'b1' and 'b2'
   std::cout << "Step: Initialize UBytes 'b1' and 'b2'" << std::endl;
   UByte b1(200);
@@ -167,6 +175,7 @@ TEST(IntegerTest, UByteType) {
 }
 
 TEST(IntegerTest, Endianness) {
+  // Proof of compliance: [FE-0010.1.5] Methods allowing explicit and well defined conversion.
   // Step: Initialize Int with 0x12345678 and swap bytes
   std::cout << "Step: Initialize Int with 0x12345678 and swap bytes"
             << std::endl;
@@ -188,6 +197,7 @@ TEST(IntegerTest, Endianness) {
 }
 
 TEST(IntegerTest, PrimitiveInitialization) {
+  // Proof of compliance: [FE-0010.1.1] takes a value of the basic type as parameter.
   // Step: Initialize signed types
   std::cout << "Step: Initialize signed types" << std::endl;
 
@@ -237,6 +247,7 @@ TEST(IntegerTest, PrimitiveInitialization) {
 }
 
 TEST(IntegerTest, BitwiseOperations) {
+  // Proof of compliance: [FE-0030.1.5] add methods for bitwise operations.
   // Step: Initialize Integers 'a' (10) and 'b' (12)
   std::cout << "Step: Initialize Integers 'a' (10) and 'b' (12)" << std::endl;
   Int a(0b1010); // 10
@@ -268,6 +279,7 @@ TEST(IntegerTest, BitwiseOperations) {
 }
 
 TEST(IntegerTest, Introspection) {
+  // Proof of compliance: [FE-0030.1.9] methods allowing form of reflection and introspection.
   // Step: Introspect signed Int
   std::cout << "Step: Introspect signed Int" << std::endl;
   Int i(42);
@@ -302,6 +314,7 @@ TEST(IntegerTest, Introspection) {
 }
 
 TEST(IntegerTest, PrimitiveComparison) {
+  // Proof of compliance: [FE-0030.1.2] methods for comparison with primitive types.
   // Step: Initialize Int with 42
   std::cout << "Step: Initialize Int with 42" << std::endl;
   Int i(42);

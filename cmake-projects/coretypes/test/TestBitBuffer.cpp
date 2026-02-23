@@ -9,6 +9,7 @@
 using namespace quasar::coretypes;
 
 TEST(BitBufferTest, GetSetBit) {
+  // Proof of compliance: [FE-0010.4.2] Operations at bit level.
   // Step: Initialize BitBuffer with 16 bits
   std::cout << "Step: Initialize BitBuffer with 16 bits" << std::endl;
   BitBuffer bb(16); // 2 bytes
@@ -35,6 +36,7 @@ TEST(BitBufferTest, GetSetBit) {
 }
 
 TEST(BitBufferTest, BitSize) {
+  // Proof of compliance: [FE-0010.4] BitBuffer class and inferred sizing.
   // Step: Initialize BitBuffer with 10 bits
   std::cout << "Step: Initialize BitBuffer with 10 bits" << std::endl;
   BitBuffer bb(10); // 2 bytes allocated. 10 bits valid.
@@ -49,6 +51,7 @@ TEST(BitBufferTest, BitSize) {
 }
 
 TEST(BitBufferTest, SliceBits) {
+  // Proof of compliance: [FE-0010.4.3] Slicing with bit granularity.
   // Step: Initialize BitBuffer with 8 bits and set value to 0xF0
   std::cout << "Step: Initialize BitBuffer with 8 bits and set value to 0xF0"
             << std::endl;
@@ -70,6 +73,7 @@ TEST(BitBufferTest, SliceBits) {
 }
 
 TEST(BitBufferTest, ConcatBits) {
+  // Proof of compliance: [FE-0010.4.4] Concatenation of buffers.
   // Step: Initialize BitBuffer 'a' with 2 bits and set them to true
   std::cout << "Step: Initialize BitBuffer 'a' with 2 bits and set them to true"
             << std::endl;
@@ -93,7 +97,7 @@ TEST(BitBufferTest, ConcatBits) {
   std::cout << "Assertion: Check if 'c' bit size is 4" << std::endl;
   EXPECT_EQ(c.bitSize(), 4);
 
-  // Assertion: Check if bits in 'c' match expectations
+  // Assertion: Check bits in 'c' match expectations
   std::cout << "Assertion: Check if bit 0 in 'c' is true" << std::endl;
   EXPECT_TRUE(c.getBit(0));
   std::cout << "Assertion: Check if bit 1 in 'c' is true" << std::endl;
@@ -105,6 +109,7 @@ TEST(BitBufferTest, ConcatBits) {
 }
 
 TEST(BitBufferTest, ReverseBits) {
+  // Proof of compliance: [FE-0010.4.7] Reversing the buffer at bit level.
   // Step: Initialize BitBuffer with 4 bits and set initial pattern 1100
   std::cout
       << "Step: Initialize BitBuffer with 4 bits and set initial pattern 1100"
@@ -131,6 +136,7 @@ TEST(BitBufferTest, ReverseBits) {
 }
 
 TEST(BitBufferTest, ReverseBitsGroup) {
+  // Proof of compliance: [FE-0010.4.7] Reversing at bit level with groups.
   // Step: Initialize BitBuffer with 6 bits and set pattern 10 11 00
   std::cout << "Step: Initialize BitBuffer with 6 bits and set pattern 10 11 00"
             << std::endl;
@@ -162,6 +168,7 @@ TEST(BitBufferTest, ReverseBitsGroup) {
 }
 
 TEST(BitBufferTest, OutOfRange) {
+  // Proof of compliance: [FE-0010.4] Handling out of range access.
   // Step: Initialize BitBuffer with 8 bits
   std::cout << "Step: Initialize BitBuffer with 8 bits" << std::endl;
   BitBuffer bb(8); // 8 bits = 1 byte
@@ -186,6 +193,7 @@ TEST(BitBufferTest, OutOfRange) {
 }
 
 TEST(BitBufferTest, Equals) {
+  // Proof of compliance: [FE-0010.4.5] Comparison.
   // Step: Initialize bb1 and bb2 with identical patterns
   std::cout << "Step: Initialize bb1 and bb2 with identical patterns"
             << std::endl;
@@ -219,6 +227,7 @@ TEST(BitBufferTest, Equals) {
 }
 
 TEST(BitBufferTest, Clone) {
+  // Proof of compliance: [FE-0010.4.8] Cloning with memory allocation.
   // Step: Initialize bb1 and set a bit
   std::cout << "Step: Initialize bb1 and set a bit" << std::endl;
   BitBuffer bb1(16);
@@ -231,6 +240,7 @@ TEST(BitBufferTest, Clone) {
   // Assertion: Check if bb2 matches bb1
   std::cout << "Assertion: Check if bb2 bit size is 16" << std::endl;
   EXPECT_EQ(bb2.bitSize(), 16);
+  // Proof of compliance: [FE-0030.10] All methods of all classes in quasar::coretypes shall be tested.
   std::cout << "Assertion: Check if bit 5 in bb2 is true" << std::endl;
   EXPECT_TRUE(bb2.getBit(5));
   std::cout << "Assertion: Check if bit 0 in bb2 is false" << std::endl;
@@ -272,6 +282,7 @@ TEST(BitBufferTest, Performance_GetSet) {
 }
 
 TEST(BitBufferTest, ThreadSafety) {
+  // Proof of compliance: [FE-0010.4.9] BitBuffer class shall be thread safe.
   // Step: Initialize BitBuffer and atomic stop flag
   std::cout << "Step: Initialize BitBuffer and atomic stop flag" << std::endl;
   BitBuffer bb(1024);

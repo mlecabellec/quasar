@@ -9,6 +9,7 @@
 using namespace quasar::coretypes;
 
 TEST(CoreTypesThreadSafety, IntegerImmutable) {
+  // Proof of compliance: [FE-0010.1.6] Each class shall be thread safe.
   // Step: Initialize shared Int and atomic stop flag
   std::cout << "Step: Initialize shared Int and atomic stop flag" << std::endl;
   Int sharedInt(42);
@@ -49,6 +50,7 @@ TEST(CoreTypesThreadSafety, IntegerImmutable) {
 }
 
 TEST(CoreTypesThreadSafety, FloatingPointImmutable) {
+  // Proof of compliance: [FE-0010.1.6] Each class shall be thread safe.
   // Step: Initialize shared Double and atomic stop flag
   std::cout << "Step: Initialize shared Double and atomic stop flag"
             << std::endl;

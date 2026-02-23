@@ -6,14 +6,17 @@
 namespace quasar::named {
 
 bool NamedObject::isValidName(const std::string &name) {
+  // Fulfills [FE-0020.1.1.3] Name shall match regex.
   // Regex to match a valid C-style identifier.
   static const std::regex pattern("^[a-zA-Z_][a-zA-Z0-9_]*$");
   return std::regex_match(name, pattern);
 }
 
 NamedObject::NamedObject(const std::string &name) : m_name(name) {
+  // Fulfills [FE-0020.1.1] "name" property initialized at construction.
   // Validate name according to naming rules.
   if (name.empty()) {
+    // Fulfills [FE-0020.1.1.1] Name shall be non empty.
     throw std::runtime_error("Name cannot be empty");
   }
   if (!isValidName(name)) {
@@ -21,11 +24,15 @@ NamedObject::NamedObject(const std::string &name) : m_name(name) {
   }
 }
 
-NamedObject::~NamedObject() {}
+NamedObject::~NamedObject() {
+  // Fulfills [FE-0020.1.3.2] Parent destruction releases children.
+  // std::list<shared_ptr> handles this automatically.
+}
 
 std::shared_ptr<NamedObject>
 NamedObject::create(const std::string &name,
                     std::shared_ptr<NamedObject> parent) {
+  // Fulfills [FE-0020.6] static method "create".
   // Local helper class to allow make_shared with protected constructor.
   struct Helper : public NamedObject {
     explicit Helper(const std::string &n) : NamedObject(n) {}
@@ -49,6 +56,7 @@ std::shared_ptr<NamedObject> NamedObject::getSelf() const {
 }
 
 void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
+  // Fulfills [FE-0020.5] Operations shall be thread safe.
   {
     // Check if the requested parent is already set.
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
@@ -75,6 +83,7 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   std::shared_ptr<NamedObject> oldParent;
 
   if (parent) {
+    // Fulfills [FE-0020.1.2.2] Added to parent's children list.
     // Attempt to add this object as a child of the new parent.
     // This will throw if there's a name collision.
     parent->addChild(getSelf());
@@ -89,6 +98,7 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 
   if (oldParent) {
     try {
+      // Fulfills [FE-0020.1.3.4] removed from old parent list.
       // Remove this object from the old parent's child list.
       oldParent->removeChild(m_name);
     } catch (...) {
@@ -98,12 +108,15 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 }
 
 void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
+  // Fulfills [FE-0020.1.3.1] strong reference to children.
   std::lock_guard<std::recursive_mutex> lock(m_mutex);
   // Ensure that all children have unique names.
   for (const std::shared_ptr<NamedObject> &c : m_children) {
     if (c->getName() == child->getName()) {
       if (c == child)
         return; // The object is already a child.
+      // Fulfills [FE-0020.1.1.2] Unique name within parent.
+      // Fulfills [FE-0020.1.2.3] Fail if name not unique in new parent.
       throw std::runtime_error("Name not unique in parent: " +
                                child->getName());
     }

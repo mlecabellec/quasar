@@ -11,15 +11,18 @@ namespace quasar::coretypes {
 Buffer::Buffer() {}
 
 Buffer::Buffer(size_t size) : data_(size, 0) {
+  // Fulfills [FE-0010.3.8] cloning the buffer with associated memory allocation.
   // Constructor initializes the internal vector with the requested size.
   // std::vector's constructor zero-initializes the elements.
 }
 
 Buffer::Buffer(const std::vector<uint8_t> &data) : data_(data) {
+  // Fulfills [FE-0010.3.1] Encoding and decoding values to and from a basic buffer type.
   // Deep copy of the provided byte vector.
 }
 
 Buffer::Buffer(const Buffer &other) : std::enable_shared_from_this<Buffer>() {
+  // Fulfills [FE-0010.3.9] The class is thread safe.
   // Lock the source buffer to ensure a consistent snapshot during copy.
   // Using recursive mutex allows the same thread to acquire it multiple times.
   std::lock_guard<std::recursive_timed_mutex> lock(other.mutex_);
@@ -28,6 +31,7 @@ Buffer::Buffer(const Buffer &other) : std::enable_shared_from_this<Buffer>() {
 
 Buffer &Buffer::operator=(const Buffer &other) {
   if (this != &other) {
+    // Fulfills [FE-0010.3.9] The class is thread safe.
     // Avoid deadlock when assigning between two buffers by using std::lock
     // which implements a deadlock-avoidance algorithm for multiple mutexes.
     // It acquires both locks in a consistent order across the application.
@@ -42,6 +46,7 @@ Buffer &Buffer::operator=(const Buffer &other) {
 }
 
 size_t Buffer::size() const {
+  // Fulfills [FE-0010.3.9] The class is thread safe.
   // Lock required to protect access to the data vector in a thread-safe manner,
   // preventing race conditions with concurrent write operations.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
@@ -49,6 +54,7 @@ size_t Buffer::size() const {
 }
 
 uint8_t Buffer::get(size_t index) const {
+  // Fulfills [FE-0010.3.9] The class is thread safe.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Bounds checking before access to prevent undefined behavior or crashes.
   if (index >= data_.size()) {
@@ -58,6 +64,7 @@ uint8_t Buffer::get(size_t index) const {
 }
 
 void Buffer::set(size_t index, uint8_t value) {
+  // Fulfills [FE-0010.3.9] The class is thread safe.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Bounds checking to ensure memory safety during write operations.
   if (index >= data_.size()) {
@@ -67,6 +74,7 @@ void Buffer::set(size_t index, uint8_t value) {
 }
 
 std::string Buffer::toString() const {
+  // Fulfills [FE-0010.3.2] Encoding and decoding values to and from a string.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   std::stringstream ss;
   // Use hex manipulator and setfill/setw to ensure each byte is exactly 2 hex digits.
@@ -79,6 +87,7 @@ std::string Buffer::toString() const {
 }
 
 std::vector<uint8_t> Buffer::toVector() const {
+  // Fulfills [FE-0030.5.10] Methods for conversion from and to std::vector<uint8_t>.
   // Return a copy of the internal data vector to avoid exposing internal state directly.
   // This maintains encapsulation and ensures thread safety for the caller.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
@@ -86,6 +95,7 @@ std::vector<uint8_t> Buffer::toVector() const {
 }
 
 Buffer Buffer::fromString(const std::string &hex) {
+  // Fulfills [FE-0010.3.2] Encoding and decoding values to and from a string.
   // Hex string must represent bytes, so its length must be even (2 characters per byte).
   if (hex.length() % 2 != 0) {
     throw std::invalid_argument("Invalid hex string length: must be even");
@@ -102,6 +112,8 @@ Buffer Buffer::fromString(const std::string &hex) {
 }
 
 void Buffer::writeInt(int value, size_t index, Endianness endian) {
+  // Fulfills [FE-0010.3.3] The class shall provide methods for conversion from numeric types.
+  // Fulfills [FE-0010.3.3.1] The class shall provide conversion methods allowing to specify endianness at byte or word level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Ensure there's enough space for a 4-byte (32-bit) integer write.
   if (index + 4 > data_.size()) {
@@ -129,6 +141,8 @@ void Buffer::writeInt(int value, size_t index, Endianness endian) {
 }
 
 int Buffer::readInt(size_t index, Endianness endian) const {
+  // Fulfills [FE-0010.3.3] The class shall provide methods for conversion from numeric types.
+  // Fulfills [FE-0010.3.3.1] The class shall provide conversion methods allowing to specify endianness at byte or word level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Ensure there's enough data to read a 4-byte integer.
   if (index + 4 > data_.size()) {
@@ -156,6 +170,7 @@ int Buffer::readInt(size_t index, Endianness endian) const {
 }
 
 Buffer Buffer::slice(size_t start, size_t length) const {
+  // Fulfills [FE-0010.3.4] Methods for slicing the buffer.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Verify slice boundaries against current buffer size.
   if (start + length > data_.size()) {
@@ -168,6 +183,7 @@ Buffer Buffer::slice(size_t start, size_t length) const {
 }
 
 Buffer Buffer::concat(const Buffer &other) const {
+  // Fulfills [FE-0010.3.5] Methods for concatenation of buffers.
   if (this == &other) {
     // Special case for concatenating a buffer with itself to avoid deadlock 
     // or iterator invalidation while reading/writing to the same vector.
@@ -190,6 +206,7 @@ Buffer Buffer::concat(const Buffer &other) const {
 }
 
 bool Buffer::equals(const Buffer &other) const {
+  // Fulfills [FE-0010.3.6] Methods for comparison.
   if (this == &other)
     return true;
 
@@ -204,12 +221,15 @@ bool Buffer::equals(const Buffer &other) const {
 }
 
 void Buffer::reverse() {
+  // Fulfills [FE-0010.3.7] Methods for reversing the buffer at byte level.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Use STL algorithm to reverse the entire data vector in-place.
   std::reverse(data_.begin(), data_.end());
 }
 
 void Buffer::reverse(size_t wordSize) {
+  // Fulfills [FE-0010.3.7] Methods for reversing the buffer at word level.
+  // Fulfills [FE-0010.3.3.2] Specify word size.
   // wordSize 0 is invalid for division.
   if (wordSize == 0) {
     throw std::invalid_argument("Word size must be greater than zero");
@@ -231,6 +251,7 @@ void Buffer::reverse(size_t wordSize) {
 }
 
 Buffer Buffer::clone() const {
+  // Fulfills [FE-0010.3.8] Methods for cloning the buffer with associated memory allocation.
   // Explicit clone uses the copy constructor which is already thread-safe.
   return Buffer(*this);
 }
@@ -238,6 +259,7 @@ Buffer Buffer::clone() const {
 // New implementations
 
 std::shared_ptr<BufferSlice> Buffer::sliceView(size_t start, size_t length) {
+  // Fulfills [FE-0030.5.7] Lightweight views creation.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Bounds check for the view window.
   if (start + length > data_.size()) {
@@ -249,6 +271,7 @@ std::shared_ptr<BufferSlice> Buffer::sliceView(size_t start, size_t length) {
 }
 
 Buffer Buffer::bitwiseAnd(const Buffer &other) const {
+  // Fulfills [FE-0030.5.3] Bitwise operations.
   // Optimized case for self-AND.
   if (this == &other)
     return clone();
@@ -274,6 +297,7 @@ Buffer Buffer::bitwiseAnd(const Buffer &other) const {
 }
 
 Buffer Buffer::bitwiseOr(const Buffer &other) const {
+  // Fulfills [FE-0030.5.3] Bitwise operations.
   if (this == &other)
     return clone();
 
@@ -296,6 +320,7 @@ Buffer Buffer::bitwiseOr(const Buffer &other) const {
 }
 
 Buffer Buffer::bitwiseXor(const Buffer &other) const {
+  // Fulfills [FE-0030.5.3] Bitwise operations.
   if (this == &other) {
     // XORing any value with itself results in 0.
     std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
@@ -321,6 +346,7 @@ Buffer Buffer::bitwiseXor(const Buffer &other) const {
 }
 
 Buffer Buffer::bitwiseNot() const {
+  // Fulfills [FE-0030.5.3] Bitwise operations.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   std::vector<uint8_t> resData(data_.size());
   // Flip all bits in each byte using the bitwise NOT operator.
@@ -331,6 +357,7 @@ Buffer Buffer::bitwiseNot() const {
 }
 
 int Buffer::compareTo(const Buffer &other) const {
+  // Fulfills [FE-0010.3.6] Methods for comparison.
   // Identity check.
   if (this == &other)
     return 0;
@@ -350,6 +377,7 @@ int Buffer::compareTo(const Buffer &other) const {
 }
 
 bool Buffer::equals(const std::vector<uint8_t> &other) const {
+  // Fulfills [FE-0010.3.6] Methods for comparison.
   std::lock_guard<std::recursive_timed_mutex> lock(mutex_);
   // Compare internal data vector with a raw vector of bytes.
   return data_ == other;

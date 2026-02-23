@@ -16,12 +16,17 @@ namespace quasar::named {
  * 
  * This class inherits from NamedObject for hierarchy management and 
  * coretypes::BufferSlice for buffer view operations.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.7] Create a NamedBufferSlice class which is a view of a Buffer.
  */
 class NamedBufferSlice : public NamedObject,
                          public quasar::coretypes::BufferSlice {
 public:
   /**
    * @brief Factory method to create a new NamedBufferSlice.
+   * 
+   * Fulfills [FE-0030.7.5] Slices can be created from a Buffer.
    * 
    * @param name The name of the slice object.
    * @param buffer The underlying buffer to view.
@@ -37,6 +42,9 @@ public:
 
   /**
    * @brief Constructs a NamedBufferSlice instance.
+   * 
+   * Fulfills [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
+   * 
    * @param name The name of the object.
    * @param buffer The underlying buffer.
    * @param start Start offset.
@@ -53,12 +61,18 @@ public:
 
   /**
    * @brief Creates a standalone copy of this slice.
+   * 
+   * Fulfills [FE-0030.7.2] A slice shall be able to be copied to a new Buffer.
+   * 
    * @return A new NamedBufferSlice pointing to the same buffer region, with the same name, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override;
 
   /**
    * @brief Creates a sub-slice view of this slice.
+   * 
+   * Fulfills [FE-0030.7.6] Slices can be created from a slice.
+   * 
    * @param start The relative starting offset within this slice.
    * @param length The length of the new sub-slice.
    * @return A new NamedBufferSlice that is a view into the same underlying buffer.

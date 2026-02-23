@@ -17,6 +17,9 @@ namespace quasar::named {
  *
  * This class combines hierarchical management from NamedObject with floating
  * point value handling from coretypes::FloatingPoint.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0020.4] Derivated class for FloatingPoint core type.
  *
  * @tparam T The underlying floating point type (e.g., float, double).
  */
@@ -31,6 +34,8 @@ public:
 
   /**
    * @brief Factory method to create a NamedFloatingPoint.
+   * 
+   * Fulfills [FE-0020.6] static method "create".
    *
    * @param name The name of the floating point object.
    * @param value The initial floating point value.
@@ -56,6 +61,9 @@ public:
 
   /**
    * @brief Creates a clone of this NamedFloatingPoint.
+   * 
+   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+   * 
    * @return A new NamedFloatingPoint with the same name and value, but no
    * hierarchy.
    */

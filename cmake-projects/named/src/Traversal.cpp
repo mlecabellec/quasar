@@ -8,6 +8,7 @@ namespace quasar::named::traversal {
 void forEachDepthFirst(
     const std::shared_ptr<NamedObject> &root,
     std::function<void(std::shared_ptr<NamedObject>)> callback) {
+  // Fulfills [FE-0020.12.1] Depth-first traversal.
   if (!root)
     return;
 
@@ -36,6 +37,7 @@ void forEachDepthFirst(
 void forEachBreadthFirst(
     const std::shared_ptr<NamedObject> &root,
     std::function<void(std::shared_ptr<NamedObject>)> callback) {
+  // Fulfills [FE-0020.12.1] Breadth-first traversal.
   if (!root)
     return;
 
@@ -59,6 +61,7 @@ void forEachBreadthFirst(
 
 std::shared_ptr<NamedObject>
 findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
+  // Fulfills [FE-0020.13] Search tree by name.
   // Simple iterative search using a stack.
   std::stack<std::shared_ptr<NamedObject>> stack;
   if (root)
@@ -85,6 +88,7 @@ findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
 
 std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
                                       std::shared_ptr<NamedObject> newParent) {
+  // Fulfills [FE-0020.14] Copying parts of the tree.
   if (!root)
     return nullptr;
 

@@ -5,6 +5,7 @@
 using namespace quasar::coretypes;
 
 TEST(StringTest, Creation) {
+  // Proof of compliance: [FE-0030.3] Add a String class as a wrapper around std::string.
   // Step: Initialize empty String
   std::cout << "Step: Initialize empty String" << std::endl;
   String s1;
@@ -40,6 +41,7 @@ TEST(StringTest, Creation) {
 }
 
 TEST(StringTest, Comparison) {
+  // Proof of compliance: [FE-0030.10] all methods of all classes tested.
   // Step: Initialize Strings 's1', 's2', 's3'
   std::cout << "Step: Initialize Strings 's1', 's2', 's3'" << std::endl;
   String s1("abc");

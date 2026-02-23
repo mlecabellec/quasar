@@ -17,6 +17,9 @@ namespace quasar::named {
  *
  * This class combines the hierarchical capabilities of NamedObject with the
  * integer value management of coretypes::Integer.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0020.4] Derivated class for Integer core type.
  *
  * @tparam T The underlying integer type (e.g., int, uint32_t, int64_t).
  */
@@ -30,6 +33,8 @@ public:
 
   /**
    * @brief Factory method to create a NamedInteger.
+   * 
+   * Fulfills [FE-0020.6] static method "create".
    *
    * @param name The name of the integer object.
    * @param value The initial integer value.
@@ -55,6 +60,9 @@ public:
 
   /**
    * @brief Creates a clone of this NamedInteger.
+   * 
+   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+   * 
    * @return A new NamedInteger with the same name and value, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override {

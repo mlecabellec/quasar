@@ -10,6 +10,8 @@
 using namespace quasar::named;
 
 TEST(NamedObjectTest, Creation) {
+  // Proof of compliance: [FE-0020.1.1] "name" property initialized.
+  // Proof of compliance: [FE-0020.3.2] getter for name.
   // Step: Create NamedObject "root"
   std::cout << "Step: Create NamedObject \"root\"" << std::endl;
   std::shared_ptr<NamedObject> obj = NamedObject::create("root");
@@ -24,6 +26,8 @@ TEST(NamedObjectTest, Creation) {
 }
 
 TEST(NamedObjectTest, InvalidName) {
+  // Proof of compliance: [FE-0020.1.1.1] Non empty string.
+  // Proof of compliance: [FE-0020.1.1.3] Regex match.
   // Assertion: Check if empty name throws
   std::cout << "Assertion: Check if empty name throws" << std::endl;
   EXPECT_THROW(NamedObject::create(""), std::runtime_error);
@@ -39,6 +43,9 @@ TEST(NamedObjectTest, InvalidName) {
 }
 
 TEST(NamedObjectTest, Hierarchy) {
+  // Proof of compliance: [FE-0020.1.2] optional "parent" property.
+  // Proof of compliance: [FE-0020.1.3] lifecycle managed by parent.
+  // Proof of compliance: [FE-0020.3] getter methods.
   // Step: Create root and child1
   std::cout << "Step: Create root and child1" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -87,6 +94,8 @@ TEST(NamedObjectTest, Hierarchy) {
 }
 
 TEST(NamedObjectTest, Uniqueness) {
+  // Proof of compliance: [FE-0020.1.1.2] Unique within parent.
+  // Proof of compliance: [FE-0020.1.2.3] fail if name not unique.
   // Step: Create root and child with name "child"
   std::cout << "Step: Create root and child with name \"child\"" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -111,6 +120,7 @@ TEST(NamedObjectTest, Uniqueness) {
 }
 
 TEST(NamedObjectTest, CycleDetection) {
+  // Proof of compliance: [FE-0020.1.2] prevents cycles.
   // Step: Create p1 -> p2 -> p3 hierarchy
   std::cout << "Step: Create p1 -> p2 -> p3 hierarchy" << std::endl;
   std::shared_ptr<NamedObject> p1 = NamedObject::create("p1");
@@ -129,6 +139,7 @@ TEST(NamedObjectTest, CycleDetection) {
 }
 
 TEST(NamedObjectTest, DerivedClasses) {
+  // Proof of compliance: [FE-0020.4] derivated class for each core type.
   // Step: Create root, NamedInteger and NamedBoolean
   std::cout << "Step: Create root, NamedInteger and NamedBoolean" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -150,6 +161,7 @@ TEST(NamedObjectTest, DerivedClasses) {
 }
 
 TEST(NamedObjectTest, SerializationXML) {
+  // Proof of compliance: [FE-0020.9.4] XML conversion.
   // Step: Create objects for XML serialization
   std::cout << "Step: Create objects for XML serialization" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -172,6 +184,7 @@ TEST(NamedObjectTest, SerializationXML) {
 }
 
 TEST(NamedObjectTest, SerializationYAML) {
+  // Proof of compliance: [FE-0020.9.3] YAML conversion.
   // Step: Create objects for YAML serialization
   std::cout << "Step: Create objects for YAML serialization" << std::endl;
   auto root = NamedObject::create("root");
@@ -191,6 +204,7 @@ TEST(NamedObjectTest, SerializationYAML) {
 }
 
 TEST(NamedObjectTest, NamedBuffers) {
+  // Proof of compliance: [FE-0030.6] Support for named Buffer and BitBuffer.
   // Step: Create NamedBuffer
   std::cout << "Step: Create NamedBuffer" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -217,6 +231,8 @@ TEST(NamedObjectTest, NamedBuffers) {
 }
 
 TEST(NamedObjectTest, RelatedObject) {
+  // Proof of compliance: [FE-0020.7] "related" property.
+  // Proof of compliance: [FE-0020.8] weak pointers.
   // Step: Create two objects
   std::cout << "Step: Create two objects" << std::endl;
   std::shared_ptr<NamedObject> obj1 = NamedObject::create("obj1");

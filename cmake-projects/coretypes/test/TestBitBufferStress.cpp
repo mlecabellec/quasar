@@ -6,6 +6,7 @@
 using namespace quasar::coretypes;
 
 TEST(BitBufferStress, LargeAllocation) {
+  // Proof of compliance: [FE-0010.4.8] cloning with associated memory allocation.
   // Step: Calculate sizes for 100 MB buffer
   std::cout << "Step: Calculate sizes for 100 MB buffer" << std::endl;
   size_t sizeBytes = 100 * 1024 * 1024;
@@ -42,6 +43,7 @@ TEST(BitBufferStress, LargeAllocation) {
 }
 
 TEST(BitBufferStress, HeavySlice) {
+  // Proof of compliance: [FE-0010.4.3] slicing with bit granularity.
   // Step: Initialize BitBuffer with 100,000 bits
   std::cout << "Step: Initialize BitBuffer with 100,000 bits" << std::endl;
   size_t bits = 100000;

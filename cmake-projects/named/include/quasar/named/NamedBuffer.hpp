@@ -16,6 +16,9 @@ namespace quasar::named {
  * @brief A named object that manages a contiguous byte buffer.
  * 
  * Inherits from NamedObject for hierarchy and coretypes::Buffer for buffer operations.
+ * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.6] support for a named Buffer.
  */
 class NamedBuffer : public NamedObject, public quasar::coretypes::Buffer {
 public:
@@ -26,6 +29,8 @@ public:
 
   /**
    * @brief Factory method to create a NamedBuffer with a specific size.
+   * 
+   * Fulfills [FE-0020.6] static method "create".
    * 
    * @param name The name of the buffer object.
    * @param size The initial size of the buffer in bytes.
@@ -39,6 +44,8 @@ public:
   /**
    * @brief Factory method to create a NamedBuffer with initial data.
    * 
+   * Fulfills [FE-0020.6] static method "create".
+   * 
    * @param name The name of the buffer object.
    * @param data A vector of bytes to initialize the buffer content.
    * @param parent Optional parent in the hierarchy.
@@ -50,6 +57,9 @@ public:
 
   /**
    * @brief Creates a standalone copy of this NamedBuffer.
+   * 
+   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+   * 
    * @return A new NamedBuffer with the same name and content, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone() const override {

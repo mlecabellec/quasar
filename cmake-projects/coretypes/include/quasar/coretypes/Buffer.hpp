@@ -34,6 +34,11 @@ enum class Endianness {
  * It provides a rich set of methods for data manipulation, designed for
  * binary protocol processing, file I/O, and data serialization.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.3] Provide a Buffer class.
+ * - Fulfills [FE-0010.3.9] The class is thread safe.
+ * - Fulfills [FE-0030.8] Usage of mutexes with timeout preferred (implemented via recursive_timed_mutex).
+ * 
  * Key features include:
  * - **Thread-Safety**: All access is protected by an internal recursive mutex.
  * - **Endianness Support**: Methods for reading/writing multi-byte integers 
@@ -60,6 +65,10 @@ public:
 
   /**
    * @brief Constructs a buffer from an existing vector of bytes.
+   * 
+   * Fulfills [FE-0010.3.1] Encoding and decoding values to and from a basic buffer type.
+   * Fulfills [FE-0030.5.10] Methods for conversion from and to std::vector<uint8_t>.
+   * 
    * @param data The byte data to initialize the buffer with.
    */
   explicit Buffer(const std::vector<uint8_t> &data);
@@ -111,18 +120,28 @@ public:
 
   /**
    * @brief Converts the buffer content to a hexadecimal string representation.
+   * 
+   * Fulfills [FE-0010.3.2] Encoding and decoding values to and from a string.
+   * Fulfills [FE-0030.5.12] Conversion to quasar::coretypes::String.
+   * 
    * @return A string containing the hex representation (e.g., "0a1b2c").
    */
   std::string toString() const;
 
   /**
    * @brief Returns a copy of the internal data as a byte vector.
+   * 
+   * Fulfills [FE-0030.5.10] Methods for conversion from and to std::vector<uint8_t>.
+   * 
    * @return A std::vector<uint8_t> containing a copy of the buffer data.
    */
   std::vector<uint8_t> toVector() const;
 
   /**
    * @brief Creates a new Buffer from a hexadecimal string.
+   * 
+   * Fulfills [FE-0010.3.2] Encoding and decoding values to and from a string.
+   * 
    * @param hex The hex string to parse.
    * @return A Buffer instance containing the parsed data.
    * @throws std::invalid_argument If the hex string is invalid or has an odd length.
@@ -131,6 +150,9 @@ public:
 
   /**
    * @brief Writes a 32-bit integer to the buffer at the specified index.
+   * 
+   * Fulfills [FE-0010.3.3] Methods for conversion from numeric types.
+   * Fulfills [FE-0010.3.3.1] Specify endianness.
    *
    * @param value The integer value to write.
    * @param index The starting index in the buffer.
@@ -142,6 +164,8 @@ public:
 
   /**
    * @brief Reads a 32-bit integer from the buffer at the specified index.
+   * 
+   * Fulfills [FE-0030.5.11] Conversion from and to quasar::coretypes::Number.
    *
    * @param index The starting index in the buffer.
    * @param endian The endianness to use for decoding (defaults to BigEndian).
@@ -152,6 +176,8 @@ public:
 
   /**
    * @brief Creates a new Buffer containing a deep copy of a slice of this buffer.
+   * 
+   * Fulfills [FE-0010.3.4] Methods for slicing the buffer.
    *
    * @param start The starting byte index.
    * @param length The number of bytes to include in the slice.
@@ -162,6 +188,8 @@ public:
 
   /**
    * @brief Concatenates this buffer with another into a new Buffer instance.
+   * 
+   * Fulfills [FE-0010.3.5] Methods for concatenation of buffers.
    *
    * @param other The buffer to append to this one.
    * @return A new Buffer containing the concatenated data.
@@ -170,6 +198,9 @@ public:
 
   /**
    * @brief Checks if this buffer is identical to another buffer.
+   * 
+   * Fulfills [FE-0010.3.6] Methods for comparison.
+   * Fulfills [FE-0030.5.1] Comparison with other Buffer objects.
    *
    * Two buffers are equal if they have the same size and identical content.
    * @param other The buffer to compare with.
@@ -179,6 +210,8 @@ public:
 
   /**
    * @brief Reverses the order of all bytes in the buffer in-place.
+   * 
+   * Fulfills [FE-0010.3.7] Methods for reversing the buffer at byte level.
    */
   void reverse();
 
@@ -187,6 +220,9 @@ public:
    *
    * Useful for swapping endianness of larger blocks of data (e.g., swapping 
    * 32-bit words).
+   * 
+   * Fulfills [FE-0010.3.7] Methods for reversing the buffer at word level.
+   * Fulfills [FE-0010.3.3.2] Specify word size.
    *
    * @param wordSize The size of chunks to swap (in bytes).
    * @throws std::invalid_argument If the buffer size is not a multiple of @p wordSize, 
@@ -196,6 +232,9 @@ public:
 
   /**
    * @brief Creates a deep copy of the buffer.
+   * 
+   * Fulfills [FE-0010.3.8] Methods for cloning the buffer with associated memory allocation.
+   * 
    * @return A new Buffer instance with the same data.
    */
   Buffer clone() const;
@@ -205,6 +244,8 @@ public:
    *
    * A slice view provides shared access to a portion of the buffer without copying.
    * Modifications through the view are reflected in the original buffer.
+   * 
+   * Fulfills [FE-0030.5.7] Create a BufferSlice class which is a view of the original Buffer.
    *
    * @param start The starting index for the view.
    * @param length The number of bytes in the view.
@@ -215,6 +256,8 @@ public:
 
   /**
    * @brief Performs an element-wise bitwise AND with another buffer.
+   * 
+   * Fulfills [FE-0030.5.3] Bitwise operations.
    *
    * @param other The other buffer of the same size.
    * @return A new Buffer containing the result of (this & other).
@@ -224,6 +267,8 @@ public:
 
   /**
    * @brief Performs an element-wise bitwise OR with another buffer.
+   * 
+   * Fulfills [FE-0030.5.3] Bitwise operations.
    *
    * @param other The other buffer of the same size.
    * @return A new Buffer containing the result of (this | other).
@@ -233,6 +278,8 @@ public:
 
   /**
    * @brief Performs an element-wise bitwise XOR with another buffer.
+   * 
+   * Fulfills [FE-0030.5.3] Bitwise operations.
    *
    * @param other The other buffer of the same size.
    * @return A new Buffer containing the result of (this ^ other).
@@ -242,6 +289,8 @@ public:
 
   /**
    * @brief Performs a bitwise NOT operation on the buffer content.
+   * 
+   * Fulfills [FE-0030.5.3] Bitwise operations.
    *
    * @return A new Buffer containing the bitwise complement of this buffer's data.
    */
@@ -249,6 +298,8 @@ public:
 
   /**
    * @brief Compares this buffer lexicographically with another.
+   * 
+   * Fulfills [FE-0010.3.6] Methods for comparison.
    *
    * @param other The buffer to compare with.
    * @return A negative value if this < other, a positive value if this > other, 

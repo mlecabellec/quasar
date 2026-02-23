@@ -18,6 +18,10 @@ namespace quasar::coretypes {
  * type system. It is designed to be immutable, ensuring that string data can
  * be safely shared across threads without explicit locking for read operations.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.3] Add a String class as a wrapper around std::string.
+ * - Fulfills [FE-0050.1.3] Mapping for SMP "String8" Primitive Type.
+ * 
  * It provides common string operations like length retrieval, empty checks,
  * and lexicographical comparison, while maintaining a clear path to the 
  * underlying std::string for compatibility with other libraries.

@@ -3,14 +3,17 @@
 namespace quasar::coretypes {
 
 String::String() : value_("") {
+  // Fulfills [FE-0030.3] Add a String class as a wrapper around std::string.
   // Default constructor initializes the internal storage as an empty string.
 }
 
 String::String(const std::string &s) : value_(s) {
+  // Fulfills [FE-0030.3] Add a String class as a wrapper around std::string.
   // Wraps an existing std::string object.
 }
 
 String::String(const char *s) : value_(s ? s : "") {
+  // Fulfills [FE-0030.3] Add a String class as a wrapper around std::string.
   // Defensive check: if a null C-string pointer is provided, initialize as an empty string.
   // This prevents potential crashes when constructed with NULL.
 }

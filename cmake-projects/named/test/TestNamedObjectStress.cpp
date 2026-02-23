@@ -9,6 +9,8 @@
 using namespace quasar::named;
 
 TEST(NamedObjectStress, DeepHierarchy) {
+  // Proof of compliance: [FE-0020.1] Tree of named objects.
+  // Proof of compliance: [FE-0020.13] Search the tree by name.
   // Step: Create deep hierarchy (1000 levels)
   std::cout << "Step: Create deep hierarchy (1000 levels)" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -37,6 +39,7 @@ TEST(NamedObjectStress, DeepHierarchy) {
 }
 
 TEST(NamedObjectStress, WideHierarchy) {
+  // Proof of compliance: [FE-0020.3.3] Getter for the children property.
   // Step: Create wide hierarchy (5000 children)
   std::cout << "Step: Create wide hierarchy (5000 children)" << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");

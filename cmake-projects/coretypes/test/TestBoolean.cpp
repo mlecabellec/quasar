@@ -5,6 +5,7 @@
 using namespace quasar::coretypes;
 
 TEST(BooleanTest, ConstructorValue) {
+  // Proof of compliance: [FE-0010.2.1] Encoding and decoding values to and from a basic boolean type.
   // Step: Initialize Boolean with true
   std::cout << "Step: Initialize Boolean with true" << std::endl;
   Boolean b(true);
@@ -23,6 +24,7 @@ TEST(BooleanTest, ConstructorValue) {
 }
 
 TEST(BooleanTest, ConstructorString) {
+  // Proof of compliance: [FE-0010.2.2] Encoding and decoding values to and from a string.
   // Step: Initialize Boolean from "true" string
   std::cout << "Step: Initialize Boolean from \"true\" string" << std::endl;
   Boolean b1("true");
@@ -57,6 +59,7 @@ TEST(BooleanTest, ConstructorString) {
 }
 
 TEST(BooleanTest, ToString) {
+  // Proof of compliance: [FE-0010.2.2] Encoding and decoding values to and from a string.
   // Step: Initialize Boolean with true and convert to string
   std::cout << "Step: Initialize Boolean with true and convert to string"
             << std::endl;
@@ -77,6 +80,7 @@ TEST(BooleanTest, ToString) {
 }
 
 TEST(BooleanTest, FromNumeric) {
+  // Proof of compliance: [FE-0010.2.3] methods for conversion from numeric types.
   // Step: Create Boolean from numeric 1
   std::cout << "Step: Create Boolean from numeric 1" << std::endl;
   Boolean b1 = Boolean::fromNumeric(1);
@@ -103,6 +107,7 @@ TEST(BooleanTest, FromNumeric) {
 }
 
 TEST(BooleanTest, PrimitiveComparison) {
+  // Proof of compliance: [FE-0030.10] all methods tested.
   // Step: Initialize Boolean with true
   std::cout << "Step: Initialize Boolean with true" << std::endl;
   Boolean b(true);

@@ -20,6 +20,10 @@ namespace quasar::coretypes {
  * addressable access to a range of bits within the parent buffer without 
  * copying the underlying data.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.5.7] Create a BitBufferSlice class which is a view of the original BitBuffer.
+ * - Fulfills [FE-0030.9] All methods are const correct.
+ * 
  * This class is particularly useful for:
  * - Extracting bit-fields from packed protocols (e.g., IP headers, custom 
  *   hardware registers).
@@ -32,6 +36,8 @@ class BitBufferSlice {
 public:
   /**
    * @brief Constructs a BitBufferSlice viewing a range of bits in a BitBuffer.
+   * 
+   * Fulfills [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
    *
    * @param buffer A shared pointer to the parent BitBuffer.
    * @param startBit The absolute starting bit index in the parent buffer.
@@ -78,6 +84,8 @@ public:
    *
    * The new slice will point to the same underlying parent BitBuffer with an 
    * adjusted offset.
+   * 
+   * Fulfills [FE-0030.7.6] Slices can be created from a slice.
    *
    * @param index The starting bit index relative to this slice.
    * @param subLength The number of bits to include in the sub-slice.
@@ -90,6 +98,8 @@ public:
    * @brief Concatenates this bit slice with another into a new BitBuffer.
    *
    * Performs a bit-by-bit copy of both slices into a newly allocated BitBuffer.
+   * 
+   * Fulfills [FE-0030.7.3] A slice shall be able to be concatenated with other slices.
    *
    * @param other The other bit slice to append.
    * @return A shared pointer to a new BitBuffer containing bits from both slices.
@@ -102,6 +112,8 @@ public:
    * The bits are packed into bytes using Big Endian bit numbering (first bit in MSB).
    * If the number of bits is not a multiple of 8, the last byte is zero-padded at 
    * the least significant bits.
+   * 
+   * Fulfills [FE-0030.5.10] Method for conversion to std::vector<uint8_t>.
    *
    * @return A std::vector<uint8_t> containing the packed bit data.
    */

@@ -6,11 +6,13 @@ namespace quasar {
 namespace coretypes {
 
 Boolean::Boolean(bool value) : value_(value) {
+  // Fulfills [FE-0010.2.1] Encoding and decoding values to and from a basic boolean type.
   // Initialize the boolean value directly from the primitive parameter.
   // This class is immutable, so the value won't change after construction.
 }
 
 Boolean::Boolean(const std::string &s) : value_(parseBoolean(s)) {
+  // Fulfills [FE-0010.2.2] Encoding and decoding values to and from a string.
   // Initialize the boolean value by parsing the string parameter.
   // parseBoolean handles the case-insensitive logic.
 }
@@ -27,16 +29,19 @@ Boolean::Boolean(const char *s) {
 }
 
 bool Boolean::booleanValue() const {
+  // Fulfills [FE-0010.2.1] Encoding and decoding values to and from a basic boolean type.
   // Returns the internal primitive bool state.
   return value_;
 }
 
 std::string Boolean::toString() const {
+  // Fulfills [FE-0010.2.2] Encoding and decoding values to and from a string.
   // Standard string representation: returns "true" or "false".
   return value_ ? "true" : "false";
 }
 
 bool Boolean::parseBoolean(const std::string &s) {
+  // Fulfills [FE-0010.2.2] Encoding and decoding values to and from a string.
   // Fast path: only strings with exactly 4 characters can be "true".
   // This optimization avoids unnecessary string copies or transformations for other values.
   if (s.length() != 4) {

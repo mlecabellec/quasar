@@ -120,6 +120,7 @@ void serializeToXml(XMLElement *element,
 }
 
 std::string toXml(const std::shared_ptr<NamedObject> &obj) {
+  // Fulfills [FE-0020.9.4] XML conversion.
   XMLDocument doc;
   XMLElement *root = doc.NewElement("NamedObject");
   doc.InsertFirstChild(root);
@@ -135,6 +136,7 @@ std::string toXml(const std::shared_ptr<NamedObject> &obj) {
  */
 void deserializeFromXml(XMLElement *element,
                         std::shared_ptr<NamedObject> parent) {
+  // Fulfills [FE-0020.9.4] XML conversion.
   const char *name = element->Attribute("name");
   const char *type = element->Attribute("type");
   const char *text = element->GetText();
@@ -155,6 +157,7 @@ void deserializeFromXml(XMLElement *element,
 }
 
 std::shared_ptr<NamedObject> fromXml(const std::string &xml) {
+  // Fulfills [FE-0020.9.4] XML conversion.
   XMLDocument doc;
   if (doc.Parse(xml.c_str()) != XML_SUCCESS) {
     throw std::runtime_error("Failed to parse XML");
@@ -188,6 +191,7 @@ std::shared_ptr<NamedObject> fromXml(const std::string &xml) {
  * @brief Recursive helper for YAML serialization.
  */
 YAML::Node serializeToYaml(const std::shared_ptr<NamedObject> &obj) {
+  // Fulfills [FE-0020.9.3] YAML conversion via yaml-cpp.
   YAML::Node node;
   node["name"] = obj->getName();
 
@@ -225,6 +229,7 @@ YAML::Node serializeToYaml(const std::shared_ptr<NamedObject> &obj) {
 }
 
 std::string toYaml(const std::shared_ptr<NamedObject> &obj) {
+  // Fulfills [FE-0020.9.3] YAML conversion.
   YAML::Node root = serializeToYaml(obj);
   YAML::Emitter out;
   out << root;
@@ -236,6 +241,7 @@ std::string toYaml(const std::shared_ptr<NamedObject> &obj) {
  */
 void deserializeFromYaml(const YAML::Node &node,
                          std::shared_ptr<NamedObject> parent) {
+  // Fulfills [FE-0020.9.3] YAML conversion.
   std::string name = node["name"].as<std::string>();
   std::string type = node["type"].as<std::string>();
   std::string value = node["value"] ? node["value"].as<std::string>() : "";
@@ -251,6 +257,7 @@ void deserializeFromYaml(const YAML::Node &node,
 }
 
 std::shared_ptr<NamedObject> fromYaml(const std::string &yaml) {
+  // Fulfills [FE-0020.9.3] YAML conversion.
   YAML::Node root = YAML::Load(yaml);
   if (!root.IsDefined())
     throw std::runtime_error("Invalid YAML");
@@ -278,6 +285,7 @@ using jsoncons::json;
  * @brief Recursive helper for JSON serialization.
  */
 json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
+  // Fulfills [FE-0020.9.2] JSON conversion via jsoncons.
   json j;
   j["name"] = obj->getName();
 
@@ -331,6 +339,7 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
 }
 
 std::string toJson(const std::shared_ptr<NamedObject> &obj) {
+  // Fulfills [FE-0020.9.2] JSON conversion.
   json j = serializeToJson(obj);
   return j.to_string();
 }
@@ -339,6 +348,7 @@ std::string toJson(const std::shared_ptr<NamedObject> &obj) {
  * @brief Recursive helper for JSON deserialization.
  */
 void deserializeFromJson(const json &j, std::shared_ptr<NamedObject> parent) {
+  // Fulfills [FE-0020.9.2] JSON conversion.
   std::string name = j["name"].as<std::string>();
   std::string type = j["type"].as<std::string>();
   std::string value = j.contains("value") ? j["value"].as<std::string>() : "";
@@ -354,6 +364,7 @@ void deserializeFromJson(const json &j, std::shared_ptr<NamedObject> parent) {
 }
 
 std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
+  // Fulfills [FE-0020.9.2] JSON conversion.
   json j = json::parse(jsonStr);
   std::string name = j["name"].as<std::string>();
   std::string type = j["type"].as<std::string>();

@@ -22,6 +22,10 @@ namespace quasar::coretypes {
  * It holds a shared_ptr to the underlying Buffer to ensure the data remains
  * valid for the lifetime of the slice.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0030.5.7] Create a BufferSlice class which is a view of the original Buffer.
+ * - Fulfills [FE-0030.9] All methods are const correct.
+ * 
  * Slices are useful for:
  * - Parsing sub-fields of a larger binary message.
  * - Passing parts of a buffer to functions without copying.
@@ -34,6 +38,8 @@ class BufferSlice {
 public:
   /**
    * @brief Constructs a new BufferSlice.
+   * 
+   * Fulfills [FE-0030.7.1] A slice shall be defined by a starting offset and a length.
    * 
    * @param buffer Shared pointer to the parent Buffer.
    * @param offset The starting byte offset within the parent Buffer.
@@ -76,12 +82,16 @@ public:
   /**
    * @brief Converts the slice data into a new std::vector.
    * 
+   * Fulfills [FE-0030.5.10] Methods for conversion to std::vector<uint8_t>.
+   * 
    * @return A std::vector<uint8_t> containing a copy of the slice data.
    */
   std::vector<uint8_t> toVector() const;
 
   /**
    * @brief Converts the slice data to a hexadecimal string representation.
+   * 
+   * Fulfills [FE-0030.5.12] Conversion to quasar::coretypes::String.
    * 
    * @return A string containing the hex representation of the slice data.
    */
@@ -92,6 +102,8 @@ public:
    * 
    * The new slice will point to the same underlying parent Buffer with an 
    * adjusted offset.
+   * 
+   * Fulfills [FE-0030.7.6] Slices can be created from a slice.
    * 
    * @param index The start index relative to the beginning of this slice.
    * @param length The length of the new sub-slice.
@@ -104,6 +116,8 @@ public:
    * @brief Concatenates this slice with another into a new Buffer.
    * 
    * Performs a copy of data from both slices into a newly allocated Buffer instance.
+   * 
+   * Fulfills [FE-0030.7.3] A slice shall be able to be concatenated with other slices.
    * 
    * @param other The other slice to append to this one.
    * @return A shared pointer to a new Buffer containing data from both slices.
@@ -127,6 +141,8 @@ public:
   /**
    * @brief Checks if this slice's content is identical to another slice's content.
    * 
+   * Fulfills [FE-0030.5.1] Comparison with other Buffer objects.
+   * 
    * @param other The other slice to compare with.
    * @return true if both slices have the same size and identical data.
    */
@@ -137,6 +153,8 @@ public:
    * 
    * Currently supports writing the integer value of a Number object if the 
    * slice provides sufficient space (typically 4 bytes for 32-bit int).
+   * 
+   * Fulfills [FE-0030.5.11] Methods for conversion from quasar::coretypes::Number.
    * 
    * @param n The Number object containing the value to write.
    * @throws std::out_of_range If the slice is too small to contain the value.

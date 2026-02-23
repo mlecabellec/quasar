@@ -7,6 +7,7 @@
 using namespace quasar::coretypes;
 
 TEST(FloatingPointTest, Arithmetic) {
+  // Proof of compliance: [FE-0010.1.3] methods for addition, subtraction, multiplication, division.
   // Step: Initialize Float objects 'a' and 'b'
   std::cout << "Step: Initialize Float objects 'a' and 'b'" << std::endl;
   Float a(10.5f);
@@ -22,6 +23,7 @@ TEST(FloatingPointTest, Arithmetic) {
 }
 
 TEST(FloatingPointTest, SafeArithmetic) {
+  // Proof of compliance: [FE-0010.1.4] methods for safe addition, subtraction, multiplication, division.
   // Step: Initialize Double object with max value and another with 2.0
   std::cout
       << "Step: Initialize Double object with max value and another with 2.0"
@@ -56,6 +58,7 @@ TEST(FloatingPointTest, SafeArithmetic) {
 }
 
 TEST(FloatingPointTest, StringParsing) {
+  // Proof of compliance: [FE-0010.1.7] methods for encoding and decoding values to and from a string.
   // Step: Parse Float from "3.14"
   std::cout << "Step: Parse Float from \"3.14\"" << std::endl;
   Float f("3.14");
@@ -84,6 +87,7 @@ TEST(FloatingPointTest, StringParsing) {
 }
 
 TEST(FloatingPointTest, PrimitiveComparison) {
+  // Proof of compliance: [FE-0030.1.2] methods for comparison with primitive types.
   // Step: Initialize Double object with 3.14
   std::cout << "Step: Initialize Double object with 3.14" << std::endl;
   Double d(3.14);
@@ -135,6 +139,7 @@ TEST(FloatingPointTest, PrimitiveComparison) {
 }
 
 TEST(FloatingPointTest, ToStringHex) {
+  // Proof of compliance: [FE-0010.1.7] methods for encoding values to a string (arbitrary base).
   // Step: Initialize Float with 15.5
   std::cout << "Step: Initialize Float with 15.5" << std::endl;
   Float f(15.5f);

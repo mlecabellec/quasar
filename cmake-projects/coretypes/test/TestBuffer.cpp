@@ -8,6 +8,7 @@
 using namespace quasar::coretypes;
 
 TEST(BufferTest, ConstructAndSize) {
+  // Proof of compliance: [FE-0010.3.8] cloning the buffer with associated memory allocation.
   // Step: Initialize empty Buffer
   std::cout << "Step: Initialize empty Buffer" << std::endl;
   Buffer b1;
@@ -30,6 +31,7 @@ TEST(BufferTest, ConstructAndSize) {
 }
 
 TEST(BufferTest, SetGet) {
+  // Proof of compliance: [FE-0010.3] Provide a Buffer class.
   // Step: Initialize Buffer with size 5
   std::cout << "Step: Initialize Buffer with size 5" << std::endl;
   Buffer b(5);
@@ -52,6 +54,7 @@ TEST(BufferTest, SetGet) {
 }
 
 TEST(BufferTest, ToString) {
+  // Proof of compliance: [FE-0010.3.2] Encoding and decoding values to and from a string.
   // Step: Initialize Buffer from vector
   std::cout << "Step: Initialize Buffer from vector {0xDE, 0xAD, 0xBE, 0xEF}"
             << std::endl;
@@ -64,6 +67,7 @@ TEST(BufferTest, ToString) {
 }
 
 TEST(BufferTest, FromString) {
+  // Proof of compliance: [FE-0010.3.2] Encoding and decoding values to and from a string.
   // Step: Initialize Buffer from hex string "deadbeef"
   std::cout << "Step: Initialize Buffer from hex string \"deadbeef\""
             << std::endl;
@@ -83,6 +87,7 @@ TEST(BufferTest, FromString) {
 }
 
 TEST(BufferTest, NumericIO) {
+  // Proof of compliance: [FE-0010.3.3] conversion methods allowing to specify endianness.
   // Step: Initialize Buffer with size 8
   std::cout << "Step: Initialize Buffer with size 8" << std::endl;
   Buffer b(8);
@@ -119,6 +124,8 @@ TEST(BufferTest, NumericIO) {
 }
 
 TEST(BufferTest, SliceConcat) {
+  // Proof of compliance: [FE-0010.3.4] Methods for slicing the buffer.
+  // Proof of compliance: [FE-0010.3.5] Methods for concatenation of buffers.
   // Step: Initialize b1 and b2 from strings
   std::cout << "Step: Initialize b1 and b2 from strings" << std::endl;
   Buffer b1 = Buffer::fromString("aabb");
@@ -143,6 +150,7 @@ TEST(BufferTest, SliceConcat) {
 }
 
 TEST(BufferTest, Reverse) {
+  // Proof of compliance: [FE-0010.3.7] Methods for reversing the buffer at byte level.
   // Step: Initialize Buffer and reverse it
   std::cout << "Step: Initialize Buffer and reverse it" << std::endl;
   Buffer b = Buffer::fromString("01020304");
@@ -154,6 +162,7 @@ TEST(BufferTest, Reverse) {
 }
 
 TEST(BufferTest, ReverseWord) {
+  // Proof of compliance: [FE-0010.3.7] Methods for reversing the buffer at word level.
   // Step: Initialize Buffer and reverse in words of 4 bytes
   std::cout << "Step: Initialize Buffer and reverse in words of 4 bytes"
             << std::endl;
@@ -167,6 +176,7 @@ TEST(BufferTest, ReverseWord) {
 }
 
 TEST(BufferTest, Clone) {
+  // Proof of compliance: [FE-0010.3.8] Methods for cloning the buffer.
   // Step: Initialize Buffer b and its clone b2
   std::cout << "Step: Initialize Buffer b and its clone b2" << std::endl;
   Buffer b = Buffer::fromString("aa");
@@ -192,6 +202,7 @@ TEST(BufferTest, Clone) {
 // New Tests
 
 TEST(BufferTest, SliceView) {
+  // Proof of compliance: [FE-0030.5.7] Create a BufferSlice class which is a view.
   // Step: Initialize shared Buffer and set content
   std::cout << "Step: Initialize shared Buffer and set content" << std::endl;
   std::shared_ptr<Buffer> b = std::make_shared<Buffer>(10);
@@ -229,6 +240,7 @@ TEST(BufferTest, SliceView) {
 }
 
 TEST(BufferTest, BitwiseOps) {
+  // Proof of compliance: [FE-0030.5.3] add methods for bitwise operations.
   // Step: Initialize b1 and b2 for bitwise ops
   std::cout << "Step: Initialize b1 and b2 for bitwise ops" << std::endl;
   Buffer b1 = Buffer::fromString("f0");
@@ -267,6 +279,7 @@ TEST(BufferTest, BitwiseOps) {
 }
 
 TEST(BufferTest, ComparisonOps) {
+  // Proof of compliance: [FE-0010.3.6] Methods for comparison.
   // Step: Initialize b1, b2, b3 for comparison
   std::cout << "Step: Initialize b1, b2, b3 for comparison" << std::endl;
   Buffer b1 = Buffer::fromString("aabb");

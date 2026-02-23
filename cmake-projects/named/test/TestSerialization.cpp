@@ -127,6 +127,7 @@ protected:
 };
 
 TEST_F(SerializationTest, XMLRoundTrip) {
+  // Proof of compliance: [FE-0020.9.4] XML conversion.
   // Step: XML Round Trip
   std::cout << "Step: XML Round Trip" << std::endl;
   std::shared_ptr<NamedObject> root = createTestHierarchy();
@@ -136,6 +137,7 @@ TEST_F(SerializationTest, XMLRoundTrip) {
 }
 
 TEST_F(SerializationTest, YAMLRoundTrip) {
+  // Proof of compliance: [FE-0020.9.3] YAML conversion.
   // Step: YAML Round Trip
   std::cout << "Step: YAML Round Trip" << std::endl;
   std::shared_ptr<NamedObject> root = createTestHierarchy();
@@ -145,6 +147,7 @@ TEST_F(SerializationTest, YAMLRoundTrip) {
 }
 
 TEST_F(SerializationTest, JSONRoundTrip) {
+  // Proof of compliance: [FE-0020.9.2] JSON conversion.
   // Step: JSON Round Trip
   std::cout << "Step: JSON Round Trip" << std::endl;
   auto root = createTestHierarchy();

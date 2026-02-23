@@ -19,6 +19,10 @@ namespace coretypes {
  * This class provides a set of methods for converting between boolean, String, 
  * and numeric types. 
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.2] Provide a Boolean class.
+ * - Fulfills [FE-0050.1.3] Mapping for SMP "Bool" Primitive Type.
+ * 
  * This class is immutable and thread-safe. It follows the Java-style Boolean
  * wrapper conventions.
  */
@@ -26,6 +30,9 @@ class Boolean {
 public:
   /**
    * @brief Allocates a Boolean object representing the value argument.
+   * 
+   * Fulfills [FE-0010.2.1] Encoding and decoding values to and from a basic boolean type.
+   * 
    * @param value The value of the Boolean.
    */
   explicit Boolean(bool value);
@@ -35,6 +42,8 @@ public:
    * argument is not null and is equal, ignoring case, to the string "true".
    *
    * Otherwise, allocates a Boolean object representing the value false.
+   * 
+   * Fulfills [FE-0010.2.2] Encoding and decoding values to and from a string.
    *
    * @param s The string to be converted to a Boolean.
    */
@@ -59,6 +68,8 @@ public:
    * @brief Returns a String object representing this Boolean's value.
    *
    * Returns "true" if the value is true, and "false" otherwise.
+   * 
+   * Fulfills [FE-0010.2.2] Encoding and decoding values to and from a string.
    *
    * @return a string representation of this object.
    */
@@ -79,6 +90,8 @@ public:
    * @brief Converts a numeric value to a Boolean.
    *
    * Comparison with 0 is used: 0 is false, anything else is true.
+   * 
+   * Fulfills [FE-0010.2.3] Methods for conversion from numeric types.
    *
    * @tparam T The numeric type.
    * @param value The numeric value.

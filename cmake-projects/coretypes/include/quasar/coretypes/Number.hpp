@@ -19,6 +19,9 @@ namespace coretypes {
  * a unified way to handle different numeric representations such as integers 
  * (signed/unsigned, various sizes) and floating-point numbers.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.1.2] Each class related to a basic numeric type shall be derivated from a common "Number" base class.
+ * 
  * The interface includes:
  * - **Conversion**: Methods to convert the numeric value to standard C++ primitive types.
  * - **Polymorphic Arithmetic**: Operations that return shared pointers to new Number instances,
@@ -42,6 +45,8 @@ public:
   /**
    * @brief Returns the value of this number as an int.
    * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The numeric value represented by this object after conversion to 
    * type int.
    * @throws std::overflow_error If the value cannot fit into an int.
@@ -50,6 +55,8 @@ public:
 
   /**
    * @brief Returns the value of this number as a long.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
    * 
    * @return The numeric value represented by this object after conversion to 
    * type long.
@@ -60,6 +67,8 @@ public:
   /**
    * @brief Returns the value of this number as a float.
    * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The numeric value represented by this object after conversion to 
    * type float.
    */
@@ -68,6 +77,8 @@ public:
   /**
    * @brief Returns the value of this number as a double.
    * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The numeric value represented by this object after conversion to 
    * type double.
    */
@@ -75,12 +86,17 @@ public:
 
   /**
    * @brief Returns a string representation of the number.
+   * 
+   * Fulfills [FE-0010.1.7] Methods for encoding values to a string.
+   * 
    * @return A string representing the numeric value.
    */
   virtual std::string toString() const = 0;
 
   /**
    * @brief Compares this Number with another Number.
+   * 
+   * Fulfills [FE-0030.1.1] Add methods for comparison with other Number objects.
    * 
    * @param other The other Number to compare with.
    * @return -1 if this < other, 0 if this == other, or 1 if this > other.
@@ -90,6 +106,8 @@ public:
   /**
    * @brief Checks equality between this Number and another.
    * 
+   * Fulfills [FE-0030.1.1] Add methods for comparison with other Number objects.
+   * 
    * @param other The other Number to compare with.
    * @return true if both numbers represent the same value.
    */
@@ -97,6 +115,8 @@ public:
 
   /**
    * @brief Performs addition with another Number.
+   * 
+   * Fulfills [FE-0030.1.3] Add methods for basic arithmetic operations.
    * 
    * @param other The other Number to add.
    * @return A shared pointer to a new Number containing the sum.
@@ -106,6 +126,8 @@ public:
   /**
    * @brief Performs subtraction with another Number.
    * 
+   * Fulfills [FE-0030.1.3] Add methods for basic arithmetic operations.
+   * 
    * @param other The other Number to subtract.
    * @return A shared pointer to a new Number containing the difference.
    */
@@ -114,6 +136,8 @@ public:
   /**
    * @brief Performs multiplication with another Number.
    * 
+   * Fulfills [FE-0030.1.3] Add methods for basic arithmetic operations.
+   * 
    * @param other The other Number to multiply by.
    * @return A shared pointer to a new Number containing the product.
    */
@@ -121,6 +145,8 @@ public:
 
   /**
    * @brief Performs division by another Number.
+   * 
+   * Fulfills [FE-0030.1.3] Add methods for basic arithmetic operations.
    * 
    * @param other The other Number to divide by.
    * @return A shared pointer to a new Number containing the quotient.
@@ -131,6 +157,8 @@ public:
   /**
    * @brief Performs addition with overflow/underflow checks.
    * 
+   * Fulfills [FE-0030.1.4] Add methods for safe arithmetic operations.
+   * 
    * @param other The other Number to add.
    * @return A shared pointer to a new Number containing the sum.
    * @throws std::overflow_error If the operation results in an overflow.
@@ -139,6 +167,8 @@ public:
 
   /**
    * @brief Performs subtraction with overflow/underflow checks.
+   * 
+   * Fulfills [FE-0030.1.4] Add methods for safe arithmetic operations.
    * 
    * @param other The other Number to subtract.
    * @return A shared pointer to a new Number containing the difference.
@@ -149,6 +179,8 @@ public:
   /**
    * @brief Performs multiplication with overflow/underflow checks.
    * 
+   * Fulfills [FE-0030.1.4] Add methods for safe arithmetic operations.
+   * 
    * @param other The other Number to multiply by.
    * @return A shared pointer to a new Number containing the product.
    * @throws std::overflow_error If the operation results in an overflow.
@@ -157,6 +189,8 @@ public:
 
   /**
    * @brief Performs division with safety checks.
+   * 
+   * Fulfills [FE-0030.1.4] Add methods for safe arithmetic operations.
    * 
    * @param other The other Number to divide by.
    * @return A shared pointer to a new Number containing the quotient.
@@ -168,6 +202,8 @@ public:
   /**
    * @brief Performs a bitwise AND operation.
    * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
+   * 
    * @param other The other Number.
    * @return A shared pointer to a new Number containing the result.
    * @throws std::runtime_error If the number type does not support bitwise operations.
@@ -176,6 +212,8 @@ public:
 
   /**
    * @brief Performs a bitwise OR operation.
+   * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
    * 
    * @param other The other Number.
    * @return A shared pointer to a new Number containing the result.
@@ -186,6 +224,8 @@ public:
   /**
    * @brief Performs a bitwise XOR operation.
    * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
+   * 
    * @param other The other Number.
    * @return A shared pointer to a new Number containing the result.
    * @throws std::runtime_error If the number type does not support bitwise operations.
@@ -195,6 +235,8 @@ public:
   /**
    * @brief Performs a bitwise NOT operation.
    * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
+   * 
    * @return A shared pointer to a new Number containing the bitwise complement.
    * @throws std::runtime_error If the number type does not support bitwise operations.
    */
@@ -202,6 +244,8 @@ public:
 
   /**
    * @brief Performs a bitwise Left Shift operation.
+   * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
    * 
    * @param amount The number of positions to shift.
    * @return A shared pointer to a new Number containing the result.
@@ -212,6 +256,8 @@ public:
   /**
    * @brief Performs a bitwise Right Shift operation.
    * 
+   * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
+   * 
    * @param amount The number of positions to shift.
    * @return A shared pointer to a new Number containing the result.
    * @throws std::runtime_error If the number type does not support bitwise operations.
@@ -220,18 +266,27 @@ public:
 
   /**
    * @brief Gets the type name of the number.
+   * 
+   * Fulfills [FE-0030.1.9] Add methods allowing some form of reflection and introspection.
+   * 
    * @return A string representing the type (e.g., "Integer", "FloatingPoint").
    */
   virtual std::string getType() const = 0;
 
   /**
    * @brief Checks if the number is an integral type.
+   * 
+   * Fulfills [FE-0030.1.9] Add methods allowing some form of reflection and introspection.
+   * 
    * @return true if the underlying type is an integer.
    */
   virtual bool isIntegerType() const = 0;
 
   /**
    * @brief Checks if the number is signed.
+   * 
+   * Fulfills [FE-0030.1.9] Add methods allowing some form of reflection and introspection.
+   * 
    * @return true if the underlying type can represent negative values.
    */
   virtual bool isSigned() const = 0;

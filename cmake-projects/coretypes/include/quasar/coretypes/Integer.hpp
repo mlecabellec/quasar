@@ -26,6 +26,11 @@ namespace coretypes {
  * (int8_t, uint8_t, ..., int64_t, uint64_t). It inherits from Number and 
  * implements polymorphic arithmetic, bitwise operations, and conversions.
  * 
+ * **Compliance**:
+ * - Fulfills [FE-0010.1] Provide, for each basic numeric type, a class which is assignable to its basic type.
+ * - Fulfills [FE-0010.1.2] Each class related to a basic numeric type shall be derivated from a common "Number" base class.
+ * - Fulfills [FE-0030.8] All methods are thread safe (inherent due to immutability).
+ * 
  * The class is designed to be immutable, meaning any operation that modifies
  * the value returns a new instance. This makes it inherently thread-safe.
  *
@@ -38,12 +43,17 @@ template <typename T> class Integer : public Number {
 public:
   /**
    * @brief Constructs an Integer object from a primitive value.
+   * 
+   * Fulfills [FE-0010.1.1] Constructor which takes a value of the basic type.
+   * 
    * @param value The primitive integer value.
    */
   explicit Integer(T value) : value_(value) {}
 
   /**
    * @brief Constructs an Integer object from a string with a specified radix.
+   * 
+   * Fulfills [FE-0010.1.7] Methods for decoding values from a string.
    * 
    * @param s The string containing the numeric value.
    * @param radix The base to use for parsing (defaults to 10).
@@ -55,6 +65,9 @@ public:
 
   /**
    * @brief Converts the integer to a standard 32-bit int.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The integer representation.
    * @throws std::overflow_error If the value is outside the range of int.
    */
@@ -82,6 +95,9 @@ public:
 
   /**
    * @brief Converts the integer to a standard 64-bit long.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The long representation.
    * @throws std::overflow_error If the value is outside the range of long.
    */
@@ -107,6 +123,9 @@ public:
 
   /**
    * @brief Converts the integer to a float.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The float representation. Precision loss may occur for large values.
    */
   float toFloat() const override {
@@ -116,6 +135,9 @@ public:
 
   /**
    * @brief Converts the integer to a double.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
    * @return The double representation.
    */
   double toDouble() const override { 
@@ -125,6 +147,9 @@ public:
 
   /**
    * @brief Returns a string representation of the integer in base 10.
+   * 
+   * Fulfills [FE-0010.1.7] Methods for encoding values to a string.
+   * 
    * @return String representation.
    */
   std::string toString() const override { return toString(value_, 10); }
@@ -141,6 +166,8 @@ public:
    * Performs standard addition. Note that for signed types, overflow 
    * results in undefined behavior in C++, while for unsigned types, 
    * it follows modulo arithmetic (wrap-around).
+   * 
+   * Fulfills [FE-0010.1.3] Methods for addition.
    *
    * @param other The value to add.
    * @return A new Integer instance containing the sum.
@@ -155,6 +182,8 @@ public:
    * 
    * Performs standard subtraction. Similar to addition, behavior on 
    * underflow/overflow depends on whether T is signed or unsigned.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for subtraction.
    *
    * @param other The value to subtract.
    * @return A new Integer instance containing the difference.
@@ -167,6 +196,8 @@ public:
    * @brief Multiplies by another Integer of the same type.
    * 
    * Performs standard multiplication.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for multiplication.
    *
    * @param other The value to multiply by.
    * @return A new Integer instance containing the product.
@@ -179,6 +210,8 @@ public:
    * @brief Divides by another Integer of the same type.
    * 
    * Performs integer division (truncation towards zero).
+   * 
+   * Fulfills [FE-0010.1.3] Methods for division.
    *
    * @param other The value to divide by.
    * @return A new Integer instance containing the quotient.
@@ -198,6 +231,8 @@ public:
    * Uses compiler intrinsics to perform addition and check if the result 
    * fits within the limits of type T. This provides a safe way to 
    * perform arithmetic without relying on undefined behavior.
+   * 
+   * Fulfills [FE-0010.1.4] Methods for safe addition.
    * 
    * @param other The value to add.
    * @return A new Integer instance containing the sum.
@@ -219,6 +254,8 @@ public:
    * Uses compiler intrinsics to perform subtraction and check for overflow 
    * or underflow conditions.
    * 
+   * Fulfills [FE-0010.1.4] Methods for safe subtraction.
+   * 
    * @param other The value to subtract.
    * @return A new Integer instance containing the difference.
    * @throws std::overflow_error If an overflow or underflow occurs.
@@ -237,6 +274,8 @@ public:
    * Uses compiler intrinsics to perform multiplication and check if the 
    * product is representable in type T.
    * 
+   * Fulfills [FE-0010.1.4] Methods for safe multiplication.
+   * 
    * @param other The value to multiply by.
    * @return A new Integer instance containing the product.
    * @throws std::overflow_error If an overflow or underflow occurs.
@@ -254,6 +293,8 @@ public:
    * 
    * Performs division with checks for both division by zero and the 
    * edge case of dividing the minimum signed value by -1.
+   * 
+   * Fulfills [FE-0010.1.4] Methods for safe division.
    * 
    * @param other The value to divide by.
    * @return A new Integer instance containing the quotient.
@@ -279,6 +320,8 @@ public:
   /**
    * @brief Compares this Integer with another Number.
    * 
+   * Fulfills [FE-0030.1.1] Methods for comparison with other Number objects.
+   * 
    * @param other The number to compare with.
    * @return -1 if this < other, 0 if equal, 1 if this > other.
    */
@@ -298,6 +341,9 @@ public:
 
   /**
    * @brief Checks equality with another Number.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for comparison.
+   * 
    * @param other The number to compare with.
    * @return true if both represent the same numeric value.
    */
@@ -307,6 +353,9 @@ public:
 
   /**
    * @brief Compares with another Integer of the same type T.
+   * 
+   * Fulfills [FE-0010.1.3] Methods for comparison.
+   * 
    * @param other The other Integer.
    * @return -1 if this < other, 1 if this > other, 0 if equal.
    */
@@ -327,6 +376,9 @@ public:
 
   /**
    * @brief Checks equality with a primitive value.
+   * 
+   * Fulfills [FE-0030.1.2] Methods for comparison with primitive types.
+   * 
    * @param other The primitive value.
    * @return true if equal.
    */
@@ -334,6 +386,9 @@ public:
 
   /**
    * @brief Compares with a primitive value.
+   * 
+   * Fulfills [FE-0030.1.2] Methods for comparison with primitive types.
+   * 
    * @param other The primitive value.
    * @return -1, 0, or 1.
    */
@@ -375,6 +430,8 @@ public:
 
   /**
    * @brief Polymorphic addition.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
    */
   std::shared_ptr<Number> add(const Number &other) const override {
     return std::make_shared<Integer<T>>(value_ +
@@ -383,6 +440,8 @@ public:
 
   /**
    * @brief Polymorphic subtraction.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
    */
   std::shared_ptr<Number> subtract(const Number &other) const override {
     return std::make_shared<Integer<T>>(value_ -
@@ -391,6 +450,8 @@ public:
 
   /**
    * @brief Polymorphic multiplication.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
    */
   std::shared_ptr<Number> multiply(const Number &other) const override {
     return std::make_shared<Integer<T>>(value_ *
@@ -399,6 +460,8 @@ public:
 
   /**
    * @brief Polymorphic division.
+   * 
+   * Fulfills [FE-0030.1.3] Methods for basic arithmetic operations.
    */
   std::shared_ptr<Number> divide(const Number &other) const override {
     double d = other.toDouble();
@@ -409,6 +472,8 @@ public:
 
   /**
    * @brief Polymorphic safe addition.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
    */
   std::shared_ptr<Number> safeAdd(const Number &other) const override {
     T otherVal = static_cast<T>(other.toDouble());
@@ -420,6 +485,8 @@ public:
 
   /**
    * @brief Polymorphic safe subtraction.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
    */
   std::shared_ptr<Number> safeSubtract(const Number &other) const override {
     T otherVal = static_cast<T>(other.toDouble());
@@ -431,6 +498,8 @@ public:
 
   /**
    * @brief Polymorphic safe multiplication.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
    */
   std::shared_ptr<Number> safeMultiply(const Number &other) const override {
     T otherVal = static_cast<T>(other.toDouble());
@@ -442,6 +511,8 @@ public:
 
   /**
    * @brief Polymorphic safe division.
+   * 
+   * Fulfills [FE-0030.1.4] Methods for safe arithmetic operations.
    */
   std::shared_ptr<Number> safeDivide(const Number &other) const override {
     T otherVal = static_cast<T>(other.toDouble());
@@ -461,6 +532,8 @@ public:
    * Each bit of the result is 1 if the corresponding bits of both 
    * operands are 1; otherwise, the result bit is 0.
    * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
+   * 
    * @param other The other number to perform bitwise AND with.
    * @return A shared pointer to a new Integer containing the result.
    */
@@ -477,6 +550,8 @@ public:
    * Each bit of the result is 1 if at least one of the corresponding bits 
    * of the operands is 1; otherwise, the result bit is 0.
    * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
+   * 
    * @param other The other number to perform bitwise OR with.
    * @return A shared pointer to a new Integer containing the result.
    */
@@ -491,6 +566,8 @@ public:
    * Each bit of the result is 1 if exactly one of the corresponding bits 
    * of the operands is 1; otherwise, the result bit is 0.
    * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
+   * 
    * @param other The other number to perform bitwise XOR with.
    * @return A shared pointer to a new Integer containing the result.
    */
@@ -504,6 +581,8 @@ public:
    * 
    * Flips all bits of the integer: 0 becomes 1, and 1 becomes 0.
    * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
+   * 
    * @return A shared pointer to a new Integer containing the bitwise complement.
    */
   std::shared_ptr<Number> bitwiseNot() const override {
@@ -516,6 +595,8 @@ public:
    * 
    * Shifts the bits of the integer to the left by the specified amount. 
    * The new bits on the right are filled with zeros.
+   * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
    * 
    * @param amount The number of bits to shift.
    * @return A shared pointer to a new Integer containing the result.
@@ -533,6 +614,8 @@ public:
    * arithmetic shift, preserving the sign bit). For unsigned types, 
    * it's a logical shift (filled with zeros).
    * 
+   * Fulfills [FE-0030.1.5] Methods for bitwise operations.
+   * 
    * @param amount The number of bits to shift.
    * @return A shared pointer to a new Integer containing the result.
    */
@@ -543,18 +626,27 @@ public:
 
   /**
    * @brief Returns the type name.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return "Integer"
    */
   std::string getType() const override { return "Integer"; }
 
   /**
    * @brief Checks if this is an integer type.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return true
    */
   bool isIntegerType() const override { return true; }
 
   /**
    * @brief Checks if this is a signed integer type.
+   * 
+   * Fulfills [FE-0030.1.9] Methods allowing some form of reflection and introspection.
+   * 
    * @return true if signed, false otherwise.
    */
   bool isSigned() const override { return std::is_signed<T>::value; }

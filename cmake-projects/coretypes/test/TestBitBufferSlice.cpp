@@ -7,6 +7,7 @@
 using namespace quasar::coretypes;
 
 TEST(BitBufferSliceTest, CreationAndGet) {
+  // Proof of compliance: [FE-0030.5.7] Create a BitBufferSlice class which is a view.
   // Step: Initialize BitBuffer with 16 bits
   std::cout << "Step: Initialize BitBuffer with 16 bits" << std::endl;
   std::shared_ptr<BitBuffer> bb =
@@ -35,6 +36,7 @@ TEST(BitBufferSliceTest, CreationAndGet) {
 }
 
 TEST(BitBufferSliceTest, SubSlice) {
+  // Proof of compliance: [FE-0030.7.6] Slices can be created from a slice.
   // Step: Initialize BitBuffer and set bit index 2 to true
   std::cout << "Step: Initialize BitBuffer and set bit index 2 to true"
             << std::endl;
@@ -68,6 +70,7 @@ TEST(BitBufferSliceTest, SubSlice) {
 }
 
 TEST(BitBufferSliceTest, Concat) {
+  // Proof of compliance: [FE-0030.7.3] A slice shall be able to be concatenated.
   // Step: Initialize bb1 with bit 0 set to true
   std::cout << "Step: Initialize bb1 with bit 0 set to true" << std::endl;
   std::shared_ptr<BitBuffer> bb1 = std::make_shared<BitBuffer>(4);

@@ -5,6 +5,7 @@
 using namespace quasar::named;
 
 TEST(NamedStringTest, CreationAndValue) {
+  // Proof of compliance: [FE-0030.4] support for a named String.
   // Step: Create NamedString with name "myString" and value "Hello World"
   std::cout
       << "Step: Create NamedString \"myString\" with value \"Hello World\""
@@ -26,6 +27,7 @@ TEST(NamedStringTest, CreationAndValue) {
 }
 
 TEST(NamedStringTest, ParentChild) {
+  // Proof of compliance: [FE-0020.1.2] optional "parent" property.
   // Step: Create root NamedObject and NamedString child
   std::cout << "Step: Create root NamedObject and NamedString child"
             << std::endl;
@@ -43,6 +45,7 @@ TEST(NamedStringTest, ParentChild) {
 }
 
 TEST(NamedStringTest, Clone) {
+  // Proof of compliance: [FE-0020.14] Utilities for copying tree.
   // Step: Create NamedString and clone it
   std::cout << "Step: Create NamedString and clone it" << std::endl;
   std::shared_ptr<NamedString> ns = NamedString::create("original", "content");
