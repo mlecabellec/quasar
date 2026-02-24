@@ -90,7 +90,9 @@ CRITICAL CONSTRAINTS:
 7. Do not summarize your changes; just apply them surgically.
 """
             # Command to invoke Gemini CLI
-            gemini_cmd = ["gemini", "-y", "--model", self.model, prompt]
+            gemini_cmd = ["gemini", "--model", self.model, "-p", prompt]
+            if self.yolo:
+                gemini_cmd.append("-y")
 
             print(f"Invoking Gemini CLI for {project_name} (model: {self.model})...")
             try:
