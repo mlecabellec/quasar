@@ -89,19 +89,11 @@ CRITICAL CONSTRAINTS:
 7. Do not summarize your changes; just apply them surgically.
 """
             # Command to invoke Gemini CLI
-            gemini_cmd = ["gemini", prompt]
-            if self.yolo:
-                gemini_cmd.append("--yolo")
+            gemini_cmd = ["gemini", "-y", prompt]
 
             print(f"Invoking Gemini CLI for {project_name}...")
             try:
-                if self.yolo:
-                     subprocess.run(gemini_cmd, check=True)
-                else:
-                    print("Prompt prepared (run with --yolo to execute):")
-                    print("-" * 40)
-                    print(prompt[:500] + "...")
-                    print("-" * 40)
+                subprocess.run(gemini_cmd, check=True)
             except subprocess.CalledProcessError as e:
                 print(f"Error invoking Gemini CLI: {e}")
             except FileNotFoundError:
