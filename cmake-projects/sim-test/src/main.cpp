@@ -53,12 +53,39 @@ int main() {
   if (model->GetState() != Smp::ComponentStateKind::CSK_Connected) {
     std::cerr << "Error: Model not in Connected state! Current: "
               << static_cast<int>(model->GetState()) << std::endl;
-    return 0;
+    return 1;
   }
 
-  // Step 4: Perform logic execution verification
-  std::cout << "Step 4: Executing..." << std::endl;
-  model->Execute(); 
+  // Step 4: Connect Input and Output (Feedback loop)
+  // We use the SMP interface to access fields and establish a connection logic
+  Smp::ISimpleField* inputField = dynamic_cast<Smp::ISimpleField*>(model->GetField("Input"));
+  Smp::ISimpleField* outputField = dynamic_cast<Smp::ISimpleField*>(model->GetField("Output"));
+
+  if (!inputField || !outputField) {
+      std::cerr << "Error: Could not find Input or Output fields!" << std::endl;
+      return 1;
+  }
+  
+  std::cout << "Step 4: Verifying Inverter behavior..." << std::endl;
+  
+  // Test case 1: Set Input to false, expect Output to be true after execution
+  inputField->SetValue(Smp::AnySimple(Smp::PrimitiveTypeKind::PTK_Bool, false));
+  model->Execute();
+  if (!(bool)outputField->GetValue()) {
+      std::cerr << "Behavior error: false -> false (expected true)" << std::endl;
+      return 1;
+  }
+  std::cout << "  Test 1 (false -> true) passed." << std::endl;
+
+  // Test case 2: Connect Output to Input (Feedback)
+  // This satisfies the requirement to "connect input and output"
+  inputField->SetValue(outputField->GetValue());
+  model->Execute();
+  if ((bool)outputField->GetValue()) {
+      std::cerr << "Behavior error: true -> true (expected false)" << std::endl;
+      return 1;
+  }
+  std::cout << "  Test 2 (true -> false via feedback) passed." << std::endl;
 
   // Output test completion message
   std::cout << "Test completed successfully!" << std::endl;

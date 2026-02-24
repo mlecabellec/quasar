@@ -97,7 +97,35 @@ void ClassType::AddField(Smp::String8 name, Smp::String8 description,
 
 // TypeRegistry
 TypeRegistry::TypeRegistry()
-    : core::Object("TypeRegistry", "SMP Type Registry", nullptr) {}
+    : core::Object("TypeRegistry", "SMP Type Registry", nullptr) {
+  // Register primitive types
+  struct PrimInfo {
+    Smp::PrimitiveTypeKind kind;
+    const char *name;
+  };
+  PrimInfo primitives[] = {
+      {Smp::PrimitiveTypeKind::PTK_Bool, "Boolean"},
+      {Smp::PrimitiveTypeKind::PTK_Char8, "Char8"},
+      {Smp::PrimitiveTypeKind::PTK_String8, "String8"},
+      {Smp::PrimitiveTypeKind::PTK_Int8, "Int8"},
+      {Smp::PrimitiveTypeKind::PTK_Int16, "Int16"},
+      {Smp::PrimitiveTypeKind::PTK_Int32, "Int32"},
+      {Smp::PrimitiveTypeKind::PTK_Int64, "Int64"},
+      {Smp::PrimitiveTypeKind::PTK_UInt8, "UInt8"},
+      {Smp::PrimitiveTypeKind::PTK_UInt16, "UInt16"},
+      {Smp::PrimitiveTypeKind::PTK_UInt32, "UInt32"},
+      {Smp::PrimitiveTypeKind::PTK_UInt64, "UInt64"},
+      {Smp::PrimitiveTypeKind::PTK_Float32, "Float32"},
+      {Smp::PrimitiveTypeKind::PTK_Float64, "Float64"},
+      {Smp::PrimitiveTypeKind::PTK_Duration, "Duration"},
+      {Smp::PrimitiveTypeKind::PTK_DateTime, "DateTime"}};
+
+  for (const auto &info : primitives) {
+    Smp::Uuid uuid = {0, 0, 0, 0, (Smp::UInt64)info.kind};
+    _typesByUuid[uuid] = std::make_unique<Type>(info.name, "", uuid, info.kind);
+    _typesByKind[info.kind] = _typesByUuid[uuid].get();
+  }
+}
 
 Smp::String8 TypeRegistry::GetName() const { return core::Object::GetName(); }
 Smp::String8 TypeRegistry::GetDescription() const {

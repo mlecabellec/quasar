@@ -279,6 +279,8 @@ private:
   void RecursivelyConnect(Smp::IComponent *component);
   void RecursivelyDisconnect(Smp::IComponent *component);
 
+  std::map<Smp::IComponent *, std::unique_ptr<Smp::IPublication>> _publications;
+
   // Helper to resolve GetState ambiguity
   // We might need to implement `IComponent::GetState` and
   // `ISimulator::GetState` explicitly if possible? In C++, we cannot have two

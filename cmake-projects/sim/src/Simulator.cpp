@@ -255,8 +255,10 @@ void Simulator::RecursivelyPublish(Smp::IComponent *component) {
   if (!component)
     return;
   if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
-    std::unique_ptr<Publication> publication = std::make_unique<Publication>(GetTypeRegistry());
-    component->Publish(publication.get());
+    auto publication = std::make_unique<Publication>(GetTypeRegistry());
+    Smp::IPublication* pubPtr = publication.get();
+    _publications[component] = std::move(publication);
+    component->Publish(pubPtr);
   }
   Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(component);
   if (composite) {

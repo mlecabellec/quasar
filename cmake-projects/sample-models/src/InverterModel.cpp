@@ -1,6 +1,7 @@
 #include "InverterModel.hpp"
 #include <Smp/IPublication.h>
 #include <stdexcept>
+#include <string>
 
 namespace sample {
 
@@ -9,67 +10,55 @@ const Smp::Uuid InverterModel::_uuid = {0x12345678, 0x1234, 0x5678, 0x1234,
 
 InverterModel::InverterModel(Smp::String8 name, Smp::String8 description,
                              Smp::IComposite *parent)
-    : core::Object(name, description, parent),
-      _state(Smp::ComponentStateKind::CSK_Created), _input(false),
-      _output(true) {}
-
-Smp::ComponentStateKind InverterModel::GetState() const { return _state; }
+    : sim::Model(name, description, parent),
+      _input(false),
+      _output(true),
+      _executeEntryPoint(this) {}
 
 void InverterModel::Publish(Smp::IPublication *receiver) {
+  sim::Model::Publish(receiver);
   if (receiver) {
-    receiver->PublishField("Input", "Boolean Input", &_input,
-                           Smp::ViewKind::VK_All, true, true, false);
-    receiver->PublishField("Output", "Boolean Output", &_output,
-                           Smp::ViewKind::VK_All, true, false, true);
+    _fields.Add(receiver->PublishField("Input", "Boolean Input", &_input,
+                           Smp::ViewKind::VK_All, true, true, false));
+    _fields.Add(receiver->PublishField("Output", "Boolean Output", &_output,
+                           Smp::ViewKind::VK_All, true, false, true));
   }
-  _state = Smp::ComponentStateKind::CSK_Publishing;
 }
 
 void InverterModel::Configure(Smp::Services::ILogger *logger,
                               Smp::Services::ILinkRegistry *linkRegistry) {
-  _state = Smp::ComponentStateKind::CSK_Configured;
+  sim::Model::Configure(logger, linkRegistry);
 }
 
 void InverterModel::Connect(Smp::ISimulator *simulator) {
-  _state = Smp::ComponentStateKind::CSK_Connected;
-}
-
-void InverterModel::Disconnect() {
-  _state = Smp::ComponentStateKind::CSK_Created;
+  sim::Model::Connect(simulator);
 }
 
 const Smp::Uuid &InverterModel::GetUuid() const { return _uuid; }
 
-Smp::IField *InverterModel::GetField(Smp::String8 fullName) const {
-  return nullptr;
-}
-const Smp::FieldCollection *InverterModel::GetFields() const { return nullptr; }
-
 Smp::AnySimple InverterModel::GetSimpleValue(Smp::String8 fullName) const {
-  return Smp::AnySimple();
+  if (std::string(fullName) == "Input") {
+    return Smp::AnySimple(Smp::PrimitiveTypeKind::PTK_Bool, _input);
+  } else if (std::string(fullName) == "Output") {
+    return Smp::AnySimple(Smp::PrimitiveTypeKind::PTK_Bool, _output);
+  }
+  return sim::Model::GetSimpleValue(fullName);
 }
-void InverterModel::SetSimpleValue(Smp::String8 fullName,
-                                   Smp::AnySimple value) {}
-void InverterModel::GetSimpleArrayValue(Smp::String8 fullName,
-                                        Smp::UInt64 length,
-                                        Smp::AnySimple *values,
-                                        Smp::UInt64 startIndex) const {}
-void InverterModel::SetSimpleArrayValue(Smp::String8 fullName,
-                                        Smp::UInt64 length,
-                                        Smp::AnySimpleArray values,
-                                        Smp::UInt64 startIndex) {}
 
-Smp::Bool InverterModel::AddChild(Smp::IObject *child,
-                                  const Smp::ICollectionBase *collection) {
-  return false;
+void InverterModel::SetSimpleValue(Smp::String8 fullName,
+                                   Smp::AnySimple value) {
+  if (std::string(fullName) == "Input") {
+    _input = (Smp::Bool)value;
+  } else {
+    sim::Model::SetSimpleValue(fullName, value);
+  }
 }
-Smp::Bool InverterModel::RemoveChild(Smp::IObject *child,
-                                     const Smp::ICollectionBase *collection) {
-  return false;
-}
-Smp::IObject *InverterModel::IsChildInCollection(
-    Smp::String8 child, const Smp::ICollectionBase *collection) const {
-  return nullptr;
+
+Smp::IObject *InverterModel::GetChild(Smp::String8 name) const {
+  if (std::string(name) == "Execute") {
+    return const_cast<ExecuteEntryPoint *>(&_executeEntryPoint);
+  }
+  return sim::Model::GetChild(name);
 }
 
 void InverterModel::Execute() { _output = !_input; }

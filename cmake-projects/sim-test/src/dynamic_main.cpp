@@ -1,6 +1,8 @@
 #include <Smp/IComponent.h>
 #include <Smp/IModel.h>
 #include <Smp/ISimulator.h>
+#include <Smp/ISimpleField.h>
+#include <Smp/IEntryPoint.h>
 #include <iostream>
 #include <sim/Simulator.hpp>
 
@@ -76,6 +78,42 @@ int main() {
       std::cerr << "State error after Connect: " << (int)component->GetState() << std::endl;
       return 1;
   }
+
+  std::cout << "Step 4: Connecting Input and Output and testing behavior..." << std::endl;
+  
+  // Use GetField to find the fields by name
+  Smp::ISimpleField* inputField = dynamic_cast<Smp::ISimpleField*>(component->GetField("Input"));
+  Smp::ISimpleField* outputField = dynamic_cast<Smp::ISimpleField*>(component->GetField("Output"));
+
+  if (!inputField || !outputField) {
+      std::cerr << "Error: Could not find Input or Output fields via SMP interface!" << std::endl;
+      return 1;
+  }
+
+  // Find the entry point for execution
+  Smp::IEntryPoint* executeEntryPoint = dynamic_cast<Smp::IEntryPoint*>(component->GetChild("Execute"));
+  if (!executeEntryPoint) {
+      std::cerr << "Error: Could not find Execute entry point via GetChild!" << std::endl;
+      return 1;
+  }
+
+  // Test 1: Set Input to false, check Output is true after Execute
+  inputField->SetValue(Smp::AnySimple(Smp::PrimitiveTypeKind::PTK_Bool, false));
+  executeEntryPoint->Execute();
+  if (!(bool)outputField->GetValue()) {
+      std::cerr << "Dynamic test failed: expected true output for false input" << std::endl;
+      return 1;
+  }
+  std::cout << "  Dynamic Test 1 (false -> true) passed." << std::endl;
+
+  // Test 2: Feedback connection (Output -> Input)
+  inputField->SetValue(outputField->GetValue()); // Set Input to true (as Output was true)
+  executeEntryPoint->Execute();
+  if ((bool)outputField->GetValue()) {
+      std::cerr << "Dynamic test failed: expected false output for true input (feedback)" << std::endl;
+      return 1;
+  }
+  std::cout << "  Dynamic Test 2 (true -> false via feedback) passed." << std::endl;
 
   std::cout << "Dynamic Loading Test completed successfully!" << std::endl;
   return 0;
