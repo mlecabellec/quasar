@@ -14,8 +14,9 @@ CMAKE_PROJECTS_DIR = PROJECT_ROOT / "cmake-projects"
 EXCLUDED_PROJECTS = ["third-party"]
 
 class QuasarManager:
-    def __init__(self, yolo=False):
+    def __init__(self, yolo=False, model="gemini-3-flash-preview"):
         self.yolo = yolo
+        self.model = model
 
     def get_features(self):
         """Extracts feature IDs and titles from FE-*.md files."""
@@ -89,9 +90,9 @@ CRITICAL CONSTRAINTS:
 7. Do not summarize your changes; just apply them surgically.
 """
             # Command to invoke Gemini CLI
-            gemini_cmd = ["gemini", "-y", prompt]
+            gemini_cmd = ["gemini", "-y", "--model", self.model, prompt]
 
-            print(f"Invoking Gemini CLI for {project_name}...")
+            print(f"Invoking Gemini CLI for {project_name} (model: {self.model})...")
             try:
                 subprocess.run(gemini_cmd, check=True)
             except subprocess.CalledProcessError as e:
@@ -102,6 +103,7 @@ CRITICAL CONSTRAINTS:
 def main():
     parser = argparse.ArgumentParser(description="Quasar Project Management Tool")
     parser.add_argument("--yolo", action="store_true", help="Enable YOLO mode (minimal confirmation)")
+    parser.add_argument("--model", default="gemini-3-flash-preview", help="Gemini model to use")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Task: doc-features
@@ -109,7 +111,7 @@ def main():
 
     args = parser.parse_args()
 
-    manager = QuasarManager(yolo=args.yolo)
+    manager = QuasarManager(yolo=args.yolo, model=args.model)
 
     if args.command == "doc-features":
         manager.task_doc_features()
