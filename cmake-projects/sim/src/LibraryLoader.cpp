@@ -30,7 +30,7 @@ void *LibraryLoader::LoadLibrary(const std::string &libraryPath) {
 #else
   // Try loading exactly as specified, or append .so
   void *handle = dlopen(libraryPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-  if (!handle) {
+  if (!handle && libraryPath.find(".so") == std::string::npos) {
     std::string soPath = libraryPath + ".so";
     handle = dlopen(soPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
   }
