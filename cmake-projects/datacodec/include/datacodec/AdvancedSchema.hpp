@@ -15,6 +15,18 @@ namespace datacodec {
 /**
  * @class ConditionalFieldDef
  * @brief A field that is only present if a condition is met.
+ *
+ * This class can be used to model EtherCAT data structures with optional fields
+ * or fields whose presence depends on configuration or other data values. This
+ * might be relevant for advanced SDO or PDO configurations where certain fields
+ * are conditionally included, contributing to flexible data representation for
+ * FE-0040.
+ *
+ * Contribution to FE-0020: Inherits from FieldDef, which in turn inherits from
+ * quasar::named::NamedObject (FE-0020.4). Its `isPresent` method takes a
+ * `quasar::named::NamedObject*` as context, demonstrating interaction with the
+ * named object hierarchy for conditional logic, aligning with the principle of
+ * managing complex named object structures.
  */
 class ConditionalFieldDef : public FieldDef {
 public:
@@ -45,6 +57,18 @@ private:
 /**
  * @class TransformCodec
  * @brief Middleware codec that applies a transformation to the decoded value.
+ *
+ * This codec can be used to apply pre-processing or post-processing steps
+ * during the encoding or decoding of EtherCAT data. For example, it could be used
+ * for data validation, type coercion, or applying specific EtherCAT data encoding
+ * rules that differ from standard binary representations, potentially aiding in
+ * handling complex data requirements for FE-0040.
+ *
+ * Contribution to FE-0020: Inherits from ICodec and explicitly uses
+ * `std::shared_ptr<quasar::named::NamedObject>` in its transformer types and
+ * method signatures. This demonstrates that advanced codec operations are built
+ * upon the NamedObject abstraction, supporting the manipulation and interpretation
+ * of data within the named object framework as envisioned by FE-0020.
  */
 class TransformCodec : public ICodec {
 public:

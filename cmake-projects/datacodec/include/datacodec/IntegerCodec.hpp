@@ -1,29 +1,21 @@
 /**
- * @file IntegerCodec.hpp
- * @brief Codec implementation for integer types.
- */
-
-#ifndef DATACODEC_INTEGERCODEC_HPP
-#define DATACODEC_INTEGERCODEC_HPP
-
-#include "datacodec/ICodec.hpp"
-#include "quasar/coretypes/Integer.hpp"
-#include "quasar/named/NamedInteger.hpp"
-#include <algorithm>
-#include <stdexcept>
-#include <type_traits>
-
-namespace datacodec {
-
-/**
  * @class IntegerCodec
  * @brief Codec for encoding/decoding integer values.
  *
  * Supports different integer types (T), endianness, and bit counts.
+ * This codec is fundamental for representing integer-based data within EtherCAT
+ * communication, such as slave addresses, SDO indices, PDO values, and register
+ * values. Its support for bit-level operations and endianness is crucial for
+ * low-level data handling as required by FE-0040.
  * Note: Bit counting logic should ideally be handled by the BitBufferSlice's
  * getBits/setBits methods, or we manually pack/unpack if not supported.
  * For this initial implementation, we assume byte-aligned operations or
  * simple bit operations provided by coretypes.
+ *
+ * Contribution to FE-0020: Implements the ICodec interface by creating and returning
+ * `quasar::named::NamedInteger<T>` objects, directly fulfilling FE-0020.4. This
+ * shows how primitive data types are represented as named objects within the
+ * framework, forming the basic building blocks for more complex structures.
  */
 template <typename T> class IntegerCodec : public ICodec {
 public:
@@ -55,7 +47,7 @@ public:
     // value = buffer.readBits<T>(0, m_bitSize, m_isBigEndian);
 
     // Return a NamedInteger unnamed (name to be assigned by parent
-    // schema/container)
+    // schema/container), fulfilling FE-0020.4.
     return quasar::named::NamedInteger<T>::create("", value);
   }
 

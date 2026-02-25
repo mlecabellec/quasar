@@ -10,6 +10,15 @@
 
 namespace sim {
 
+/**
+ * @brief Helper for dynamic library loading.
+ * @details This class provides mechanisms to load and unload shared libraries
+ *          dynamically. It is a prerequisite for integrating external
+ *          libraries, such as an EtherCAT master library (e.g., Resoem,
+ *          as described in [FE-0040]). This implementation itself does not
+ *          contain EtherCAT-specific logic.
+ *          Contributes indirectly to [FE-0040] by enabling dynamic library loading.
+ */
 LibraryLoader &LibraryLoader::GetInstance() {
   static LibraryLoader instance;
   return instance;

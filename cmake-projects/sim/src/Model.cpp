@@ -14,6 +14,7 @@ Smp::ComponentStateKind Model::GetState() const { return _state; }
 
 void Model::Publish(Smp::IPublication *receiver) {
   /// Fulfills [FE-0060.3.4] (IComponent::Publish).
+  // [FE-0050.6.1] Transitions component state from CSK_Created to CSK_Publishing.
   if (_state != Smp::ComponentStateKind::CSK_Created) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Created);
@@ -24,6 +25,7 @@ void Model::Publish(Smp::IPublication *receiver) {
 void Model::Configure(Smp::Services::ILogger *logger,
                       Smp::Services::ILinkRegistry *linkRegistry) {
   /// Fulfills [FE-0060.3.5] (IComponent::Configure).
+  // [FE-0050.6.1] Transitions component state from CSK_Publishing to CSK_Configured.
   if (_state != Smp::ComponentStateKind::CSK_Publishing) {
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Publishing);
@@ -33,6 +35,7 @@ void Model::Configure(Smp::Services::ILogger *logger,
 
 void Model::Connect(Smp::ISimulator *simulator) {
   /// Fulfills [FE-0060.3.6] (IComponent::Connect).
+  // [FE-0050.6.1] Transitions component state from CSK_Configured to CSK_Connected.
   if (_state != Smp::ComponentStateKind::CSK_Configured)
     throw core::InvalidComponentState(_state,
                                       Smp::ComponentStateKind::CSK_Configured);
@@ -43,6 +46,7 @@ void Model::Connect(Smp::ISimulator *simulator) {
 }
 
 void Model::Disconnect() {
+  // [FE-0050.6.1] Transitions component state, typically back to CSK_Created or CSK_Configured.
   // Check state? The standard doesn't explicitly restrict Disconnect from all
   // states, but usually from Connected. "Ask the component to disconnect...".
   _state =
@@ -74,22 +78,30 @@ const Smp::Uuid &Model::GetUuid() const {
 }
 
 Smp::AnySimple Model::GetSimpleValue(Smp::String8 fullName) const {
+  // Potentially interacts with primitive types via Smp::AnySimple, supporting
+  // FE-0050.1.6 and FE-0050.1.7. Currently stubbed.
   throw core::InvalidFieldName(fullName);
 }
 
 void Model::SetSimpleValue(Smp::String8 fullName, Smp::AnySimple value) {
+  // Potentially interacts with primitive types via Smp::AnySimple, supporting
+  // FE-0050.1.6 and FE-0050.1.7. Currently stubbed.
   throw core::InvalidFieldName(fullName);
 }
 
 void Model::GetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                 Smp::AnySimple *values,
                                 Smp::UInt64 startIndex) const {
+  // Potentially interacts with primitive types via Smp::AnySimpleArray, supporting
+  // FE-0050.1.8. Currently stubbed.
   throw core::InvalidFieldName(fullName);
 }
 
 void Model::SetSimpleArrayValue(Smp::String8 fullName, Smp::UInt64 length,
                                 Smp::AnySimpleArray values,
                                 Smp::UInt64 startIndex) {
+  // Potentially interacts with primitive types via Smp::AnySimpleArray, supporting
+  // FE-0050.1.8. Currently stubbed.
   throw core::InvalidFieldName(fullName);
 }
 

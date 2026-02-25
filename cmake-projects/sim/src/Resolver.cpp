@@ -85,6 +85,7 @@ static std::vector<std::string> SplitPath(const char *path) {
 
 Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
   /// Fulfills [FE-0070.5.2] (IResolver::ResolveAbsolute).
+  // [FE-0050.3.2] Absolute paths supported.
   if (!absolutePath || absolutePath[0] != '/') {
     return nullptr;
   }
@@ -97,6 +98,8 @@ Smp::IObject *Resolver::ResolveAbsolute(Smp::String8 absolutePath) {
 Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
                                         Smp::IObject *startingObject) {
   /// Fulfills [FE-0070.5.3] (IResolver::ResolveRelative).
+  // [FE-0050.3.1] Core logic for resolving SMP path strings.
+  // [FE-0050.3.2] Relative paths supported.
   if (!relativePath || !startingObject) {
     return nullptr;
   }
@@ -110,11 +113,15 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
     if (!current)
       return nullptr;
 
+    // [FE-0050.3.7] Support for "." to reference current object.
     if (part == ".") {
       continue;
-    } else if (part == "..") {
+    } 
+    // [FE-0050.3.6] Support for ".." to reference parent object.
+    else if (part == "..") {
       current = current->GetParent();
-    } else {
+    } 
+    else {
       // Traverse down.
       // current must be IComposite or IComponent/Object having containers?
       // "Recurse into composites".
@@ -137,6 +144,8 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
             // Check if container has component named part?
             // Container has GetComponent(name).
             if (container) {
+              // [FE-0050.3.3] Delimiter "/" is used by SplitPath.
+              // Implicitly, internal component resolution here corresponds to path traversal.
               next = container->GetComponent(part.c_str());
               if (next)
                 break;
@@ -152,6 +161,10 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
       if (!next) {
         auto *component = dynamic_cast<Smp::IComponent *>(current);
         if (component) {
+          // [FE-0050.3.4] Supports delimiters "/" or ".". The current logic primarily
+          // uses "/" via SplitPath, and then looks up components/fields.
+          // Explicitly handling "." is done earlier. Implicitly handling traversal
+          // to fields might align with '.' delimiter usage in some contexts.
           auto *field = component->GetField(part.c_str());
           if (field)
             next = field;
@@ -161,6 +174,9 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
       // GetField? IComponent::GetField handles "MyField.Position[2]". But here
       // we split by /. So if path is "MyField/SubField", we handle one by one.
       // If "MyArray[0]", GetField handles it?
+      // [FE-0050.3.8] Array element identification by "[n]" is NOT explicitly handled here.
+      // The current logic focuses on component/field names separated by '/'.
+      // This is a gap regarding FE-0050.3.8.
 
       current = next;
     }

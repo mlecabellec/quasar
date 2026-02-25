@@ -18,6 +18,10 @@ namespace datacodec {
 /**
  * @class FieldDef
  * @brief Definition of a single field in the schema.
+ *
+ * Inherits from quasar::named::NamedObject, fulfilling FE-0020.4 by providing
+ * a concrete implementation of a named object for data fields. It associates
+ * an ICodec with a specific bit offset within a larger structure.
  */
 class FieldDef : public quasar::named::NamedObject {
 public:
@@ -46,6 +50,20 @@ private:
 /**
  * @class ContainerDef
  * @brief Definition of a container (composite structure) in the schema.
+ *
+ * These definitions are used to describe the structure of EtherCAT data objects,
+ * such as those found in SDO (Service Data Object) entries, PDO (Process Data
+ * Object) mappings, and the payloads of various mailbox protocols (CoE, FoE, EoE).
+ * By defining these structures, the datacodec module enables the accurate
+ * serialization and deserialization of data required for EtherCAT communication,
+ * directly supporting features like FE-0040.4 (Mailbox Protocols) and
+ * FE-0040.5 (Process Data Configuration).
+ *
+ * Contribution to FE-0020: Inherits from quasar::named::NamedObject (FE-0020.4)
+ * and manages a collection of FieldDef objects. This establishes a hierarchical
+ * structure, directly contributing to FE-0020.1.2 and FE-0020.1.3 by enabling
+ * the construction of trees or graphs of named objects, where ContainerDef acts
+ * as a parent to FieldDef instances. This is foundational for organizing complex data.
  */
 class ContainerDef : public quasar::named::NamedObject {
 public:

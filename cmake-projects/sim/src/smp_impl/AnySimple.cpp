@@ -1,3 +1,44 @@
+/**
+ * @file AnySimple.cpp
+ * @brief Implementation of Smp::AnySimple.
+ *
+ * Smp::AnySimple is a class that can hold values of various primitive types.
+ * It provides mechanisms for type conversion, comparison, and basic value
+ * manipulation.
+ *
+ * Contribution to FE-0030:
+ * - This class serves as a foundational element for handling primitive types,
+ *   which are essential for the Number and String features described in
+ *   FE-0030.1, FE-0030.2, and FE-0030.3.
+ * - [FE-0030.1.7] The AnySimple type shall hold a Primitive Type as per AnySimple.h in [SMP_FILES]. This class implements that requirement.
+ * - [FE-0050.1.1] Primitive Types: Supports all primitive types defined by Smp::PrimitiveTypeKind.
+ * - [FE-0050.1.3] Detailed Specification: Supports storage and retrieval for specified primitive types.
+ * - [FE-0050.1.4] Duration Type: Supports PrimitiveTypeKind::PTK_Duration.
+ * - [FE-0050.1.5] DateTime Type: Supports PrimitiveTypeKind::PTK_DateTime.
+ * - [FE-0050.1.6] Simple Field: Used by SimpleField to get/set primitive values.
+ * - [FE-0050.1.8] AnySimpleArray Type: Forms the basis for AnySimpleArray.
+ * - [FE-0050.1.2] Type Mapping: Does not manage mapping to XML or C++ types.
+ * - [FE-0030.1.1] [FE-0030.1.2] Supports comparison of primitive types via
+ *   `operator==`, `operator!=`, and type casting operators.
+ * - [FE-0030.1.9] Provides basic introspection via `GetType()`, allowing
+ *   query of the stored primitive type.
+ * - [FE-0030.3] Directly supports `Smp::String8` as a primitive type.
+ * - [FE-0050.5.1] Exceptions like `core::InvalidAnyType` are thrown for invalid operations. `core::InvalidAnyType` inherits from `core::CoreException`, adhering to the requirement that SMP exceptions inherit from `Smp::Exception`.
+ *
+ * Missing parts related to FE-0050:
+ * - Does not implement arithmetic operations (basic or safe) as required by
+ *   FE-0030.1.3 and FE-0030.1.4.
+ * - Does not implement bitwise operations (basic or safe) as required by
+ *   FE-0030.1.5 through FE-0030.1.8.
+ * - Does not directly handle custom `quasar::coretypes::Number` objects,
+ *   their derivatives, or buffer-related types (FE-0030.1, FE-0030.2, FE-0030.5
+ *   through FE-0030.7).
+ *
+ * Const Correctness ([FE-0030.9]):
+ * - Many methods are correctly marked `const` (e.g., copy constructors,
+ *   assignment operators, comparison operators, `GetType()`, casting operators),
+ *   contributing to the const correctness requirement.
+ */
 #include "Smp/AnySimple.h"
 #include "Smp/PrimitiveTypes.h"
 #include <core/StandardExceptions.hpp>

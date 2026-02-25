@@ -2,6 +2,10 @@
 
 namespace Smp {
 
+// [FE-0050.4.1] Defines constant UUIDs for fundamental SMP types and concepts.
+// These pre-defined UUIDs ensure unique identification for core elements within the SMP framework.
+
+// UUIDs for Primitive Types
 constexpr Uuid Uuids::Uuid_Uuid;
 constexpr Uuid Uuids::Uuid_Void;
 constexpr Uuid Uuids::Uuid_Char8;
@@ -20,6 +24,7 @@ constexpr Uuid Uuids::Uuid_Duration;
 constexpr Uuid Uuids::Uuid_DateTime;
 constexpr Uuid Uuids::Uuid_String8;
 
+// UUIDs for SMP Core Concepts and Types
 constexpr Uuid Uuids::Uuid_PrimitiveTypeKind;
 constexpr Uuid Uuids::Uuid_EventId;
 constexpr Uuid Uuids::Uuid_LogMessageKind;

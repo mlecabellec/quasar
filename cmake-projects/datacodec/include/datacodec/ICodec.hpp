@@ -19,7 +19,17 @@ namespace datacodec {
  *
  * This interface defines the contract for transforming between raw binary
  * representations (accessed via BitBufferSlice) and high-level object
- * representations (NamedObject instances).
+ * representations (NamedObject instances). This is fundamental for defining how
+ * structured data, used in EtherCAT mailboxes (e.g., CoE, FoE, EoE), Process Data
+ * Objects (PDOs), and configuration parameters, is converted to and from its
+ * binary representation. This directly supports features like FE-0040.4 and
+ * FE-0040.5 by providing the mechanism for data serialization and deserialization.
+ *
+ * Contribution to FE-0020: This interface's `decode` and `encode` methods operate
+ * directly on `quasar::named::NamedObject` instances or its derivatives. This
+ * establishes the core mechanism for interacting with the named object hierarchy,
+ * aligning with the foundational requirement of FE-0020 to provide a robust
+ * framework for named objects.
  */
 class ICodec {
 public:

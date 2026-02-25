@@ -1,3 +1,26 @@
+/**
+ * @file LinkRegistry.cpp
+ * @brief Implementation of sim::LinkRegistry service.
+ *
+ * This service manages links between simulation components, ensuring that
+ * relationships are tracked and managed correctly.
+ *
+ * Contribution to FE-0030:
+ * - [FE-0030.8] Thread safety: The implementation extensively uses
+ *   `std::timed_mutex` to protect shared data structures (`_counts`,
+ *   `_collections`). This ensures that operations like adding, removing, and
+ *   querying links are thread-safe, fulfilling the requirement for thread
+ *   safety with preferred timeout mechanisms.
+ *
+ * Missing parts related to FE-0030:
+ * - Does not implement functionalities for `quasar::coretypes::Number`,
+ *   `quasar::coretypes::String`, `Buffer`, or `BitBuffer` types or their
+ *   associated operations (arithmetic, bitwise, comparison, reflection).
+ *
+ * Const Correctness ([FE-0030.9]):
+ * - Methods like `GetState()`, `GetUuid()`, and `GetLinkSources()` are correctly
+ *   marked `const`, contributing to the requirement.
+ */
 #include "sim/LinkRegistry.hpp"
 #include <Smp/ILinkingComponent.h>
 
@@ -65,6 +88,7 @@ Smp::IObject *LinkRegistry::IsChildInCollection(
 void LinkRegistry::AddLink(Smp::IComponent *source,
                            const Smp::IComponent *target) {
   /// Fulfills [FE-0070.6.2] (ILinkRegistry::AddLink).
+  // Acquire lock with timeout to ensure thread safety [FE-0030.8]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -79,6 +103,7 @@ void LinkRegistry::AddLink(Smp::IComponent *source,
 
 Smp::UInt32 LinkRegistry::GetLinkCount(const Smp::IComponent *source,
                                        const Smp::IComponent *target) const {
+  // Acquire lock with timeout to ensure thread safety [FE-0030.8]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -97,6 +122,7 @@ Smp::UInt32 LinkRegistry::GetLinkCount(const Smp::IComponent *source,
 
 Smp::Bool LinkRegistry::RemoveLink(Smp::IComponent *source,
                                    const Smp::IComponent *target) {
+  // Acquire lock with timeout to ensure thread safety [FE-0030.8]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -124,6 +150,7 @@ Smp::Bool LinkRegistry::RemoveLink(Smp::IComponent *source,
 
 const Smp::ComponentCollection *
 LinkRegistry::GetLinkSources(const Smp::IComponent *target) const {
+  // Acquire lock with timeout to ensure thread safety [FE-0030.8]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -134,21 +161,15 @@ LinkRegistry::GetLinkSources(const Smp::IComponent *target) const {
     return &it->second;
   }
 
-  // Return empty collection?
-  // We can interpret this as: no links -> null? No, interface says "Collection
-  // of source components". Return empty collection. We need a persistent empty
-  // collection or just create an entry. Since map operator[] creates entry, we
-  // can't use it in const method without mutable. But `_collections` is not
-  // mutable in previous header version. I should make `_collections` mutable or
-  // use a static empty collection. Or simpler: change header to `mutable`. (I
-  // did remove `mutable` in Description but check code). In code:
-  // `std::map<...> _collections;` (not mutable). So I can't modify it. I'll
-  // return a pointer to a static empty collection if not found.
+  // Return empty collection if no links found.
+  // Note: `_collections` is not mutable, so operator[] cannot be used in a const method.
+  // Returning a static empty collection is a common pattern for const getters.
   static core::SimpleCollection<Smp::IComponent> emptyCollection;
   return &emptyCollection;
 }
 
 Smp::Bool LinkRegistry::CanRemove(const Smp::IComponent *target) {
+  // Acquire lock with timeout to ensure thread safety [FE-0030.8]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -156,12 +177,12 @@ Smp::Bool LinkRegistry::CanRemove(const Smp::IComponent *target) {
 
   auto itCollection = _collections.find(target);
   if (itCollection == _collections.end()) {
-    return true; // No links
+    return true; // No links means it can be removed.
   }
 
   for (auto *source : itCollection->second) {
     if (!dynamic_cast<Smp::ILinkingComponent *>(source)) {
-      return false;
+      return false; // Cannot remove if any source is not a ILinkingComponent.
     }
   }
   return true;
@@ -173,6 +194,7 @@ void LinkRegistry::RemoveLinks(const Smp::IComponent *target) {
   std::vector<Smp::ILinkingComponent *> sourcesToRemove;
 
   {
+    // Acquire lock with timeout to ensure thread safety [FE-0030.8]
     std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring LinkRegistry lock");
@@ -187,7 +209,7 @@ void LinkRegistry::RemoveLinks(const Smp::IComponent *target) {
     }
   }
 
-  // Perform removal outside lock
+  // Perform removal outside lock to avoid deadlocks and allow re-entrancy.
   for (auto *linking : sourcesToRemove) {
     linking->RemoveLinks(target);
   }

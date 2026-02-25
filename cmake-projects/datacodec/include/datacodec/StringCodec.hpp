@@ -16,9 +16,18 @@ namespace datacodec {
  * @class StringCodec
  * @brief Codec for encoding/decoding strings.
  *
- * Supports both fixed-length strings (padded) and variable-length
+ * This codec is responsible for handling string data, which can appear in various
+ * EtherCAT contexts. This includes device names obtained from Slave Information
+ * Interface (SII) data during network discovery (FE-0040.3.3), potentially as part
+ * of mailbox protocol data (e.g., FoE file names), or other text-based
+ * configurations. It supports both fixed-length strings (padded) and variable-length
  * (null-terminated or prefixed). For now, focusing on fixed-length for
  * simplicity in initial phase.
+ *
+ * Contribution to FE-0020: Implements the ICodec interface by creating and returning
+ * `quasar::named::NamedString` objects, directly fulfilling FE-0020.4. This
+ * extends the named object framework to handle textual data, which is essential
+ * for device identification and configuration within EtherCAT systems.
  */
 class StringCodec : public ICodec {
 public:
@@ -37,6 +46,8 @@ public:
     // Placeholder: read bytes from buffer until null or max length
     std::string value = "";
 
+    // Return a NamedString unnamed (name to be assigned by parent
+    // schema/container), fulfilling FE-0020.4.
     return quasar::named::NamedString::create("", value);
   }
 

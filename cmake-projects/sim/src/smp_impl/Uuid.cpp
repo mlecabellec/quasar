@@ -8,6 +8,7 @@
 
 namespace Smp {
 namespace {
+// [FE-0050.5.1] UuidException inherits from Smp::Exception, fulfilling the requirement for SMP exceptions.
 class UuidException final : public Exception {
 public:
   UuidException(String8 message) : m_message(message) {}
@@ -40,6 +41,7 @@ int HexCharToInt(char c) {
 } // namespace
 
 Uuid::Uuid(const char *value) {
+  // [FE-0050.4.1] Ensures UUID strings are valid and conform to the standard format.
   if (!value || std::strlen(value) != 36) {
     throw UuidException("Invalid UUID string length (must be 36 characters)");
   }

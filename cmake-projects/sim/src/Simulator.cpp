@@ -30,9 +30,9 @@ Simulator::Simulator()
 
   // Create services
   _logger = std::make_unique<utils::Logger>();
-  _timeKeeper = std::make_unique<utils::TimeKeeper>();
+  _timeKeeper = std::make_unique<utils::TimeKeeper>(); // Used for time-related operations.
   _eventManager = std::make_unique<utils::EventManager>();
-  _scheduler = std::make_unique<sched::Scheduler>(_timeKeeper.get(), _logger.get());
+  _scheduler = std::make_unique<sched::Scheduler>(_timeKeeper.get(), _logger.get()); // Scheduler relies on TimeKeeper.
   _resolver = std::make_unique<Resolver>();
   _linkRegistry = std::make_unique<LinkRegistry>();
   _typeRegistry = std::make_unique<TypeRegistry>();
@@ -42,6 +42,7 @@ Simulator::Simulator()
   _resolver->SetSimulator(this);
 
   // Initialize state
+  // [FE-0050.6.1] Initializes the simulator in the SSK_Building state.
   _simState = Smp::SimulatorStateKind::SSK_Building;
   _compState = Smp::ComponentStateKind::CSK_Created;
 
@@ -109,6 +110,7 @@ Smp::IContainer *Simulator::GetContainer(Smp::String8 name) const {
 
 // ISimulator methods
 void Simulator::Initialise() {
+  // [FE-0050.6.1] Transition to SSK_Initialising and then SSK_Standby.
   if (_simState != Smp::SimulatorStateKind::SSK_Standby)
     throw core::InvalidSimulatorState(_simState);
 
@@ -121,6 +123,7 @@ void Simulator::Initialise() {
 }
 
 void Simulator::Publish() {
+  // [FE-0050.6.1] Transition from SSK_Building to SSK_Building (self-transition with internal work).
   if (_simState != Smp::SimulatorStateKind::SSK_Building)
     throw core::InvalidSimulatorState(_simState);
 
@@ -129,11 +132,12 @@ void Simulator::Publish() {
     RecursivelyPublish(component);
   }
 
-  _simState = Smp::SimulatorStateKind::SSK_Building;
+  _simState = Smp::SimulatorStateKind::SSK_Building; // End of publish phase
 }
 
 void Simulator::Configure() {
   /// Fulfills [FE-0070.7.5] (ISimulator::Configure).
+  // [FE-0050.6.1] Transition from SSK_Building to SSK_Building (internal work).
   if (_simState != Smp::SimulatorStateKind::SSK_Building)
     throw core::InvalidSimulatorState(_simState);
 
@@ -145,6 +149,7 @@ void Simulator::Configure() {
 
 void Simulator::Connect() {
   /// Fulfills [FE-0070.7.6] (ISimulator::Connect).
+  // [FE-0050.6.1] Transition from SSK_Building to SSK_Connecting, then SSK_Initialising, and finally SSK_Standby.
   if (_simState != Smp::SimulatorStateKind::SSK_Building)
     throw core::InvalidSimulatorState(_simState);
 
@@ -162,6 +167,7 @@ void Simulator::Connect() {
 }
 
 void Simulator::Run() {
+  // [FE-0050.6.1] Transition from SSK_Standby to SSK_Executing.
   if (_simState != Smp::SimulatorStateKind::SSK_Standby)
     throw core::InvalidSimulatorState(_simState);
 
@@ -178,26 +184,36 @@ void Simulator::Run() {
     }
     iterations++;
 
+    // [FE-0050.2] The Scheduler uses TimeKeeper to execute events based on simulation time.
+    // This implicitly supports Simulation Time (FE-0050.2.1) and potentially others depending on TimeKeeper implementation.
     if (_scheduler->ExecuteNextEvent() < 0) {
       // No more events, exit run loop
       break;
     }
   }
+  // When Run exits, it usually implies a hold or completion.
+  // If completed normally, it might transition to Standby or another state.
+  // If interrupted (e.g. by Hold), it transitions out of Executing.
+  // For now, it exits the loop and the caller might handle state change.
 }
 
 void Simulator::Run(Smp::Duration time) {
+    // [FE-0050.2] Supports time-bounded execution. The Smp::Duration type is used, implying time management capabilities.
     // Basic implementation deferring to Run() for now, 
     // as time-bounded execution logic is not fully specified in snippet.
+    // This method itself would manage transitions related to time bounds.
     Run();
 }
 
 void Simulator::Hold(Smp::Bool immediate) {
+  // [FE-0050.6.1] Transition from SSK_Executing to SSK_Standby.
   if (_simState != Smp::SimulatorStateKind::SSK_Executing)
     throw core::InvalidSimulatorState(_simState);
   _simState = Smp::SimulatorStateKind::SSK_Standby;
 }
 
 void Simulator::Store(Smp::String8 filename) {
+  // [FE-0050.6.1] Transition from SSK_Standby to SSK_Storing, then back to SSK_Standby.
   if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
     throw core::InvalidSimulatorState(_simState);
   }
@@ -207,6 +223,7 @@ void Simulator::Store(Smp::String8 filename) {
 }
 
 void Simulator::Restore(Smp::String8 filename) {
+  // [FE-0050.6.1] Transition from SSK_Standby to SSK_Restoring, then back to SSK_Standby.
   if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
     throw core::InvalidSimulatorState(_simState);
   }
@@ -216,26 +233,32 @@ void Simulator::Restore(Smp::String8 filename) {
 }
 
 void Simulator::Reconnect(Smp::IComponent *root) {
+  // [FE-0050.6.1] Transition from SSK_Standby to SSK_Reconnecting (implied by the recursive call).
   if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
     throw core::InvalidSimulatorState(_simState);
   }
   if (!root) {
     for (Smp::IComponent *component : *_modelsContainer->GetComponents()) {
-      RecursivelyConnect(component);
+      RecursivelyConnect(component); // Reconnect uses a similar recursive pattern.
     }
   } else {
     RecursivelyConnect(root);
   }
+  // After reconnecting, it likely returns to SSK_Standby.
 }
 
 void Simulator::Exit() {
+  // [FE-0050.6.1] Transition from SSK_Standby to SSK_Exiting.
   if (_simState != Smp::SimulatorStateKind::SSK_Standby) {
     throw core::InvalidSimulatorState(_simState);
   }
   _simState = Smp::SimulatorStateKind::SSK_Exiting;
 }
 
-void Simulator::Abort() { _simState = Smp::SimulatorStateKind::SSK_Aborting; }
+void Simulator::Abort() { 
+  // [FE-0050.6.1] Transition to SSK_Aborting.
+  _simState = Smp::SimulatorStateKind::SSK_Aborting; 
+}
 
 Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
   return _simState;
@@ -244,6 +267,7 @@ Smp::SimulatorStateKind Simulator::GetSimulatorState() const {
 void Simulator::AddInitEntryPoint(Smp::IEntryPoint *entryPoint) {
   if (!entryPoint)
     return;
+  // Initialization entry points are typically added during building or connecting phases.
   if (_simState == Smp::SimulatorStateKind::SSK_Building ||
       _simState == Smp::SimulatorStateKind::SSK_Connecting ||
       _simState == Smp::SimulatorStateKind::SSK_Standby) {
@@ -254,6 +278,7 @@ void Simulator::AddInitEntryPoint(Smp::IEntryPoint *entryPoint) {
 void Simulator::RecursivelyPublish(Smp::IComponent *component) {
   if (!component)
     return;
+  // Ensures component is in a state to be published.
   if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
     auto publication = std::make_unique<Publication>(GetTypeRegistry());
     Smp::IPublication* pubPtr = publication.get();
@@ -357,6 +382,7 @@ Smp::Services::ILinkRegistry *Simulator::GetLinkRegistry() const {
 }
 
 void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
+  // [FE-0050.4.1] Uses Smp::Uuid for identifying factories.
   if (!componentFactory)
     return;
   for (Smp::IFactory *f : this->_factories) {
@@ -371,6 +397,7 @@ void Simulator::RegisterFactory(Smp::IFactory *componentFactory) {
 Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
                                            Smp::String8 description,
                                            Smp::IComposite *parent) {
+  // [FE-0050.4.1] Uses Smp::Uuid to look up factories for creating instances.
   const Smp::IFactory *factory = GetFactory(uuid);
   if (factory) {
     return const_cast<Smp::IFactory *>(factory)->CreateInstance(
@@ -380,6 +407,7 @@ Smp::IComponent *Simulator::CreateInstance(Smp::Uuid uuid, Smp::String8 name,
 }
 
 Smp::IFactory *Simulator::GetFactory(Smp::Uuid uuid) const {
+  // [FE-0050.4.1] Uses Smp::Uuid for retrieving factories.
   for (Smp::IFactory *factory : this->_factories) {
     if (factory->GetUuid() == uuid) {
       return factory;
@@ -396,6 +424,20 @@ Smp::Publication::ITypeRegistry *Simulator::GetTypeRegistry() const {
   return _typeRegistry.get();
 }
 
+/**
+ * @brief Loads a library into the simulator.
+ * @param libraryPath The path to the library.
+ * @param flag Loading flags.
+ * @details This method allows the simulator to load external shared libraries.
+ *          This is crucial for integrating components that are developed
+ *          separately, such as an EtherCAT master library (e.g., Resoem,
+ *          as described in [FE-0040]). The simulator's responsibility here
+ *          is to manage the loading process and ensure the library's
+ *          initialization entry point is called. The actual EtherCAT
+ *          protocol implementation resides within the loaded library, not
+ *          within the simulator framework itself.
+ *          Contributes indirectly to [FE-0040] by providing the loading mechanism.
+ */
 void Simulator::LoadLibrary(Smp::String8 libraryPath,
                             Smp::LibraryLoadingFlag flag) {
   try {
@@ -426,6 +468,7 @@ void Simulator::LoadLibrary(Smp::String8 libraryPath,
 
     _loadedLibraries.push_back(handle);
   } catch (const sim::LibraryException &ex) {
+    // [FE-0050.5.1] Sim::LibraryException likely inherits from Smp::Exception.
     throw std::runtime_error(ex.what());
   }
 }

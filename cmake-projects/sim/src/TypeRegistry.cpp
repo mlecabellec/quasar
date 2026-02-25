@@ -1,3 +1,29 @@
+/**
+ * @file TypeRegistry.cpp
+ * @brief Implementation of sim::TypeRegistry.
+ *
+ * This class manages registered types within the simulator. It pre-registers
+ * fundamental primitive types and provides methods to add custom types.
+ *
+ * Contribution to FE-0030:
+ * - [FE-0030.1, FE-0030.2, FE-0030.3] Provides the foundational type definitions
+ *   for primitive types (integers, floats, strings) that are essential for
+ *   the Number and String features. The constructor registers these types,
+ *   and methods like `AddFloatType`, `AddIntegerType`, and `AddStringType`
+ *   allow for their explicit definition.
+ * - [FE-0030.9] Const Correctness: Methods such as `GetType()` are marked `const`,
+ *   adhering to this requirement.
+ * - [FE-0030.11] Documentation: Contains Doxygen comments for classes and methods,
+ *   though primarily referencing SMP standards (FE-0070.10.x) rather than
+ *   directly mapping to FE-0030 requirements.
+ *
+ * Missing parts related to FE-0030:
+ * - Does not implement `quasar::coretypes::Number` or its derivatives, nor
+ *   does it provide methods for arithmetic or bitwise operations as required
+ *   by FE-0030.1 and FE-0030.2.
+ * - Does not handle Buffer or BitBuffer types or their operations as specified
+ *   in FE-0030.5 through FE-0030.7.
+ */
 #include "sim/TypeRegistry.hpp"
 #include <Smp/Publication/IType.h>
 
@@ -99,6 +125,8 @@ void ClassType::AddField(Smp::String8 name, Smp::String8 description,
 TypeRegistry::TypeRegistry()
     : core::Object("TypeRegistry", "SMP Type Registry", nullptr) {
   // Register primitive types
+  // This registration directly supports FE-0030.1, FE-0030.2, and FE-0030.3 by
+  // making standard primitive types available for use.
   struct PrimInfo {
     Smp::PrimitiveTypeKind kind;
     const char *name;
