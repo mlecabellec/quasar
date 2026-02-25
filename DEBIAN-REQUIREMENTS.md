@@ -41,6 +41,13 @@ Raylib is vendored but links against system libraries on Linux.
 ### SymEngine (Symbolic Math)
 *   `libgmp-dev`: GNU Multiple Precision Arithmetic Library (required by SymEngine configuration).
 
+### Utilities & Security
+*   `libssl-dev`: OpenSSL development files (required for secure communication).
+*   `uuid-dev`: Universally Unique ID library.
+*   `zlib1g-dev`: Compression library.
+*   `binutils-dev`: Binary utilities development files (often for symbol resolution and debugging).
+*   `libiberty-dev`: Library of GNU utility functions.
+
 ### Optional / Optimization
 The build system can use system versions of these libraries if found, speeding up the build and avoiding network fetches.
 *   `libyaml-cpp-dev`: YAML parser and emitter.
@@ -63,13 +70,13 @@ You can install all the requirements using the following command:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y 
-    build-essential cmake git pkg-config python3 file 
-    linux-headers-$(uname -r) autoconf automake libtool dkms 
-    libasound2-dev libx11-dev libxrandr-dev libxi-dev 
-    libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev 
-    libgmp-dev 
-    libyaml-cpp-dev libtinyxml2-dev libjsoncons-dev 
+sudo apt-get install -y \
+    build-essential cmake git pkg-config python3 file \
+    linux-headers-$(uname -r) autoconf automake libtool dkms \
+    libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+    libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+    libgmp-dev libssl-dev uuid-dev zlib1g-dev binutils-dev libiberty-dev \
+    libyaml-cpp-dev libtinyxml2-dev libjsoncons-dev \
     doxygen graphviz texlive-latex-base texlive-fonts-recommended texlive-latex-extra
 ```
 
