@@ -33,7 +33,7 @@ jobs:
           apt-get update
           apt-get install -y cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-                             libgmp-dev
+                             libgmp-dev libssl-dev
           # Attempt to install headers for the running kernel if possible, 
           # but in a container on GHA this is usually not matching the distro repo.
           # We install the default headers for the distro to allow compilation 
