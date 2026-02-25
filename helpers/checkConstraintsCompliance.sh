@@ -176,16 +176,21 @@ checkConstraintsComplianceImpl()
             1.2 Display your understanding of each constraint.
             1.3 Explain how the conformance of the code to each constraint will be verified.
         2. Read the content of ${currentCmakeProjectDirRelativePath}.
-            2.1 Analyze project's structure, beginning with CMAKELists.txt files.
+            2.1 Analyze project's structure, beginning with CMakeLists.txt files. Walk through the project directory tree, iterating over all files and directories cited in CMakeLists.txt files.
+                2.1.1 Some path to files may contain leading or trailing spaces, check if path is correct before using it.
             2.2 Identify structures, classes, methods, files, etc.
             2.3 Obtain an understanding of the code, its goals, its architecture, its design, etc.
             2.4 Obtain an understanding of the execution flow of the code.
             2.5 During the process, display all ongoing thinking.
         3. For each constraint, explain how the code conforms to it.
-        4. For each constraint, explain how the code does not conform to it.
+            3.1 List all files, all classes, all methods, all functions, etc. and report for each their level of compliance with the constraint.
+        4. For each constraint, explain how the code does conform to it.
         5. For each constraint, explain how the code could be modified to conform to it.
-        6. At the end of the process, report all done modifications.
-        7. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY PROJECT FILES.
+        6. At the end of the process, report for global conformance and non conformance.
+        7. At the end of the process, write a detailled markdown report file in doc/reports directory.
+            7.1 The report file must be named "PPPP-CS-XXXX-YYYY-MM-DD.md" where PPPP is the project name, XXXX is the constraint number and YYYY-MM-DD is the date.
+        8. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY PROJECT FILES, except the report file.
+        9. Results on files, classes, methods, etc. could be displayed in a table format.
         "
 
         invokeCli "$PROJECT_ROOT_DIR" "$(getModelNameFromLevel 2)" "$cAgentPrompt"
