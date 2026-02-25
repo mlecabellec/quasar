@@ -36,7 +36,8 @@ void *LibraryLoader::LoadLibrary(const std::string &libraryPath) {
   }
 
   if (!handle) {
-    std::string error = dlerror() ? dlerror() : "Unknown dlopen error";
+    const char *err = dlerror();
+    std::string error = err ? err : "Unknown dlopen error";
     throw LibraryException("Failed to load library " + libraryPath + ": " +
                            error);
   }
