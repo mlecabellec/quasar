@@ -148,12 +148,12 @@ invokeCli()
 }
 
 
-updateContributionToFeaturesImpl()
+checkConstraintsComplianceImpl()
 {
     local currentCmakeProjectDir="$1"
     echo "currentCmakeProjectDir: $currentCmakeProjectDir"
 
-    for cFeatureFile in $(find $PROJECT_ROOT_DIR/doc/features -type f -name "FE*md")
+    for cConstraintFile in $(find $PROJECT_ROOT_DIR/doc/architecture -type f -name "CS*md")
     {
         echo "PWD: $PWD"
         pushd $PWD
@@ -161,47 +161,34 @@ updateContributionToFeaturesImpl()
         echo "PWD: $PWD"
 
 
-        echo "cFeatureFile: $cFeatureFile"
-        local featureFileRelativePath="$(getRelativePath $PROJECT_ROOT_DIR $cFeatureFile)"
+        echo "cConstraintFile: $cConstraintFile"
+        local constraintFileRelativePath="$(getRelativePath $PROJECT_ROOT_DIR $cConstraintFile)"
         local currentCmakeProjectDirRelativePath="$(getRelativePath $PROJECT_ROOT_DIR $currentCmakeProjectDir)"
-        echo "featureFileRelativePath: $featureFileRelativePath"
+        echo "constraintFileRelativePath: $constraintFileRelativePath"
         echo "currentCmakeProjectDirRelativePath: $currentCmakeProjectDirRelativePath"
 
         local cAgentPrompt="
-        Your goal is to identify in ${currentCmakeProjectDirRelativePath} the contribution of the code regarding features described in ${featureFileRelativePath}.
+        Your goal is to identify in ${currentCmakeProjectDirRelativePath} the contribution of the code regarding features described in ${constraintFileRelativePath}.
 
         In order to do that, you will have to:
-        1. Read the content of ${featureFileRelativePath} and display it.
+        1. Read the content of ${constraintFileRelativePath} and display it.
+            1.1 Identify the constraints described in ${constraintFileRelativePath}.
+            1.2 Display your understanding of each constraint.
+            1.3 Explain how the conformance of the code to each constraint will be verified.
         2. Read the content of ${currentCmakeProjectDirRelativePath}.
-            2.1 Identify structures, classes, methods, files, etc.
-            2.2 Obtain an understanding of the code, its goals, its architecture, its design, etc.
-            2.3 Obtain an understanding of the execution flow of the code.
-            2.4 During the process, display all ongoing thinking.
-        3. Identify the contribution of the code regarding features described in ${featureFileRelativePath}.
-        4. Create or update comment in ${currentCmakeProjectDirRelativePath} to document the contribution of the code regarding features described in ${featureFileRelativePath}.
-            4.1 YOU SHALL ONLY ADD OR MODIFY COMMENTS. IT IS FORBIDDEN TO MODIFY FUNCTIONAL CODE.
-            4.1 Create or update doxygen comments. Create or update comment inside method bodies.
-            4.2 The added or updated comment shall cite the reference of the feature.
-            4.3 The added or updated comment shall explain how the commented code contributes to the feature.
-            4.4 The added or updated comment shall provide an argumentation of the contribution.
-            4.5 If the contribution of the code does not fully cover the feature, the added or updated comment shall explain the missing part.
-            4.6 During the process, display all ongoing thinking.
-        5. Analyze specifically tests and verify if tests are consistent with ${featureFileRelativePath}.
-            5.1 Verify that the implemented test sequence prove formally the contribution and the conformance to the feature. Comment shall explain how the tests prove the contribution and the conformance.
-            5.2 If the tests are not consistent, update them. If contribution is not proven, add \"TO BE CONFIRMED\" to the comment.
-            5.3 During the process, display all ongoing thinking.
-        6. After creation or update, make an additional analysis on the comments and verify if its still consistent with ${featureFileRelativePath}.
-            6.1 If the comments are not consistent, update them. If contribution is not proven, add \"TO BE CONFIRMED\" to the comment.
-            6.2 During the process, display all ongoing thinking.
-        7. At the end of the process, report all done modifications.
-        8. YOU SHALL ONLY ADD OR MODIFY COMMENTS. IT IS FORBIDDEN TO MODIFY FUNCTIONAL CODE.
-        9. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY CODE. ONLY COMMENTS ARE ALLOWED.
-        10. IT IS FORBIDDEN TO ADD OR REMOVE ANY PROJECT FILES.
-        11. IT IS FORBIDDEN TO MODIFY PROJECTS FILES LIKE CMakeLists.txt, etc.
-        12. For each planned modification, cross check your own work. If quality of the modification is not proven, don't do it.
+            2.1 Analyze project's structure, beginning with CMAKELists.txt files.
+            2.2 Identify structures, classes, methods, files, etc.
+            2.3 Obtain an understanding of the code, its goals, its architecture, its design, etc.
+            2.4 Obtain an understanding of the execution flow of the code.
+            2.5 During the process, display all ongoing thinking.
+        3. For each constraint, explain how the code conforms to it.
+        4. For each constraint, explain how the code does not conform to it.
+        5. For each constraint, explain how the code could be modified to conform to it.
+        6. At the end of the process, report all done modifications.
+        7. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY PROJECT FILES.
         "
 
-        invokeCli "$PROJECT_ROOT_DIR" "$(getModelNameFromLevel 0)" "$cAgentPrompt"
+        invokeCli "$PROJECT_ROOT_DIR" "$(getModelNameFromLevel 2)" "$cAgentPrompt"
         echo "PWD: $PWD"
         popd
         echo "PWD: $PWD"
@@ -212,14 +199,14 @@ updateContributionToFeaturesImpl()
 }
 
 
-proceedWithFeatureContributionUpdate()
+proceedWithCheckConstraintsCompliance()
 {
        for cmakeProjectDir in $(iterateOverCmakeProjects); do
-           updateContributionToFeaturesImpl "$cmakeProjectDir"
+           checkConstraintsComplianceImpl "$cmakeProjectDir"
        done
 }
 
-proceedWithFeatureContributionUpdate
+proceedWithCheckConstraintsCompliance
 
 
 
