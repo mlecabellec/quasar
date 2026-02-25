@@ -111,6 +111,11 @@ updateContributionToFeaturesImpl()
             6.1 If the comments are not consistent, update them. If contribution is not proven, add \"TO BE CONFIRMED\" to the comment.
             6.2 During the process, display all ongoing thinking.
         7. At the end of the process, report all done modifications.
+        8. YOU SHALL ONLY ADD OR MODIFY COMMENTS. IT IS FORBIDDEN TO MODIFY FUNCTIONAL CODE.
+        9. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY CODE. ONLY COMMENTS ARE ALLOWED.
+        10. IT IS FORBIDDEN TO ADD OR REMOVE ANY PROJECT FILES.
+        11. IT IS FORBIDDEN TO MODIFY PROJECTS FILES LIKE CMakeLists.txt, etc.
+        12. For each planned modification, cross check your own work. If quality of the modification is not proven, don't do it.
         "
 
         gemini -y -m "$GEMINI_MODEL_LVL0" -p "$cGemniPrompt"
