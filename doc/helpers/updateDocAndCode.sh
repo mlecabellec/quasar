@@ -22,6 +22,30 @@ getScriptDir()
     echo "$SCRIPT_DIR"
 }
 
+
+getRelativePath() {
+    local source="$1"
+    local target="$2"
+    
+    local common="$source"
+    local result=""
+
+    # 1. Trouver la base commune
+    while [[ "${target#$common}" == "$target" ]]; do
+        common=$(dirname "$common")
+        result="../$result"
+    done
+
+    # 2. Ajouter la partie spécifique de la cible
+    local forward_part="${target#$common}"
+    
+    # Nettoyage des slashs
+    forward_part="${forward_part#/}"
+    
+    echo "${result}${forward_part}"
+}
+
+
 SCRIPT_DIR="$(getScriptDir)"
 echo "SCRIPT_DIR: $SCRIPT_DIR"
 
@@ -48,19 +72,30 @@ updateContributionToFeaturesImpl()
 
     for cFeatureFile in $(find $PROJECT_ROOT_DIR/doc/features -type f -name "FE*md")
     {
+        echo "PWD: $PWD"
+        pushd $PWD
+        cd $PROJECT_ROOT_DIR
+        echo "PWD: $PWD"
+
+
         echo "cFeatureFile: $cFeatureFile"
+        local featureFileRelativePath="$(getRelativePath $PROJECT_ROOT_DIR $cFeatureFile)"
+        local currentCmakeProjectDirRelativePath="$(getRelativePath $PROJECT_ROOT_DIR $currentCmakeProjectDir)"
+        echo "featureFileRelativePath: $featureFileRelativePath"
+        echo "currentCmakeProjectDirRelativePath: $currentCmakeProjectDirRelativePath"
+
         local cGemniPrompt="
-        Your goal is to identify in @${currentCmakeProjectDir} the contribution of the code regarding features described in @${cFeatureFile}.
+        Your goal is to identify in @${currentCmakeProjectDirRelativePath} the contribution of the code regarding features described in @${featureFileRelativePath}.
 
         In order to do that, you will have to:
-        1. Read the content of @${cFeatureFile} and display it.
-        2. Read the content of @${currentCmakeProjectDir}.
+        1. Read the content of @${featureFileRelativePath} and display it.
+        2. Read the content of @${currentCmakeProjectDirRelativePath}.
             2.1 Identify structures, classes, methods, files, etc.
             2.2 Obtain an understanding of the code, its goals, its architecture, its design, etc.
             2.3 Obtain an understanding of the execution flow of the code.
             2.4 During the process, display all ongoing thinking.
-        3. Identify the contribution of the code regarding features described in @${cFeatureFile}.
-        4. Create or update comment in @${currentCmakeProjectDir} to document the contribution of the code regarding features described in @${cFeatureFile}.
+        3. Identify the contribution of the code regarding features described in @${featureFileRelativePath}.
+        4. Create or update comment in @${currentCmakeProjectDirRelativePath} to document the contribution of the code regarding features described in @${featureFileRelativePath}.
             4.1 Create or update doxygen comments. Create or update comment inside method bodies.
             4.2 The added or updated comment shall cite the reference of the feature.
             4.3 The added or updated comment shall explain how the commented code contributes to the feature.
@@ -70,6 +105,9 @@ updateContributionToFeaturesImpl()
         "
 
         gemini -y -m "$GEMINI_MODEL_LVL0" -p "$cGemniPrompt"
+        echo "PWD: $PWD"
+        popd
+        echo "PWD: $PWD"
     }
 
     
