@@ -18,7 +18,9 @@ namespace quasar::coretypes {
  *
  * BitBufferSlice provides a window into an existing BitBuffer. It allows for
  * addressable access to a range of bits within the parent buffer without 
- * copying the underlying data.
+ * copying the underlying data. Analogous to `std::span` [FE-0040.8.2], this
+ * class enables efficient, zero-copy access to bit-fields within EtherCAT
+ * frames and process data [FE-0040.2], [FE-0040.5.3].
  * 
  * **Compliance**:
  * - Fulfills [FE-0030.5.7] Create a BitBufferSlice class which is a view of the original BitBuffer.
@@ -83,7 +85,7 @@ public:
    * @brief Creates a new sub-slice from the current bit slice.
    *
    * The new slice will point to the same underlying parent BitBuffer with an 
-   * adjusted offset.
+   * adjusted offset. Useful for modular parsing of complex EtherCAT data structures [FE-0040.2].
    * 
    * Fulfills [FE-0030.7.6] Slices can be created from a slice.
    *
@@ -111,9 +113,8 @@ public:
    *
    * The bits are packed into bytes using Big Endian bit numbering (first bit in MSB).
    * If the number of bits is not a multiple of 8, the last byte is zero-padded at 
-   * the least significant bits.
-   * 
-   * Fulfills [FE-0030.5.10] Method for conversion to std::vector<uint8_t>.
+      * the least significant bits. Useful for preparing data for EtherCAT frame transmission [FE-0040.2].
+    *    * Fulfills [FE-0030.5.10] Method for conversion to std::vector<uint8_t>.
    *
    * @return A std::vector<uint8_t> containing the packed bit data.
    */

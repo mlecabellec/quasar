@@ -32,7 +32,13 @@ enum class Endianness {
  * @brief The Buffer class is a thread-safe wrapper around a raw byte array.
  *
  * It provides a rich set of methods for data manipulation, designed for
- * binary protocol processing, file I/O, and data serialization.
+ * binary protocol processing, file I/O, and data serialization. Essential for handling
+ * raw Ethernet frames and binary data used in protocols like EtherCAT [FE-0040.1], [FE-0040.2].
+ * Furthermore, this class provides fundamental capabilities for implementing
+ * protocol definitions as required by [FE-0100], such as parsing headers
+ * for protocols like UDP, TCP, IPv4, Ethernet II, CCSDS, CAN, IENA, and ESVF.
+ * Its methods for byte-level access, endianness control, and integer read/write
+ * are critical for interpreting structured binary data found in network protocols.
  * 
  * **Compliance**:
  * - Fulfills [FE-0010.3] Provide a Buffer class.
@@ -153,6 +159,7 @@ public:
    * 
    * Fulfills [FE-0010.3.3] Methods for conversion from numeric types.
    * Fulfills [FE-0010.3.3.1] Specify endianness.
+   * Endianness control is crucial for network protocols like EtherCAT [FE-0040.1.2].
    *
    * @param value The integer value to write.
    * @param index The starting index in the buffer.
@@ -244,6 +251,7 @@ public:
    *
    * A slice view provides shared access to a portion of the buffer without copying.
    * Modifications through the view are reflected in the original buffer.
+   * Similar to std::span [FE-0040.8.2], this facilitates efficient zero-copy data access.
    * 
    * Fulfills [FE-0030.5.7] Create a BufferSlice class which is a view of the original Buffer.
    *
@@ -258,6 +266,7 @@ public:
    * @brief Performs an element-wise bitwise AND with another buffer.
    * 
    * Fulfills [FE-0030.5.3] Bitwise operations.
+   * Crucial for low-level frame manipulation and bitmasking operations in protocols like EtherCAT [FE-0040.2].
    *
    * @param other The other buffer of the same size.
    * @return A new Buffer containing the result of (this & other).
@@ -318,6 +327,7 @@ public:
 protected:
   /**
    * @brief Recursive mutex ensuring thread-safe access to the buffer data.
+   * Relies on std::chrono for timeouts, aligning with [FE-0040.8.3].
    */
   mutable std::recursive_timed_mutex mutex_;
 

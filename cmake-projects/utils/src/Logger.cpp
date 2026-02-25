@@ -78,6 +78,11 @@ Logger::QueryLogMessageKind(Smp::String8 messageKindName) {
     return -1;
   }
 
+  // Implements FE-0070.1.3: Translates log message kind names to IDs.
+  // This function supports the predefined log message kinds as per FE-0070.1.4.
+  // The mapping is hardcoded, not persisted, and does not dynamically maintain a map,
+  // thus not fully satisfying FE-0070.1.2 or FE-0070.1.5.
+
   // Compare message kind names to their constant IDs
   if (std::strcmp(messageKindName,
                   Smp::Services::ILogger::LMK_InformationName) == 0)
@@ -107,6 +112,10 @@ void Logger::Log(const Smp::IObject *sender, Smp::String8 message,
     // If we cannot acquire the lock, we skip logging to avoid blocking.
     return;
   }
+
+  // Implements FE-0070.1.6: Logs a message to stdout.
+  // Formats the output including the log kind (e.g., INFO, ERROR) and sender if available,
+  // aligning with FE-0070.1.4.
 
   // Determine string representation of the log kind
   std::string kindStr;

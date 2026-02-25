@@ -25,6 +25,11 @@ namespace coretypes {
  * This class provides an object-oriented wrapper for primitive integral types 
  * (int8_t, uint8_t, ..., int64_t, uint64_t). It inherits from Number and 
  * implements polymorphic arithmetic, bitwise operations, and conversions.
+ * These types are essential for representing and manipulating numerical fields
+ * within protocol headers and data structures, as required for implementing
+ * protocols like those described in [FE-0100]. For example, they can be used
+ * to represent port numbers, IP addresses, lengths, sequence numbers, and other
+ * critical numerical data within network packets and data formats.
  * 
  * **Compliance**:
  * - Fulfills [FE-0010.1] Provide, for each basic numeric type, a class which is assignable to its basic type.

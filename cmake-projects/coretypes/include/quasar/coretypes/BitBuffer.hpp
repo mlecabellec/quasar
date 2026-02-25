@@ -18,7 +18,8 @@ class BitBufferSlice;
  *
  * This class extends the byte-oriented Buffer to provide bit-level granularity. 
  * It is essential for handling bit-packed data formats common in network 
- * protocols, compressed files, and low-level hardware interfaces.
+ * protocols, compressed files, and low-level hardware interfaces. Crucial for
+ * EtherCAT frame management [FE-0040.2] and PDO configuration [FE-0040.5.3].
  * 
  * **Compliance**:
  * - Fulfills [FE-0010.4] Provide a BitBuffer class.
@@ -31,6 +32,7 @@ class BitBufferSlice;
  * - Bit 0 is the Most Significant Bit (MSB) of the first byte (byte index 0).
  * - Bit 7 is the Least Significant Bit (LSB) of the first byte.
  * - Bit 8 is the MSB of the second byte (byte index 1), and so on.
+ * Network order endianness is relevant for EtherCAT [FE-0040.1.2].
  * 
  * **Thread Safety**: 
  * Inherits thread-safety from the Buffer class, protecting the underlying 
@@ -100,7 +102,8 @@ public:
   /**
    * @brief Creates a new BitBuffer containing a range of bits from this buffer.
    *
-   * The slice is a deep copy of the requested range.
+   * The slice is a deep copy of the requested range. Essential for extracting
+   * bit-fields from EtherCAT frames [FE-0040.2.3] and configuring PDOs [FE-0040.5.3].
    * 
    * Fulfills [FE-0010.4.3] Slicing the buffer with bit granularity.
    * Fulfills [FE-0030.5.6] Slicing at bit level.
@@ -117,6 +120,8 @@ public:
    *
    * Unlike sliceBits, this creates a lightweight view (BitBufferSlice) that 
    * points to the original data. Modifications through the view affect this buffer.
+   * Analogous to `std::span` [FE-0040.8.2], this provides efficient zero-copy access
+   * to bit sub-ranges, useful for parsing EtherCAT data.
    * 
    * Fulfills [FE-0030.5.7] Creation of BitBufferSlice views.
    *
@@ -132,7 +137,7 @@ public:
    * @brief Concatenates this BitBuffer with another.
    *
    * Creates a new BitBuffer that contains all bits of this buffer followed 
-   * by all bits of @p other.
+   * by all bits of @p other. Useful for assembling multi-part EtherCAT frames [FE-0040.2].
    * 
    * Fulfills [FE-0010.4.4] Concatenation of buffers.
    * Fulfills [FE-0030.5.5] Concatenation.
@@ -159,6 +164,7 @@ public:
    * @brief Reverses the order of all bits in the buffer.
    *
    * The first bit becomes the last, the second becomes the second-to-last, etc.
+   * Useful for byte or bit-level reversal operations in low-level protocols like EtherCAT [FE-0040.2].
    * 
    * Fulfills [FE-0010.4.7] Reversing at bit level.
    */

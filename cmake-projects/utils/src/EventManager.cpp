@@ -1,4 +1,5 @@
 #include "utils/EventManager.hpp"
+#include <Smp/IEntryPoint.h>
 #include <algorithm>
 #include <core/StandardExceptions.hpp>
 #include <cstring>
@@ -90,6 +91,11 @@ Smp::IObject *EventManager::GetChild(Smp::String8 name) const {
 }
 
 void EventManager::RegisterPredefinedEvents() {
+  // This method registers standard SMP predefined events, supporting
+  // [FE-0070.4.8] and implicitly contributing to [FE-0070.4.9] by defining
+  // these events. These events are crucial for simulation state transitions and
+  // time updates.
+
   // Map standard event names to their reserved IDs
   _eventIds[SMP_LeaveConnecting] = SMP_LeaveConnectingId;
   _eventIds[SMP_EnterInitialising] = SMP_EnterInitialisingId;
@@ -113,6 +119,11 @@ void EventManager::RegisterPredefinedEvents() {
 }
 
 Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
+  // Implements FE-0070.4.2: IEventManager QueryEventId shall return Event
+  // identifier. This method ensures that event names are mapped to unique
+  // EventIds. New IDs are generated if the event name is not found, ensuring
+  // uniqueness throughout the simulation.
+
   // [CS-0010.16] Check for null pointers
   if (!eventName) {
     throw core::InvalidEventName("Event name is null");
@@ -126,7 +137,8 @@ Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
 
   // Search for existing event by name
   // [CS-0010.35] Forbidden auto replaced with explicit type
-  std::map<std::string, Smp::Services::EventId>::iterator it = _eventIds.find(eventName);
+  std::map<std::string, Smp::Services::EventId>::iterator it =
+      _eventIds.find(eventName);
   if (it != _eventIds.end()) {
     return it->second;
   }
@@ -140,6 +152,10 @@ Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
 
 void EventManager::Subscribe(Smp::Services::EventId event,
                              const Smp::IEntryPoint *entryPoint) {
+  // Implements FE-0070.4.5: IEventManager Subscribe shall subscribe an entry
+  // point to an event. Also addresses FE-0070.4.3 and FE-0070.4.4 by managing
+  // the subscription list.
+
   // [CS-0010.16] Check for null pointers
   if (!entryPoint) {
     throw std::invalid_argument("Entry point is null");
@@ -152,21 +168,25 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   }
 
   // [CS-0010.35] Forbidden auto replaced with explicit type
-  std::vector<const Smp::IEntryPoint *>& subscribers = _subscriptions[event];
-  std::vector<const Smp::IEntryPoint *>::iterator it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
-  
+  std::vector<const Smp::IEntryPoint *> &subscribers = _subscriptions[event];
+  std::vector<const Smp::IEntryPoint *>::iterator it =
+      std::find(subscribers.begin(), subscribers.end(), entryPoint);
+
   // Verify if already subscribed
   if (it != subscribers.end()) {
     throw core::EntryPointAlreadySubscribed(entryPoint,
                                             "Entry point already subscribed");
   }
-  
+
   // Add new subscriber
   subscribers.push_back(entryPoint);
 }
 
 void EventManager::Unsubscribe(Smp::Services::EventId event,
                                const Smp::IEntryPoint *entryPoint) {
+  // Implements FE-0070.4.6: IEventManager Unsubscribe shall unsubscribe an
+  // entry point. Handles cases where the event or entry point might not exist.
+
   // [CS-0010.16] Check for null pointers
   if (!entryPoint) {
     throw std::invalid_argument("Entry point is null");
@@ -179,44 +199,57 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   }
 
   // [CS-0010.35] Forbidden auto replaced with explicit type
-  std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>>::iterator itSub = _subscriptions.find(event);
+  std::map<Smp::Services::EventId,
+           std::vector<const Smp::IEntryPoint *>>::iterator itSub =
+      _subscriptions.find(event);
   if (itSub == _subscriptions.end()) {
     throw core::EntryPointNotSubscribed(
         entryPoint, "Entry point not subscribed (event has no subscribers)");
   }
 
   // Find the entry point in the subscription list
-  std::vector<const Smp::IEntryPoint *>& subscribers = itSub->second;
-  std::vector<const Smp::IEntryPoint *>::iterator it = std::find(subscribers.begin(), subscribers.end(), entryPoint);
-  
+  std::vector<const Smp::IEntryPoint *> &subscribers = itSub->second;
+  std::vector<const Smp::IEntryPoint *>::iterator it =
+      std::find(subscribers.begin(), subscribers.end(), entryPoint);
+
   // Verify existence before removal
   if (it == subscribers.end()) {
     throw core::EntryPointNotSubscribed(entryPoint,
                                         "Entry point not subscribed");
   }
-  
+
   // Remove subscriber
   subscribers.erase(it);
 }
 
 void EventManager::Emit(Smp::Services::EventId event, Smp::Bool synchronous) {
-  // Copy subscribers to avoid deadlock if they modify subscriptions during execution
-  // [CS-0010.35] Forbidden auto replaced with explicit type
+  // Implements FE-0070.4.7: IEventManager Emit shall emit a global event.
+  // Supports synchronous flag as per FE-0070.4.9.
+  // The copying of subscribers helps address FE-0070.4.11.
+  // @warning Does not explicitly implement FE-0070.4.10 (State transition event
+  // shall not trigger another transition).
+
+  // Copy subscribers to avoid deadlock if they modify subscriptions during
+  // execution [CS-0010.35] Forbidden auto replaced with explicit type
   std::vector<const Smp::IEntryPoint *> subscribersCopy;
   {
     std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring EventManager lock");
     }
-    std::map<Smp::Services::EventId, std::vector<const Smp::IEntryPoint *>>::iterator it = _subscriptions.find(event);
+    std::map<Smp::Services::EventId,
+             std::vector<const Smp::IEntryPoint *>>::iterator it =
+        _subscriptions.find(event);
     if (it != _subscriptions.end()) {
       subscribersCopy = it->second;
     }
   }
 
   // Iterate over the copy and execute each entry point
-  for (std::vector<const Smp::IEntryPoint *>::const_iterator itCopy = subscribersCopy.begin(); itCopy != subscribersCopy.end(); ++itCopy) {
-    const Smp::IEntryPoint* ep = *itCopy;
+  for (std::vector<const Smp::IEntryPoint *>::const_iterator itCopy =
+           subscribersCopy.begin();
+       itCopy != subscribersCopy.end(); ++itCopy) {
+    const Smp::IEntryPoint *ep = *itCopy;
     if (ep) {
       // Execute the entry point
       ep->Execute();

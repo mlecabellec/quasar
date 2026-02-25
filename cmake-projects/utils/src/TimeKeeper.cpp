@@ -80,6 +80,7 @@ void TimeKeeper::SetEventManager(Smp::Services::IEventManager *eventManager) {
 }
 
 Smp::Duration TimeKeeper::GetSimulationTime() const {
+  // Implements FE-0070.2.6: GetSimulationTime shall return Simulation time.
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring TimeKeeper lock");
@@ -88,6 +89,7 @@ Smp::Duration TimeKeeper::GetSimulationTime() const {
 }
 
 Smp::DateTime TimeKeeper::GetEpochTime() const {
+  // Implements FE-0070.2.7: ITimeKeeper GetEpochTime shall return Epoch time.
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring TimeKeeper lock");
@@ -96,6 +98,7 @@ Smp::DateTime TimeKeeper::GetEpochTime() const {
 }
 
 Smp::DateTime TimeKeeper::GetMissionStartTime() const {
+  // Implements FE-0070.2.9: ITimeKeeper GetMissionStartTime shall return Mission Start Time.
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring TimeKeeper lock");
@@ -104,6 +107,7 @@ Smp::DateTime TimeKeeper::GetMissionStartTime() const {
 }
 
 Smp::Duration TimeKeeper::GetMissionTime() const {
+  // Implements FE-0070.2.8: ITimeKeeper GetMissionTime shall return Mission time.
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring TimeKeeper lock");
@@ -112,6 +116,7 @@ Smp::Duration TimeKeeper::GetMissionTime() const {
 }
 
 Smp::DateTime TimeKeeper::GetZuluTime() const {
+  // Implements FE-0070.2.10: ITimeKeeper GetZuluTime shall return Zulu time.
   // Get current system time in nanoseconds
   // [CS-0010.35] Forbidden auto replaced with explicit type
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -120,6 +125,7 @@ Smp::DateTime TimeKeeper::GetZuluTime() const {
 }
 
 void TimeKeeper::SetSimulationTime(Smp::Duration simulationTime) {
+  // Implements FE-0070.2.5: ITimeKeeper SetSimulationTime method shall advance Simulation time.
   // Use RAII for mutex [CS-0010.22]
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
   if (!lock.owns_lock()) {
@@ -129,6 +135,7 @@ void TimeKeeper::SetSimulationTime(Smp::Duration simulationTime) {
 }
 
 void TimeKeeper::SetEpochTime(Smp::DateTime epochTime) {
+  // Implements FE-0070.2.2: The ITimeKeeper SetEpochTime method shall set the Epoch Time.
   // Set the new epoch time and calculate the offset
   {
     std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
@@ -138,13 +145,15 @@ void TimeKeeper::SetEpochTime(Smp::DateTime epochTime) {
     _epochOffset = epochTime - _simulationTime;
   }
   
-  // Emit event if manager is connected
+  // Emit event if manager is connected. This supports [FE-0070.3.21] which states
+  // that EpochTimeChange events update scheduled epoch events.
   if (_eventManager) {
     _eventManager->Emit(Smp::Services::IEventManager::SMP_EpochTimeChangedId);
   }
 }
 
 void TimeKeeper::SetMissionStartTime(Smp::DateTime missionStart) {
+  // Implements FE-0070.2.3: The ITimeKeeper SetMissionStartTime method shall set the Mission start time.
   // Set the mission start time
   {
     std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
@@ -154,13 +163,15 @@ void TimeKeeper::SetMissionStartTime(Smp::DateTime missionStart) {
     _missionStart = missionStart;
   }
   
-  // Emit event if manager is connected
+  // Emit event if manager is connected. This supports [FE-0070.3.22] which states
+  // that MissionTimeChange events update scheduled mission events.
   if (_eventManager) {
     _eventManager->Emit(Smp::Services::IEventManager::SMP_MissionTimeChangedId);
   }
 }
 
 void TimeKeeper::SetMissionTime(Smp::Duration missionTime) {
+  // Implements FE-0070.2.4: The ITimeKeeper SetMissionTime method shall set the Mission time.
   // MissionTime = EpochTime - MissionStart
   // => MissionStart = EpochTime - MissionTime
   SetMissionStartTime(GetEpochTime() - missionTime);
