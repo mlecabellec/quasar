@@ -103,7 +103,7 @@ invokeOpenCode()
     
     pushd $PWD
     cd $workDir
-    opencode --agent "build" --model "$cOpenCodeModel" --prompt "$cOpenCodePrompt"
+    opencode run --agent "build" --model "$cOpenCodeModel" "$cOpenCodePrompt"
     popd
 }
 
