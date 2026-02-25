@@ -98,9 +98,11 @@ CRITICAL CONSTRAINTS:
             try:
                 subprocess.run(gemini_cmd, check=True)
             except subprocess.CalledProcessError as e:
-                print(f"Error invoking Gemini CLI: {e}")
+                print(f"Error invoking Gemini CLI for {project_name}: {e}")
+                sys.exit(1)
             except FileNotFoundError:
                 print("Error: 'gemini' command not found in PATH.")
+                sys.exit(1)
 
 def main():
     parser = argparse.ArgumentParser(description="Quasar Project Management Tool")

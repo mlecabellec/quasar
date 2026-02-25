@@ -92,6 +92,17 @@ endif()
 # Configure SOES
 add_subdirectory(SOES)
 
+# Configure CppServer
+option(QUASAR_ENABLE_CPPSERVER "Enable CppServer" ON)
+
+if(QUASAR_ENABLE_CPPSERVER)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+    set(ASIO_STANDALONE ON CACHE BOOL "" FORCE)
+    set(CPPSERVER_MODULE ON CACHE BOOL "" FORCE)
+    set(CPPCOMMON_MODULE ON CACHE BOOL "" FORCE)
+    add_subdirectory(CppServer)
+endif()
+
 add_subdirectory(smp)
 add_subdirectory(core)
 add_subdirectory(smp_ext)

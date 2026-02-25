@@ -10,6 +10,8 @@
 | **Catch2**     | 3.12.0   | [https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)                 | Boost Software License 1.0 |
 | **sol2**       | v3.3.0   | [https://github.com/ThePhD/sol2](https://github.com/ThePhD/sol2)                         | MIT                        |
 | **lua**        | 5.4.7    | [https://www.lua.org/](https://www.lua.org/)                                             | MIT                        |
-| **libzmq**     | 4.3.6    | [https://github.com/zeromq/libzmq](https://github.com/zeromq/libzmq)                     | MPL 2.0                    |
+| **libzmq**     | 4.3.6       | [https://github.com/zeromq/libzmq](https://github.com/zeromq/libzmq)                     | MPL 2.0                    |
 | **Smp**        | E-ST-40-07C | [https://ecss.nl](https://ecss.nl)                                                       | ESA Community Weak         |
-
+| **jsoncons**   | 0.176.0     | [https://github.com/danielaparker/jsoncons](https://github.com/danielaparker/jsoncons)   | Boost Software License 1.0 |
+| **CppServer**  | master      | [https://github.com/chronoxor/CppServer](https://github.com/chronoxor/CppServer)         | MIT                        |
+| **SOES**       | master      | [https://github.com/OpenEtherCATsociety/SOES](https://github.com/OpenEtherCATsociety/SOES) | GPLv2 with exceptions      |
