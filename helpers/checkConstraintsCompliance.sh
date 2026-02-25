@@ -191,6 +191,8 @@ checkConstraintsComplianceImpl()
             7.1 The report file must be named "PPPP-CS-XXXX-YYYY-MM-DD.md" where PPPP is the project name, XXXX is the constraint number and YYYY-MM-DD is the date.
         8. IT IS FORBIDDEN TO ADD, MODIFY OR REMOVE ANY PROJECT FILES, except the report file.
         9. Results on files, classes, methods, etc. could be displayed in a table format.
+        10. The work shall be done autonomously, in YOLO mode, without any confirmation.
+        11. The work shall be done carefully. The quality of the achievement matters most than time.
         "
 
         invokeCli "$PROJECT_ROOT_DIR" "$(getModelNameFromLevel 2)" "$cAgentPrompt"
