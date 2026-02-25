@@ -96,12 +96,21 @@ updateContributionToFeaturesImpl()
             2.4 During the process, display all ongoing thinking.
         3. Identify the contribution of the code regarding features described in @${featureFileRelativePath}.
         4. Create or update comment in @${currentCmakeProjectDirRelativePath} to document the contribution of the code regarding features described in @${featureFileRelativePath}.
+            4.1 YOU SHALL ONLY ADD OR MODIFY COMMENTS. IT IS FORBIDDEN TO MODIFY FUNCTIONAL CODE.
             4.1 Create or update doxygen comments. Create or update comment inside method bodies.
             4.2 The added or updated comment shall cite the reference of the feature.
             4.3 The added or updated comment shall explain how the commented code contributes to the feature.
             4.4 The added or updated comment shall provide an argumentation of the contribution.
             4.5 If the contribution of the code does not fully cover the feature, the added or updated comment shall explain the missing part.
             4.6 During the process, display all ongoing thinking.
+        5. Analyze specifically tests and verify if tests are consistent with @${featureFileRelativePath}.
+            5.1 Verify that the implemented test sequence prove formally the contribution and the conformance to the feature. Comment shall explain how the tests prove the contribution and the conformance.
+            5.2 If the tests are not consistent, update them. If contribution is not proven, add \"TO BE CONFIRMED\" to the comment.
+            5.3 During the process, display all ongoing thinking.
+        6. After creation or update, make an additional analysis on the comments and verify if its still consistent with @${featureFileRelativePath}.
+            6.1 If the comments are not consistent, update them. If contribution is not proven, add \"TO BE CONFIRMED\" to the comment.
+            6.2 During the process, display all ongoing thinking.
+        7. At the end of the process, report all done modifications.
         "
 
         gemini -y -m "$GEMINI_MODEL_LVL0" -p "$cGemniPrompt"
