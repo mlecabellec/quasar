@@ -1,6 +1,8 @@
 #include "quasar/coretypes/BitBuffer.hpp"
 #include "quasar/coretypes/Buffer.hpp"
+#include "quasar/named/NamedBitBuffer.hpp"
 #include "quasar/named/NamedBitBufferSlice.hpp"
+#include "quasar/named/NamedBuffer.hpp"
 #include "quasar/named/NamedBufferSlice.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
@@ -139,4 +141,127 @@ TEST(NamedBufferSliceTest, Clone) {
   // Assertion: Check if cloned slice has the correct value
   std::cout << "Assertion: Check if cloned slice index 0 is 0xFF" << std::endl;
   EXPECT_EQ(casted->get(0), 0xFF);
+}
+
+TEST(NamedBufferSliceTest, OutOfBoundsTests) {
+  // Proof of compliance: [TSK-20260301-001.6], [TSK-20260301-001.7] out of
+  // bounds behavior
+  std::cout << "Step: Initialize NamedBuffer for bounds testing" << std::endl;
+  auto buf = NamedBuffer::create("buf", 10);
+
+  std::cout << "Assertion: Over-extending slice should throw std::out_of_range"
+            << std::endl;
+  EXPECT_THROW(NamedBufferSlice::create("slice1", buf, 5, 6),
+               std::out_of_range);
+  EXPECT_THROW(NamedBufferSlice::create("slice1", buf, 15, 1),
+               std::out_of_range);
+
+  auto validSlice = NamedBufferSlice::create("slice2", buf, 2, 5);
+  std::cout
+      << "Assertion: Over-extending sub-slice should throw std::out_of_range"
+      << std::endl;
+  EXPECT_THROW(NamedBufferSlice::create("subSlice1", validSlice, 3, 3),
+               std::out_of_range);
+  EXPECT_THROW(validSlice->sliceView(3, 3), std::out_of_range);
+}
+
+TEST(NamedBitBufferSliceTest, OutOfBoundsTests) {
+  // Proof of compliance: [TSK-20260301-001.9] out of bounds behavior
+  std::cout << "Step: Initialize NamedBitBuffer for bounds testing"
+            << std::endl;
+  auto buf = NamedBitBuffer::create("bbuf", 10);
+
+  std::cout
+      << "Assertion: Over-extending bit slice should throw std::out_of_range"
+      << std::endl;
+  EXPECT_THROW(NamedBitBufferSlice::create("slice1", buf, 5, 6),
+               std::out_of_range);
+  EXPECT_THROW(NamedBitBufferSlice::create("slice1", buf, 15, 1),
+               std::out_of_range);
+
+  auto validSlice = NamedBitBufferSlice::create("slice2", buf, 2, 5);
+  std::cout
+      << "Assertion: Over-extending sub-slice should throw std::out_of_range"
+      << std::endl;
+  EXPECT_THROW(NamedBitBufferSlice::create("subSlice1", validSlice, 3, 3),
+               std::out_of_range);
+  EXPECT_THROW(validSlice->sliceView(3, 3), std::out_of_range);
+}
+
+TEST(NamedBufferSliceTest, DeepCopyRebasing) {
+  std::cout << "Step: Setup hierarchy with a root, Buffer, and Slices"
+            << std::endl;
+  auto root = NamedObject::create("root");
+  auto buf = NamedBuffer::create("buf", 20, root);
+  auto slice1 = NamedBufferSlice::create("slice1", buf, 2, 10, buf);
+  auto slice2 = NamedBufferSlice::create("slice2", buf, 5, 5, root);
+  auto subSlice = NamedBufferSlice::create("subSlice", slice1, 3, 4, slice1);
+
+  std::cout << "Step: Perform deep copy of the tree" << std::endl;
+  auto clonedRoot = root->deepCopy();
+
+  std::cout << "Step: Find nodes in cloned tree" << std::endl;
+  auto clonedBuf =
+      std::dynamic_pointer_cast<NamedBuffer>(clonedRoot->getFirstChild());
+  auto clonedSlice2 =
+      std::dynamic_pointer_cast<NamedBufferSlice>(clonedRoot->getLastChild());
+  auto clonedSlice1 =
+      std::dynamic_pointer_cast<NamedBufferSlice>(clonedBuf->getFirstChild());
+  auto clonedSubSlice = std::dynamic_pointer_cast<NamedBufferSlice>(
+      clonedSlice1->getFirstChild());
+
+  std::cout << "Assertion: slice1 should rebase to clonedBuf" << std::endl;
+  EXPECT_EQ(clonedSlice1->quasar::coretypes::BufferSlice::getParent(),
+            clonedBuf);
+  EXPECT_NE(clonedSlice1->quasar::coretypes::BufferSlice::getParent(), buf);
+
+  std::cout << "Assertion: slice2 should NOT rebase, keeping original buf"
+            << std::endl;
+  EXPECT_EQ(clonedSlice2->quasar::coretypes::BufferSlice::getParent(), buf);
+
+  std::cout
+      << "Assertion: subSlice should rebase indirectly to clonedBuf via slice1"
+      << std::endl;
+  EXPECT_EQ(clonedSubSlice->quasar::coretypes::BufferSlice::getParent(),
+            clonedBuf);
+  EXPECT_EQ(clonedSubSlice->getOffset(), 5);
+}
+
+TEST(NamedBitBufferSliceTest, DeepCopyRebasing) {
+  std::cout << "Step: Setup hierarchy with a root, BitBuffer, and Slices"
+            << std::endl;
+  auto root = NamedObject::create("root");
+  auto buf = NamedBitBuffer::create("bbuf", 20, root);
+  auto slice1 = NamedBitBufferSlice::create("slice1", buf, 2, 10, buf);
+  auto slice2 = NamedBitBufferSlice::create("slice2", buf, 5, 5, root);
+  auto subSlice = NamedBitBufferSlice::create("subSlice", slice1, 3, 4, slice1);
+
+  std::cout << "Step: Perform deep copy of the tree" << std::endl;
+  auto clonedRoot = root->deepCopy();
+
+  std::cout << "Step: Find nodes in cloned tree" << std::endl;
+  auto clonedBuf =
+      std::dynamic_pointer_cast<NamedBitBuffer>(clonedRoot->getFirstChild());
+  auto clonedSlice2 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+      clonedRoot->getLastChild());
+  auto clonedSlice1 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+      clonedBuf->getFirstChild());
+  auto clonedSubSlice = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+      clonedSlice1->getFirstChild());
+
+  std::cout << "Assertion: slice1 should rebase to clonedBuf" << std::endl;
+  EXPECT_EQ(clonedSlice1->quasar::coretypes::BitBufferSlice::getParent(),
+            clonedBuf);
+  EXPECT_NE(clonedSlice1->quasar::coretypes::BitBufferSlice::getParent(), buf);
+
+  std::cout << "Assertion: slice2 should NOT rebase, keeping original buf"
+            << std::endl;
+  EXPECT_EQ(clonedSlice2->quasar::coretypes::BitBufferSlice::getParent(), buf);
+
+  std::cout
+      << "Assertion: subSlice should rebase indirectly to clonedBuf via slice1"
+      << std::endl;
+  EXPECT_EQ(clonedSubSlice->quasar::coretypes::BitBufferSlice::getParent(),
+            clonedBuf);
+  EXPECT_EQ(clonedSubSlice->getOffset(), 5);
 }
