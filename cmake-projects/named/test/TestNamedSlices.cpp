@@ -117,7 +117,7 @@ TEST(NamedBufferSliceTest, Clone) {
   // Step: Initialize Buffer and set value for cloning test
   std::cout << "Step: Initialize Buffer and set value for cloning test"
             << std::endl;
-  auto buf = std::make_shared<Buffer>(10);
+  std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(10);
   buf->set(5, 0xFF);
 
   // Step: Create NamedBufferSlice
@@ -147,7 +147,7 @@ TEST(NamedBufferSliceTest, OutOfBoundsTests) {
   // Proof of compliance: [TSK-20260301-001.6], [TSK-20260301-001.7] out of
   // bounds behavior
   std::cout << "Step: Initialize NamedBuffer for bounds testing" << std::endl;
-  auto buf = NamedBuffer::create("buf", 10);
+  std::shared_ptr<NamedBuffer> buf = NamedBuffer::create("buf", 10);
 
   std::cout << "Assertion: Over-extending slice should throw std::out_of_range"
             << std::endl;
@@ -156,7 +156,8 @@ TEST(NamedBufferSliceTest, OutOfBoundsTests) {
   EXPECT_THROW(NamedBufferSlice::create("slice1", buf, 15, 1),
                std::out_of_range);
 
-  auto validSlice = NamedBufferSlice::create("slice2", buf, 2, 5);
+  std::shared_ptr<NamedBufferSlice> validSlice =
+      NamedBufferSlice::create("slice2", buf, 2, 5);
   std::cout
       << "Assertion: Over-extending sub-slice should throw std::out_of_range"
       << std::endl;
@@ -169,7 +170,7 @@ TEST(NamedBitBufferSliceTest, OutOfBoundsTests) {
   // Proof of compliance: [TSK-20260301-001.9] out of bounds behavior
   std::cout << "Step: Initialize NamedBitBuffer for bounds testing"
             << std::endl;
-  auto buf = NamedBitBuffer::create("bbuf", 10);
+  std::shared_ptr<NamedBitBuffer> buf = NamedBitBuffer::create("bbuf", 10);
 
   std::cout
       << "Assertion: Over-extending bit slice should throw std::out_of_range"
@@ -179,7 +180,8 @@ TEST(NamedBitBufferSliceTest, OutOfBoundsTests) {
   EXPECT_THROW(NamedBitBufferSlice::create("slice1", buf, 15, 1),
                std::out_of_range);
 
-  auto validSlice = NamedBitBufferSlice::create("slice2", buf, 2, 5);
+  std::shared_ptr<NamedBitBufferSlice> validSlice =
+      NamedBitBufferSlice::create("slice2", buf, 2, 5);
   std::cout
       << "Assertion: Over-extending sub-slice should throw std::out_of_range"
       << std::endl;
@@ -191,11 +193,14 @@ TEST(NamedBitBufferSliceTest, OutOfBoundsTests) {
 TEST(NamedBufferSliceTest, DeepCopyRebasing) {
   std::cout << "Step: Setup hierarchy with a root, Buffer, and Slices"
             << std::endl;
-  auto root = NamedObject::create("root");
-  auto buf = NamedBuffer::create("buf", 20, root);
-  auto slice1 = NamedBufferSlice::create("slice1", buf, 2, 10, buf);
-  auto slice2 = NamedBufferSlice::create("slice2", buf, 5, 5, root);
-  auto subSlice = NamedBufferSlice::create("subSlice", slice1, 3, 4, slice1);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedBuffer> buf = NamedBuffer::create("buf", 20, root);
+  std::shared_ptr<NamedBufferSlice> slice1 =
+      NamedBufferSlice::create("slice1", buf, 2, 10, buf);
+  std::shared_ptr<NamedBufferSlice> slice2 =
+      NamedBufferSlice::create("slice2", buf, 5, 5, root);
+  std::shared_ptr<NamedBufferSlice> subSlice =
+      NamedBufferSlice::create("subSlice", slice1, 3, 4, slice1);
 
   std::cout << "Step: Perform deep copy of the tree" << std::endl;
   auto clonedRoot = root->deepCopy();
@@ -225,16 +230,26 @@ TEST(NamedBufferSliceTest, DeepCopyRebasing) {
   EXPECT_EQ(clonedSubSlice->quasar::coretypes::BufferSlice::getParent(),
             clonedBuf);
   EXPECT_EQ(clonedSubSlice->getOffset(), 5);
+
+  // Break strong circular references created intentionally for rebasing tests
+  slice1->setParent(nullptr);
+  subSlice->setParent(nullptr);
+  clonedSlice1->setParent(nullptr);
+  clonedSubSlice->setParent(nullptr);
 }
 
 TEST(NamedBitBufferSliceTest, DeepCopyRebasing) {
   std::cout << "Step: Setup hierarchy with a root, BitBuffer, and Slices"
             << std::endl;
-  auto root = NamedObject::create("root");
-  auto buf = NamedBitBuffer::create("bbuf", 20, root);
-  auto slice1 = NamedBitBufferSlice::create("slice1", buf, 2, 10, buf);
-  auto slice2 = NamedBitBufferSlice::create("slice2", buf, 5, 5, root);
-  auto subSlice = NamedBitBufferSlice::create("subSlice", slice1, 3, 4, slice1);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedBitBuffer> buf =
+      NamedBitBuffer::create("bbuf", 20, root);
+  std::shared_ptr<NamedBitBufferSlice> slice1 =
+      NamedBitBufferSlice::create("slice1", buf, 2, 10, buf);
+  std::shared_ptr<NamedBitBufferSlice> slice2 =
+      NamedBitBufferSlice::create("slice2", buf, 5, 5, root);
+  std::shared_ptr<NamedBitBufferSlice> subSlice =
+      NamedBitBufferSlice::create("subSlice", slice1, 3, 4, slice1);
 
   std::cout << "Step: Perform deep copy of the tree" << std::endl;
   auto clonedRoot = root->deepCopy();
@@ -264,4 +279,10 @@ TEST(NamedBitBufferSliceTest, DeepCopyRebasing) {
   EXPECT_EQ(clonedSubSlice->quasar::coretypes::BitBufferSlice::getParent(),
             clonedBuf);
   EXPECT_EQ(clonedSubSlice->getOffset(), 5);
+
+  // Break strong circular references created intentionally for rebasing tests
+  slice1->setParent(nullptr);
+  subSlice->setParent(nullptr);
+  clonedSlice1->setParent(nullptr);
+  clonedSubSlice->setParent(nullptr);
 }

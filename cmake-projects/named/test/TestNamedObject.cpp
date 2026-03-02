@@ -187,8 +187,9 @@ TEST(NamedObjectTest, SerializationYAML) {
   // Proof of compliance: [FE-0020.9.3] YAML conversion.
   // Step: Create objects for YAML serialization
   std::cout << "Step: Create objects for YAML serialization" << std::endl;
-  auto root = NamedObject::create("root");
-  auto child = NamedInteger<int>::create("val", 123, root);
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedInteger<int>> child =
+      NamedInteger<int>::create("val", 123, root);
 
   // Step: Serialize to YAML
   std::cout << "Step: Serialize to YAML" << std::endl;

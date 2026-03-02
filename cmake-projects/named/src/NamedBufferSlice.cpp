@@ -81,20 +81,24 @@ NamedBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   std::shared_ptr<NamedBufferSlice> clonedSlice = nullptr;
 
   if (originalParent && newParent) {
-    auto underlyingBuffer = quasar::coretypes::BufferSlice::getParent();
+    std::shared_ptr<quasar::coretypes::Buffer> underlyingBuffer =
+        quasar::coretypes::BufferSlice::getParent();
 
-    if (auto nb = std::dynamic_pointer_cast<NamedBuffer>(originalParent)) {
+    if (std::shared_ptr<NamedBuffer> nb =
+            std::dynamic_pointer_cast<NamedBuffer>(originalParent)) {
       if (underlyingBuffer == nb) {
-        if (auto newNb = std::dynamic_pointer_cast<NamedBuffer>(newParent)) {
+        if (std::shared_ptr<NamedBuffer> newNb =
+                std::dynamic_pointer_cast<NamedBuffer>(newParent)) {
           clonedSlice =
               NamedBufferSlice::create(getName(), newNb, getOffset(), size());
         }
       }
-    } else if (auto nbs = std::dynamic_pointer_cast<NamedBufferSlice>(
-                   originalParent)) {
+    } else if (std::shared_ptr<NamedBufferSlice> nbs =
+                   std::dynamic_pointer_cast<NamedBufferSlice>(
+                       originalParent)) {
       if (underlyingBuffer ==
           nbs->quasar::coretypes::BufferSlice::getParent()) {
-        if (auto newNbs =
+        if (std::shared_ptr<NamedBufferSlice> newNbs =
                 std::dynamic_pointer_cast<NamedBufferSlice>(newParent)) {
           if (getOffset() >= newNbs->getOffset()) {
             size_t relativeStart = getOffset() - newNbs->getOffset();
@@ -114,8 +118,8 @@ NamedBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
     clonedSlice->setParent(newParent);
   }
 
-  auto childList = getChildren();
-  for (const auto &child : childList) {
+  std::list<std::shared_ptr<NamedObject>> childList = getChildren();
+  for (const std::shared_ptr<NamedObject> &child : childList) {
     child->deepCopy(getSelf(), clonedSlice);
   }
 

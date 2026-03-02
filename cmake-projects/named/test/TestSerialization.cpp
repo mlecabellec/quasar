@@ -150,7 +150,7 @@ TEST_F(SerializationTest, JSONRoundTrip) {
   // Proof of compliance: [FE-0020.9.2] JSON conversion.
   // Step: JSON Round Trip
   std::cout << "Step: JSON Round Trip" << std::endl;
-  auto root = createTestHierarchy();
+  std::shared_ptr<NamedObject> root = createTestHierarchy();
   std::string json = serialization::toJson(root);
   std::shared_ptr<NamedObject> restored = serialization::fromJson(json);
   verifyHierarchy(restored);

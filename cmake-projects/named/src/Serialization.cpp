@@ -357,7 +357,7 @@ void deserializeFromJson(const json &j, std::shared_ptr<NamedObject> parent) {
       createFromTypeAndValue(name, type, value, parent);
 
   if (j.contains("children")) {
-    for (const auto &child : j["children"].array_range()) {
+    for (const jsoncons::json &child : j["children"].array_range()) {
       deserializeFromJson(child, obj);
     }
   }
@@ -374,7 +374,7 @@ std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
       createFromTypeAndValue(name, type, value, nullptr);
 
   if (j.contains("children")) {
-    for (const auto &child : j["children"].array_range()) {
+    for (const jsoncons::json &child : j["children"].array_range()) {
       deserializeFromJson(child, obj);
     }
   }

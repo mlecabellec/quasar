@@ -302,7 +302,7 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
 
   // Iterate over children and recursively copy them. Deep copy attaches
   // themselves automatically.
-  for (const auto &child : children) {
+  for (const std::shared_ptr<NamedObject> &child : children) {
     child->deepCopy(getSelf(), clonedObj);
   }
 

@@ -81,20 +81,24 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   std::shared_ptr<NamedBitBufferSlice> clonedSlice = nullptr;
 
   if (originalParent && newParent) {
-    auto underlyingBuffer = quasar::coretypes::BitBufferSlice::getParent();
+    std::shared_ptr<quasar::coretypes::BitBuffer> underlyingBuffer =
+        quasar::coretypes::BitBufferSlice::getParent();
 
-    if (auto nb = std::dynamic_pointer_cast<NamedBitBuffer>(originalParent)) {
+    if (std::shared_ptr<NamedBitBuffer> nb =
+            std::dynamic_pointer_cast<NamedBitBuffer>(originalParent)) {
       if (underlyingBuffer == nb) {
-        if (auto newNb = std::dynamic_pointer_cast<NamedBitBuffer>(newParent)) {
+        if (std::shared_ptr<NamedBitBuffer> newNb =
+                std::dynamic_pointer_cast<NamedBitBuffer>(newParent)) {
           clonedSlice = NamedBitBufferSlice::create(getName(), newNb,
                                                     getOffset(), size());
         }
       }
-    } else if (auto nbs = std::dynamic_pointer_cast<NamedBitBufferSlice>(
-                   originalParent)) {
+    } else if (std::shared_ptr<NamedBitBufferSlice> nbs =
+                   std::dynamic_pointer_cast<NamedBitBufferSlice>(
+                       originalParent)) {
       if (underlyingBuffer ==
           nbs->quasar::coretypes::BitBufferSlice::getParent()) {
-        if (auto newNbs =
+        if (std::shared_ptr<NamedBitBufferSlice> newNbs =
                 std::dynamic_pointer_cast<NamedBitBufferSlice>(newParent)) {
           if (getOffset() >= newNbs->getOffset()) {
             size_t relativeStart = getOffset() - newNbs->getOffset();
@@ -114,8 +118,8 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
     clonedSlice->setParent(newParent);
   }
 
-  auto childList = getChildren();
-  for (const auto &child : childList) {
+  std::list<std::shared_ptr<NamedObject>> childList = getChildren();
+  for (const std::shared_ptr<NamedObject> &child : childList) {
     child->deepCopy(getSelf(), clonedSlice);
   }
 
