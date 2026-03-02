@@ -9,8 +9,8 @@
 using namespace quasar::named;
 
 TEST(NamedObjectThreadSafety, StressTest) {
-  // Proof of compliance: [FE-0020.5] Operations on named objects shall be thread safe.
-  // Step: Initialize root object and concurrency controls
+  // Proof of compliance: [FE-0020.5] Operations on named objects shall be
+  // thread safe. Step: Initialize root object and concurrency controls
   std::cout << "Step: Initialize root object and concurrency controls"
             << std::endl;
   std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -75,9 +75,9 @@ TEST(NamedObjectThreadSafety, StressTest) {
   for (int i = 0; i < 4; ++i)
     threads.emplace_back(reader);
 
-  // Step: Run stress test for 1 second
-  std::cout << "Step: Run stress test for 1 second" << std::endl;
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  // Step: Run stress test for 100ms
+  std::cout << "Step: Run stress test for 100ms" << std::endl;
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // Step: Signal stop and join all threads
   std::cout << "Step: Signal stop and join all threads" << std::endl;

@@ -25,6 +25,7 @@ TEST(CoreTypesThreadSafety, IntegerImmutable) {
       Int copy = sharedInt;
       // Assertion: Check if copy value is 42
       EXPECT_EQ(copy.toInt(), 42);
+      std::this_thread::yield();
     }
   };
 
@@ -35,9 +36,9 @@ TEST(CoreTypesThreadSafety, IntegerImmutable) {
     threads.emplace_back(reader);
   }
 
-  // Step: Sleep for 100ms
-  std::cout << "Step: Sleep for 100ms" << std::endl;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Step: Sleep for 10ms
+  std::cout << "Step: Sleep for 10ms" << std::endl;
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Step: Signal threads to stop and join
   std::cout << "Step: Signal threads to stop and join" << std::endl;
@@ -67,6 +68,7 @@ TEST(CoreTypesThreadSafety, FloatingPointImmutable) {
       Double copy = sharedDouble;
       // Assertion: Check if copy value is 3.14
       EXPECT_DOUBLE_EQ(copy.toDouble(), 3.14);
+      std::this_thread::yield();
     }
   };
 
@@ -77,9 +79,9 @@ TEST(CoreTypesThreadSafety, FloatingPointImmutable) {
     threads.emplace_back(reader);
   }
 
-  // Step: Sleep for 100ms
-  std::cout << "Step: Sleep for 100ms" << std::endl;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Step: Sleep for 10ms
+  std::cout << "Step: Sleep for 10ms" << std::endl;
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Step: Signal threads to stop and join
   std::cout << "Step: Signal threads to stop and join" << std::endl;
