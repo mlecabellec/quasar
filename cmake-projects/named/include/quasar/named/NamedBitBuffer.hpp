@@ -50,6 +50,12 @@ public:
     std::shared_ptr<NamedObject> clone() const override;
 
     /**
+     * @brief Returns the type of the object.
+     * @return "NamedBitBuffer"
+     */
+    std::string getType() const override;
+
+    /**
      * @brief Constructs a NamedBitBuffer instance.
      * @param name The name of the object.
      * @param bitCount The number of bits.

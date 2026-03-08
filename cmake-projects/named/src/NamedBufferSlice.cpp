@@ -126,4 +126,6 @@ NamedBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   return clonedSlice;
 }
 
+std::string NamedBufferSlice::getType() const { return "NamedBufferSlice"; }
+
 } // namespace quasar::named

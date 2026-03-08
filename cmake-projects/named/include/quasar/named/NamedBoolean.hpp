@@ -53,6 +53,12 @@ public:
   }
 
   /**
+   * @brief Returns the type of the object.
+   * @return "NamedBoolean"
+   */
+  std::string getType() const override;
+
+  /**
    * @brief Constructs a NamedBoolean instance.
    * @param name The name of the object.
    * @param value The initial boolean value.

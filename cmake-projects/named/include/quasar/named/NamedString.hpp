@@ -54,6 +54,12 @@ public:
   }
 
   /**
+   * @brief Returns the type of the object.
+   * @return "NamedString"
+   */
+  std::string getType() const override;
+
+  /**
    * @brief Constructs a NamedString instance.
    * @param name The name of the object.
    * @param value The initial string value.

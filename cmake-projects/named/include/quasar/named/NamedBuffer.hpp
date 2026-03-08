@@ -68,6 +68,12 @@ public:
   }
 
   /**
+   * @brief Returns the type of the object.
+   * @return "NamedBuffer"
+   */
+  std::string getType() const override;
+
+  /**
    * @brief Constructs a NamedBuffer instance with a given size.
    * @param name The name of the object.
    * @param size The initial buffer size.

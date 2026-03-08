@@ -49,4 +49,6 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
   return obj;
 }
 
+std::string NamedBuffer::getType() const { return "NamedBuffer"; }
+
 } // namespace quasar::named

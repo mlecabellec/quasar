@@ -113,6 +113,12 @@ public:
   std::shared_ptr<NamedObject> clone() const override;
 
   /**
+   * @brief Returns the type of the object.
+   * @return "NamedBufferSlice"
+   */
+  std::string getType() const override;
+
+  /**
    * @brief Performs a deep copy, rebasing underlying buffer if it views its
    * parent.
    */

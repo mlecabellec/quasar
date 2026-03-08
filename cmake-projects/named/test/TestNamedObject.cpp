@@ -260,3 +260,48 @@ TEST(NamedObjectTest, RelatedObject) {
   std::cout << "Assertion: Related object should be nullptr" << std::endl;
   EXPECT_EQ(obj1->getRelated(), nullptr);
 }
+
+TEST(NamedObjectTest, RTTI) {
+  // Proof of compliance: [TSK-20260303-002.2] Runtime Type Identification
+  std::cout << "Step: Check RTTI for NamedObject and NamedInteger" << std::endl;
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedInteger<int>> i = NamedInteger<int>::create("intVal", 42, root);
+
+  EXPECT_EQ(root->getType(), "NamedObject");
+  EXPECT_EQ(i->getType(), "NamedInteger");
+
+  EXPECT_TRUE(root->is<NamedObject>());
+  EXPECT_FALSE(root->is<NamedInteger<int>>());
+
+  EXPECT_TRUE(i->is<NamedObject>());
+  EXPECT_TRUE(i->is<NamedInteger<int>>());
+
+  EXPECT_NO_THROW(i->as<NamedInteger<int>>());
+}
+
+TEST(NamedObjectTest, ReplaceInTree) {
+  // Proof of compliance: [TSK-20260303-002.1] Tree Substitution
+  std::cout << "Step: Check replaceInTree structural substitution" << std::endl;
+  std::shared_ptr<NamedObject> root = NamedObject::create("root");
+  std::shared_ptr<NamedObject> child1 = NamedObject::create("child1", root);
+  std::shared_ptr<NamedObject> grandchild = NamedObject::create("grandchild", child1);
+  std::shared_ptr<NamedObject> child2 = NamedObject::create("child2", root);
+
+  std::shared_ptr<NamedObject> replacement = NamedObject::create("replacement");
+  
+  child1->replaceInTree(replacement);
+
+  // replacement should now be child of root
+  EXPECT_EQ(replacement->getParent(), root);
+  // and parent of grandchild
+  EXPECT_EQ(replacement->getChildren().size(), 1);
+  EXPECT_EQ(replacement->getFirstChild(), grandchild);
+  EXPECT_EQ(grandchild->getParent(), replacement);
+
+  // original child1 should be detached
+  EXPECT_EQ(child1->getParent(), nullptr);
+  EXPECT_EQ(child1->getChildren().size(), 0);
+
+  // root should have "replacement" and child2
+  EXPECT_EQ(root->getChildren().size(), 2);
+}

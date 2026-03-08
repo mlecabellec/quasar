@@ -26,4 +26,6 @@ NamedBoolean::create(const std::string &name, bool value,
   return obj;
 }
 
+std::string NamedBoolean::getType() const { return "NamedBoolean"; }
+
 } // namespace quasar::named

@@ -73,6 +73,12 @@ public:
   }
 
   /**
+   * @brief Returns the type of the object.
+   * @return "NamedFloatingPoint"
+   */
+  std::string getType() const override { return "NamedFloatingPoint"; }
+
+  /**
    * @brief Constructs a NamedFloatingPoint instance.
    * @param name The name of the object.
    * @param value The initial value.

@@ -94,6 +94,14 @@ public:
   std::string getName() const;
 
   /**
+   * @brief Sets the object's name.
+   *
+   * @param name The new name for the object.
+   * @throws std::runtime_error if name is empty, invalid, or already exists in the parent.
+   */
+  void setName(const std::string &name);
+
+  /**
    * @brief Retrieves the parent object.
    *
    * Fulfills [FE-0020.3.1] Getter for the parent property.
@@ -110,6 +118,15 @@ public:
    * @return A list containing shared pointers to all direct children.
    */
   std::list<std::shared_ptr<NamedObject>> getChildren() const;
+
+  /**
+   * @brief Retrieves a specific child by name.
+   *
+   * @param name The name of the child to find.
+   * @return Shared pointer to the child, or nullptr if not found.
+   */
+  std::shared_ptr<NamedObject> getChild(const std::string &name) const;
+
 
   /**
    * @brief Finds the sibling immediately preceding this object in the parent's
@@ -192,6 +209,41 @@ public:
   bool operator<(const NamedObject &other) const;
 
   /**
+   * @brief Returns the type of the object as a string.
+   *
+   * @return The class name as a string. Default is "NamedObject".
+   */
+  virtual std::string getType() const;
+
+  /**
+   * @brief Checks if the object is of a specific type.
+   * @tparam T The type to check for.
+   * @return true if the object is of type T or derived from T.
+   */
+  template <typename T> bool is() const {
+    return dynamic_cast<const T *>(this) != nullptr;
+  }
+
+  /**
+   * @brief Casts the object to a specific type.
+   * @tparam T The type to cast to.
+   * @return Shared pointer to the object as type T, or nullptr if cast fails.
+   */
+  template <typename T> std::shared_ptr<T> as() {
+    return std::dynamic_pointer_cast<T>(getSelf());
+  }
+
+  /**
+   * @brief Replaces this object in the hierarchy with another object.
+   *
+   * This method updates the parent's reference and re-parents all children.
+   *
+   * @param replacement The object that will replace this one.
+   * @throws std::runtime_error if timeout occurs or hierarchy becomes invalid.
+   */
+  void replaceInTree(std::shared_ptr<NamedObject> replacement);
+
+  /**
    * @brief Creates a standalone copy of this object.
    *
    * This is a shallow clone that does not copy the hierarchy (parent/children).
@@ -244,14 +296,22 @@ protected:
    * Used by setParent and create.
    * @param child The child to add.
    */
-  void addChild(std::shared_ptr<NamedObject> child);
+  virtual void addChild(std::shared_ptr<NamedObject> child);
+
+  /**
+   * @brief Internal helper to replace a child.
+   * @param oldChild The child to be replaced.
+   * @param newChild The replacement child.
+   */
+  virtual void replaceChild(std::shared_ptr<NamedObject> oldChild,
+                            std::shared_ptr<NamedObject> newChild);
 
   /**
    * @brief Internal helper to remove a child by name.
    * Used by setParent.
    * @param name Name of the child to remove.
    */
-  void removeChild(const std::string &name);
+  virtual void removeChild(const std::string &name);
 
   /**
    * @brief Sets the internal weak pointer to self.

@@ -1,0 +1,44 @@
+project(quasar_scripting)
+
+# Ensure C++23 is used
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Include directories
+include_directories(
+    include
+    ../third-party/lua
+    ../third-party/sol2/include
+    ../coretypes/include
+    ../named/include
+)
+
+# Source files
+set(SOURCES
+    src/LuaEngine.cpp
+)
+
+# Header files (for IDEs)
+set(HEADERS
+    include/quasar/scripting/LuaEngine.hpp
+)
+
+# Create the library
+add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+
+# Link dependencies
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+    liblua 
+    sol2 
+    quasar_coretypes 
+    quasar_named
+)
+
+# Export include directories for targets that link against this
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+add_subdirectory(test)

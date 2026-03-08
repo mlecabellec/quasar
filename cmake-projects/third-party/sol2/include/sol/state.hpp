@@ -39,7 +39,11 @@ namespace sol {
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
+#if LUA_VERSION_NUM >= 504
+		: unique_base(lua_newstate(alfunc, alpointer, 0u)), state_view(unique_base::get()) {
+#else
 		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
+#endif
 			set_default_state(unique_base::get(), panic);
 		}
 

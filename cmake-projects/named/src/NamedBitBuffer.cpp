@@ -38,4 +38,6 @@ std::shared_ptr<NamedObject> NamedBitBuffer::clone() const {
   return newObj;
 }
 
+std::string NamedBitBuffer::getType() const { return "NamedBitBuffer"; }
+
 } // namespace quasar::named

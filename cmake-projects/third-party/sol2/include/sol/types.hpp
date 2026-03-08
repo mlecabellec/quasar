@@ -685,7 +685,11 @@ namespace sol {
 		runtime = LUA_ERRRUN,
 		memory = LUA_ERRMEM,
 		handler = LUA_ERRERR,
+#if LUA_VERSION_NUM < 504
 		gc = LUA_ERRGCMM,
+#else
+		gc = -100, // LUA_ERRGCMM was removed in Lua 5.4
+#endif
 		syntax = LUA_ERRSYNTAX,
 		file = LUA_ERRFILE,
 	};
@@ -695,7 +699,11 @@ namespace sol {
 		yielded = LUA_YIELD,
 		runtime = LUA_ERRRUN,
 		memory = LUA_ERRMEM,
+#if LUA_VERSION_NUM < 504
 		gc = LUA_ERRGCMM,
+#else
+		gc = -101, // LUA_ERRGCMM was removed in Lua 5.4
+#endif
 		handler = LUA_ERRERR,
 		dead = -1,
 	};
@@ -704,7 +712,11 @@ namespace sol {
 		ok = LUA_OK,
 		syntax = LUA_ERRSYNTAX,
 		memory = LUA_ERRMEM,
+#if LUA_VERSION_NUM < 504
 		gc = LUA_ERRGCMM,
+#else
+		gc = -102, // LUA_ERRGCMM was removed in Lua 5.4
+#endif
 		file = LUA_ERRFILE,
 	};
 

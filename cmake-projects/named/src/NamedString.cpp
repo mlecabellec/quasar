@@ -26,4 +26,6 @@ NamedString::create(const std::string &name, const std::string &value,
   return obj;
 }
 
+std::string NamedString::getType() const { return "NamedString"; }
+
 } // namespace quasar::named

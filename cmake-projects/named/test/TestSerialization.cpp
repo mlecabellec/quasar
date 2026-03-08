@@ -5,6 +5,14 @@
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedString.hpp"
 #include "quasar/named/Serialization.hpp"
+#include "quasar/named/NamedTimestamp.hpp"
+#include "quasar/named/NamedDuration.hpp"
+#include "quasar/named/NamedDate.hpp"
+#include "quasar/named/NamedQuantity.hpp"
+#include "quasar/named/NamedArray.hpp"
+#include "quasar/named/NamedMap.hpp"
+#include "quasar/named/NamedVariant.hpp"
+
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -31,6 +39,20 @@ protected:
         NamedBitBuffer::create("bitBufferVal", 16, root);
     bb->setBit(0, true);
 
+    NamedDate::create("dateVal", 19000, root);
+    NamedTimestamp::create("tsVal", 1680000000000000, root);
+    NamedDuration::create("durVal", 42000000, root);
+    NamedQuantity::create("qtyVal", 220.5, quasar::coretypes::Units::Volt, root);
+
+    auto array = NamedArray<NamedObject>::create("arrayVal", root);
+    array->push_back(NamedInteger<int32_t>::create("item0", 123));
+    
+    auto map = NamedMap<NamedObject>::create("mapVal", root);
+    map->put("key1", NamedString::create("item1", "mapped"));
+    
+    auto variant = NamedVariant::create("varVal", root);
+    variant->set(NamedBoolean::create("inner", false));
+
     return root;
   }
 
@@ -45,9 +67,9 @@ protected:
     EXPECT_EQ(obj->getName(), "root");
 
     // Assertion: Check children size
-    std::cout << "Assertion: Check if children size is 6" << std::endl;
+    std::cout << "Assertion: Check if children size is 13" << std::endl;
     std::list<std::shared_ptr<NamedObject>> children = obj->getChildren();
-    EXPECT_EQ(children.size(), 6);
+    EXPECT_EQ(children.size(), 13);
 
     // Step: Verify each child by name and value
     std::cout << "Step: Verify each child by name and value" << std::endl;
@@ -57,6 +79,10 @@ protected:
     bool foundFloat = false;
     bool foundBuffer = false;
     bool foundBitBuffer = false;
+    bool foundDate = false;
+    bool foundTs = false;
+    bool foundDur = false;
+    bool foundQty = false;
 
     for (const std::shared_ptr<NamedObject> &child : children) {
       if (child->getName() == "intVal") {
@@ -111,11 +137,52 @@ protected:
         ASSERT_TRUE(bb != nullptr);
         EXPECT_EQ(bb->bitSize(), 16);
         EXPECT_TRUE(bb->getBit(0));
+      } else if (child->getName() == "dateVal") {
+        foundDate = true;
+        std::shared_ptr<NamedDate> d = std::dynamic_pointer_cast<NamedDate>(child);
+        std::cout << "Assertion: Check dateVal" << std::endl;
+        ASSERT_TRUE(d != nullptr);
+        EXPECT_EQ(d->value(), 19000);
+      } else if (child->getName() == "tsVal") {
+        foundTs = true;
+        std::shared_ptr<NamedTimestamp> ts = std::dynamic_pointer_cast<NamedTimestamp>(child);
+        std::cout << "Assertion: Check tsVal" << std::endl;
+        ASSERT_TRUE(ts != nullptr);
+        EXPECT_EQ(ts->value(), 1680000000000000);
+      } else if (child->getName() == "durVal") {
+        foundDur = true;
+        std::shared_ptr<NamedDuration> dur = std::dynamic_pointer_cast<NamedDuration>(child);
+        std::cout << "Assertion: Check durVal" << std::endl;
+        ASSERT_TRUE(dur != nullptr);
+        EXPECT_EQ(dur->value(), 42000000);
+      } else if (child->getName() == "qtyVal") {
+        foundQty = true;
+        std::shared_ptr<NamedQuantity> qty = std::dynamic_pointer_cast<NamedQuantity>(child);
+        std::cout << "Assertion: Check qtyVal" << std::endl;
+        ASSERT_TRUE(qty != nullptr);
+        EXPECT_DOUBLE_EQ(qty->value(), 220.5);
+        EXPECT_DOUBLE_EQ(qty->value(), 220.5);
+        EXPECT_EQ(qty->getUnitSymbol(), "V");
+      } else if (child->getName() == "arrayVal") {
+        auto arr = std::dynamic_pointer_cast<NamedArray<NamedObject>>(child);
+        ASSERT_TRUE(arr != nullptr);
+        EXPECT_EQ(arr->size(), 1);
+      } else if (child->getName() == "mapVal") {
+        auto m = std::dynamic_pointer_cast<NamedMap<NamedObject>>(child);
+        ASSERT_TRUE(m != nullptr);
+        EXPECT_EQ(m->size(), 1);
+        EXPECT_TRUE(m->contains("key1"));
+      } else if (child->getName() == "varVal") {
+        auto v = std::dynamic_pointer_cast<NamedVariant>(child);
+        ASSERT_TRUE(v != nullptr);
+        ASSERT_TRUE(v->get() != nullptr);
+        EXPECT_TRUE((v->template holds<NamedBoolean>()));
+
       }
     }
 
     // Assertion: Ensure all expected children were found
-    std::cout << "Assertion: Ensure all 6 expected children were found"
+    std::cout << "Assertion: Ensure all 13 expected children were found"
               << std::endl;
     EXPECT_TRUE(foundInt);
     EXPECT_TRUE(foundBool);
@@ -123,6 +190,10 @@ protected:
     EXPECT_TRUE(foundFloat);
     EXPECT_TRUE(foundBuffer);
     EXPECT_TRUE(foundBitBuffer);
+    EXPECT_TRUE(foundDate);
+    EXPECT_TRUE(foundTs);
+    EXPECT_TRUE(foundDur);
+    EXPECT_TRUE(foundQty);
   }
 };
 
