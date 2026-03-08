@@ -1,5 +1,7 @@
 #include "quasar/scripting/RegistryBindings.hpp"
 #include "quasar/scripting/ScriptableNamedObject.hpp"
+#include "quasar/scripting/LuaService.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
@@ -35,7 +37,7 @@ std::shared_ptr<NamedObject> resolvePath(std::shared_ptr<NamedObject> root, cons
     return current;
 }
 
-void bindNamedTypes(sol::state& lua) {
+void bindNamedTypes(sol::state_view lua) {
     // --- NamedObject ---
     auto utNamedObject = lua.new_usertype<NamedObject>("NamedObject", sol::no_constructor);
     utNamedObject["getName"] = &NamedObject::getName;
@@ -119,9 +121,33 @@ void bindNamedTypes(sol::state& lua) {
     utNamedVariant["get"] = &NamedVariant::get;
     utNamedVariant["getType"] = &NamedVariant::getType;
 
+    // --- LuaService ---
+    auto utLuaService = lua.new_usertype<LuaService>("LuaService", sol::base_classes, sol::bases<named::NamedObject, ScriptComponent>());
+    auto factoryLuaService = [](const std::string& name, sol::optional<std::shared_ptr<named::NamedObject>> parent) {
+        return std::static_pointer_cast<named::NamedObject>(LuaService::create(name, parent.value_or(nullptr)));
+    };
+    utLuaService["new"] = factoryLuaService;
+    utLuaService["create"] = factoryLuaService;
+    utLuaService["loadScript"] = &LuaService::loadScript;
+    utLuaService["onInit"] = &LuaService::onInit;
+    utLuaService["onUpdate"] = &LuaService::onUpdate;
+    utLuaService["onShutdown"] = &LuaService::onShutdown;
+    utLuaService["asService"] = [](std::shared_ptr<named::NamedObject> obj) { return std::dynamic_pointer_cast<LuaService>(obj); };
+
     // --- Global quasar table ---
     auto quasarTable = lua.create_named_table("quasar");
     quasarTable["resolve"] = &resolvePath;
+    
+    // Lifecycle Tracking
+    quasarTable["track"] = [](std::shared_ptr<named::NamedObject> obj) {
+        ObjectTracker::getInstance().track(obj);
+    };
+    quasarTable["isAlive"] = [](std::shared_ptr<named::NamedObject> obj) {
+        return ObjectTracker::getInstance().isAlive(obj);
+    };
+    quasarTable["cleanupTracker"] = []() {
+        ObjectTracker::getInstance().cleanup();
+    };
 }
 
 } // namespace quasar::scripting

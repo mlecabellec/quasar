@@ -22,6 +22,10 @@ set(SOURCES
     src/RegistryBindings.cpp
     src/ScriptExecutor.cpp
     src/ScriptableNamedObject.cpp
+    src/LuaService.cpp
+    src/ObjectTracker.cpp
+    src/ScriptManager.cpp
+    src/ScriptConsole.cpp
 )
 
 # Header files (for IDEs)
@@ -32,6 +36,10 @@ set(HEADERS
     include/quasar/scripting/LuaFuture.hpp
     include/quasar/scripting/ScriptExecutor.hpp
     include/quasar/scripting/ScriptableNamedObject.hpp
+    include/quasar/scripting/LuaService.hpp
+    include/quasar/scripting/ObjectTracker.hpp
+    include/quasar/scripting/ScriptManager.hpp
+    include/quasar/scripting/ScriptConsole.hpp
 )
 
 # Create the library
