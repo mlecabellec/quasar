@@ -1,4 +1,6 @@
 #include "quasar/scripting/LuaEngine.hpp"
+#include "quasar/scripting/TypeBindings.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 #include <iostream>
 
 namespace quasar {
@@ -36,11 +38,11 @@ LuaEngine::LuaEngine() {
         sol::lib::os  // TODO: Restrict later for strict sandboxing
     );
 
-    // Provide a global error handler for protected function calls
-    m_lua.set_function("quasar_error_handler", [](std::string message) {
-        return "Lua Error: " + message;
-    });
+    // Register Quasar bindings
+    bindCoreTypes(m_lua);
+    bindNamedTypes(m_lua);
 
+    setupSandbox();
 }
 
 LuaEngine::~LuaEngine() {
@@ -58,12 +60,8 @@ void LuaEngine::setupSandbox() {
     m_lua["io"]["popen"] = sol::lua_nil;
 }
 
-void LuaEngine::executeString(const std::string& code) {
-    auto result = m_lua.safe_script(code, sol::script_pass_on_error);
-    if (!result.valid()) {
-        sol::error err = result;
-        throw LuaExecutionException(err.what());
-    }
+sol::protected_function_result LuaEngine::executeString(const std::string& code) {
+    return m_lua.safe_script(code, sol::script_pass_on_error);
 }
 
 void LuaEngine::gcStep(int step_size) {

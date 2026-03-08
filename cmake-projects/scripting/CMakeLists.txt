@@ -10,6 +10,7 @@ include_directories(
     include
     ../third-party/lua
     ../third-party/sol2/include
+    ../third-party/asio/asio/include
     ../coretypes/include
     ../named/include
 )
@@ -17,11 +18,20 @@ include_directories(
 # Source files
 set(SOURCES
     src/LuaEngine.cpp
+    src/TypeBindings.cpp
+    src/RegistryBindings.cpp
+    src/ScriptExecutor.cpp
+    src/ScriptableNamedObject.cpp
 )
 
 # Header files (for IDEs)
 set(HEADERS
     include/quasar/scripting/LuaEngine.hpp
+    include/quasar/scripting/TypeBindings.hpp
+    include/quasar/scripting/RegistryBindings.hpp
+    include/quasar/scripting/LuaFuture.hpp
+    include/quasar/scripting/ScriptExecutor.hpp
+    include/quasar/scripting/ScriptableNamedObject.hpp
 )
 
 # Create the library

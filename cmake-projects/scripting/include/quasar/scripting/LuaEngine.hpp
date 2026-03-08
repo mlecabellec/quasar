@@ -43,9 +43,9 @@ public:
     /**
      * @brief Executes a string of Lua code safely.
      * @param code The Lua source code.
-     * @throws LuaExecutionException if execution fails or a syntax error occurs.
+     * @return Result of the execution.
      */
-    void executeString(const std::string& code);
+    sol::protected_function_result executeString(const std::string& code);
 
     /**
      * @brief Access the underlying sol::state directly.
