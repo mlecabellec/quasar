@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <mutex>
+#include <algorithm>
 
 namespace quasar::named {
 
