@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y cmake g++ make git pkg-config python3 file linux-headers-amd64 \
+          apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                              libgmp-dev libssl-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev
           # Attempt to install headers for the running kernel if possible, 
@@ -39,11 +39,23 @@ jobs:
           # We install the default headers for the distro to allow compilation 
           # if the build system allows specifying the KERNELDIR.
 
+      - name: ccache cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-${{ matrix.container }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.container }}-ccache-
+
       - name: Configure CMake Projects
         run: cmake -S cmake-projects -B build-projects
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Build CMake Projects
         run: cmake --build build-projects
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Test CMake Projects
         run: ctest --test-dir build-projects --output-on-failure
