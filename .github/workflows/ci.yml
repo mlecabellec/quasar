@@ -48,12 +48,19 @@ jobs:
             ${{ runner.os }}-${{ matrix.container }}-ccache-
 
       - name: Configure CMake Projects
-        run: cmake -S cmake-projects -B build-projects
+        run: |
+          mkdir -p .ccache
+          cmake -S cmake-projects -B build-projects \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Build CMake Projects
-        run: cmake --build build-projects
+        run: |
+          ccache -z
+          cmake --build build-projects
+          ccache -s
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
