@@ -7,9 +7,13 @@ namespace quasar::scripting {
 
 class LuaServiceTest : public ::testing::Test {
 protected:
+    std::string m_scriptPath;
+
     void SetUp() override {
+        m_scriptPath = std::string("/tmp/test_service_") + 
+                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".lua";
         // Create a temporary Lua script for testing
-        std::ofstream ofs("/tmp/test_service.lua");
+        std::ofstream ofs(m_scriptPath);
         ofs << R"(
             service = {
                 init_called = false,
@@ -36,14 +40,14 @@ protected:
     }
 
     void TearDown() override {
-        std::remove("/tmp/test_service.lua");
+        std::remove(m_scriptPath.c_str());
     }
 };
 
 TEST_F(LuaServiceTest, FullLifecycle) {
-    auto svc = LuaService::create("TestSvc");
+    std::shared_ptr<LuaService> svc = LuaService::create("TestSvc");
     
-    ASSERT_TRUE(svc->loadScript("/tmp/test_service.lua"));
+    ASSERT_TRUE(svc->loadScript(m_scriptPath));
     
     // Test onInit
     EXPECT_TRUE(svc->onInit());
@@ -53,7 +57,7 @@ TEST_F(LuaServiceTest, FullLifecycle) {
     svc->onUpdate(0.1);
     
     // Check update_count in the service table
-    auto result = svc->execute("return service.update_count");
+    sol::protected_function_result result = svc->execute("return service.update_count");
     EXPECT_EQ(result.get<int>(), 2);
 
     svc->onShutdown();
@@ -63,11 +67,11 @@ TEST_F(LuaServiceTest, FullLifecycle) {
 }
 
 TEST_F(LuaServiceTest, ObjectTracking) {
-    auto svc = LuaService::create("TrackerSvc");
-    auto& engine = *svc->getEngine();
-    auto& lua = engine.getState();
+    std::shared_ptr<LuaService> svc = LuaService::create("TrackerSvc");
+    LuaEngine& engine = *svc->getEngine();
+    sol::state& lua = engine.getState();
     
-    auto obj = named::NamedObject::create("TrackMe");
+    std::shared_ptr<named::NamedObject> obj = named::NamedObject::create("TrackMe");
     ObjectTracker::getInstance().track(obj);
     
     lua["trackedObj"] = obj;

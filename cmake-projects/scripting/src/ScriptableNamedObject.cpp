@@ -3,7 +3,10 @@
 namespace quasar::scripting {
 
 std::shared_ptr<ScriptableNamedObject> ScriptableNamedObject::create(const std::string& name, std::shared_ptr<named::NamedObject> parent) {
-    auto obj = std::shared_ptr<ScriptableNamedObject>(new ScriptableNamedObject(name));
+    struct Enabler : public ScriptableNamedObject {
+        Enabler(const std::string& n) : ScriptableNamedObject(n) {}
+    };
+    std::shared_ptr<ScriptableNamedObject> obj = std::make_shared<Enabler>(name);
     obj->setSelf(obj);
     if (parent) {
         obj->setParent(parent);

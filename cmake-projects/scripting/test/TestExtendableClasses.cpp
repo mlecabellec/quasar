@@ -15,7 +15,7 @@ TEST_F(ExtendableClassesTest, MethodOverride) {
     sol::state& lua = engine.getState();
     
     // Create a scriptable object
-    auto obj = ScriptableNamedObject::create("MyObject");
+    std::shared_ptr<ScriptableNamedObject> obj = ScriptableNamedObject::create("MyObject");
     
     // Define override in Lua
     lua["obj"] = obj;
@@ -41,7 +41,7 @@ TEST_F(ExtendableClassesTest, HookAddChild) {
     LuaEngine engine;
     sol::state& lua = engine.getState();
     
-    auto parent = ScriptableNamedObject::create("Parent");
+    std::shared_ptr<ScriptableNamedObject> parent = ScriptableNamedObject::create("Parent");
     lua["parent"] = parent;
     lua.script(R"(
         parent:setLuaSelf({
@@ -51,7 +51,7 @@ TEST_F(ExtendableClassesTest, HookAddChild) {
         })
     )");
     
-    auto child = named::NamedObject::create("Child");
+    std::shared_ptr<named::NamedObject> child = named::NamedObject::create("Child");
     // setParent calls parent->addChild internally
     child->setParent(parent); 
     

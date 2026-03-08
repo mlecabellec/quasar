@@ -4,7 +4,10 @@
 namespace quasar::scripting {
 
 std::shared_ptr<LuaService> LuaService::create(const std::string& name, std::shared_ptr<named::NamedObject> parent) {
-    auto svc = std::shared_ptr<LuaService>(new LuaService(name));
+    struct Enabler : public LuaService {
+        Enabler(const std::string& n) : LuaService(n) {}
+    };
+    std::shared_ptr<LuaService> svc = std::make_shared<Enabler>(name);
     svc->setSelf(svc);
     if (parent) {
         svc->setParent(parent);
@@ -19,7 +22,7 @@ LuaService::LuaService(const std::string& name)
 
 bool LuaService::loadScript(const std::string& path) {
     try {
-        auto result = m_engine->getState().script_file(path);
+        sol::protected_function_result result = m_engine->getState().script_file(path);
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] failed to load script: " << err.what() << std::endl;
@@ -48,7 +51,7 @@ sol::protected_function_result LuaService::execute(const std::string& script) {
 bool LuaService::onInit() {
     if (m_luaSelf && m_luaSelf["onInit"].valid()) {
         sol::protected_function func = m_luaSelf["onInit"];
-        auto result = func(m_luaSelf);
+        sol::protected_function_result result = func(m_luaSelf);
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] onInit error: " << err.what() << std::endl;
@@ -62,7 +65,7 @@ bool LuaService::onInit() {
 void LuaService::onUpdate(double dt) {
     if (m_luaSelf && m_luaSelf["onUpdate"].valid()) {
         sol::protected_function func = m_luaSelf["onUpdate"];
-        auto result = func(m_luaSelf, dt);
+        sol::protected_function_result result = func(m_luaSelf, dt);
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] onUpdate error: " << err.what() << std::endl;
@@ -73,7 +76,7 @@ void LuaService::onUpdate(double dt) {
 void LuaService::onShutdown() {
     if (m_luaSelf && m_luaSelf["onShutdown"].valid()) {
         sol::protected_function func = m_luaSelf["onShutdown"];
-        auto result = func(m_luaSelf);
+        sol::protected_function_result result = func(m_luaSelf);
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] onShutdown error: " << err.what() << std::endl;

@@ -21,7 +21,7 @@ TEST_F(ScriptExecutorTest, ExecuteSync) {
     LuaEngine engine;
     engine.executeString("x = 10");
     
-    auto result = ScriptExecutor::ExecuteSync(engine, "return x * 2");
+    sol::protected_function_result result = ScriptExecutor::ExecuteSync(engine, "return x * 2");
     ASSERT_TRUE(result.valid());
     EXPECT_EQ(result.get<int>(), 20);
 }
@@ -39,7 +39,7 @@ TEST_F(ScriptExecutorTest, ExecuteAsync) {
     future.wait();
     ASSERT_TRUE(future.isReady());
     
-    auto result = future.get();
+    sol::protected_function_result result = future.get();
     ASSERT_TRUE(result.valid());
     EXPECT_EQ(result.get<int>(), 500500); // sum of 1 to 1000
     EXPECT_EQ(cpp_sum, 125250); // sum of 1 to 500
@@ -49,7 +49,7 @@ TEST_F(ScriptExecutorTest, ExecuteAsyncError) {
     LuaFuture future = ScriptExecutor::ExecuteAsync("error('async failure')");
     future.wait();
     
-    auto result = future.get();
+    sol::protected_function_result result = future.get();
     ASSERT_FALSE(result.valid());
     
     // Check error message

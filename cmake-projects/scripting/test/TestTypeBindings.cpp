@@ -19,7 +19,7 @@ protected:
 TEST_F(TypeBindingsTest, IntegerPrecision) {
     // Large 64-bit integer test: 2^60 + 7
     int64_t largeVal = (1LL << 60) + 7;
-    auto valObj = std::make_shared<Integer<int64_t>>(largeVal);
+    std::shared_ptr<Integer<int64_t>> valObj = std::make_shared<Integer<int64_t>>(largeVal);
     
     engine.getState()["val"] = valObj;
     
@@ -41,7 +41,7 @@ TEST_F(TypeBindingsTest, IntegerPrecision) {
 TEST_F(TypeBindingsTest, UnsignedIntegerPrecision) {
     // Max uint64_t test
     uint64_t maxVal = std::numeric_limits<uint64_t>::max();
-    auto valObj = std::make_shared<Integer<uint64_t>>(maxVal);
+    std::shared_ptr<Integer<uint64_t>> valObj = std::make_shared<Integer<uint64_t>>(maxVal);
     
     engine.getState()["uval"] = valObj;
     
@@ -72,9 +72,9 @@ TEST_F(TypeBindingsTest, QuantityMath) {
 }
 
 TEST_F(TypeBindingsTest, HierarchyResolution) {
-    auto root = NamedObject::create("root");
-    auto c1 = NamedObject::create("c1", root);
-    auto sub = NamedInteger<int64_t>::create("sub", 42, c1);
+    std::shared_ptr<NamedObject> root = NamedObject::create("root");
+    std::shared_ptr<NamedObject> c1 = NamedObject::create("c1", root);
+    std::shared_ptr<NamedInteger<int64_t>> sub = NamedInteger<int64_t>::create("sub", 42, c1);
     
     engine.getState()["root"] = root;
     
@@ -95,7 +95,7 @@ TEST_F(TypeBindingsTest, HierarchyResolution) {
 }
 
 TEST_F(TypeBindingsTest, VariantHandling) {
-    auto var = NamedVariant::create("var");
+    std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
     engine.getState()["var"] = var;
     
     engine.executeString(R"(
@@ -118,17 +118,17 @@ TEST_F(TypeBindingsTest, VariantHandling) {
 
 TEST_F(TypeBindingsTest, CppVariantHandling) {
     using NamedLong = NamedInteger<int64_t>;
-    auto var = NamedVariant::create("var");
-    auto val = NamedLong::create("initial", 100);
+    std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
+    std::shared_ptr<NamedLong> val = NamedLong::create("initial", 100);
     
     // This mimics what happens in Lua
     var->set(val);
     
-    auto current = var->get();
+    std::shared_ptr<NamedObject> current = var->get();
     ASSERT_NE(current, nullptr);
     EXPECT_EQ(current->getName(), "value");
     
-    auto nlong = std::dynamic_pointer_cast<NamedLong>(current);
+    std::shared_ptr<NamedLong> nlong = std::dynamic_pointer_cast<NamedLong>(current);
     ASSERT_NE(nlong, nullptr);
     EXPECT_EQ(nlong->value(), 100);
 }

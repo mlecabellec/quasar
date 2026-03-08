@@ -39,7 +39,7 @@ std::shared_ptr<NamedObject> resolvePath(std::shared_ptr<NamedObject> root, cons
 
 void bindNamedTypes(sol::state_view lua) {
     // --- NamedObject ---
-    auto utNamedObject = lua.new_usertype<NamedObject>("NamedObject", sol::no_constructor);
+    sol::usertype<NamedObject> utNamedObject = lua.new_usertype<NamedObject>("NamedObject", sol::no_constructor);
     utNamedObject["getName"] = &NamedObject::getName;
     utNamedObject["setName"] = &NamedObject::setName;
     utNamedObject["getParent"] = &NamedObject::getParent;
@@ -60,41 +60,44 @@ void bindNamedTypes(sol::state_view lua) {
     utNamedObject["asScriptable"] = [](std::shared_ptr<NamedObject> obj) { return std::dynamic_pointer_cast<ScriptableNamedObject>(obj); };
 
     // --- ScriptableNamedObject ---
-    auto utScriptable = lua.new_usertype<ScriptableNamedObject>("ScriptableNamedObject", sol::base_classes, sol::bases<NamedObject>());
-    auto factoryScriptable = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
+    sol::usertype<ScriptableNamedObject> utScriptable = lua.new_usertype<ScriptableNamedObject>("ScriptableNamedObject", sol::base_classes, sol::bases<NamedObject>());
+    utScriptable["new"] = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
         return std::static_pointer_cast<NamedObject>(ScriptableNamedObject::create(name, parent.value_or(nullptr)));
     };
-    utScriptable["new"] = factoryScriptable;
-    utScriptable["create"] = factoryScriptable;
+    utScriptable["create"] = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
+        return std::static_pointer_cast<NamedObject>(ScriptableNamedObject::create(name, parent.value_or(nullptr)));
+    };
     utScriptable["setLuaSelf"] = &ScriptableNamedObject::setLuaSelf;
     utScriptable["getLuaSelf"] = &ScriptableNamedObject::getLuaSelf;
     utScriptable["onEvent"] = &ScriptableNamedObject::onEvent;
 
     // --- NamedLong ---
     using NamedLong = NamedInteger<int64_t>;
-    auto utNamedLong = lua.new_usertype<NamedLong>("NamedLong", sol::base_classes, sol::bases<NamedObject>());
-    auto factoryNamedLong = [](const std::string& name, int64_t value, sol::optional<std::shared_ptr<NamedObject>> parent) {
+    sol::usertype<NamedLong> utNamedLong = lua.new_usertype<NamedLong>("NamedLong", sol::base_classes, sol::bases<NamedObject>());
+    utNamedLong["new"] = [](const std::string& name, int64_t value, sol::optional<std::shared_ptr<NamedObject>> parent) {
         return std::static_pointer_cast<NamedObject>(NamedLong::create(name, value, parent.value_or(nullptr)));
     };
-    utNamedLong["new"] = factoryNamedLong;
-    utNamedLong["create"] = factoryNamedLong;
+    utNamedLong["create"] = [](const std::string& name, int64_t value, sol::optional<std::shared_ptr<NamedObject>> parent) {
+        return std::static_pointer_cast<NamedObject>(NamedLong::create(name, value, parent.value_or(nullptr)));
+    };
     utNamedLong["value"] = &NamedLong::value;
     utNamedLong[sol::meta_function::to_string] = static_cast<std::string(NamedLong::*)() const>(&NamedLong::toString);
 
     // --- NamedDouble ---
     using NamedDouble = NamedFloatingPoint<double>;
-    auto utNamedDouble = lua.new_usertype<NamedDouble>("NamedDouble", sol::base_classes, sol::bases<NamedObject>());
-    auto factoryNamedDouble = [](const std::string& name, double value, sol::optional<std::shared_ptr<NamedObject>> parent) {
+    sol::usertype<NamedDouble> utNamedDouble = lua.new_usertype<NamedDouble>("NamedDouble", sol::base_classes, sol::bases<NamedObject>());
+    utNamedDouble["new"] = [](const std::string& name, double value, sol::optional<std::shared_ptr<NamedObject>> parent) {
         return std::static_pointer_cast<NamedObject>(NamedDouble::create(name, value, parent.value_or(nullptr)));
     };
-    utNamedDouble["new"] = factoryNamedDouble;
-    utNamedDouble["create"] = factoryNamedDouble;
+    utNamedDouble["create"] = [](const std::string& name, double value, sol::optional<std::shared_ptr<NamedObject>> parent) {
+        return std::static_pointer_cast<NamedObject>(NamedDouble::create(name, value, parent.value_or(nullptr)));
+    };
     utNamedDouble["value"] = &NamedDouble::value;
     utNamedDouble[sol::meta_function::to_string] = static_cast<std::string(NamedDouble::*)() const>(&NamedDouble::toString);
 
     // --- NamedQuantity ---
-    auto utNamedQuantity = lua.new_usertype<NamedQuantity>("NamedQuantity", sol::base_classes, sol::bases<NamedObject>());
-    auto factoryNamedQuantity = sol::overload(
+    sol::usertype<NamedQuantity> utNamedQuantity = lua.new_usertype<NamedQuantity>("NamedQuantity", sol::base_classes, sol::bases<NamedObject>());
+    utNamedQuantity["new"] = sol::overload(
         [](const std::string& name, double value, const quasar::coretypes::Unit& unit, sol::optional<std::shared_ptr<NamedObject>> parent) {
             return std::static_pointer_cast<NamedObject>(NamedQuantity::create(name, value, unit, parent.value_or(nullptr)));
         },
@@ -102,19 +105,26 @@ void bindNamedTypes(sol::state_view lua) {
             return std::static_pointer_cast<NamedObject>(NamedQuantity::create(name, value, unitSymbol, parent.value_or(nullptr)));
         }
     );
-    utNamedQuantity["new"] = factoryNamedQuantity;
-    utNamedQuantity["create"] = factoryNamedQuantity;
+    utNamedQuantity["create"] = sol::overload(
+        [](const std::string& name, double value, const quasar::coretypes::Unit& unit, sol::optional<std::shared_ptr<NamedObject>> parent) {
+            return std::static_pointer_cast<NamedObject>(NamedQuantity::create(name, value, unit, parent.value_or(nullptr)));
+        },
+        [](const std::string& name, double value, const std::string& unitSymbol, sol::optional<std::shared_ptr<NamedObject>> parent) {
+            return std::static_pointer_cast<NamedObject>(NamedQuantity::create(name, value, unitSymbol, parent.value_or(nullptr)));
+        }
+    );
     utNamedQuantity["value"] = &NamedQuantity::value;
     utNamedQuantity["getUnitSymbol"] = &NamedQuantity::getUnitSymbol;
     utNamedQuantity[sol::meta_function::to_string] = static_cast<std::string(NamedQuantity::*)() const>(&NamedQuantity::toString);
 
     // --- NamedVariant ---
-    auto utNamedVariant = lua.new_usertype<NamedVariant>("NamedVariant", sol::base_classes, sol::bases<NamedObject>());
-    auto factoryNamedVariant = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
+    sol::usertype<NamedVariant> utNamedVariant = lua.new_usertype<NamedVariant>("NamedVariant", sol::base_classes, sol::bases<NamedObject>());
+    utNamedVariant["new"] = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
         return std::static_pointer_cast<NamedObject>(NamedVariant::create(name, parent.value_or(nullptr)));
     };
-    utNamedVariant["new"] = factoryNamedVariant;
-    utNamedVariant["create"] = factoryNamedVariant;
+    utNamedVariant["create"] = [](const std::string& name, sol::optional<std::shared_ptr<NamedObject>> parent) {
+        return std::static_pointer_cast<NamedObject>(NamedVariant::create(name, parent.value_or(nullptr)));
+    };
     utNamedVariant["set"] = [](NamedVariant& self, std::shared_ptr<NamedObject> obj) {
         self.set(obj);
     };
@@ -122,12 +132,13 @@ void bindNamedTypes(sol::state_view lua) {
     utNamedVariant["getType"] = &NamedVariant::getType;
 
     // --- LuaService ---
-    auto utLuaService = lua.new_usertype<LuaService>("LuaService", sol::base_classes, sol::bases<named::NamedObject, ScriptComponent>());
-    auto factoryLuaService = [](const std::string& name, sol::optional<std::shared_ptr<named::NamedObject>> parent) {
+    sol::usertype<LuaService> utLuaService = lua.new_usertype<LuaService>("LuaService", sol::base_classes, sol::bases<named::NamedObject, ScriptComponent>());
+    utLuaService["new"] = [](const std::string& name, sol::optional<std::shared_ptr<named::NamedObject>> parent) {
         return std::static_pointer_cast<named::NamedObject>(LuaService::create(name, parent.value_or(nullptr)));
     };
-    utLuaService["new"] = factoryLuaService;
-    utLuaService["create"] = factoryLuaService;
+    utLuaService["create"] = [](const std::string& name, sol::optional<std::shared_ptr<named::NamedObject>> parent) {
+        return std::static_pointer_cast<named::NamedObject>(LuaService::create(name, parent.value_or(nullptr)));
+    };
     utLuaService["loadScript"] = &LuaService::loadScript;
     utLuaService["onInit"] = &LuaService::onInit;
     utLuaService["onUpdate"] = &LuaService::onUpdate;
@@ -135,7 +146,7 @@ void bindNamedTypes(sol::state_view lua) {
     utLuaService["asService"] = [](std::shared_ptr<named::NamedObject> obj) { return std::dynamic_pointer_cast<LuaService>(obj); };
 
     // --- Global quasar table ---
-    auto quasarTable = lua.create_named_table("quasar");
+    sol::table quasarTable = lua.create_named_table("quasar");
     quasarTable["resolve"] = &resolvePath;
     
     // Lifecycle Tracking

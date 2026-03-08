@@ -14,7 +14,7 @@ ScriptManager::ScriptManager() : named::NamedObject("ScriptManager") {}
 std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name, const std::string& scriptPath) {
     std::lock_guard<std::mutex> lock(m_mutex);
     
-    auto svc = LuaService::create(name, getSelf());
+    std::shared_ptr<LuaService> svc = LuaService::create(name, getSelf());
     
     // Setup sandbox for the service
     sol::environment env = createSandbox(svc->getEngine()->getState());
@@ -33,7 +33,7 @@ std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name
 
 void ScriptManager::stopService(const std::string& name) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto it = m_services.find(name);
+    std::map<std::string, std::shared_ptr<LuaService>>::iterator it = m_services.find(name);
     if (it != m_services.end()) {
         it->second->onShutdown();
         m_services.erase(it);
@@ -42,15 +42,15 @@ void ScriptManager::stopService(const std::string& name) {
 
 void ScriptManager::update(double dt) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto& pair : m_services) {
+    for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
         pair.second->onUpdate(dt);
     }
 }
 
 void ScriptManager::tickGC(int stepSize) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto& pair : m_services) {
-        auto& lua = pair.second->getEngine()->getState();
+    for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
+        sol::state& lua = pair.second->getEngine()->getState();
         lua_gc(lua.lua_state(), LUA_GCSTEP, stepSize);
     }
 }

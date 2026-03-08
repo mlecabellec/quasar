@@ -6,8 +6,12 @@ namespace quasar::scripting {
 
 class ScriptManagerTest : public ::testing::Test {
 protected:
+    std::string m_scriptPath;
+
     void SetUp() override {
-        std::ofstream ofs("/tmp/stress_script.lua");
+        m_scriptPath = std::string("/tmp/stress_script_") + 
+                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".lua";
+        std::ofstream ofs(m_scriptPath);
         ofs << R"(
             local t = {}
             for i=1,100 do t[i] = i end
@@ -20,17 +24,17 @@ protected:
         ofs.close();
     }
     void TearDown() override {
-        std::remove("/tmp/stress_script.lua");
+        std::remove(m_scriptPath.c_str());
     }
 };
 
 TEST_F(ScriptManagerTest, MemoryStress) {
-    auto& mgr = ScriptManager::getInstance();
+    ScriptManager& mgr = ScriptManager::getInstance();
     
     // Perform 1000 creation/destruction cycles to check for leaks
     for (int i = 0; i < 1000; ++i) {
         std::string name = "Svc_" + std::to_string(i);
-        auto svc = mgr.createService(name, "/tmp/stress_script.lua");
+        std::shared_ptr<LuaService> svc = mgr.createService(name, m_scriptPath);
         ASSERT_NE(svc, nullptr);
         mgr.stopService(name);
         
@@ -44,14 +48,14 @@ TEST_F(ScriptManagerTest, MemoryStress) {
 }
 
 TEST_F(ScriptManagerTest, SandboxIsolation) {
-    auto& mgr = ScriptManager::getInstance();
+    ScriptManager& mgr = ScriptManager::getInstance();
     
     // Create a script that tries to use blocked os.execute
     std::ofstream ofs("/tmp/evil.lua");
     ofs << "return { onInit = function() os.execute('echo evil') end }";
     ofs.close();
     
-    auto svc = mgr.createService("EvilSvc", "/tmp/evil.lua");
+    std::shared_ptr<LuaService> svc = mgr.createService("EvilSvc", "/tmp/evil.lua");
     // This should fail or at least the onInit call should fail/warn
     // In our current ScriptManager, we load libraries then nil out os.execute.
     // Let's verify it panics or errors gracefully.

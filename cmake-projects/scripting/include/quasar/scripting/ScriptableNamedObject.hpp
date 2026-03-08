@@ -35,7 +35,7 @@ public:
     std::string getType() const override {
         if (m_luaSelf && m_luaSelf["getType"].valid()) {
             sol::protected_function func = m_luaSelf["getType"];
-            auto result = func(m_luaSelf);
+            sol::protected_function_result result = func(m_luaSelf);
             if (result.valid()) return result;
         }
         return "ScriptableNamedObject";
@@ -44,7 +44,7 @@ public:
     std::shared_ptr<named::NamedObject> clone() const override {
         if (m_luaSelf && m_luaSelf["clone"].valid()) {
             sol::protected_function func = m_luaSelf["clone"];
-            auto result = func(m_luaSelf);
+            sol::protected_function_result result = func(m_luaSelf);
             if (result.valid()) return result;
         }
         return named::NamedObject::clone();

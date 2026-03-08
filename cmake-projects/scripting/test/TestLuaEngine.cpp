@@ -52,13 +52,13 @@ TEST(LuaEngineTest, SandboxExecution) {
     engine.doSetupSandbox();
     
     // os.execute should be nil, so calling it in a script will result in a runtime error (attempt to call a nil value)
-    auto result = engine.executeString("os.execute('echo hi')");
+    sol::protected_function_result result = engine.executeString("os.execute('echo hi')");
     EXPECT_FALSE(result.valid());
 }
 
 TEST(LuaEngineTest, PanicHandling) {
     LuaEngine engine;
     // Attempting to execute malformed Lua should return an invalid result (syntax error)
-    auto result = engine.executeString("this is not valid lua code $#%#$");
+    sol::protected_function_result result = engine.executeString("this is not valid lua code $#%#$");
     EXPECT_FALSE(result.valid());
 }
