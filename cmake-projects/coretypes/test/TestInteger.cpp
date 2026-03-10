@@ -271,11 +271,11 @@ TEST(IntegerTest, BitwiseOperations) {
 
   // Assertion: Check bitwiseLeftShift
   std::cout << "Assertion: Check bitwiseLeftShift(10, 1) is 20" << std::endl;
-  EXPECT_EQ(a.bitwiseLeftShift(1)->toInt(), 20);
+  EXPECT_EQ(a.bitwiseLeftShift(Int(1))->toInt(), 20);
 
   // Assertion: Check bitwiseRightShift
   std::cout << "Assertion: Check bitwiseRightShift(10, 1) is 5" << std::endl;
-  EXPECT_EQ(a.bitwiseRightShift(1)->toInt(), 5);
+  EXPECT_EQ(a.bitwiseRightShift(Int(1))->toInt(), 5);
 }
 
 TEST(IntegerTest, Introspection) {

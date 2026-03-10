@@ -161,6 +161,27 @@ public:
     // Promotion from float to double is always safe and lossless.
     return static_cast<double>(value_);
   }
+
+  int8_t toInt8() const override { return toIntType<int8_t>(); }
+  int16_t toInt16() const override { return toIntType<int16_t>(); }
+  int32_t toInt32() const override { return toIntType<int32_t>(); }
+  int64_t toInt64() const override { return toIntType<int64_t>(); }
+  uint8_t toUInt8() const override { return toIntType<uint8_t>(); }
+  uint16_t toUInt16() const override { return toIntType<uint16_t>(); }
+  uint32_t toUInt32() const override { return toIntType<uint32_t>(); }
+  uint64_t toUInt64() const override { return toIntType<uint64_t>(); }
+  size_t toSizeT() const override { return toIntType<size_t>(); }
+  ptrdiff_t toPtrDiffT() const override { return toIntType<ptrdiff_t>(); }
+
+  template<typename TargetT> TargetT toIntType() const {
+    if (std::isnan(value_)) throw std::runtime_error("NaN");
+    if (std::isinf(value_)) throw std::overflow_error("Infinity");
+    if (value_ > static_cast<T>(std::numeric_limits<TargetT>::max()) ||
+        value_ < static_cast<T>(std::numeric_limits<TargetT>::min())) {
+      throw std::overflow_error("Out of range");
+    }
+    return static_cast<TargetT>(value_);
+  }
   
   /**
    * @brief Returns a string representation of the floating point value.
@@ -351,6 +372,85 @@ public:
     return compareTo(other) == 0;
   }
 
+  // --- Polymorphic Dispatch Implementation ---
+
+#define IMPLEMENT_INT_OP(OP_NAME) \
+  std::shared_ptr<Number> OP_NAME(signed char val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(unsigned char val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(short val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(unsigned short val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(int val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(unsigned int val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(unsigned long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(long long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  std::shared_ptr<Number> OP_NAME(unsigned long long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); }
+
+#define IMPLEMENT_INT_CMP_OP(OP_NAME, RETURN_TYPE) \
+  RETURN_TYPE OP_NAME(signed char val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(unsigned char val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(short val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(unsigned short val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(int val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(unsigned int val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(unsigned long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(long long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); } \
+  RETURN_TYPE OP_NAME(unsigned long long val) const override { return OP_NAME##Polymorphic(static_cast<double>(val)); }
+
+  // Arithmetic
+  IMPLEMENT_INT_OP(add)
+  IMPLEMENT_INT_OP(subtract)
+  IMPLEMENT_INT_OP(multiply)
+  IMPLEMENT_INT_OP(divide)
+
+  // Safe Arithmetic
+  IMPLEMENT_INT_OP(safeAdd)
+  IMPLEMENT_INT_OP(safeSubtract)
+  IMPLEMENT_INT_OP(safeMultiply)
+  IMPLEMENT_INT_OP(safeDivide)
+
+  // Bitwise (They will throw internally)
+  IMPLEMENT_INT_OP(bitwiseAnd)
+  IMPLEMENT_INT_OP(bitwiseOr)
+  IMPLEMENT_INT_OP(bitwiseXor)
+  IMPLEMENT_INT_OP(bitwiseLeftShift)
+  IMPLEMENT_INT_OP(bitwiseRightShift)
+
+  // Comparison
+  IMPLEMENT_INT_CMP_OP(compareTo, int)
+  IMPLEMENT_INT_CMP_OP(equals, bool)
+
+#undef IMPLEMENT_INT_OP
+#undef IMPLEMENT_INT_CMP_OP
+
+  // Implementation of binary ops with double to support the macros
+  std::shared_ptr<Number> addPolymorphic(double val) const { return std::make_shared<FloatingPoint<T>>(static_cast<T>(val) + value_); }
+  std::shared_ptr<Number> subtractPolymorphic(double val) const { return std::make_shared<FloatingPoint<T>>(static_cast<T>(val) - value_); }
+  std::shared_ptr<Number> multiplyPolymorphic(double val) const { return std::make_shared<FloatingPoint<T>>(static_cast<T>(val) * value_); }
+  std::shared_ptr<Number> dividePolymorphic(double val) const { return std::make_shared<FloatingPoint<T>>(static_cast<T>(val) / value_); }
+
+  std::shared_ptr<Number> safeAddPolymorphic(double val) const { T res = static_cast<T>(val) + value_; checkSafe(res); return std::make_shared<FloatingPoint<T>>(res); }
+  std::shared_ptr<Number> safeSubtractPolymorphic(double val) const { T res = static_cast<T>(val) - value_; checkSafe(res); return std::make_shared<FloatingPoint<T>>(res); }
+  std::shared_ptr<Number> safeMultiplyPolymorphic(double val) const { T res = static_cast<T>(val) * value_; checkSafe(res); return std::make_shared<FloatingPoint<T>>(res); }
+  std::shared_ptr<Number> safeDividePolymorphic(double val) const { if (value_ == 0.0) throw std::runtime_error("Division by zero"); T res = static_cast<T>(val) / value_; checkSafe(res); return std::make_shared<FloatingPoint<T>>(res); }
+
+  std::shared_ptr<Number> bitwiseAndPolymorphic(double) const { throw std::runtime_error("Bitwise operations not supported on FloatingPoint"); }
+  std::shared_ptr<Number> bitwiseOrPolymorphic(double) const { throw std::runtime_error("Bitwise operations not supported on FloatingPoint"); }
+  std::shared_ptr<Number> bitwiseXorPolymorphic(double) const { throw std::runtime_error("Bitwise operations not supported on FloatingPoint"); }
+  std::shared_ptr<Number> bitwiseLeftShiftPolymorphic(double) const { throw std::runtime_error("Bitwise operations not supported on FloatingPoint"); }
+  std::shared_ptr<Number> bitwiseRightShiftPolymorphic(double) const { throw std::runtime_error("Bitwise operations not supported on FloatingPoint"); }
+
+  int compareToPolymorphic(double val) const { 
+      if (std::isnan(val) && std::isnan(value_)) return 0;
+      if (std::isnan(val)) return 1;
+      if (std::isnan(value_)) return -1;
+      if (val < value_) return -1;
+      if (val > value_) return 1;
+      return 0;
+  }
+  bool equalsPolymorphic(double val) const { return compareToPolymorphic(val) == 0; }
+
   /**
    * @brief Polymorphic addition.
    * 
@@ -511,7 +611,7 @@ public:
    * Floating point types do not support bitwise operations.
    * @throws std::runtime_error Always.
    */
-  std::shared_ptr<Number> bitwiseLeftShift(int) const override {
+  std::shared_ptr<Number> bitwiseLeftShift(const Number &) const override {
     throw std::runtime_error(
         "Bitwise operations not supported on FloatingPoint");
   }
@@ -521,7 +621,7 @@ public:
    * Floating point types do not support bitwise operations.
    * @throws std::runtime_error Always.
    */
-  std::shared_ptr<Number> bitwiseRightShift(int) const override {
+  std::shared_ptr<Number> bitwiseRightShift(const Number &) const override {
     throw std::runtime_error(
         "Bitwise operations not supported on FloatingPoint");
   }

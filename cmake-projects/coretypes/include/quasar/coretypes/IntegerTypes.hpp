@@ -46,6 +46,12 @@ using UInt = Integer<uint32_t>;
  */
 using ULong = Integer<uint64_t>;
 
+/** @brief size_t integer wrapper. */
+using Size = Integer<size_t>;
+
+/** @brief ptrdiff_t integer wrapper. */
+using PtrDiff = Integer<ptrdiff_t>;
+
 } // namespace coretypes
 } // namespace quasar
 

@@ -85,6 +85,92 @@ public:
   virtual double toDouble() const = 0;
 
   /**
+   * @brief Returns the value of this number as an int64_t.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
+   * @return The numeric value represented by this object after conversion to 
+   * type int64_t.
+   * @throws std::overflow_error If the value cannot fit into an int64_t.
+   */
+  virtual int64_t toInt64() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a uint64_t.
+   * 
+   * Fulfills [FE-0010.1.5] Methods allowing explicit conversion to other numeric types.
+   * 
+   * @return The numeric value represented by this object after conversion to 
+   * type uint64_t.
+   * @throws std::overflow_error If the value cannot fit into a uint64_t.
+   */
+  virtual uint64_t toUInt64() const = 0;
+
+  /**
+   * @brief Returns the value of this number as an int32_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual int32_t toInt32() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a uint32_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual uint32_t toUInt32() const = 0;
+
+  /**
+   * @brief Returns the value of this number as an int16_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual int16_t toInt16() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a uint16_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual uint16_t toUInt16() const = 0;
+
+  /**
+   * @brief Returns the value of this number as an int8_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual int8_t toInt8() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a uint8_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual uint8_t toUInt8() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a size_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual size_t toSizeT() const = 0;
+
+  /**
+   * @brief Returns the value of this number as a ptrdiff_t.
+   * 
+   * @return The numeric value.
+   * @throws std::overflow_error If the value cannot fit.
+   */
+  virtual ptrdiff_t toPtrDiffT() const = 0;
+
+  /**
    * @brief Returns a string representation of the number.
    * 
    * Fulfills [FE-0010.1.7] Methods for encoding values to a string.
@@ -112,6 +198,46 @@ public:
    * @return true if both numbers represent the same value.
    */
   virtual bool equals(const Number &other) const = 0;
+
+  // Polymorphic arithmetic variations for all base integer types.
+  // Fulfills [TSK-20260308-001.3] Provide explicit method overrides or specializations for each base integer type.
+
+#define DEFINE_POLYMORPHIC_OP(OP_NAME, RETURN_TYPE) \
+  virtual RETURN_TYPE OP_NAME(signed char val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(unsigned char val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(short val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(unsigned short val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(int val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(unsigned int val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(long val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(unsigned long val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(long long val) const = 0; \
+  virtual RETURN_TYPE OP_NAME(unsigned long long val) const = 0;
+
+  // Arithmetic
+  DEFINE_POLYMORPHIC_OP(add, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(subtract, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(multiply, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(divide, std::shared_ptr<Number>)
+
+  // Safe Arithmetic
+  DEFINE_POLYMORPHIC_OP(safeAdd, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(safeSubtract, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(safeMultiply, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(safeDivide, std::shared_ptr<Number>)
+
+  // Bitwise
+  DEFINE_POLYMORPHIC_OP(bitwiseAnd, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(bitwiseOr, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(bitwiseXor, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(bitwiseLeftShift, std::shared_ptr<Number>)
+  DEFINE_POLYMORPHIC_OP(bitwiseRightShift, std::shared_ptr<Number>)
+
+  // Comparison
+  DEFINE_POLYMORPHIC_OP(compareTo, int)
+  DEFINE_POLYMORPHIC_OP(equals, bool)
+
+#undef DEFINE_POLYMORPHIC_OP
 
   /**
    * @brief Performs addition with another Number.
@@ -247,22 +373,22 @@ public:
    * 
    * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
    * 
-   * @param amount The number of positions to shift.
+   * @param other The number of positions to shift.
    * @return A shared pointer to a new Number containing the result.
    * @throws std::runtime_error If the number type does not support bitwise operations.
    */
-  virtual std::shared_ptr<Number> bitwiseLeftShift(int amount) const = 0;
+  virtual std::shared_ptr<Number> bitwiseLeftShift(const Number &other) const = 0;
 
   /**
    * @brief Performs a bitwise Right Shift operation.
    * 
    * Fulfills [FE-0030.1.5] Add methods for bitwise operations.
    * 
-   * @param amount The number of positions to shift.
+   * @param other The number of positions to shift.
    * @return A shared pointer to a new Number containing the result.
    * @throws std::runtime_error If the number type does not support bitwise operations.
    */
-  virtual std::shared_ptr<Number> bitwiseRightShift(int amount) const = 0;
+  virtual std::shared_ptr<Number> bitwiseRightShift(const Number &other) const = 0;
 
   /**
    * @brief Gets the type name of the number.
