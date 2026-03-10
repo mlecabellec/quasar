@@ -20,7 +20,12 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Define adder lambda (Thread A)
   std::cout << "Step: Define adder lambda (Thread A)" << std::endl;
   std::function<void()> adder = [&]() {
+    std::size_t iterations = 0;
+    // [CS-0010.37] Loop hard limit.
     while (!stop) {
+      if (++iterations > 10000000) {
+          break;
+      }
       int id = counter++;
       try {
         // Step: Create child with unique ID
@@ -35,7 +40,12 @@ TEST(NamedObjectThreadSafety, StressTest) {
   std::cout << "Step: Define remover lambda (Thread B)" << std::endl;
   std::function<void()> remover = [&]() {
     std::mt19937 rng(std::random_device{}());
+    std::size_t iterations = 0;
+    // [CS-0010.37] Loop hard limit.
     while (!stop) {
+      if (++iterations > 10000000) {
+          break;
+      }
       std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
       if (!children.empty()) {
         std::uniform_int_distribution<size_t> dist(0, children.size() - 1);
@@ -53,9 +63,16 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Define reader lambda (Thread C)
   std::cout << "Step: Define reader lambda (Thread C)" << std::endl;
   std::function<void()> reader = [&]() {
+    std::size_t iterations = 0;
+    // [CS-0010.37] Loop hard limit.
     while (!stop) {
+      if (++iterations > 10000000) {
+          break;
+      }
       std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
-      for (const std::shared_ptr<NamedObject> &child : children) {
+      // [CS-0010.34] auto forbidden.
+      for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+        const std::shared_ptr<NamedObject> &child = *it;
         // Step: Access name to verify object integrity
         volatile size_t l = child->getName().length();
         (void)l;
@@ -82,10 +99,12 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Signal stop and join all threads
   std::cout << "Step: Signal stop and join all threads" << std::endl;
   stop = true;
-  for (std::thread &t : threads)
-    t.join();
+  // [CS-0010.34] auto forbidden.
+  for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); ++it)
+    it->join();
 
   // Assertion: Thread safety verified if no crashes occurred
   std::cout << "Assertion: Thread safety verified" << std::endl;
   SUCCEED();
 }
+

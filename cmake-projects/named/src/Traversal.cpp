@@ -1,4 +1,5 @@
 #include "quasar/named/Traversal.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <algorithm>
 #include <queue>
 #include <stack>
@@ -16,7 +17,14 @@ void forEachDepthFirst(
   std::stack<std::shared_ptr<NamedObject>> stack;
   stack.push(root);
 
+  std::size_t iterations = 0;
   while (!stack.empty()) {
+    // [CS-0010.37] Loop hard limit.
+    if (++iterations > config::HARD_LIMIT_ITERATIONS) {
+        throw std::runtime_error("Hard limit reached in forEachDepthFirst");
+    }
+    
+    // [CS-0010.34] auto forbidden.
     std::shared_ptr<NamedObject> current = stack.top();
     stack.pop();
 
@@ -45,7 +53,14 @@ void forEachBreadthFirst(
   std::queue<std::shared_ptr<NamedObject>> queue;
   queue.push(root);
 
+  std::size_t iterations = 0;
   while (!queue.empty()) {
+    // [CS-0010.37] Loop hard limit.
+    if (++iterations > config::HARD_LIMIT_ITERATIONS) {
+        throw std::runtime_error("Hard limit reached in forEachBreadthFirst");
+    }
+    
+    // [CS-0010.34] auto forbidden.
     std::shared_ptr<NamedObject> current = queue.front();
     queue.pop();
 
@@ -53,7 +68,9 @@ void forEachBreadthFirst(
     callback(current);
 
     // Enqueue all children for processing in the next levels.
-    for (const std::shared_ptr<NamedObject> &child : current->getChildren()) {
+    std::list<std::shared_ptr<NamedObject>> children = current->getChildren();
+    for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+      const std::shared_ptr<NamedObject> &child = *it;
       queue.push(child);
     }
   }
@@ -67,7 +84,14 @@ findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
   if (root)
     stack.push(root);
 
+  std::size_t iterations = 0;
   while (!stack.empty()) {
+    // [CS-0010.37] Loop hard limit.
+    if (++iterations > config::HARD_LIMIT_ITERATIONS) {
+        throw std::runtime_error("Hard limit reached in findByName");
+    }
+    
+    // [CS-0010.34] auto forbidden.
     std::shared_ptr<NamedObject> current = stack.top();
     stack.pop();
 
@@ -101,7 +125,9 @@ std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
   }
 
   // Recursively process and attach all children.
-  for (const std::shared_ptr<NamedObject> &child : root->getChildren()) {
+  std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
+  for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+    const std::shared_ptr<NamedObject> &child = *it;
     deepCopy(child, newRoot);
   }
 
@@ -109,3 +135,4 @@ std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
 }
 
 } // namespace quasar::named::traversal
+

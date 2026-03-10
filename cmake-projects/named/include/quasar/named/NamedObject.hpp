@@ -31,6 +31,7 @@ namespace quasar::named {
  * - Fulfills [FE-0030.8] All methods are thread safe.
  * - Fulfills [FE-0030.9] All methods are const correct.
  * - Fulfills [FE-0060.1.1] Provide name, parent, and child collection features.
+ * - Fulfills [CS-0010.45] Documented with Doxygen.
  *
  * The class is thread-safe using a recursive mutex for all state-modifying
  * operations.
@@ -39,6 +40,7 @@ class NamedObject {
 public:
   /**
    * @brief Virtual destructor.
+   * @compliance [FE-0020.1.3.2] Parent destruction releases children.
    */
   virtual ~NamedObject();
 
@@ -87,9 +89,8 @@ public:
   /**
    * @brief Retrieves the object's name.
    *
-   * Fulfills [FE-0020.3.2] Getter for the name property.
-   *
    * @return The object name as a string.
+   * @compliance [FE-0020.3.2] Getter for the name property.
    */
   std::string getName() const;
 
@@ -104,18 +105,16 @@ public:
   /**
    * @brief Retrieves the parent object.
    *
-   * Fulfills [FE-0020.3.1] Getter for the parent property.
-   *
    * @return Shared pointer to the parent, or nullptr if it's a root object.
+   * @compliance [FE-0020.3.1] Getter for the parent property.
    */
   std::shared_ptr<NamedObject> getParent() const;
 
   /**
    * @brief Retrieves all child objects.
    *
-   * Fulfills [FE-0020.3.3] Getter for the children property.
-   *
    * @return A list containing shared pointers to all direct children.
+   * @compliance [FE-0020.3.3] Getter for the children property.
    */
   std::list<std::shared_ptr<NamedObject>> getChildren() const;
 
@@ -132,9 +131,8 @@ public:
    * @brief Finds the sibling immediately preceding this object in the parent's
    * child list.
    *
-   * Fulfills [FE-0020.3.5] Getter for the previous sibling property.
-   *
    * @return Shared pointer to the previous sibling, or nullptr if none.
+   * @compliance [FE-0020.3.5] Getter for the previous sibling property.
    */
   std::shared_ptr<NamedObject> getPreviousSibling() const;
 
@@ -142,27 +140,24 @@ public:
    * @brief Finds the sibling immediately following this object in the parent's
    * child list.
    *
-   * Fulfills [FE-0020.3.6] Getter for the next sibling property.
-   *
    * @return Shared pointer to the next sibling, or nullptr if none.
+   * @compliance [FE-0020.3.6] Getter for the next sibling property.
    */
   std::shared_ptr<NamedObject> getNextSibling() const;
 
   /**
    * @brief Retrieves the first child in the hierarchy.
    *
-   * Fulfills [FE-0020.3.7] Getter for the first child property.
-   *
    * @return Shared pointer to the first child, or nullptr if no children.
+   * @compliance [FE-0020.3.7] Getter for the first child property.
    */
   std::shared_ptr<NamedObject> getFirstChild() const;
 
   /**
    * @brief Retrieves the last child in the hierarchy.
    *
-   * Fulfills [FE-0020.3.8] Getter for the last child property.
-   *
    * @return Shared pointer to the last child, or nullptr if no children.
+   * @compliance [FE-0020.3.8] Getter for the last child property.
    */
   std::shared_ptr<NamedObject> getLastChild() const;
 
@@ -171,10 +166,9 @@ public:
    *
    * Related objects are typically non-hierarchical links.
    *
-   * Fulfills [FE-0020.7] Support a "related" property.
-   * Fulfills [FE-0020.8] Relations implemented using weak pointers.
-   *
    * @param related The object to relate to.
+   * @compliance [FE-0020.7] Support a "related" property.
+   * @compliance [FE-0020.8] Relations implemented using weak pointers.
    */
   void setRelated(std::shared_ptr<NamedObject> related);
 
@@ -185,15 +179,13 @@ public:
    */
   std::shared_ptr<NamedObject> getRelated() const;
 
-  // Comparison
   /**
    * @brief Equality operator.
    * Compares objects based on their names.
    *
-   * Fulfills [FE-0020.2] Methods for comparison based on the name.
-   *
    * @param other The object to compare with.
    * @return true if names match.
+   * @compliance [FE-0020.2] Methods for comparison based on the name.
    */
   bool operator==(const NamedObject &other) const;
 
@@ -201,10 +193,9 @@ public:
    * @brief Less-than operator for sorting.
    * Compares objects lexicographically based on their names.
    *
-   * Fulfills [FE-0020.2.3] Comparison shall be lexicographical.
-   *
    * @param other The object to compare with.
    * @return true if this name is lexicographically smaller than the other.
+   * @compliance [FE-0020.2.3] Comparison shall be lexicographical.
    */
   bool operator<(const NamedObject &other) const;
 
@@ -240,6 +231,7 @@ public:
    *
    * @param replacement The object that will replace this one.
    * @throws std::runtime_error if timeout occurs or hierarchy becomes invalid.
+   * @compliance [FE-0110.1.1] Tree Substitution.
    */
   void replaceInTree(std::shared_ptr<NamedObject> replacement);
 
@@ -256,23 +248,20 @@ public:
   /**
    * @brief Performs a deep copy of this object and its entire subtree.
    *
-   * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
-   * Fulfills [TSK-20260301-001.2] Recursive deep copy natively natively
-   * handled.
-   *
    * @return A deep clone of the tree starting from this object as the root.
+   * @compliance [FE-0020.14] Utilities for copying parts of the tree.
+   * @compliance [FE-0020.14.1] deep copy mechanism.
    */
   virtual std::shared_ptr<NamedObject> deepCopy() const;
 
   /**
    * @brief Internal recursive helper for deep copying a subtree.
    *
-   * Fulfills [TSK-20260301-001.2]
-   *
    * @param originalParent The parent in the original tree.
    * @param newParent The new parent in the cloned tree.
    * @return A deep clone of this object, appropriately re-parented and rebased
    * if needed.
+   * @compliance [FE-0020.14.1] deep copy mechanism.
    */
   virtual std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
@@ -288,6 +277,7 @@ protected:
   /**
    * @brief Protected constructor to enforce use of create() factory.
    * @param name The name of the object.
+   * @compliance [FE-0020.1.1] "name" property initialized.
    */
   NamedObject(const std::string &name);
 
@@ -295,6 +285,7 @@ protected:
    * @brief Internal helper to add a child.
    * Used by setParent and create.
    * @param child The child to add.
+   * @compliance [FE-0020.1.3.1] strong reference to children.
    */
   virtual void addChild(std::shared_ptr<NamedObject> child);
 
@@ -310,6 +301,7 @@ protected:
    * @brief Internal helper to remove a child by name.
    * Used by setParent.
    * @param name Name of the child to remove.
+   * @compliance [FE-0020.1.3.4] removed from parent list.
    */
   virtual void removeChild(const std::string &name);
 
@@ -340,6 +332,7 @@ private:
    * @brief Validates if a name follows the allowed format.
    * @param name The name to validate.
    * @return true if valid.
+   * @compliance [FE-0020.1.1.3] Name shall match regex.
    */
   static bool isValidName(const std::string &name);
 };
@@ -347,3 +340,4 @@ private:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDOBJECT_HPP
+

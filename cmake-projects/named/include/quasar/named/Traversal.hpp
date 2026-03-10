@@ -106,3 +106,4 @@ deepCopy(const std::shared_ptr<NamedObject> &root,
 } // namespace quasar::named::traversal
 
 #endif // QUASAR_NAMED_TRAVERSAL_HPP
+

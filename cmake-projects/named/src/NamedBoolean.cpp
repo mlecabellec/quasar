@@ -4,7 +4,7 @@ namespace quasar::named {
 
 NamedBoolean::NamedBoolean(const std::string &name, bool value)
     : NamedObject(name), quasar::coretypes::Boolean(value) {
-    // Fulfills [FE-0020.4] Derivated class for Boolean core type.
+    // Fulfills [FE-0020.4] Derivative class for Boolean core type.
     // Both base classes are initialized with the respective name and value.
 }
 
@@ -15,10 +15,10 @@ NamedBoolean::create(const std::string &name, bool value,
   // Create a new NamedBoolean instance.
   std::shared_ptr<NamedBoolean> obj =
       std::make_shared<NamedBoolean>(name, value);
-  
+
   // Set the self-reference for getSelf().
   obj->setSelf(obj);
-  
+
   // Link to parent if one is provided.
   if (parent) {
     obj->setParent(parent);
@@ -29,3 +29,4 @@ NamedBoolean::create(const std::string &name, bool value,
 std::string NamedBoolean::getType() const { return "NamedBoolean"; }
 
 } // namespace quasar::named
+

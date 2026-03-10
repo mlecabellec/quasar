@@ -203,16 +203,16 @@ TEST(NamedBufferSliceTest, DeepCopyRebasing) {
       NamedBufferSlice::create("subSlice", slice1, 3, 4, slice1);
 
   std::cout << "Step: Perform deep copy of the tree" << std::endl;
-  auto clonedRoot = root->deepCopy();
+  std::shared_ptr<NamedObject> clonedRoot = root->deepCopy();
 
   std::cout << "Step: Find nodes in cloned tree" << std::endl;
-  auto clonedBuf =
+  std::shared_ptr<NamedBuffer> clonedBuf =
       std::dynamic_pointer_cast<NamedBuffer>(clonedRoot->getFirstChild());
-  auto clonedSlice2 =
+  std::shared_ptr<NamedBufferSlice> clonedSlice2 =
       std::dynamic_pointer_cast<NamedBufferSlice>(clonedRoot->getLastChild());
-  auto clonedSlice1 =
+  std::shared_ptr<NamedBufferSlice> clonedSlice1 =
       std::dynamic_pointer_cast<NamedBufferSlice>(clonedBuf->getFirstChild());
-  auto clonedSubSlice = std::dynamic_pointer_cast<NamedBufferSlice>(
+  std::shared_ptr<NamedBufferSlice> clonedSubSlice = std::dynamic_pointer_cast<NamedBufferSlice>(
       clonedSlice1->getFirstChild());
 
   std::cout << "Assertion: slice1 should rebase to clonedBuf" << std::endl;
@@ -252,16 +252,16 @@ TEST(NamedBitBufferSliceTest, DeepCopyRebasing) {
       NamedBitBufferSlice::create("subSlice", slice1, 3, 4, slice1);
 
   std::cout << "Step: Perform deep copy of the tree" << std::endl;
-  auto clonedRoot = root->deepCopy();
+  std::shared_ptr<NamedObject> clonedRoot = root->deepCopy();
 
   std::cout << "Step: Find nodes in cloned tree" << std::endl;
-  auto clonedBuf =
+  std::shared_ptr<NamedBitBuffer> clonedBuf =
       std::dynamic_pointer_cast<NamedBitBuffer>(clonedRoot->getFirstChild());
-  auto clonedSlice2 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+  std::shared_ptr<NamedBitBufferSlice> clonedSlice2 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
       clonedRoot->getLastChild());
-  auto clonedSlice1 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+  std::shared_ptr<NamedBitBufferSlice> clonedSlice1 = std::dynamic_pointer_cast<NamedBitBufferSlice>(
       clonedBuf->getFirstChild());
-  auto clonedSubSlice = std::dynamic_pointer_cast<NamedBitBufferSlice>(
+  std::shared_ptr<NamedBitBufferSlice> clonedSubSlice = std::dynamic_pointer_cast<NamedBitBufferSlice>(
       clonedSlice1->getFirstChild());
 
   std::cout << "Assertion: slice1 should rebase to clonedBuf" << std::endl;
@@ -286,3 +286,4 @@ TEST(NamedBitBufferSliceTest, DeepCopyRebasing) {
   clonedSlice1->setParent(nullptr);
   clonedSubSlice->setParent(nullptr);
 }
+

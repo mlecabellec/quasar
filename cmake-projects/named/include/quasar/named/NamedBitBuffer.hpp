@@ -20,6 +20,7 @@ namespace quasar::named {
  * 
  * **Compliance**:
  * - Fulfills [FE-0030.6] support for a named BitBuffer.
+ * - Fulfills [FE-0020.4] Derivative of NamedObject.
  */
 class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer {
 public:
@@ -66,3 +67,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDBITBUFFER_HPP
+

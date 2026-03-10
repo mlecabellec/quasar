@@ -21,10 +21,10 @@ NamedBuffer::create(const std::string &name, size_t size,
   // Fulfills [FE-0020.6] static method "create".
   // Instantiate a new NamedBuffer.
   std::shared_ptr<NamedBuffer> obj = std::make_shared<NamedBuffer>(name, size);
-  
+
   // Ensure the object can return a shared_ptr to itself.
   obj->setSelf(obj);
-  
+
   // If a parent is specified, add this buffer to the hierarchy.
   if (parent) {
     obj->setParent(parent);
@@ -38,10 +38,10 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
   // Fulfills [FE-0020.6] static method "create".
   // Instantiate a new NamedBuffer with initial data.
   std::shared_ptr<NamedBuffer> obj = std::make_shared<NamedBuffer>(name, data);
-  
+
   // Ensure the object can return a shared_ptr to itself.
   obj->setSelf(obj);
-  
+
   // If a parent is specified, add this buffer to the hierarchy.
   if (parent) {
     obj->setParent(parent);
@@ -52,3 +52,4 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
 std::string NamedBuffer::getType() const { return "NamedBuffer"; }
 
 } // namespace quasar::named
+

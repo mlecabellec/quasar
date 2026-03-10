@@ -19,7 +19,8 @@ namespace quasar::named {
  * integer value management of coretypes::Integer.
  * 
  * **Compliance**:
- * - Fulfills [FE-0020.4] Derivated class for Integer core type.
+ * - Fulfills [FE-0020.4] Derivative class for Integer core type.
+ * - Fulfills [CS-0010.34] auto forbidden.
  *
  * @tparam T The underlying integer type (e.g., int, uint32_t, int64_t).
  */
@@ -90,3 +91,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDINTEGER_HPP
+

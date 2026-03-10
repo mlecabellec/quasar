@@ -3,7 +3,8 @@
  * @brief Class for named views into bit-addressable buffers.
  */
 
-#pragma once
+#ifndef QUASAR_NAMED_NAMEDBITBUFFERSLICE_HPP
+#define QUASAR_NAMED_NAMEDBITBUFFERSLICE_HPP
 
 #include "quasar/coretypes/BitBufferSlice.hpp"
 #include "quasar/named/NamedObject.hpp"
@@ -124,6 +125,10 @@ public:
   /**
    * @brief Performs a deep copy, rebasing underlying bit buffer if it views its
    * parent.
+   * @param originalParent Original parent.
+   * @param newParent New parent.
+   * @return Cloned object.
+   * @compliance [FE-0020.14.2] Deep copy rebase slices.
    */
   std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
@@ -144,3 +149,6 @@ public:
 };
 
 } // namespace quasar::named
+
+#endif // QUASAR_NAMED_NAMEDBITBUFFERSLICE_HPP
+

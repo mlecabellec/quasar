@@ -1,4 +1,5 @@
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <algorithm>
 #include <regex>
 
@@ -59,7 +60,7 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   {
     // Check if the requested parent is already set.
     std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                      std::chrono::seconds(1));
+                                                      config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring NamedObject lock");
     }
@@ -75,8 +76,13 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   }
 
   // Verify that setting the parent doesn't create a cycle in the tree.
+  // [CS-0010.37] Hard limit on loops.
   std::shared_ptr<NamedObject> p = parent;
+  std::size_t iterations = 0;
   while (p) {
+    if (++iterations > config::HARD_LIMIT_ITERATIONS) {
+      throw std::runtime_error("Hard limit reached in parent hierarchy check");
+    }
     if (p.get() == this) {
       throw std::runtime_error("Cycle detected in parent hierarchy");
     }
@@ -85,6 +91,7 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 
   std::shared_ptr<NamedObject> oldParent;
 
+  // Add this object as a child of the new parent.
   if (parent) {
     // Fulfills [FE-0020.1.2.2] Added to parent's children list.
     // Attempt to add this object as a child of the new parent.
@@ -92,10 +99,10 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
     parent->addChild(getSelf());
   }
 
+  // Atomically update the parent reference.
   {
-    // Atomically update the parent reference.
     std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                      std::chrono::seconds(1));
+                                                      config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring NamedObject lock");
     }
@@ -103,10 +110,10 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
     m_parent = parent;
   }
 
+  // Remove this object from the old parent's child list.
   if (oldParent) {
     try {
       // Fulfills [FE-0020.1.3.4] removed from old parent list.
-      // Remove this object from the old parent's child list.
       oldParent->removeChild(m_name);
     } catch (...) {
       // Ignore errors during removal from old parent to maintain consistency.
@@ -117,12 +124,15 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
   // Fulfills [FE-0020.1.3.1] strong reference to children.
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
+  
   // Ensure that all children have unique names.
-  for (const std::shared_ptr<NamedObject> &c : m_children) {
+  // [CS-0010.34] auto forbidden.
+  for (std::list<std::shared_ptr<NamedObject>>::iterator it = m_children.begin(); it != m_children.end(); ++it) {
+    const std::shared_ptr<NamedObject> &c = *it;
     if (c->getName() == child->getName()) {
       if (c == child)
         return; // The object is already a child.
@@ -137,7 +147,7 @@ void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
 
 void NamedObject::removeChild(const std::string &name) {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -155,7 +165,7 @@ void NamedObject::removeChild(const std::string &name) {
 void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
                                std::shared_ptr<NamedObject> newChild) {
   std::unique_lock<std::recursive_timed_mutex> lock(
-      m_mutex, std::chrono::milliseconds(100));
+      m_mutex, config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -176,6 +186,7 @@ void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
 std::string NamedObject::getName() const { return m_name; }
 
 void NamedObject::setName(const std::string &name) {
+  // Validate the new name according to naming rules.
   if (name.empty()) {
     throw std::runtime_error("Name cannot be empty");
   }
@@ -183,8 +194,9 @@ void NamedObject::setName(const std::string &name) {
     throw std::runtime_error("Invalid name format: " + name);
   }
 
+  // Acquire local lock to modify name.
   std::unique_lock<std::recursive_timed_mutex> lock(
-      m_mutex, std::chrono::milliseconds(100));
+      m_mutex, config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -193,15 +205,17 @@ void NamedObject::setName(const std::string &name) {
     return;
   }
 
+  // Need to check for name uniqueness in the parent before renaming.
   std::shared_ptr<NamedObject> parent = m_parent.lock();
   if (parent) {
-    // Need to check for name uniqueness in the parent before renaming
     std::unique_lock<std::recursive_timed_mutex> parentLock(
-        parent->m_mutex, std::chrono::milliseconds(100));
+        parent->m_mutex, config::DEFAULT_LOCK_TIMEOUT);
     if (!parentLock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring parent lock for rename");
     }
-    for (const auto &child : parent->m_children) {
+    // [CS-0010.34] auto forbidden.
+    for (std::list<std::shared_ptr<NamedObject>>::iterator it = parent->m_children.begin(); it != parent->m_children.end(); ++it) {
+      const std::shared_ptr<NamedObject> &child = *it;
       if (child.get() != this && child->getName() == name) {
         throw std::runtime_error("Name not unique in parent: " + name);
       }
@@ -218,16 +232,18 @@ void NamedObject::setName(const std::string &name) {
 std::string NamedObject::getType() const { return "NamedObject"; }
 
 void NamedObject::replaceInTree(std::shared_ptr<NamedObject> replacement) {
+  // Fulfills [FE-0110.1.1] Tree Substitution.
   if (!replacement) {
     throw std::runtime_error("Replacement cannot be null");
   }
 
   std::unique_lock<std::recursive_timed_mutex> lock(
-      m_mutex, std::chrono::milliseconds(100));
+      m_mutex, config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
 
+  // Update parent reference if it exists.
   std::shared_ptr<NamedObject> parent = m_parent.lock();
   if (parent) {
     // Replace this in parent's child list.
@@ -242,18 +258,20 @@ void NamedObject::replaceInTree(std::shared_ptr<NamedObject> replacement) {
     m_children.clear();
   }
 
-  for (const std::shared_ptr<NamedObject> &child : children) {
-    // Re-parent each child to the replacement.
+  // Re-parent each child to the replacement.
+  // [CS-0010.34] auto forbidden.
+  for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+    const std::shared_ptr<NamedObject> &child = *it;
     child->setParent(replacement);
   }
 
   // Update replacement's parent.
   replacement->setParent(parent);
 
-  // Clear our own parent reference now that we are detached
+  // Clear our own parent reference now that we are detached.
   {
       std::unique_lock<std::recursive_timed_mutex> lock2(
-          m_mutex, std::chrono::milliseconds(100));
+          m_mutex, config::DEFAULT_LOCK_TIMEOUT);
       if (lock2.owns_lock()) {
           m_parent.reset();
       }
@@ -262,7 +280,7 @@ void NamedObject::replaceInTree(std::shared_ptr<NamedObject> replacement) {
 
 std::shared_ptr<NamedObject> NamedObject::getParent() const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -271,7 +289,7 @@ std::shared_ptr<NamedObject> NamedObject::getParent() const {
 
 std::list<std::shared_ptr<NamedObject>> NamedObject::getChildren() const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -280,11 +298,14 @@ std::list<std::shared_ptr<NamedObject>> NamedObject::getChildren() const {
 
 std::shared_ptr<NamedObject> NamedObject::getChild(const std::string &name) const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
-  for (const auto &child : m_children) {
+  // Search for child by name.
+  // [CS-0010.34] auto forbidden.
+  for (std::list<std::shared_ptr<NamedObject>>::const_iterator it = m_children.begin(); it != m_children.end(); ++it) {
+    const std::shared_ptr<NamedObject> &child = *it;
     if (child->getName() == name) {
       return child;
     }
@@ -300,7 +321,7 @@ std::shared_ptr<NamedObject> NamedObject::getPreviousSibling() const {
   // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::unique_lock<std::recursive_timed_mutex> lock(p->m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error(
         "Timeout acquiring parent NamedObject lock in getPreviousSibling");
@@ -324,7 +345,7 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
   // Siblings are stored in the parent's child list.
   // We lock the parent to safely traverse the list.
   std::unique_lock<std::recursive_timed_mutex> lock(p->m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error(
         "Timeout acquiring parent NamedObject lock in getNextSibling");
@@ -342,7 +363,7 @@ std::shared_ptr<NamedObject> NamedObject::getNextSibling() const {
 
 std::shared_ptr<NamedObject> NamedObject::getFirstChild() const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -353,7 +374,7 @@ std::shared_ptr<NamedObject> NamedObject::getFirstChild() const {
 
 std::shared_ptr<NamedObject> NamedObject::getLastChild() const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -363,8 +384,9 @@ std::shared_ptr<NamedObject> NamedObject::getLastChild() const {
 }
 
 void NamedObject::setRelated(std::shared_ptr<NamedObject> related) {
+  // Fulfills [FE-0020.7] Support a "related" property.
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -373,7 +395,7 @@ void NamedObject::setRelated(std::shared_ptr<NamedObject> related) {
 
 std::shared_ptr<NamedObject> NamedObject::getRelated() const {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                    std::chrono::seconds(1));
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -396,6 +418,7 @@ std::shared_ptr<NamedObject> NamedObject::clone() const {
 }
 
 std::shared_ptr<NamedObject> NamedObject::deepCopy() const {
+  // Fulfills [FE-0020.14.1] deep copy mechanism.
   // Initiates a deep copy down the hierarchy starting with no parent context.
   return deepCopy(nullptr, nullptr);
 }
@@ -404,19 +427,19 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
     [[maybe_unused]] std::shared_ptr<NamedObject> originalParent,
     std::shared_ptr<NamedObject> newParent) const {
 
-  // Clone the current node (shallow copy, unattached)
+  // Clone the current node (shallow copy, unattached).
   std::shared_ptr<NamedObject> clonedObj = clone();
 
-  // Attach to the copy's new parent if provided
+  // Attach to the copy's new parent if provided.
   if (newParent) {
     clonedObj->setParent(newParent);
   }
 
-  // Snap children concurrently safely
+  // Snap children concurrently safely.
   std::list<std::shared_ptr<NamedObject>> children;
   {
     std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
-                                                      std::chrono::seconds(1));
+                                                      config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) {
       throw std::runtime_error(
           "Timeout acquiring NamedObject lock during deepCopy");
@@ -426,7 +449,9 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
 
   // Iterate over children and recursively copy them. Deep copy attaches
   // themselves automatically.
-  for (const std::shared_ptr<NamedObject> &child : children) {
+  // [CS-0010.34] auto forbidden.
+  for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+    const std::shared_ptr<NamedObject> &child = *it;
     child->deepCopy(getSelf(), clonedObj);
   }
 
@@ -434,3 +459,4 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
 }
 
 } // namespace quasar::named
+

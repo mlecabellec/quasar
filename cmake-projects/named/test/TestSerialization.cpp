@@ -44,13 +44,13 @@ protected:
     NamedDuration::create("durVal", 42000000, root);
     NamedQuantity::create("qtyVal", 220.5, quasar::coretypes::Units::Volt, root);
 
-    auto array = NamedArray<NamedObject>::create("arrayVal", root);
+    std::shared_ptr<NamedArray<NamedObject>> array = NamedArray<NamedObject>::create("arrayVal", root);
     array->push_back(NamedInteger<int32_t>::create("item0", 123));
     
-    auto map = NamedMap<NamedObject>::create("mapVal", root);
+    std::shared_ptr<NamedMap<NamedObject>> map = NamedMap<NamedObject>::create("mapVal", root);
     map->put("key1", NamedString::create("item1", "mapped"));
     
-    auto variant = NamedVariant::create("varVal", root);
+    std::shared_ptr<NamedVariant> variant = NamedVariant::create("varVal", root);
     variant->set(NamedBoolean::create("inner", false));
 
     return root;
@@ -84,7 +84,8 @@ protected:
     bool foundDur = false;
     bool foundQty = false;
 
-    for (const std::shared_ptr<NamedObject> &child : children) {
+    for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+      const std::shared_ptr<NamedObject> &child = *it;
       if (child->getName() == "intVal") {
         foundInt = true;
         std::shared_ptr<NamedInteger<int32_t>> i =
@@ -164,16 +165,16 @@ protected:
         EXPECT_DOUBLE_EQ(qty->value(), 220.5);
         EXPECT_EQ(qty->getUnitSymbol(), "V");
       } else if (child->getName() == "arrayVal") {
-        auto arr = std::dynamic_pointer_cast<NamedArray<NamedObject>>(child);
+        std::shared_ptr<NamedArray<NamedObject>> arr = std::dynamic_pointer_cast<NamedArray<NamedObject>>(child);
         ASSERT_TRUE(arr != nullptr);
         EXPECT_EQ(arr->size(), 1);
       } else if (child->getName() == "mapVal") {
-        auto m = std::dynamic_pointer_cast<NamedMap<NamedObject>>(child);
+        std::shared_ptr<NamedMap<NamedObject>> m = std::dynamic_pointer_cast<NamedMap<NamedObject>>(child);
         ASSERT_TRUE(m != nullptr);
         EXPECT_EQ(m->size(), 1);
         EXPECT_TRUE(m->contains("key1"));
       } else if (child->getName() == "varVal") {
-        auto v = std::dynamic_pointer_cast<NamedVariant>(child);
+        std::shared_ptr<NamedVariant> v = std::dynamic_pointer_cast<NamedVariant>(child);
         ASSERT_TRUE(v != nullptr);
         ASSERT_TRUE(v->get() != nullptr);
         EXPECT_TRUE((v->template holds<NamedBoolean>()));
@@ -226,3 +227,4 @@ TEST_F(SerializationTest, JSONRoundTrip) {
   std::shared_ptr<NamedObject> restored = serialization::fromJson(json);
   verifyHierarchy(restored);
 }
+

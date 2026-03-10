@@ -11,19 +11,20 @@ using namespace quasar::named;
 using namespace quasar::coretypes;
 
 TEST(NamedVariantsAndTemporalTest, NamedVariant) {
-    auto variant = NamedVariant::create("myVariant");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedVariant> variant = NamedVariant::create("myVariant");
 
     // Initially empty
     EXPECT_EQ(variant->get(), nullptr);
     EXPECT_FALSE(variant->holds<NamedInteger<int>>());
 
-    auto i = NamedInteger<int>::create("tempVal", 100);
+    std::shared_ptr<NamedInteger<int>> i = NamedInteger<int>::create("tempVal", 100);
     variant->set(i);
 
     EXPECT_TRUE(variant->holds<NamedInteger<int>>());
     EXPECT_FALSE(variant->holds<NamedString>());
     
-    auto retrieved = variant->getAs<NamedInteger<int>>();
+    std::shared_ptr<NamedInteger<int>> retrieved = variant->getAs<NamedInteger<int>>();
     EXPECT_NE(retrieved, nullptr);
     EXPECT_EQ(retrieved->value(), 100);
 
@@ -31,7 +32,7 @@ TEST(NamedVariantsAndTemporalTest, NamedVariant) {
     EXPECT_EQ(retrieved->getName(), "value");
 
     // Replace
-    auto s = NamedString::create("tempStr", "hello");
+    std::shared_ptr<NamedString> s = NamedString::create("tempStr", "hello");
     variant->set(s);
 
     EXPECT_FALSE(variant->holds<NamedInteger<int>>());
@@ -43,13 +44,14 @@ TEST(NamedVariantsAndTemporalTest, NamedVariant) {
 #include "quasar/named/NamedMap.hpp"
 
 TEST(NamedVariantsAndTemporalTest, CollectionVariants) {
-    auto array = NamedArray<NamedVariant>::create("varArray");
-    auto v1 = NamedVariant::create("v1");
-    auto i1 = NamedInteger<int>::create("temp", 42);
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedArray<NamedVariant>> array = NamedArray<NamedVariant>::create("varArray");
+    std::shared_ptr<NamedVariant> v1 = NamedVariant::create("v1");
+    std::shared_ptr<NamedInteger<int>> i1 = NamedInteger<int>::create("temp", 42);
     v1->set(i1);
     
-    auto v2 = NamedVariant::create("v2");
-    auto s1 = NamedString::create("temp", "world");
+    std::shared_ptr<NamedVariant> v2 = NamedVariant::create("v2");
+    std::shared_ptr<NamedString> s1 = NamedString::create("temp", "world");
     v2->set(s1);
     
     array->push_back(v1);
@@ -64,7 +66,8 @@ TEST(NamedVariantsAndTemporalTest, CollectionVariants) {
 }
 
 TEST(NamedVariantsAndTemporalTest, TemporalTimestampTest) {
-    auto ts = NamedTimestamp::create("ts", 1680000000000000); // Some exact microsecond time
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedTimestamp> ts = NamedTimestamp::create("ts", 1680000000000000); // Some exact microsecond time
     EXPECT_EQ(ts->value(), 1680000000000000);
     EXPECT_EQ(ts->getType(), "NamedTimestamp");
 
@@ -73,21 +76,23 @@ TEST(NamedVariantsAndTemporalTest, TemporalTimestampTest) {
     std::regex iso_regex(R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z)");
     EXPECT_TRUE(std::regex_match(iso, iso_regex));
 
-    auto nowTs = NamedTimestamp::now("nowTs");
+    std::shared_ptr<NamedTimestamp> nowTs = NamedTimestamp::now("nowTs");
     EXPECT_GT(nowTs->value(), 0);
 }
 
 TEST(NamedVariantsAndTemporalTest, TemporalDurationTest) {
-    auto dur = NamedDuration::create("dur", 1500000); // 1.5 seconds
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedDuration> dur = NamedDuration::create("dur", 1500000); // 1.5 seconds
     EXPECT_EQ(dur->value(), 1500000);
     EXPECT_DOUBLE_EQ(dur->toSeconds(), 1.5);
 
-    auto dur2 = NamedDuration::create("dur2", Duration::fromSeconds(2.5).value());
+    std::shared_ptr<NamedDuration> dur2 = NamedDuration::create("dur2", Duration::fromSeconds(2.5).value());
     EXPECT_DOUBLE_EQ(dur2->toSeconds(), 2.5);
 }
 
 TEST(NamedVariantsAndTemporalTest, TemporalDateTest) {
-    auto date = NamedDate::create("date", 19000); // some day count
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedDate> date = NamedDate::create("date", 19000); // some day count
     EXPECT_EQ(date->value(), 19000);
     EXPECT_EQ(date->getType(), "NamedDate");
 
@@ -96,3 +101,4 @@ TEST(NamedVariantsAndTemporalTest, TemporalDateTest) {
     std::regex iso_regex(R"(\d{4}-\d{2}-\d{2})");
     EXPECT_TRUE(std::regex_match(iso, iso_regex));
 }
+

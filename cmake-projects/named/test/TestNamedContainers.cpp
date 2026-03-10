@@ -7,11 +7,12 @@
 using namespace quasar::named;
 
 TEST(NamedContainersTest, NamedArray) {
-    auto array = NamedArray<NamedInteger<int>>::create("myArray");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedArray<NamedInteger<int>>> array = NamedArray<NamedInteger<int>>::create("myArray");
     EXPECT_EQ(array->size(), 0);
 
-    auto item1 = NamedInteger<int>::create("temp1", 42);
-    auto item2 = NamedInteger<int>::create("temp2", 84);
+    std::shared_ptr<NamedInteger<int>> item1 = NamedInteger<int>::create("temp1", 42);
+    std::shared_ptr<NamedInteger<int>> item2 = NamedInteger<int>::create("temp2", 84);
 
     array->push_back(item1);
     array->push_back(item2);
@@ -33,10 +34,11 @@ TEST(NamedContainersTest, NamedArray) {
 }
 
 TEST(NamedContainersTest, NamedMap) {
-    auto map = NamedMap<NamedInteger<int>>::create("myMap");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedMap<NamedInteger<int>>> map = NamedMap<NamedInteger<int>>::create("myMap");
     EXPECT_EQ(map->size(), 0);
 
-    auto item = NamedInteger<int>::create("temp", 100);
+    std::shared_ptr<NamedInteger<int>> item = NamedInteger<int>::create("temp", 100);
     map->put("key1", item);
 
     EXPECT_EQ(map->size(), 1);
@@ -45,7 +47,7 @@ TEST(NamedContainersTest, NamedMap) {
     EXPECT_EQ(map->get("key1")->value(), 100);
 
     // Replace
-    auto item2 = NamedInteger<int>::create("temp2", 200);
+    std::shared_ptr<NamedInteger<int>> item2 = NamedInteger<int>::create("temp2", 200);
     map->put("key1", item2);
 
     EXPECT_EQ(map->size(), 1);
@@ -58,11 +60,12 @@ TEST(NamedContainersTest, NamedMap) {
 }
 
 TEST(NamedContainersTest, NamedSet) {
-    auto set = NamedSet<NamedInteger<int>>::create("mySet");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedSet<NamedInteger<int>>> set = NamedSet<NamedInteger<int>>::create("mySet");
     EXPECT_EQ(set->size(), 0);
 
-    auto item1 = NamedInteger<int>::create("keyA", 1);
-    auto item2 = NamedInteger<int>::create("keyB", 2);
+    std::shared_ptr<NamedInteger<int>> item1 = NamedInteger<int>::create("keyA", 1);
+    std::shared_ptr<NamedInteger<int>> item2 = NamedInteger<int>::create("keyB", 2);
 
     set->insert(item1);
     set->insert(item2);
@@ -78,31 +81,33 @@ TEST(NamedContainersTest, NamedSet) {
     EXPECT_FALSE(set->contains("keyA"));
 
     // Replacing
-    auto item2_updated = NamedInteger<int>::create("keyB", 200);
+    std::shared_ptr<NamedInteger<int>> item2_updated = NamedInteger<int>::create("keyB", 200);
     set->insert(item2_updated);
     EXPECT_EQ(set->size(), 1);
     EXPECT_EQ(set->get("keyB")->value(), 200);
 }
 
 TEST(NamedContainersTest, Iterators) {
-    auto array = NamedArray<NamedInteger<int>>::create("myArray");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedArray<NamedInteger<int>>> array = NamedArray<NamedInteger<int>>::create("myArray");
     array->push_back(NamedInteger<int>::create("item1", 10));
     array->push_back(NamedInteger<int>::create("item2", 20));
     array->push_back(NamedInteger<int>::create("item3", 30));
 
     int sum = 0;
-    for (const auto& item : *array) {
-        sum += item->value();
+    for (std::vector<std::shared_ptr<NamedInteger<int>>>::iterator it = array->begin(); it != array->end(); ++it) {
+        sum += (*it)->value();
     }
     EXPECT_EQ(sum, 60);
 
-    auto map = NamedMap<NamedInteger<int>>::create("myMap");
+    std::shared_ptr<NamedMap<NamedInteger<int>>> map = NamedMap<NamedInteger<int>>::create("myMap");
     map->put("A", NamedInteger<int>::create("A", 100));
     map->put("B", NamedInteger<int>::create("B", 200));
 
     int mapSum = 0;
-    for (const auto& pair : *map) {
-        mapSum += pair.second->value();
+    for (std::map<std::string, std::shared_ptr<NamedInteger<int>>>::iterator it = map->begin(); it != map->end(); ++it) {
+        mapSum += it->second->value();
     }
     EXPECT_EQ(mapSum, 300);
 }
+

@@ -19,7 +19,8 @@ namespace quasar::named {
  * point value handling from coretypes::FloatingPoint.
  * 
  * **Compliance**:
- * - Fulfills [FE-0020.4] Derivated class for FloatingPoint core type.
+ * - Fulfills [FE-0020.4] Derivative class for FloatingPoint core type.
+ * - Fulfills [CS-0010.34] auto forbidden.
  *
  * @tparam T The underlying floating point type (e.g., float, double).
  */
@@ -92,3 +93,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDFLOATINGPOINT_HPP
+

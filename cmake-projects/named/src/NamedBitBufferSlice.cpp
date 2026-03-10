@@ -84,26 +84,33 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
     std::shared_ptr<quasar::coretypes::BitBuffer> underlyingBuffer =
         quasar::coretypes::BitBufferSlice::getParent();
 
-    if (std::shared_ptr<NamedBitBuffer> nb =
-            std::dynamic_pointer_cast<NamedBitBuffer>(originalParent)) {
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<NamedBitBuffer> nb =
+            std::dynamic_pointer_cast<NamedBitBuffer>(originalParent);
+    if (nb) {
       if (underlyingBuffer == nb) {
-        if (std::shared_ptr<NamedBitBuffer> newNb =
-                std::dynamic_pointer_cast<NamedBitBuffer>(newParent)) {
+        std::shared_ptr<NamedBitBuffer> newNb =
+                std::dynamic_pointer_cast<NamedBitBuffer>(newParent);
+        if (newNb) {
           clonedSlice = NamedBitBufferSlice::create(getName(), newNb,
                                                     getOffset(), size());
         }
       }
-    } else if (std::shared_ptr<NamedBitBufferSlice> nbs =
+    } else {
+      std::shared_ptr<NamedBitBufferSlice> nbs =
                    std::dynamic_pointer_cast<NamedBitBufferSlice>(
-                       originalParent)) {
-      if (underlyingBuffer ==
-          nbs->quasar::coretypes::BitBufferSlice::getParent()) {
-        if (std::shared_ptr<NamedBitBufferSlice> newNbs =
-                std::dynamic_pointer_cast<NamedBitBufferSlice>(newParent)) {
-          if (getOffset() >= newNbs->getOffset()) {
-            size_t relativeStart = getOffset() - newNbs->getOffset();
-            clonedSlice = NamedBitBufferSlice::create(getName(), newNbs,
-                                                      relativeStart, size());
+                       originalParent);
+      if (nbs) {
+        if (underlyingBuffer ==
+            nbs->quasar::coretypes::BitBufferSlice::getParent()) {
+          std::shared_ptr<NamedBitBufferSlice> newNbs =
+                  std::dynamic_pointer_cast<NamedBitBufferSlice>(newParent);
+          if (newNbs) {
+            if (getOffset() >= newNbs->getOffset()) {
+              size_t relativeStart = getOffset() - newNbs->getOffset();
+              clonedSlice = NamedBitBufferSlice::create(getName(), newNbs,
+                                                        relativeStart, size());
+            }
           }
         }
       }
@@ -119,7 +126,9 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   }
 
   std::list<std::shared_ptr<NamedObject>> childList = getChildren();
-  for (const std::shared_ptr<NamedObject> &child : childList) {
+  // [CS-0010.34] auto forbidden.
+  for (std::list<std::shared_ptr<NamedObject>>::iterator it = childList.begin(); it != childList.end(); ++it) {
+    const std::shared_ptr<NamedObject> &child = *it;
     child->deepCopy(getSelf(), clonedSlice);
   }
 
@@ -129,3 +138,4 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
 std::string NamedBitBufferSlice::getType() const { return "NamedBitBufferSlice"; }
 
 } // namespace quasar::named
+

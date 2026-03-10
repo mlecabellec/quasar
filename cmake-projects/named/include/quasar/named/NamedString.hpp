@@ -20,6 +20,7 @@ namespace quasar::named {
  * 
  * **Compliance**:
  * - Fulfills [FE-0030.4] support for a named String.
+ * - Fulfills [FE-0020.4] Derivative of NamedObject.
  */
 class NamedString : public NamedObject, public quasar::coretypes::String {
 public:
@@ -70,3 +71,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDSTRING_HPP
+

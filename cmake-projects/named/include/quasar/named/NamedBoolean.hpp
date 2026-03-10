@@ -18,7 +18,7 @@ namespace quasar::named {
  * Inherits from NamedObject for hierarchy and coretypes::Boolean for boolean state.
  * 
  * **Compliance**:
- * - Fulfills [FE-0020.4] Derivated class for Boolean core type.
+ * - Fulfills [FE-0020.4] Derivative class for Boolean core type.
  */
 class NamedBoolean : public NamedObject, public quasar::coretypes::Boolean {
 public:
@@ -69,3 +69,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDBOOLEAN_HPP
+

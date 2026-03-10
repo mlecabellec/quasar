@@ -6,35 +6,74 @@
 
 using namespace quasar::named;
 
-// A simple mock for event data
+/**
+ * @class MockEventData
+ * @brief A simple mock for event data.
+ */
 class MockEventData : public NamedObject {
 public:
+    /**
+     * @brief Factory method.
+     * @param name Object name.
+     * @return Shared pointer.
+     */
     static std::shared_ptr<MockEventData> create(const std::string& name) {
-        auto ptr = std::shared_ptr<MockEventData>(new MockEventData(name));
+        // [CS-0010.10] Use of new forbidden. Use make_shared with helper.
+        struct Helper : public MockEventData {
+            explicit Helper(const std::string& n) : MockEventData(n) {}
+        };
+        std::shared_ptr<MockEventData> ptr = std::make_shared<Helper>(name);
         ptr->setSelf(ptr);
         return ptr;
     }
 protected:
-    MockEventData(const std::string& name) : NamedObject(name) {}
+    /**
+     * @brief Constructor.
+     * @param name Object name.
+     */
+    explicit MockEventData(const std::string& name) : NamedObject(name) {}
 };
 
-// Mock observer
+/**
+ * @class MockObserver
+ * @brief Mock observer for testing ActiveEntity.
+ */
 class MockObserver : public IObserver {
 public:
+    /** @brief Number of notifications received. */
     int notificationCount = 0;
+    /** @brief Last received event data. */
     std::shared_ptr<NamedObject> lastEventData;
 
+    /**
+     * @brief Notify implementation.
+     * @param eventData The event data.
+     */
     void notify(std::shared_ptr<NamedObject> eventData) override {
         notificationCount++;
         lastEventData = eventData;
     }
 };
 
-// Mock device implementing ActiveEntity
+/**
+ * @class MockTemperatureSensor
+ * @brief Mock device implementing ActiveEntity.
+ * @compliance [FE-0130] Testing ActiveEntity capabilities.
+ */
 class MockTemperatureSensor : public ActiveEntity {
 public:
+    /**
+     * @brief Factory method.
+     * @param name Object name.
+     * @param parent Optional parent.
+     * @return Shared pointer.
+     */
     static std::shared_ptr<MockTemperatureSensor> create(const std::string& name, std::shared_ptr<NamedObject> parent = nullptr) {
-        auto ptr = std::shared_ptr<MockTemperatureSensor>(new MockTemperatureSensor(name));
+        // [CS-0010.10] Use of new forbidden.
+        struct Helper : public MockTemperatureSensor {
+            explicit Helper(const std::string& n) : MockTemperatureSensor(n) {}
+        };
+        std::shared_ptr<MockTemperatureSensor> ptr = std::make_shared<Helper>(name);
         ptr->setSelf(ptr);
         if (parent) {
             ptr->setParent(parent);
@@ -43,32 +82,44 @@ public:
         return ptr;
     }
 
+    /** @brief Initialize implementation. */
     void initialize() override {
         setState(EntityState::Ready);
     }
 
+    /** @brief Start implementation. */
     void start() override {
         setState(EntityState::Running);
-        auto event = MockEventData::create("sensorStarted");
+        std::shared_ptr<MockEventData> event = MockEventData::create("sensorStarted");
         notifyObservers(event);
     }
 
+    /** @brief Stop implementation. */
     void stop() override {
         setState(EntityState::Ready);
     }
 
+    /** @brief Reset implementation. */
     void reset() override {
         setState(EntityState::Uninitialized);
     }
 
-    // Direct access for validation in tests
+    /**
+     * @brief Direct access for validation in tests.
+     * @return The temperature node.
+     */
     std::shared_ptr<NamedObject> getTemperatureNode() {
         return m_temperature;
     }
 
 protected:
-    MockTemperatureSensor(const std::string& name) : ActiveEntity(name) {}
+    /**
+     * @brief Constructor.
+     * @param name Object name.
+     */
+    explicit MockTemperatureSensor(const std::string& name) : ActiveEntity(name) {}
 
+    /** @brief Initialize reflexive fields and methods. */
     void initReflexivity() {
         m_temperature = NamedObject::create("temperature", getSelf());
         REGISTER_FIELD("temperature", m_temperature);
@@ -78,6 +129,11 @@ protected:
         });
     }
 
+    /**
+     * @brief Calibrate method.
+     * @param args Arguments.
+     * @return Result.
+     */
     std::shared_ptr<NamedObject> calibrate(std::shared_ptr<NamedObject> args) {
         (void)args; // calibration ignores args for mockup
         m_calibrateCount++;
@@ -85,13 +141,16 @@ protected:
     }
 
 private:
+    /** @brief Temperature field. */
     std::shared_ptr<NamedObject> m_temperature;
 public:
+    /** @brief Calibration count for verification. */
     int m_calibrateCount = 0;
 };
 
 TEST(TestActiveEntity, LifecycleTransitions) {
-    auto sensor = MockTemperatureSensor::create("sensor1");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<MockTemperatureSensor> sensor = MockTemperatureSensor::create("sensor1");
     
     EXPECT_EQ(sensor->getState(), EntityState::Uninitialized);
     
@@ -109,8 +168,9 @@ TEST(TestActiveEntity, LifecycleTransitions) {
 }
 
 TEST(TestActiveEntity, ObserverPattern) {
-    auto sensor = MockTemperatureSensor::create("sensor1");
-    auto observer = std::make_shared<MockObserver>();
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<MockTemperatureSensor> sensor = MockTemperatureSensor::create("sensor1");
+    std::shared_ptr<MockObserver> observer = std::make_shared<MockObserver>();
     
     sensor->subscribe(observer);
     
@@ -130,13 +190,14 @@ TEST(TestActiveEntity, ObserverPattern) {
 }
 
 TEST(TestActiveEntity, FieldReflexivity) {
-    auto sensor = MockTemperatureSensor::create("sensor1");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<MockTemperatureSensor> sensor = MockTemperatureSensor::create("sensor1");
     
-    auto fields = sensor->listFields();
+    std::vector<std::string> fields = sensor->listFields();
     ASSERT_EQ(fields.size(), 1);
     EXPECT_EQ(fields[0], "temperature");
     
-    auto tempField = sensor->getField("temperature");
+    std::shared_ptr<NamedObject> tempField = sensor->getField("temperature");
     ASSERT_NE(tempField, nullptr);
     EXPECT_EQ(tempField->getName(), "temperature");
     EXPECT_EQ(tempField, sensor->getTemperatureNode());
@@ -145,18 +206,19 @@ TEST(TestActiveEntity, FieldReflexivity) {
 }
 
 TEST(TestActiveEntity, MethodReflexivity) {
-    auto sensor = MockTemperatureSensor::create("sensor1");
+    // [CS-0010.34] auto forbidden.
+    std::shared_ptr<MockTemperatureSensor> sensor = MockTemperatureSensor::create("sensor1");
     
-    auto methods = sensor->listMethods();
+    std::vector<std::string> methods = sensor->listMethods();
     ASSERT_EQ(methods.size(), 1);
     EXPECT_EQ(methods[0], "calibrate");
     
-    auto dummyArgs = NamedObject::create("args");
+    std::shared_ptr<NamedObject> dummyArgs = NamedObject::create("args");
     
     EXPECT_EQ(sensor->m_calibrateCount, 0);
     
     // Execute dynamic method
-    auto res = sensor->execute("calibrate", dummyArgs);
+    std::shared_ptr<NamedObject> res = sensor->execute("calibrate", dummyArgs);
     
     EXPECT_EQ(sensor->m_calibrateCount, 1);
     ASSERT_NE(res, nullptr);
@@ -165,3 +227,4 @@ TEST(TestActiveEntity, MethodReflexivity) {
     // Test non-existent method exception
     EXPECT_THROW(sensor->execute("unknownMethod", dummyArgs), std::runtime_error);
 }
+

@@ -15,10 +15,10 @@ NamedString::create(const std::string &name, const std::string &value,
   // Create a new NamedString instance using make_shared.
   std::shared_ptr<NamedString> obj =
       std::make_shared<NamedString>(name, value);
-  
+
   // Set the self-reference for getSelf().
   obj->setSelf(obj);
-  
+
   // Link to parent if one is provided.
   if (parent) {
     obj->setParent(parent);
@@ -29,3 +29,4 @@ NamedString::create(const std::string &name, const std::string &value,
 std::string NamedString::getType() const { return "NamedString"; }
 
 } // namespace quasar::named
+

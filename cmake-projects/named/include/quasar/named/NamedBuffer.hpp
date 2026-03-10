@@ -19,6 +19,7 @@ namespace quasar::named {
  * 
  * **Compliance**:
  * - Fulfills [FE-0030.6] support for a named Buffer.
+ * - Fulfills [FE-0020.4] Derivative of NamedObject.
  */
 class NamedBuffer : public NamedObject, public quasar::coretypes::Buffer {
 public:
@@ -91,3 +92,4 @@ public:
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDBUFFER_HPP
+
