@@ -26,6 +26,7 @@ set(SOURCES
     src/ObjectTracker.cpp
     src/ScriptManager.cpp
     src/ScriptConsole.cpp
+    src/PluginLoader.cpp
 )
 
 # Header files (for IDEs)
@@ -40,6 +41,8 @@ set(HEADERS
     include/quasar/scripting/ObjectTracker.hpp
     include/quasar/scripting/ScriptManager.hpp
     include/quasar/scripting/ScriptConsole.hpp
+    include/quasar/scripting/PluginLoader.hpp
+    include/quasar/scripting/PluginContract.hpp
 )
 
 # Create the library
@@ -60,3 +63,5 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 add_subdirectory(test)
+add_subdirectory(runner)
+add_subdirectory(test_plugin)
