@@ -89,6 +89,25 @@ if(QUASAR_ENABLE_LIBZMQ)
     add_subdirectory(libzmq)
 endif()
 
+# Configure librdkafka
+option(QUASAR_ENABLE_LIBRDKAFKA "Enable librdkafka" ON)
+
+if(QUASAR_ENABLE_LIBRDKAFKA)
+    set(RDKAFKA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(librdkafka)
+endif()
+
+# Configure open62541
+option(QUASAR_ENABLE_OPEN62541 "Enable open62541" ON)
+
+if(QUASAR_ENABLE_OPEN62541)
+    set(UA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(UA_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+    set(UA_ENABLE_AMALGAMATION OFF CACHE BOOL "" FORCE)
+    add_subdirectory(open62541)
+endif()
+
 # Configure SOES
 add_subdirectory(SOES)
 
