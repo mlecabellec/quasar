@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaEngine.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
 
 using namespace quasar::scripting;
 
@@ -51,9 +52,9 @@ TEST(LuaEngineTest, SandboxExecution) {
     TestableLuaEngine engine;
     engine.doSetupSandbox();
     
-    // os.execute should be nil, so calling it in a script will result in a runtime error (attempt to call a nil value)
-    sol::protected_function_result result = engine.executeString("os.execute('echo hi')");
-    EXPECT_FALSE(result.valid());
+    // As per user requirement, sandboxing is disabled, so os.execute should STILL be valid.
+    sol::protected_function_result result = engine.executeString("os.execute('echo hi > /dev/null')");
+    EXPECT_TRUE(result.valid());
 }
 
 TEST(LuaEngineTest, PanicHandling) {

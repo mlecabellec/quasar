@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaEngine.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
 #include "quasar/coretypes/IntegerTypes.hpp"
 #include "quasar/coretypes/FloatingPointTypes.hpp"
 #include "quasar/named/NamedInteger.hpp"
@@ -76,7 +77,7 @@ TEST_F(TypeBindingsTest, HierarchyResolution) {
     std::shared_ptr<NamedObject> c1 = NamedObject::create("c1", root);
     std::shared_ptr<NamedInteger<int64_t>> sub = NamedInteger<int64_t>::create("sub", 42, c1);
     
-    engine.getState()["root"] = root;
+    engine.getState()["root"] = LuaProxy<NamedObject>(root);
     
     engine.executeString(R"(
         obj = quasar.resolve(root, "c1/sub")
@@ -96,10 +97,10 @@ TEST_F(TypeBindingsTest, HierarchyResolution) {
 
 TEST_F(TypeBindingsTest, VariantHandling) {
     std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
-    engine.getState()["var"] = var;
+    engine.getState()["var"] = LuaProxy<NamedVariant>(var);
     
-    engine.executeString(R"(
-        val = NamedLong.create("initial", 100)
+    auto result = engine.executeString(R"(
+        val = NamedLong.create("initial", 100, var)
         var:set(val)
         
         current = var:get()
@@ -111,6 +112,11 @@ TEST_F(TypeBindingsTest, VariantHandling) {
         assert(nlong ~= nil)
         res = nlong:value()
     )");
+    
+    if (!result.valid()) {
+        sol::error err = result;
+        FAIL() << "Lua error: " << err.what();
+    }
     
     int64_t res = engine.getState()["res"];
     EXPECT_EQ(res, 100);

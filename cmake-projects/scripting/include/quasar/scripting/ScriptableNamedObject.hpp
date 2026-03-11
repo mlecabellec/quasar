@@ -6,6 +6,7 @@
 #include <string>
 
 namespace quasar::scripting {
+template<typename T> class LuaProxy;
 
 /**
  * @brief A NamedObject that can have its methods overridden/hooked by Lua.
@@ -62,12 +63,7 @@ public:
 protected:
     ScriptableNamedObject(const std::string& name) : named::NamedObject(name) {}
 
-    void addChild(std::shared_ptr<named::NamedObject> child) override {
-        if (m_luaSelf && m_luaSelf["onAddChild"].valid()) {
-            m_luaSelf["onAddChild"](m_luaSelf, child);
-        }
-        named::NamedObject::addChild(child);
-    }
+    void addChild(std::shared_ptr<named::NamedObject> child) override;
 
 private:
     sol::table m_luaSelf;

@@ -18,7 +18,9 @@ int LuaEngine::onPanic(lua_State* L) {
     return 0;
 }
 
-LuaEngine::LuaEngine() {
+LuaEngine::LuaEngine() : LuaEngine(std::weak_ptr<LuaService>{}) {}
+
+LuaEngine::LuaEngine(std::weak_ptr<LuaService> service) {
     // Set panic handler before doing anything else
     lua_atpanic(m_lua.lua_state(), &LuaEngine::onPanic);
 
@@ -34,34 +36,26 @@ LuaEngine::LuaEngine() {
         sol::lib::table, 
         sol::lib::debug,
         sol::lib::bit32,
-        sol::lib::io, // TODO: Restrict later for strict sandboxing
-        sol::lib::os  // TODO: Restrict later for strict sandboxing
+        sol::lib::io,
+        sol::lib::os,
+        sol::lib::utf8
     );
 
     // Register Quasar bindings
     bindCoreTypes(m_lua);
-    bindNamedTypes(m_lua);
-
-    setupSandbox();
+    bindNamedTypes(m_lua, service.lock());
 }
 
 LuaEngine::~LuaEngine() {
     // sol::state destroys the state automatically
 }
 
-void LuaEngine::setupSandbox() {
-    // Basic sandboxing example, removing dangerous os methods
-    m_lua["os"]["execute"] = sol::lua_nil;
-    m_lua["os"]["remove"] = sol::lua_nil;
-    m_lua["os"]["rename"] = sol::lua_nil;
-    m_lua["os"]["exit"] = sol::lua_nil;
-    
-    // Similarly for io if needed, eg io.popen
-    m_lua["io"]["popen"] = sol::lua_nil;
-}
-
 sol::protected_function_result LuaEngine::executeString(const std::string& code) {
     return m_lua.safe_script(code, sol::script_pass_on_error);
+}
+
+void LuaEngine::setupSandbox() {
+    // No-op as per user requirement: Lua should not be sandboxed and could use io functions.
 }
 
 void LuaEngine::gcStep(int step_size) {

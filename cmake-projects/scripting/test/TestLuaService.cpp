@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaService.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
 #include <fstream>
 
 namespace quasar::scripting {
@@ -74,7 +75,7 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     std::shared_ptr<named::NamedObject> obj = named::NamedObject::create("TrackMe");
     ObjectTracker::getInstance().track(obj);
     
-    lua["trackedObj"] = obj;
+    lua["trackedObj"] = LuaProxy<named::NamedObject>(obj);
     lua.script(R"(
         alive_before = quasar.isAlive(trackedObj)
     )");

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/ScriptableNamedObject.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
 
 namespace quasar::scripting {
 
@@ -18,7 +19,7 @@ TEST_F(ExtendableClassesTest, MethodOverride) {
     std::shared_ptr<ScriptableNamedObject> obj = ScriptableNamedObject::create("MyObject");
     
     // Define override in Lua
-    lua["obj"] = obj;
+    lua["obj"] = LuaProxy<ScriptableNamedObject>(obj);
     lua.script(R"(
         local self_table = {
             getType = function(self) return "LuaCustomType" end,
@@ -42,7 +43,7 @@ TEST_F(ExtendableClassesTest, HookAddChild) {
     sol::state& lua = engine.getState();
     
     std::shared_ptr<ScriptableNamedObject> parent = ScriptableNamedObject::create("Parent");
-    lua["parent"] = parent;
+    lua["parent"] = LuaProxy<ScriptableNamedObject>(parent);
     lua.script(R"(
         parent:setLuaSelf({
             onAddChild = function(self, child) 

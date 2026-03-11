@@ -11,7 +11,7 @@ namespace quasar::scripting {
 static asio::thread_pool g_luaThreadPool(std::thread::hardware_concurrency());
 
 LuaFuture ScriptExecutor::ExecuteAsync(const std::string& script) {
-    std::shared_ptr<LuaEngine> engine = std::make_shared<LuaEngine>();
+    std::shared_ptr<LuaEngine> engine = std::make_shared<LuaEngine>(std::weak_ptr<LuaService>());
     std::shared_ptr<std::promise<sol::protected_function_result>> promise = std::make_shared<std::promise<sol::protected_function_result>>();
     std::future<sol::protected_function_result> future = promise->get_future();
 

@@ -18,7 +18,7 @@ public:
      * @param script The Lua code to execute.
      */
     static void ExecuteOnce(const std::string& script) {
-        LuaEngine engine;
+        LuaEngine engine{std::weak_ptr<LuaService>{}};
         engine.executeString(script);
     }
 

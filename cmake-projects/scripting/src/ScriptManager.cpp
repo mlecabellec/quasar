@@ -67,7 +67,7 @@ sol::environment ScriptManager::createSandbox(sol::state_view lua) {
     // or are overwritten in this environment.
     
     // Provide quasar bindings to the sandbox
-    bindNamedTypes(lua); // This binds to globals, but env can see it via inheritance if we want.
+    // Note: Bindings are already established in the LuaEngine constructor.
     
     return env;
 }

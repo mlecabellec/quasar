@@ -5,6 +5,12 @@
 #include <string>
 #include <memory>
 #include <chrono>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
+#include <functional>
 
 namespace quasar::scripting {
 
@@ -69,12 +75,26 @@ public:
      */
     std::shared_ptr<LuaEngine> getEngine() const { return m_engine; }
 
+    /**
+     * @brief Posts a task to be executed on the service's worker thread.
+     */
+    void postTask(std::function<void()> task);
+
 protected:
     LuaService(const std::string& name);
 
 private:
     std::shared_ptr<LuaEngine> m_engine;
     sol::table m_luaSelf;
+
+    // Threading
+    std::thread m_worker;
+    std::atomic<bool> m_running{false};
+    std::condition_variable m_cv;
+    std::mutex m_queueMutex;
+    std::queue<std::function<void()>> m_taskQueue;
+
+    void workerLoop();
 };
 
 } // namespace quasar::scripting

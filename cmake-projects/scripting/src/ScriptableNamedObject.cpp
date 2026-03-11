@@ -1,4 +1,5 @@
 #include "quasar/scripting/ScriptableNamedObject.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
 
 namespace quasar::scripting {
 
@@ -12,6 +13,13 @@ std::shared_ptr<ScriptableNamedObject> ScriptableNamedObject::create(const std::
         obj->setParent(parent);
     }
     return obj;
+}
+
+void ScriptableNamedObject::addChild(std::shared_ptr<named::NamedObject> child) {
+    if (getLuaSelf() && getLuaSelf()["onAddChild"].valid()) {
+        getLuaSelf()["onAddChild"](getLuaSelf(), LuaProxy<named::NamedObject>(child));
+    }
+    named::NamedObject::addChild(child);
 }
 
 } // namespace quasar::scripting

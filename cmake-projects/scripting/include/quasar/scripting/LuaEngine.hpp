@@ -25,15 +25,23 @@ public:
     explicit LuaExecutionException(const std::string& message) : std::runtime_error(message) {}
 };
 
+class LuaService;
+
 /**
  * @brief A wrapper around a sol::state, providing secure and controlled execution.
  */
 class LuaEngine {
 public:
     /**
-     * @brief Constructs a new Lua Engine and initializes basic safe standard libraries.
+     * @brief Constructs a new Lua Engine and initializes standard libraries.
      */
     LuaEngine();
+
+    /**
+     * @brief Constructs a new Lua Engine with a service context.
+     * @param service Weak pointer to the host service.
+     */
+    LuaEngine(std::weak_ptr<LuaService> service);
 
     /**
      * @brief Destructor cleans up the Lua state.
