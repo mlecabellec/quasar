@@ -99,7 +99,7 @@ TEST_F(TypeBindingsTest, VariantHandling) {
     std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
     engine.getState()["var"] = LuaProxy<NamedVariant>(var);
     
-    auto result = engine.executeString(R"(
+    sol::protected_function_result result = engine.executeString(R"(
         val = NamedLong.create("initial", 100, var)
         var:set(val)
         
