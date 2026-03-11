@@ -68,7 +68,7 @@ endif()
 
 # Try finding jsoncons
 pkg_check_modules(JSONCONS jsoncons)
-if (NOT JSONCONS_FOUND)
+if (NOT JSONCONS_FOUND AND NOT TARGET jsoncons)
     set(JSONCONS_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsoncons")
     if (EXISTS "${JSONCONS_LOCAL_DIR}/CMakeLists.txt")
         message(STATUS "Using local jsoncons from ${JSONCONS_LOCAL_DIR}")
@@ -88,6 +88,10 @@ if (NOT JSONCONS_FOUND)
         set(JSONCONS_LIBRARIES jsoncons)
         set(JSONCONS_INCLUDE_DIRS ${jsoncons_SOURCE_DIR}/include)
     endif()
+endif()
+if(TARGET jsoncons AND "${JSONCONS_LIBRARIES}" STREQUAL "")
+    set(JSONCONS_LIBRARIES jsoncons)
+    set(JSONCONS_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsoncons/include")
 endif()
 
 # Find sources

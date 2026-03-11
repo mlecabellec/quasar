@@ -33,6 +33,11 @@ if(NOT TARGET tinyxml2)
     add_subdirectory(tinyxml2)
 endif()
 
+if(NOT TARGET jsoncons)
+    set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(jsoncons)
+endif()
+
 if(NOT TARGET yaml-cpp)
     set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
