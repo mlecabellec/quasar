@@ -101,6 +101,9 @@ if(QUASAR_ENABLE_LIBRDKAFKA)
     set(RDKAFKA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     add_subdirectory(librdkafka)
+    if(TARGET rdkafka)
+        target_compile_options(rdkafka PRIVATE -Wno-error -Wno-undef -Wno-pedantic -Wno-unused-parameter)
+    endif()
 endif()
 
 # Configure open62541
@@ -111,6 +114,9 @@ if(QUASAR_ENABLE_OPEN62541)
     set(UA_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
     set(UA_ENABLE_AMALGAMATION OFF CACHE BOOL "" FORCE)
     add_subdirectory(open62541)
+    if(TARGET open62541)
+        target_compile_options(open62541 PRIVATE -Wno-error -Wno-undef -Wno-pedantic -Wno-unused-parameter)
+    endif()
 endif()
 
 # Configure SOES

@@ -18,7 +18,7 @@ add_library (soes
   )
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(soes PRIVATE -Wno-pedantic -Wno-strict-prototypes -Wno-missing-prototypes)
+    target_compile_options(soes PRIVATE -Wno-pedantic -Wno-strict-prototypes -Wno-missing-prototypes -Wno-undef)
 endif()
 
 include_directories(${HAL_INCLUDES})

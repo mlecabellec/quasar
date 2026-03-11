@@ -34,7 +34,7 @@ set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
 set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 
 # Common compile flags
-add_compile_options(-Wall -Wextra -Wno-unused-parameter -Werror -fomit-frame-pointer -fno-strict-aliasing)
+add_compile_options(-Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer -fno-strict-aliasing)
 
 # Add machine flags to C_FLAGS so they take effect for linking also
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MACHINE_FLAGS}" CACHE STRING "" FORCE)
