@@ -1,43 +1,68 @@
-# Quasar
+<div align="center">
+  <img src="https://img.shields.io/badge/Quasar-Automation-blueviolet?style=for-the-badge&logo=rocket" alt="Quasar Logo Badge" />
+  
+  <h1>🌌 Quasar</h1>
+  <p><b>Global Industrial Automation Solution</b></p>
+  
+  [![CI Build Status](https://github.com/mlecabellec/quasar/actions/workflows/ci.yml/badge.svg)](https://github.com/mlecabellec/quasar/actions/workflows/ci.yml)
+  ![C++](https://img.shields.io/badge/C++23-00599C?style=flat-square&logo=c%2B%2B&logoColor=white)
+  ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat-square&logo=lua&logoColor=white)
+  ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=flat-square&logo=cmake&logoColor=white)
+  ![Linux Kernel](https://img.shields.io/badge/Linux_Kernel_Modules-FCC624?style=flat-square&logo=linux&logoColor=black)
+</div>
 
+---
 
-# Project description
+## 🚀 About Quasar
 
-Quasar is a project of global industrial automation solution.
+**Quasar** is a cutting-edge global industrial automation solution designed to bridge the gap between high-level application development and low-level industrial hardware. By providing robust middleware, strict standard enforcement, and an extensible architecture, Quasar enables the rapid development of deterministic and secure automations.
 
-Quasar shall:
-- Provide required middleware (including kernel modules, userland libraries, and userland applications) allowing to interact with common industrial hardware and standard industrial protocols.
-- Provide API oriented interface for application development.
-- Provide required environnements and integration for hardware in the loop simulation (HILS). Provided environments shall allow to simulate common industrial hardware and standard industrial protocols. It shall be possible to run applications and automations seemlessly in siulated or real environment.
-- Provide API and environements allowing rapid develoment of automations and applications.
+### Core Objectives
+- 🔌 **Middleware & Drivers**: Provide required middleware (including Linux kernel modules, userland libraries, and userland applications) to interact with common industrial hardware and standard protocols (e.g., EtherCAT).
+- 🛠️ **Developer API**: Offer a highly-structured API-oriented interface for seamless application development.
+- 🧪 **Hardare-In-The-Loop Simulation (HILS)**: Provide comprehensive environments and integration points for simulating common industrial hardware and protocols. Applications and automations run seamlessly whether in a simulated landscape or a real-world deployment.
+- ⚡ **Rapid Development**: Feature intuitive environments heavily augmented with embedded scripting tools to accelerate automation logic authoring.
 
+---
 
+## ✨ Features Highlight
 
-# Purpose of this file
+- **Tree Transformation & Data Mapping**: A sophisticated, non-destructive memory-slice mapping and XSLT-inspired tree transformation engine (`quasar::named`) to parse and project raw binary bytes natively into structured APIs.
+- **Embedded Lua Scripting**: A fully sandboxed, asynchronous Lua integration allowing end-to-end reflexivity and extension of core Quasar concepts dynamically. 
+- **Zero-Copy Memory Principles**: Engineered with `SHARE` paradigms where objects map directly over incoming buffers, obliterating serialization overheads.
+- **Strict Compliance (`CS-0010`)**: 
+  - Mandated **C++23** syntax and logic (`auto`, `new`/`delete`, raw pointers natively banned).
+  - 100% thread safety requirement for shared data structures using timed recursive mutexes.
+  - Zero tolerance policy for undefined behaviors, memory leaks, or unhandled states enforced strictly by Valgrind and CppCheck CI gates.
 
-This file is intended to collect and index all the development notes and information about the Quasar project. It is also intended to be used as a reference for the coding agents.
+---
 
+## 📂 Project Anatomy
 
-# General structure
+Quasar comprises multiple projects and modules spanning varying distinct technologies. 
 
-- `doc/` : This directory
-- 'doc/architecture.md' : Architecture overview
-- 'doc/development.md' : Development notes
-- 'doc/TODO.md' : TODO list. The TODO list is intended to be used as a reference for the coding agents regarding short term tasks. 
-- 'doc/README.md' : This file
-- 'doc/architecture/' : Architecture details. This directory is intended to contain architecture details for the Quasar project. It will also contain architectural constraints that shall be adhered to by the coding agents.
-- 'doc/features/' : Feature details. This directory is intended to contain feature details for the Quasar project. It will also contain feature that shall be implemented by the coding agents.
-- 'doc/testDefs/' : Test definitions. This directory is intended to contain test definitions for the Quasar project. It will also contain test cases that shall be implemented by the coding agents. Generated code shall pass all tests.
+```text
+quasar/
+├── cmake-projects/    # Core C++ libraries and executables
+│   ├── coretypes/     # Base primitive and data definitions
+│   ├── named/         # Hierarchical object tree, transformation, and registry system
+│   └── scripting/     # Embedded Lua service infrastructure
+├── linux-modules/     # Linux kernel modules (e.g., EtherCAT master logic)
+├── maven-projects/    # Java/Maven ecosystems
+├── ext-projects/      # Third-party or decoupled external tools under varied build systems
+└── doc/               # Comprehensive project documentation
+    ├── architecture/  # Core constraints, design rules, and dependency matrices
+    ├── features/      # Specifications for current and upcoming mechanics
+    └── project/       # Task tracking and assignment definition directives
+```
 
-# Code structure
+---
 
-This repository will contain multiple projects and modules with multiple technologies.
+## 📚 Documentation Reference
 
-'cmake-projects/' : This directory contains the CMake projects. Projects could be recursively nested, each project will have its own CMakeLists.txt file.
+To dive deeper into the project specifications, consult the `/doc` tree.
+- [Architecture Details](doc/architecture)
+- [Feature Breakdown](doc/features)
+- [Task Log](doc/project/tasks)
 
-'maven-projects/' : This directory contains the Maven projects. Projects could be recursively nested, each project will have its own pom.xml file. Maven projects will also have a CMakeLists.txt allowing them to be built with CMake.
-
-'linux-modules/' : This directory contains the Linux kernel modules. Projects could be recursively nested, each project will have its own Makefile.
-
-'ext-projects/' : This directory contains the external projects. Projects could be recursively nested, each project will have its own build system but, for each project, a CMakeLists.txt will be provided allowing it to be built with CMake. Each external project shall have a LICENSE file corresponding to the license of the project and a README.md file with information about its origin (including a link to the original repository).
-
+> **Note to Contributors & Agents**: Always consult `doc/TODO.md` and `doc/project/` for short-term task horizons, and ensure absolute compliance with all definitions housed in `doc/architecture/CS-0010.md` before submitting code!
