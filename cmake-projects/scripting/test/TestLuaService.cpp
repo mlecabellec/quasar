@@ -110,7 +110,8 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     EXPECT_GT(ObjectTracker::getInstance().getTrackedCount(), 0);
     obj.reset();
     {
-        std::lock_guard<std::recursive_mutex> lock(svc->getStateMutex());
+        std::unique_lock<std::recursive_timed_mutex> lock(svc->getStateMutex(), named::config::DEFAULT_LOCK_TIMEOUT);
+        ASSERT_TRUE(lock.owns_lock());
         lua["trackedObj"] = sol::nil;
         lua.collect_garbage();
     }

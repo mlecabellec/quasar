@@ -3,6 +3,8 @@
  * license. See the file LICENSE.md distributed with this software for
  * full license information.
  */
+#define _POSIX_C_SOURCE 200112L
+#include <time.h>
 #include <osal.h>
 #include <stdlib.h>
 #include <string.h>

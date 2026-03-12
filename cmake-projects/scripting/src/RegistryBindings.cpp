@@ -498,8 +498,8 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     
     // [CS-0010.44] Observer Factory binding.
     // Observer Factory
-    quasarTable["createObserver"] = [service](sol::function callback, sol::optional<size_t> watermark) {
-        return std::make_shared<QueuedObserver>(service, callback, watermark.value_or(1000));
+    quasarTable["createObserver"] = [weakService = std::weak_ptr<LuaService>(service)](sol::function callback, sol::optional<size_t> watermark) {
+        return std::make_shared<QueuedObserver>(weakService.lock(), callback, watermark.value_or(1000));
     };
 
     // [CS-0010.44] Lifecycle Tracking bindings.

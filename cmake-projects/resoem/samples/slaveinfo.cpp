@@ -46,6 +46,7 @@ void print_slave_info(const SlaveInfo &s, int idx) {
 
 void print_coe_od(Enumerator &enumerator, int slave_idx) {
   auto &slave = const_cast<SlaveInfo &>(enumerator.slaves()[slave_idx]);
+  (void)slave; // Fix unused variable warning
   // We need MailboxHandler/CoEHandler
   // Enumerator doesn't expose them directly, but we can construct them?
   // Wait, Enumerator takes RawSocket&. We need access to that socket.
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]) {
 
   std::string iface = argv[1];
   bool print_map = false;
+  (void)print_map; // Fix unused variable warning
   bool print_od = false;
 
   for (int i = 2; i < argc; ++i) {
