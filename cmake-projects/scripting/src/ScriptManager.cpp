@@ -20,11 +20,8 @@ std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name
     
     std::shared_ptr<LuaService> svc = LuaService::create(name, getSelf());
     
-    // Setup sandbox for the service
-    sol::environment env = createSandbox(svc->getEngine()->getState());
-    
-    // Note: To truly sandbox, we need to ensure the script runs IN this environment.
-    // sol::state::script_file has an overload for environment.
+    // Note: To truly sandbox, we need to ensure the script runs IN a sandboxed environment.
+    // This should be done inside LuaService::loadScript where the state mutex is safely held.
     
     if (svc->loadScript(scriptPath)) {
         m_services[name] = svc;
