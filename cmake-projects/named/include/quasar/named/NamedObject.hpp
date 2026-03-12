@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "quasar/named/CopyPolicy.hpp"
+
 /**
  * @namespace quasar::named
  * @brief Namespace for named hierarchical object management.
@@ -243,7 +245,7 @@ public:
    *
    * @return Shared pointer to a new object with the same name and data.
    */
-  virtual std::shared_ptr<NamedObject> clone() const;
+  virtual std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
    * @brief Performs a deep copy of this object and its entire subtree.
@@ -252,7 +254,7 @@ public:
    * @compliance [FE-0020.14] Utilities for copying parts of the tree.
    * @compliance [FE-0020.14.1] deep copy mechanism.
    */
-  virtual std::shared_ptr<NamedObject> deepCopy() const;
+  virtual std::shared_ptr<NamedObject> deepCopy(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
    * @brief Internal recursive helper for deep copying a subtree.
@@ -265,7 +267,7 @@ public:
    */
   virtual std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
-           std::shared_ptr<NamedObject> newParent) const;
+           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
    * @brief Returns a shared pointer to this instance.

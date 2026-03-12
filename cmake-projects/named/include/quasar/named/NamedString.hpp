@@ -7,7 +7,9 @@
 #define QUASAR_NAMED_NAMEDSTRING_HPP
 
 #include "quasar/coretypes/String.hpp"
+#include "quasar/coretypes/String.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -48,9 +50,13 @@ public:
    * 
    * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
    * 
+   * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return A new NamedString with the same name and value, but no hierarchy.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
+    // Strings are typically small and simple enough to just duplicate in memory,
+    // as sharing strings isn't usually a bottleneck here unless explicitly needed.
+    // For Phase 1 we will just duplicate.
     return create(getName(), toString());
   }
 

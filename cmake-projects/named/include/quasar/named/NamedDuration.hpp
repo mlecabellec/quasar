@@ -8,6 +8,7 @@
 
 #include "quasar/coretypes/Duration.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -41,7 +42,7 @@ public:
    * @brief Standalone copy.
    * @return Cloned object.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     return NamedDuration::create(getName(), value());
   }
 

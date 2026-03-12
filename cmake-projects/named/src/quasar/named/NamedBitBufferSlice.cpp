@@ -54,8 +54,14 @@ std::shared_ptr<NamedBitBufferSlice> NamedBitBufferSlice::create(
                 slice->getOffset() + startBit, bitLength, parent);
 }
 
-std::shared_ptr<NamedObject> NamedBitBufferSlice::clone() const {
+std::shared_ptr<NamedObject> NamedBitBufferSlice::clone(CopyPolicy policy) const {
   // Fulfills [FE-0030.7.2] A slice shall be able to be copied.
+  if (policy == CopyPolicy::SHARE) {
+      return NamedBitBufferSlice::create(
+          getName(), quasar::coretypes::BitBufferSlice::getParent(), getOffset(),
+          size());
+  }
+
   // Returns a new slice instance that looks at the same bit range.
   return NamedBitBufferSlice::create(
       getName(), quasar::coretypes::BitBufferSlice::getParent(), getOffset(),
@@ -76,7 +82,7 @@ NamedBitBufferSlice::sliceView(size_t startBit, size_t bitLength) const {
 
 std::shared_ptr<NamedObject>
 NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
-                              std::shared_ptr<NamedObject> newParent) const {
+                              std::shared_ptr<NamedObject> newParent, CopyPolicy policy) const {
 
   std::shared_ptr<NamedBitBufferSlice> clonedSlice = nullptr;
 
@@ -118,7 +124,7 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   }
 
   if (!clonedSlice) {
-    clonedSlice = std::dynamic_pointer_cast<NamedBitBufferSlice>(clone());
+    clonedSlice = std::dynamic_pointer_cast<NamedBitBufferSlice>(clone(policy));
   }
 
   if (newParent) {
@@ -129,7 +135,7 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   // [CS-0010.34] auto forbidden.
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = childList.begin(); it != childList.end(); ++it) {
     const std::shared_ptr<NamedObject> &child = *it;
-    child->deepCopy(getSelf(), clonedSlice);
+    child->deepCopy(getSelf(), clonedSlice, policy);
   }
 
   return clonedSlice;

@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <mutex>
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -110,7 +111,7 @@ public:
    * @brief Clones the variant.
    * @return Cloned object.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     std::shared_ptr<NamedVariant> cloned = NamedVariant::create(getName());
     std::shared_ptr<NamedObject> current = get();
     if (current) {

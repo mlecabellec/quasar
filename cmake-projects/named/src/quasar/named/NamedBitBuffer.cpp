@@ -3,7 +3,8 @@
 namespace quasar::named {
 
 NamedBitBuffer::NamedBitBuffer(const std::string &name, size_t bitCount)
-    : NamedObject(name), quasar::coretypes::BitBuffer(bitCount) {
+    : NamedObject(name), quasar::coretypes::BitBuffer(bitCount),
+      m_bound(false), m_bound_offset(0), m_bound_length(bitCount) {
     // Fulfills [FE-0030.6] support for a named BitBuffer.
     // Constructor initializes the name and allocates the specified number of bits.
 }
@@ -26,8 +27,14 @@ NamedBitBuffer::create(const std::string &name, size_t bitCount,
   return obj;
 }
 
-std::shared_ptr<NamedObject> NamedBitBuffer::clone() const {
+std::shared_ptr<NamedObject> NamedBitBuffer::clone(CopyPolicy policy) const {
   // Fulfills [FE-0020.14] Utilities for copying parts of the tree.
+  if (policy == CopyPolicy::SHARE && m_bound) {
+      auto newObj = create(getName(), bitSize());
+      newObj->bind(m_bound_offset, m_bound_length);
+      return newObj;
+  }
+  
   // Create a new NamedBitBuffer with the same dimensions.
   std::shared_ptr<NamedBitBuffer> newObj = create(getName(), bitSize());
 

@@ -4,8 +4,8 @@ namespace quasar::named {
 
 NamedString::NamedString(const std::string &name, const std::string &value)
     : NamedObject(name), quasar::coretypes::String(value) {
-    // Fulfills [FE-0030.4] support for a named String.
-    // Both base classes are initialized with the respective name and value.
+  // Fulfills [FE-0030.4] support for a named String.
+  // Both base classes are initialized with the respective name and value.
 }
 
 std::shared_ptr<NamedString>
@@ -25,6 +25,7 @@ NamedString::create(const std::string &name, const std::string &value,
   }
   return obj;
 }
+
 
 std::string NamedString::getType() const { return "NamedString"; }
 

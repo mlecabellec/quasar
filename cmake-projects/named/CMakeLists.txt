@@ -105,6 +105,7 @@ target_compile_options(quasar_named PRIVATE -Wall -Wextra -Werror -pedantic)
 target_include_directories(quasar_named PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${CMAKE_CURRENT_SOURCE_DIR}/../coretypes/include
     ${YAML_CPP_INCLUDE_DIRS}
     ${TINYXML2_INCLUDE_DIRS}
     ${JSONCONS_INCLUDE_DIRS}

@@ -412,23 +412,23 @@ bool NamedObject::operator<(const NamedObject &other) const {
   return m_name < other.m_name;
 }
 
-std::shared_ptr<NamedObject> NamedObject::clone() const {
+std::shared_ptr<NamedObject> NamedObject::clone([[maybe_unused]] CopyPolicy policy) const {
   // Default implementation creates a new NamedObject with the same name.
   return NamedObject::create(m_name);
 }
 
-std::shared_ptr<NamedObject> NamedObject::deepCopy() const {
+std::shared_ptr<NamedObject> NamedObject::deepCopy(CopyPolicy policy) const {
   // Fulfills [FE-0020.14.1] deep copy mechanism.
   // Initiates a deep copy down the hierarchy starting with no parent context.
-  return deepCopy(nullptr, nullptr);
+  return deepCopy(nullptr, nullptr, policy);
 }
 
 std::shared_ptr<NamedObject> NamedObject::deepCopy(
     [[maybe_unused]] std::shared_ptr<NamedObject> originalParent,
-    std::shared_ptr<NamedObject> newParent) const {
+    std::shared_ptr<NamedObject> newParent, CopyPolicy policy) const {
 
   // Clone the current node (shallow copy, unattached).
-  std::shared_ptr<NamedObject> clonedObj = clone();
+  std::shared_ptr<NamedObject> clonedObj = clone(policy);
 
   // Attach to the copy's new parent if provided.
   if (newParent) {
@@ -452,7 +452,7 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
   // [CS-0010.34] auto forbidden.
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
     const std::shared_ptr<NamedObject> &child = *it;
-    child->deepCopy(getSelf(), clonedObj);
+    child->deepCopy(getSelf(), clonedObj, policy);
   }
 
   return clonedObj;

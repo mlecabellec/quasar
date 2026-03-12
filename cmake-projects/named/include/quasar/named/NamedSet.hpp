@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <mutex>
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -203,7 +204,7 @@ public:
    * @brief Clones the set.
    * @return Cloned object.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     return NamedSet<T>::create(getName());
   }
 

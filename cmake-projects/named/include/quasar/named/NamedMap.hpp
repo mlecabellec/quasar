@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <mutex>
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -72,11 +73,10 @@ public:
     // Check if key already exists, to replace it
     typename std::map<std::string, std::shared_ptr<V>>::iterator it = m_elements.find(key);
     if (it != m_elements.end()) {
-        replaceChild(it->second, item);
-        it->second = item;
+        std::shared_ptr<V> oldItem = it->second;
+        replaceChild(oldItem, item);
     } else {
         addChild(item);
-        m_elements[key] = item;
     }
   }
 
@@ -208,7 +208,7 @@ public:
    * @brief Clones the map.
    * @return Cloned object.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     return NamedMap<V>::create(getName());
   }
 

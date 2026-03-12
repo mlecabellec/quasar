@@ -8,6 +8,7 @@
 
 #include "quasar/coretypes/BitBufferSlice.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -111,10 +112,11 @@ public:
    * Fulfills [FE-0030.7.2] A slice shall be able to be copied to a new
    * BitBuffer.
    *
+   * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return A new NamedBitBufferSlice pointing to the same bit buffer region,
    * with the same name, but no hierarchy.
    */
-  std::shared_ptr<NamedObject> clone() const override;
+  std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
 
   /**
    * @brief Returns the type of the object.
@@ -127,12 +129,13 @@ public:
    * parent.
    * @param originalParent Original parent.
    * @param newParent New parent.
+   * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return Cloned object.
    * @compliance [FE-0020.14.2] Deep copy rebase slices.
    */
   std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
-           std::shared_ptr<NamedObject> newParent) const override;
+           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
 
   /**
    * @brief Creates a sub-slice view of this bit slice.

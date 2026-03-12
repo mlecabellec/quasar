@@ -13,6 +13,7 @@
 #include <string>
 #include <mutex>
 #include <algorithm>
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -193,7 +194,7 @@ public:
    * @brief Clones the array.
    * @return Cloned object.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     return NamedArray<T>::create(getName());
   }
 

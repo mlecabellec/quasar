@@ -8,6 +8,8 @@
 
 #include "quasar/coretypes/FloatingPoint.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/IBoundPrimitive.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -26,7 +28,8 @@ namespace quasar::named {
  */
 template <typename T>
 class NamedFloatingPoint : public NamedObject,
-                           public quasar::coretypes::FloatingPoint<T> {
+                           public quasar::coretypes::FloatingPoint<T>,
+                           public IBoundPrimitive {
 public:
   /**
    * @brief Destructor.
@@ -65,12 +68,32 @@ public:
    * 
    * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
    * 
+   * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return A new NamedFloatingPoint with the same name and value, but no
    * hierarchy.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
+    if (policy == CopyPolicy::SHARE && m_bound) {
+        auto newObj = create(this->getName(), this->value());
+        newObj->bind(m_bound_offset, m_bound_length);
+        return newObj;
+    }
     // Return a new instance using the same name and current value.
     return create(this->getName(), this->value());
+  }
+
+  // --- IBoundPrimitive implementation ---
+  bool isBound() const override { return m_bound; }
+  std::size_t getBoundOffset() const override { return m_bound_offset; }
+  std::size_t getBoundLength() const override { return m_bound_length; }
+
+  /**
+   * @brief Binds this float to a specific memory offset (conceptual in Phase 1).
+   */
+  void bind(std::size_t offset, std::size_t length) {
+      m_bound = true;
+      m_bound_offset = offset;
+      m_bound_length = length;
   }
 
   /**
@@ -85,9 +108,15 @@ public:
    * @param value The initial value.
    */
   NamedFloatingPoint(const std::string &name, T value)
-      : NamedObject(name), quasar::coretypes::FloatingPoint<T>(value) {
+      : NamedObject(name), quasar::coretypes::FloatingPoint<T>(value),
+        m_bound(false), m_bound_offset(0), m_bound_length(sizeof(T)) {
     // Both base classes are initialized with the provided arguments.
   }
+
+private:
+  bool m_bound;
+  std::size_t m_bound_offset;
+  std::size_t m_bound_length;
 };
 
 } // namespace quasar::named

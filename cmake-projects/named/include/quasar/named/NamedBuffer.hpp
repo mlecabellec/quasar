@@ -8,6 +8,7 @@
 
 #include "quasar/coretypes/Buffer.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -61,9 +62,18 @@ public:
    * 
    * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
    * 
+   * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return A new NamedBuffer with the same name and content, but no hierarchy.
    */
-  std::shared_ptr<NamedObject> clone() const override {
+  std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
+    if (policy == CopyPolicy::SHARE) {
+      // In Phase 1, sharing a buffer might mean creating a slice over it, or
+      // returning the same node. For now, we will return a slice that covers
+      // the whole buffer, or just duplicate if strictly a buffer is required.
+      // Easiest is to duplicate, as fully sharing a raw buffer safely is complex
+      // without slice mechanics.
+      return create(getName(), data_);
+    }
     // Accessing protected data_ from Buffer base class.
     return create(getName(), data_);
   }

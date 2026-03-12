@@ -8,6 +8,8 @@
 
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/coretypes/BitBuffer.hpp"
+#include "quasar/named/IBoundPrimitive.hpp"
+#include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
 
@@ -22,7 +24,7 @@ namespace quasar::named {
  * - Fulfills [FE-0030.6] support for a named BitBuffer.
  * - Fulfills [FE-0020.4] Derivative of NamedObject.
  */
-class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer {
+class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer, public IBoundPrimitive {
 public:
     /**
      * @brief Virtual destructor.
@@ -46,9 +48,24 @@ public:
      * 
      * Fulfills [FE-0020.14] Utilities for copying parts of the tree.
      * 
+     * @param policy Memory policy (DUPLICATE vs SHARE).
      * @return A new NamedBitBuffer with the same name and bit content, but no hierarchy.
      */
-    std::shared_ptr<NamedObject> clone() const override;
+    std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
+
+    // --- IBoundPrimitive implementation ---
+    bool isBound() const override { return m_bound; }
+    std::size_t getBoundOffset() const override { return m_bound_offset; }
+    std::size_t getBoundLength() const override { return m_bound_length; }
+
+    /**
+     * @brief Binds this bit buffer to a specific memory offset (conceptual in Phase 1).
+     */
+    void bind(std::size_t offset, std::size_t length) {
+        m_bound = true;
+        m_bound_offset = offset;
+        m_bound_length = length;
+    }
 
     /**
      * @brief Returns the type of the object.
@@ -62,6 +79,11 @@ public:
      * @param bitCount The number of bits.
      */
     NamedBitBuffer(const std::string& name, size_t bitCount);
+
+private:
+    bool m_bound;
+    std::size_t m_bound_offset;
+    std::size_t m_bound_length;
 };
 
 } // namespace quasar::named

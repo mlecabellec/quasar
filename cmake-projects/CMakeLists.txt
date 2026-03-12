@@ -12,6 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(third-party)
+
+# Treat warnings as errors for all Quasar projects (non-third-party)
+add_compile_options(-Werror)
 add_subdirectory(utils)
 add_subdirectory(sched)
 # add_subdirectory(smp)
