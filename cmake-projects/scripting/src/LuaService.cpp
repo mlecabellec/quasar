@@ -50,8 +50,7 @@ sol::protected_function_result LuaService::execute(const std::string& script) {
 }
 
 bool LuaService::onInit() {
-    m_running = true;
-    m_worker = std::thread(&LuaService::workerLoop, this);
+    bool initOk = true;
 
     if (m_luaSelf && m_luaSelf["onInit"].valid()) {
         sol::protected_function func = m_luaSelf["onInit"];
@@ -61,9 +60,14 @@ bool LuaService::onInit() {
             std::cerr << "LuaService [" << getName() << "] onInit error: " << err.what() << std::endl;
             return false;
         }
-        return result.get_type() == sol::type::boolean ? result.get<bool>() : true;
+        initOk = result.get_type() == sol::type::boolean ? result.get<bool>() : true;
     }
-    return true;
+
+    if (initOk) {
+        m_running = true;
+        m_worker = std::thread(&LuaService::workerLoop, this);
+    }
+    return initOk;
 }
 
 void LuaService::onUpdate(double dt) {
