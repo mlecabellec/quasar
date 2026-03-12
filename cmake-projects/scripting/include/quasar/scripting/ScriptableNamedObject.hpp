@@ -42,13 +42,13 @@ public:
         return "ScriptableNamedObject";
     }
 
-    std::shared_ptr<named::NamedObject> clone() const override {
+    std::shared_ptr<named::NamedObject> clone(named::CopyPolicy policy = named::CopyPolicy::DUPLICATE) const override {
         if (m_luaSelf && m_luaSelf["clone"].valid()) {
             sol::protected_function func = m_luaSelf["clone"];
             sol::protected_function_result result = func(m_luaSelf);
             if (result.valid()) return result;
         }
-        return named::NamedObject::clone();
+        return named::NamedObject::clone(policy);
     }
 
     /**
