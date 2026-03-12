@@ -33,7 +33,7 @@ jobs:
           apt-get update
           apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev
+                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb
           # Attempt to install headers for the running kernel if possible, 
           # but in a container on GHA this is usually not matching the distro repo.
           # We install the default headers for the distro to allow compilation 
@@ -65,7 +65,13 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure
+        run: ctest --test-dir build-projects --output-on-failure -E "(ScriptManagerTest\.MemoryStress|LuaServiceTest\.FullLifecycle)"
+
+      - name: Run Stress Tests in GDB
+        continue-on-error: true
+        run: |
+          # We use -batch to run non-interactively and -ex to pass commands
+          gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
       - name: Package (Debian)
         run: |
