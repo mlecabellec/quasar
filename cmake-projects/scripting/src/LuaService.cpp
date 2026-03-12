@@ -22,6 +22,7 @@ LuaService::LuaService(const std::string& name)
 }
 
 bool LuaService::loadScript(const std::string& path) {
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     try {
         sol::protected_function_result result = m_engine->getState().script_file(path);
         if (!result.valid()) {
@@ -46,21 +47,25 @@ bool LuaService::loadScript(const std::string& path) {
 }
 
 sol::protected_function_result LuaService::execute(const std::string& script) {
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     return m_engine->executeString(script);
 }
 
 bool LuaService::onInit() {
     bool initOk = true;
 
-    if (m_luaSelf && m_luaSelf["onInit"].valid()) {
-        sol::protected_function func = m_luaSelf["onInit"];
-        sol::protected_function_result result = func(m_luaSelf);
-        if (!result.valid()) {
-            sol::error err = result;
-            std::cerr << "LuaService [" << getName() << "] onInit error: " << err.what() << std::endl;
-            return false;
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+        if (m_luaSelf && m_luaSelf["onInit"].valid()) {
+            sol::protected_function func = m_luaSelf["onInit"];
+            sol::protected_function_result result = func(m_luaSelf);
+            if (!result.valid()) {
+                sol::error err = result;
+                std::cerr << "LuaService [" << getName() << "] onInit error: " << err.what() << std::endl;
+                return false;
+            }
+            initOk = result.get_type() == sol::type::boolean ? result.get<bool>() : true;
         }
-        initOk = result.get_type() == sol::type::boolean ? result.get<bool>() : true;
     }
 
     if (initOk) {
@@ -71,6 +76,7 @@ bool LuaService::onInit() {
 }
 
 void LuaService::onUpdate(double dt) {
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     if (m_luaSelf && m_luaSelf["onUpdate"].valid()) {
         sol::protected_function func = m_luaSelf["onUpdate"];
         sol::protected_function_result result = func(m_luaSelf, dt);
@@ -88,6 +94,7 @@ void LuaService::onShutdown() {
         m_worker.join();
     }
 
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
     if (m_luaSelf && m_luaSelf["onShutdown"].valid()) {
         sol::protected_function func = m_luaSelf["onShutdown"];
         sol::protected_function_result result = func(m_luaSelf);
@@ -95,6 +102,13 @@ void LuaService::onShutdown() {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] onShutdown error: " << err.what() << std::endl;
         }
+    }
+}
+
+void LuaService::gcStep(int stepSize) {
+    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+    if (m_engine) {
+        m_engine->gcStep(stepSize);
     }
 }
 

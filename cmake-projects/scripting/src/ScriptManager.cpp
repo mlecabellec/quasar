@@ -50,8 +50,7 @@ void ScriptManager::update(double dt) {
 void ScriptManager::tickGC(int stepSize) {
     std::lock_guard<std::mutex> lock(m_mutex);
     for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
-        sol::state& lua = pair.second->getEngine()->getState();
-        lua_gc(lua.lua_state(), LUA_GCSTEP, stepSize);
+        pair.second->gcStep(stepSize);
     }
 }
 

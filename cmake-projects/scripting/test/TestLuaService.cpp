@@ -57,9 +57,10 @@ TEST_F(LuaServiceTest, FullLifecycle) {
     svc->onUpdate(0.1);
     svc->onUpdate(0.1);
     
-    // Check update_count in the service table
+    // Check update_count in the service table. 
+    // Since the background worker loop is running, the update_count might be >= 2.
     sol::protected_function_result result = svc->execute("return service.update_count");
-    EXPECT_EQ(result.get<int>(), 2);
+    EXPECT_GE(result.get<int>(), 2);
 
     svc->onShutdown();
     
@@ -75,11 +76,14 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     std::shared_ptr<named::NamedObject> obj = named::NamedObject::create("TrackMe");
     ObjectTracker::getInstance().track(obj);
     
-    lua["trackedObj"] = LuaProxy<named::NamedObject>(obj);
-    lua.script(R"(
-        alive_before = quasar.isAlive(trackedObj)
-    )");
-    EXPECT_TRUE(lua["alive_before"].get<bool>());
+    {
+        std::lock_guard<std::recursive_mutex> lock(svc->getStateMutex());
+        lua["trackedObj"] = LuaProxy<named::NamedObject>(obj);
+        lua.script(R"(
+            alive_before = quasar.isAlive(trackedObj)
+        )");
+        EXPECT_TRUE(lua["alive_before"].get<bool>());
+    }
     
     // Now simulate object deletion from C++ side (though it's a shared_ptr, we only have weak_ptr in tracker)
     // To truely test 'isAlive' as 'is in hierarchy', we'd need isAlive to check parents.
@@ -88,8 +92,11 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     // Let's test cleanup
     EXPECT_GT(ObjectTracker::getInstance().getTrackedCount(), 0);
     obj.reset();
-    lua["trackedObj"] = sol::nil;
-    lua.collect_garbage();
+    {
+        std::lock_guard<std::recursive_mutex> lock(svc->getStateMutex());
+        lua["trackedObj"] = sol::nil;
+        lua.collect_garbage();
+    }
     
     ObjectTracker::getInstance().cleanup();
     EXPECT_EQ(ObjectTracker::getInstance().getTrackedCount(), 0);

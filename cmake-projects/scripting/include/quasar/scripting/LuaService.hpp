@@ -80,12 +80,23 @@ public:
      */
     void postTask(std::function<void()> task);
 
+    /**
+     * @brief Perform a thread-safe garbage collection step on the Lua engine.
+     */
+    void gcStep(int stepSize);
+
+    /**
+     * @brief Access the mutex protecting the Lua state.
+     */
+    std::recursive_mutex& getStateMutex() { return m_stateMutex; }
+
 protected:
     LuaService(const std::string& name);
 
 private:
     std::shared_ptr<LuaEngine> m_engine;
     sol::table m_luaSelf;
+    std::recursive_mutex m_stateMutex;
 
     // Threading
     std::thread m_worker;
