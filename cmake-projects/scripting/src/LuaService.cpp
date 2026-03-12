@@ -1,4 +1,5 @@
 #include "quasar/scripting/LuaService.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <iostream>
 
 namespace quasar::scripting {
@@ -22,7 +23,10 @@ LuaService::LuaService(const std::string& name)
 }
 
 bool LuaService::loadScript(const std::string& path) {
-    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+    std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        throw std::runtime_error("Timeout acquiring LuaState mutex in loadScript");
+    }
     try {
         sol::protected_function_result result = m_engine->getState().script_file(path);
         if (!result.valid()) {
@@ -47,7 +51,10 @@ bool LuaService::loadScript(const std::string& path) {
 }
 
 sol::protected_function_result LuaService::execute(const std::string& script) {
-    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+    std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        throw std::runtime_error("Timeout acquiring LuaState mutex in execute");
+    }
     return m_engine->executeString(script);
 }
 
@@ -55,7 +62,10 @@ bool LuaService::onInit() {
     bool initOk = true;
 
     {
-        std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+        std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            throw std::runtime_error("Timeout acquiring LuaState mutex in onInit");
+        }
         if (m_luaSelf && m_luaSelf["onInit"].valid()) {
             sol::protected_function func = m_luaSelf["onInit"];
             sol::protected_function_result result = func(m_luaSelf);
@@ -76,7 +86,12 @@ bool LuaService::onInit() {
 }
 
 void LuaService::onUpdate(double dt) {
-    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+    std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        // Log error but don't throw to avoid crashing the worker loop or system.
+        std::cerr << "LuaService [" << getName() << "] timeout acquiring mutex in onUpdate" << std::endl;
+        return;
+    }
     if (m_luaSelf && m_luaSelf["onUpdate"].valid()) {
         sol::protected_function func = m_luaSelf["onUpdate"];
         sol::protected_function_result result = func(m_luaSelf, dt);
@@ -94,8 +109,10 @@ void LuaService::onShutdown() {
         m_worker.join();
     }
 
-    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
-    if (m_luaSelf && m_luaSelf["onShutdown"].valid()) {
+    std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        std::cerr << "LuaService [" << getName() << "] timeout acquiring mutex in onShutdown" << std::endl;
+    } else if (m_luaSelf && m_luaSelf["onShutdown"].valid()) {
         sol::protected_function func = m_luaSelf["onShutdown"];
         sol::protected_function_result result = func(m_luaSelf);
         if (!result.valid()) {
@@ -106,7 +123,11 @@ void LuaService::onShutdown() {
 }
 
 void LuaService::gcStep(int stepSize) {
-    std::lock_guard<std::recursive_mutex> lock(m_stateMutex);
+    std::unique_lock<std::recursive_timed_mutex> lock(m_stateMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+         std::cerr << "LuaService [" << getName() << "] timeout acquiring mutex in gcStep" << std::endl;
+         return;
+    }
     if (m_engine) {
         m_engine->gcStep(stepSize);
     }
@@ -123,7 +144,12 @@ void LuaService::workerLoop() {
         onUpdate(dt);
 
         // 2. Process Asynchronous Tasks (Events)
-        std::unique_lock<std::mutex> lock(m_queueMutex);
+        std::unique_lock<std::timed_mutex> lock(m_queueMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+             std::cerr << "LuaService [" << getName() << "] workerLoop timeout acquiring queue mutex" << std::endl;
+             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+             continue;
+        }
         m_cv.wait_for(lock, std::chrono::milliseconds(10), [this] { 
             return !m_running || !m_taskQueue.empty(); 
         });
@@ -144,7 +170,10 @@ void LuaService::workerLoop() {
 
 void LuaService::postTask(std::function<void()> task) {
     {
-        std::lock_guard<std::mutex> lock(m_queueMutex);
+        std::unique_lock<std::timed_mutex> lock(m_queueMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            throw std::runtime_error("Timeout acquiring queue mutex in postTask");
+        }
         m_taskQueue.push(std::move(task));
     }
     m_cv.notify_one();

@@ -2,6 +2,7 @@
 
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <string>
 #include <memory>
 #include <chrono>
@@ -86,9 +87,9 @@ public:
     void gcStep(int stepSize);
 
     /**
-     * @brief Access the mutex protecting the Lua state.
+     * @brief Exposes the state mutex for manual synchronization.
      */
-    std::recursive_mutex& getStateMutex() { return m_stateMutex; }
+    std::recursive_timed_mutex& getStateMutex() { return m_stateMutex; }
 
 protected:
     LuaService(const std::string& name);
@@ -96,13 +97,13 @@ protected:
 private:
     std::shared_ptr<LuaEngine> m_engine;
     sol::table m_luaSelf;
-    std::recursive_mutex m_stateMutex;
+    std::recursive_timed_mutex m_stateMutex;
 
     // Threading
     std::thread m_worker;
     std::atomic<bool> m_running{false};
-    std::condition_variable m_cv;
-    std::mutex m_queueMutex;
+    std::condition_variable_any m_cv;
+    std::timed_mutex m_queueMutex;
     std::queue<std::function<void()>> m_taskQueue;
 
     void workerLoop();

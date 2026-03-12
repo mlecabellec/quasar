@@ -1,6 +1,7 @@
 #pragma once
 
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -47,7 +48,7 @@ public:
 private:
     ObjectTracker() = default;
     
-    mutable std::mutex m_mutex;
+    mutable std::timed_mutex m_mutex;
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>> m_trackedObjects;
 };
 

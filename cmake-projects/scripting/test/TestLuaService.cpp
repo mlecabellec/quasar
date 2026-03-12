@@ -53,19 +53,35 @@ TEST_F(LuaServiceTest, FullLifecycle) {
     // Test onInit
     EXPECT_TRUE(svc->onInit());
     
-    // Testing via C++ calls
-    svc->onUpdate(0.1);
-    svc->onUpdate(0.1);
+    // Hardening: stressors calling Lua from multiple threads concurrently
+    std::atomic<bool> stopStress(false);
+    std::vector<std::thread> stressors;
+    for (int i = 0; i < 4; ++i) {
+        stressors.emplace_back([svc, &stopStress]() {
+            while (!stopStress) {
+                svc->onUpdate(0.01);
+                svc->execute("service.update_count = service.update_count + 1");
+                std::this_thread::yield();
+            }
+        });
+    }
+
+    // Main thread also participates
+    for (int i = 0; i < 100; ++i) {
+        svc->onUpdate(0.1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    stopStress = true;
+    for (auto& t : stressors) {
+        if (t.joinable()) t.join();
+    }
     
     // Check update_count in the service table. 
-    // Since the background worker loop is running, the update_count might be >= 2.
     sol::protected_function_result result = svc->execute("return service.update_count");
-    EXPECT_GE(result.get<int>(), 2);
+    EXPECT_GE(result.get<int>(), 100);
 
     svc->onShutdown();
-    
-    // To verify, we'd need to access m_luaSelf values. 
-    // I should probably expose a way to get values from the service for testing.
 }
 
 TEST_F(LuaServiceTest, ObjectTracking) {
@@ -77,7 +93,8 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     ObjectTracker::getInstance().track(obj);
     
     {
-        std::lock_guard<std::recursive_mutex> lock(svc->getStateMutex());
+        std::unique_lock<std::recursive_timed_mutex> lock(svc->getStateMutex(), named::config::DEFAULT_LOCK_TIMEOUT);
+        ASSERT_TRUE(lock.owns_lock());
         lua["trackedObj"] = LuaProxy<named::NamedObject>(obj);
         lua.script(R"(
             alive_before = quasar.isAlive(trackedObj)

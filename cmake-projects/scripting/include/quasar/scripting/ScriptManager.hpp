@@ -1,6 +1,7 @@
 #pragma once
 
 #include "quasar/scripting/LuaService.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include <map>
 #include <string>
@@ -48,7 +49,7 @@ public:
 private:
     ScriptManager();
     
-    std::mutex m_mutex;
+    std::timed_mutex m_mutex;
     std::map<std::string, std::shared_ptr<LuaService>> m_services;
 };
 

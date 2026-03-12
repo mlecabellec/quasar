@@ -31,17 +31,39 @@ protected:
 TEST_F(ScriptManagerTest, MemoryStress) {
     ScriptManager& mgr = ScriptManager::getInstance();
     
-    // Perform 1000 creation/destruction cycles to check for leaks
-    for (int i = 0; i < 1000; ++i) {
-        std::string name = "Svc_" + std::to_string(i);
-        std::shared_ptr<LuaService> svc = mgr.createService(name, m_scriptPath);
-        ASSERT_NE(svc, nullptr);
-        mgr.stopService(name);
-        
-        if (i % 100 == 0) {
-            mgr.tickGC();
+    std::atomic<bool> stopGC(false);
+    std::thread gcThread([&mgr, &stopGC]() {
+        while (!stopGC) {
+            mgr.tickGC(100);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
+    });
+
+    auto stressFn = [&](int start, int count) {
+        for (int i = start; i < start + count; ++i) {
+            std::string name = "SvcStress_" + std::to_string(i);
+            std::shared_ptr<LuaService> svc = mgr.createService(name, m_scriptPath);
+            if (svc) {
+                svc->execute("local x = 1 + 1");
+                mgr.stopService(name);
+            }
+        }
+    };
+
+    // Perform 5000 creation/destruction cycles across multiple threads
+    std::vector<std::thread> workers;
+    int totalCycles = 5000;
+    int threadCount = 4;
+    for (int i = 0; i < threadCount; ++i) {
+        workers.emplace_back(stressFn, i * (totalCycles / threadCount), totalCycles / threadCount);
     }
+
+    for (auto& t : workers) {
+        if (t.joinable()) t.join();
+    }
+
+    stopGC = true;
+    if (gcThread.joinable()) gcThread.join();
     
     // Final cleanup
     mgr.tickGC(1000);

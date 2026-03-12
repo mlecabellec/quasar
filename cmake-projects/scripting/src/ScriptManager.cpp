@@ -1,5 +1,6 @@
 #include "quasar/scripting/ScriptManager.hpp"
 #include "quasar/scripting/RegistryBindings.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <iostream>
 
 namespace quasar::scripting {
@@ -12,7 +13,10 @@ ScriptManager& ScriptManager::getInstance() {
 ScriptManager::ScriptManager() : named::NamedObject("ScriptManager") {}
 
 std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name, const std::string& scriptPath) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        throw std::runtime_error("Timeout acquiring ScriptManager mutex in createService");
+    }
     
     std::shared_ptr<LuaService> svc = LuaService::create(name, getSelf());
     
@@ -32,7 +36,10 @@ std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name
 }
 
 void ScriptManager::stopService(const std::string& name) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        throw std::runtime_error("Timeout acquiring ScriptManager mutex in stopService");
+    }
     std::map<std::string, std::shared_ptr<LuaService>>::iterator it = m_services.find(name);
     if (it != m_services.end()) {
         it->second->onShutdown();
@@ -41,14 +48,22 @@ void ScriptManager::stopService(const std::string& name) {
 }
 
 void ScriptManager::update(double dt) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        std::cerr << "ScriptManager update timeout" << std::endl;
+        return;
+    }
     for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
         pair.second->onUpdate(dt);
     }
 }
 
 void ScriptManager::tickGC(int stepSize) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        std::cerr << "ScriptManager tickGC timeout" << std::endl;
+        return;
+    }
     for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
         pair.second->gcStep(stepSize);
     }
