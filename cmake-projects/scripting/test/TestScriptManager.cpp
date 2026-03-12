@@ -44,7 +44,7 @@ TEST_F(ScriptManagerTest, MemoryStress) {
     }
     
     // Final cleanup
-    mgr.tickGC(1000); 
+    mgr.tickGC(1000);
 }
 
 TEST_F(ScriptManagerTest, SandboxIsolation) {
