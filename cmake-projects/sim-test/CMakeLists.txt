@@ -9,6 +9,7 @@ target_link_libraries(sim-test PRIVATE ECSS_SMP sim sample-inverter)
 
 # New dynamic test executable
 add_executable(dynamic-sim-test src/dynamic_main.cpp)
+set_target_properties(dynamic-sim-test PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(dynamic-sim-test PRIVATE
     ${PROJECT_SOURCE_DIR}/smp/include
     ${PROJECT_SOURCE_DIR}/sim/include
@@ -26,16 +27,19 @@ set(TEST_INCLUDE_DIRS
 
 # test-inverter
 add_executable(test-inverter src/test_inverter.cpp)
+set_target_properties(test-inverter PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(test-inverter PRIVATE ${TEST_INCLUDE_DIRS})
 target_link_libraries(test-inverter PRIVATE ECSS_SMP sim)
 
 # test-delayed-simple
 add_executable(test-delayed-simple src/test_delayed_simple.cpp)
+set_target_properties(test-delayed-simple PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(test-delayed-simple PRIVATE ${TEST_INCLUDE_DIRS})
 target_link_libraries(test-delayed-simple PRIVATE ECSS_SMP sim)
 
 # test-delayed-array
 add_executable(test-delayed-array src/test_delayed_array.cpp)
+set_target_properties(test-delayed-array PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(test-delayed-array PRIVATE ${TEST_INCLUDE_DIRS})
 target_link_libraries(test-delayed-array PRIVATE ECSS_SMP sim)
 

@@ -18,6 +18,7 @@ public:
 
     void Publish(Smp::IPublication* receiver) override;
     const Smp::Uuid& GetUuid() const override;
+    Smp::IObject* GetChild(Smp::String8 name) const override;
     void Execute();
 
 private:
@@ -70,6 +71,7 @@ public:
 
     void Publish(Smp::IPublication* receiver) override;
     const Smp::Uuid& GetUuid() const override;
+    Smp::IObject* GetChild(Smp::String8 name) const override;
     void Execute();
 
 private:

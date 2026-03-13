@@ -211,10 +211,16 @@ Smp::IPublication *Publication::PublishArray(Smp::String8 name,
 Smp::ISimpleArrayField *
 Publication::PublishArray(Smp::String8 name, Smp::String8 description,
                           Smp::Int64 count, void *address,
-                          Smp::PrimitiveTypeKind type, Smp::ViewKind view,
+                          Smp::PrimitiveTypeKind typeKind, Smp::ViewKind view,
                           Smp::Bool state, Smp::Bool input, Smp::Bool output) {
-  // Stub
-  return nullptr;
+  const Smp::Publication::IType *type = _typeRegistry->GetType(typeKind);
+  auto field = std::make_unique<SimpleArrayField>(
+      name, description, nullptr, type, address, static_cast<Smp::UInt64>(count),
+      typeKind, view, state, input, output);
+  _fieldCollection.Add(field.get());
+  Smp::ISimpleArrayField* fieldPtr = field.get();
+  _fields.push_back(std::move(field));
+  return fieldPtr;
 }
 
 Smp::IPublication *Publication::PublishStructure(Smp::String8 name,

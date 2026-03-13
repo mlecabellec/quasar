@@ -112,6 +112,29 @@ private:
   void *_address;
 };
 
+/**
+ * @brief Simple Array Field implementation.
+ */
+class SimpleArrayField : public Field, public virtual Smp::ISimpleArrayField {
+public:
+  SimpleArrayField(Smp::String8 name, Smp::String8 description, Smp::IObject *parent,
+                   const Smp::Publication::IType *type, void *address,
+                   Smp::UInt64 size, Smp::PrimitiveTypeKind primitiveType,
+                   Smp::ViewKind view, Smp::Bool state, Smp::Bool input,
+                   Smp::Bool output);
+
+  Smp::UInt64 GetSize() const override;
+  Smp::AnySimple GetValue(Smp::UInt64 index) const override;
+  void SetValue(Smp::UInt64 index, Smp::AnySimple value) override;
+  void GetValues(Smp::UInt64 length, Smp::AnySimple *values, Smp::UInt64 startIndex = 0) const override;
+  void SetValues(Smp::UInt64 length, Smp::AnySimpleArray values, Smp::UInt64 startIndex = 0) override;
+
+private:
+  void *_address;
+  Smp::UInt64 _size;
+  Smp::PrimitiveTypeKind _primitiveType;
+};
+
 } // namespace sim
 
 #endif // SIM_FIELD_HPP
