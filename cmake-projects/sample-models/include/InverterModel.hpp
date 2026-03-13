@@ -1,12 +1,17 @@
 #ifndef INVERTER_MODEL_HPP
 #define INVERTER_MODEL_HPP
 
-#include <sim/Model.hpp>
+#include "SmpModel.hpp"
 #include <Smp/IEntryPoint.h>
 
 namespace sample {
 
-class InverterModel : public sim::Model {
+/**
+ * @brief Inverter model implementing a pure SMP model.
+ * @details This model does not rely on any libraries other than standard ones
+ * and the ECSS SMP headers.
+ */
+class InverterModel : public SmpModel {
 public:
   InverterModel(Smp::String8 name, Smp::String8 description,
                 Smp::IComposite *parent);
@@ -14,10 +19,7 @@ public:
 
   // IComponent methods
   void Publish(Smp::IPublication *receiver) override;
-  void Configure(Smp::Services::ILogger *logger,
-                 Smp::Services::ILinkRegistry *linkRegistry = nullptr) override;
-  void Connect(Smp::ISimulator *simulator) override;
-
+  
   const Smp::Uuid &GetUuid() const override;
 
   Smp::AnySimple GetSimpleValue(Smp::String8 fullName) const override;

@@ -1,12 +1,11 @@
 add_library(sample-models SHARED
     src/InverterModel.cpp
+    src/SmpModel.cpp
     src/Library.cpp
 )
 
 target_include_directories(sample-models PRIVATE
     include
-    ${PROJECT_SOURCE_DIR}/sim/include
-    ${PROJECT_SOURCE_DIR}/third_party/core/include
 )
 
-target_link_libraries(sample-models PRIVATE ECSS_SMP sim)
+target_link_libraries(sample-models PRIVATE ECSS_SMP)
