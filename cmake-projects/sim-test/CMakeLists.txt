@@ -44,8 +44,8 @@ target_include_directories(test-delayed-array PRIVATE ${TEST_INCLUDE_DIRS})
 target_link_libraries(test-delayed-array PRIVATE ECSS_SMP sim)
 
 # CTest definitions
-add_test(NAME sim-test COMMAND sim-test)
-add_test(NAME dynamic-sim-test COMMAND dynamic-sim-test)
-add_test(NAME test-inverter COMMAND test-inverter)
-add_test(NAME test-delayed-simple COMMAND test-delayed-simple)
-add_test(NAME test-delayed-array COMMAND test-delayed-array)
+set(TEST_LIST sim-test dynamic-sim-test test-inverter test-delayed-simple test-delayed-array)
+foreach(test_name ${TEST_LIST})
+    add_test(NAME ${test_name} COMMAND ${test_name})
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib")
+endforeach()
