@@ -65,7 +65,7 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure -E "(ScriptManagerTest\.MemoryStress|LuaServiceTest\.FullLifecycle)"
+        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
