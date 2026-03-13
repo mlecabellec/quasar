@@ -18,7 +18,7 @@ int main() {
   sim::Simulator simulator;
 
   // Path to the shared library. In a build tree, it's usually in lib/
-  const char* libraryPath = "lib/libsample-models.so";
+  const char* libraryPath = "lib/libsample-inverter.so";
   
   std::cout << "Loading library: " << libraryPath << std::endl;
   try {
@@ -26,7 +26,7 @@ int main() {
   } catch (const std::exception& e) {
     std::cerr << "Failed to load library: " << e.what() << std::endl;
     // Fallback for different build structures
-    libraryPath = "libsample-models.so";
+    libraryPath = "libsample-inverter.so";
     try {
         simulator.LoadLibrary(const_cast<char*>(libraryPath));
     } catch (const std::exception& e2) {

@@ -1,4 +1,4 @@
-#include "SmpModel.hpp"
+#include "common/SmpModel.hpp"
 #include <Smp/IPublication.h>
 
 namespace sample {

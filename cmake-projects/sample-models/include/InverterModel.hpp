@@ -1,7 +1,7 @@
 #ifndef INVERTER_MODEL_HPP
 #define INVERTER_MODEL_HPP
 
-#include "SmpModel.hpp"
+#include "common/SmpModel.hpp"
 #include <Smp/IEntryPoint.h>
 
 namespace sample {

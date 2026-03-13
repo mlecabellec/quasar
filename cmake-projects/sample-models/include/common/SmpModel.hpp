@@ -7,7 +7,7 @@
 #include <Smp/ComponentStateKind.h>
 #include <Smp/ContainerCollection.h>
 #include <Smp/FieldCollection.h>
-#include "SimpleCollection.hpp"
+#include "common/SimpleCollection.hpp"
 #include <string>
 
 namespace sample {
