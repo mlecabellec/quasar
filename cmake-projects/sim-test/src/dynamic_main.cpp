@@ -18,7 +18,7 @@ int main() {
   sim::Simulator simulator;
 
   // Path to the shared library. In a build tree, it's usually in lib/
-  const char* libraryPath = "lib/libsample-inverter.so";
+  const char* libraryPath = "../../lib/libsample-inverter.so";
   
   std::cout << "Loading library: " << libraryPath << std::endl;
   try {
@@ -26,12 +26,18 @@ int main() {
   } catch (const std::exception& e) {
     std::cerr << "Failed to load library: " << e.what() << std::endl;
     // Fallback for different build structures
-    libraryPath = "libsample-inverter.so";
+    libraryPath = "lib/libsample-inverter.so";
     try {
         simulator.LoadLibrary(const_cast<char*>(libraryPath));
     } catch (const std::exception& e2) {
-        std::cerr << "Absolute fallback failed: " << e2.what() << std::endl;
-        return 1;
+        std::cerr << "Fallback failed: " << e2.what() << std::endl;
+        libraryPath = "libsample-inverter.so";
+        try {
+            simulator.LoadLibrary(const_cast<char*>(libraryPath));
+        } catch (const std::exception& e3) {
+            std::cerr << "Absolute fallback failed: " << e3.what() << std::endl;
+            return 1;
+        }
     }
   }
 

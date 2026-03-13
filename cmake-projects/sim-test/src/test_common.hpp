@@ -12,14 +12,20 @@
 #include <stdexcept>
 
 inline void LoadLibrary(sim::Simulator& simulator, const std::string& libName) {
-    std::string libPath = "lib/lib" + libName + ".so";
+    std::string libPath = "../../lib/lib" + libName + ".so";
     std::cout << "Loading library: " << libPath << std::endl;
     try {
         simulator.LoadLibrary(const_cast<char*>(libPath.c_str()));
     } catch (...) {
-        libPath = "lib" + libName + ".so";
+        libPath = "lib/lib" + libName + ".so";
         std::cout << "Retrying with: " << libPath << std::endl;
-        simulator.LoadLibrary(const_cast<char*>(libPath.c_str()));
+        try {
+            simulator.LoadLibrary(const_cast<char*>(libPath.c_str()));
+        } catch (...) {
+            libPath = "lib" + libName + ".so";
+            std::cout << "Final retry with: " << libPath << std::endl;
+            simulator.LoadLibrary(const_cast<char*>(libPath.c_str()));
+        }
     }
 }
 
