@@ -92,7 +92,7 @@ int main() {
             end
             
             return true
-        )");
+        )LUA");
         
         if (!result.valid()) {
             sol::error err = result;

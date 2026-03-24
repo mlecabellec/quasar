@@ -11,26 +11,30 @@
 namespace quasar::net {
 
 extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lua) {
-    auto netTable = lua["quasar"]["net"].get_or_create<sol::table>();
-    netTable.set_function("poll", []() {
-        EventTrampoline::getInstance().poll();
-    });
+    // Ensure intermediate tables exist before creating sub-tables.
+    // sol2 does NOT auto-create intermediate tables via [] — get_or_create is needed at each level.
+    sol::table quasarTable  = lua["quasar"].get_or_create<sol::table>();
+    sol::table netTable     = quasarTable["net"].get_or_create<sol::table>();
 
     // TSK-20260311-002: Server namespace
-    auto serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
+    netTable["server"].get_or_create<sol::table>();
     bindTCPServer(lua);
     bindUDPServer(lua);
     bindWebServer(lua);
 
     // TSK-20260311-003: Client namespace
-    auto clientTable = lua["quasar"]["net"]["client"].get_or_create<sol::table>();
+    netTable["client"].get_or_create<sol::table>();
     bindTCPClient(lua);
     bindHTTPClient(lua);
 
     // TSK-20260311-002: Security namespace
     bindSSLContext(lua);
 
-    // TODO: Register actual components
+    // Register poll LAST so sub-table construction cannot overwrite it.
+    netTable = quasarTable["net"].get_or_create<sol::table>();
+    netTable.set_function("poll", []() {
+        EventTrampoline::getInstance().poll();
+    });
 }
 
 } // namespace quasar::net
