@@ -65,3 +65,4 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 add_subdirectory(test)
 add_subdirectory(runner)
 add_subdirectory(test_plugin)
+add_subdirectory(plugins/net)
