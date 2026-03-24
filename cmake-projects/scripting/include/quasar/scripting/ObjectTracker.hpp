@@ -24,9 +24,19 @@ public:
     }
 
     /**
-     * @brief Registers an object for tracking.
+     * @brief Registers an object for tracking (weak reference).
      */
     void track(std::shared_ptr<named::NamedObject> obj);
+
+    /**
+     * @brief Registers an object for tracking (strong reference, keeps it alive).
+     */
+    void trackStrong(std::shared_ptr<named::NamedObject> obj);
+
+    /**
+     * @brief Removes an object from tracking.
+     */
+    void untrack(named::NamedObject* obj);
 
     /**
      * @brief Checks if an object is still alive in the C++ hierarchy.
@@ -50,6 +60,7 @@ private:
     
     mutable std::timed_mutex m_mutex;
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>> m_trackedObjects;
+    std::map<named::NamedObject*, std::shared_ptr<named::NamedObject>> m_strongObjects;
 };
 
 } // namespace quasar::scripting

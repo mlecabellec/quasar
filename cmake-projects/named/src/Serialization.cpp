@@ -19,6 +19,7 @@
 #include <iostream>
 #include <iterator>
 #include <jsoncons/json.hpp>
+#include <jsoncons_ext/bson/bson.hpp>
 #include <stdexcept>
 #include <tinyxml2.h>
 #include <yaml-cpp/yaml.h>
@@ -26,6 +27,7 @@
 namespace quasar::named::serialization {
 
 using namespace tinyxml2;
+using jsoncons::json;
 
 // --- Helper Factory ---
 /**
@@ -252,8 +254,6 @@ std::shared_ptr<NamedObject> fromYaml(const std::string &yaml) {
 
 // --- JSON ---
 /** @compliance [FE-0020.9.2] JSON conversion. */
-using jsoncons::json;
-
 json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
   json j;
   j["name"] = obj->getName();
@@ -304,6 +304,96 @@ std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
     }
   }
   return obj;
+}
+
+// --- BSON ---
+
+/**
+ * @brief Helper to serialize a NamedObject to a json object suitable for BSON.
+ * @param obj The object to serialize.
+ * @return A json object.
+ * @compliance [FE-0020.9.2] BSON conversion.
+ */
+json serializeToBinaryJson(const std::shared_ptr<NamedObject> &obj) {
+  json j;
+  j["name"] = obj->getName();
+  j["type"] = obj->getType();
+  
+  const quasar::coretypes::BitBuffer* bb = dynamic_cast<const quasar::coretypes::BitBuffer*>(obj.get());
+  if (bb) {
+      std::vector<uint8_t> vec = bb->toVector();
+      j["value"] = jsoncons::byte_string(vec.data(), vec.size());
+      j["bitSize"] = static_cast<uint64_t>(bb->bitSize());
+  } else {
+      const quasar::coretypes::Buffer* buf = dynamic_cast<const quasar::coretypes::Buffer*>(obj.get());
+      if (buf) {
+          std::vector<uint8_t> vec = buf->toVector();
+          j["value"] = jsoncons::byte_string(vec.data(), vec.size());
+      } else {
+          std::string val = getValueAsString(obj);
+          if (!val.empty()) j["value"] = val;
+      }
+  }
+  
+  std::list<std::shared_ptr<NamedObject>> children = obj->getChildren();
+  if (!children.empty()) {
+    json json_children = json::array();
+    for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+      const std::shared_ptr<NamedObject> &child = *it;
+      json_children.push_back(serializeToBinaryJson(child));
+    }
+    j["children"] = json_children;
+  }
+  return j;
+}
+
+/**
+ * @brief Helper to reconstruct a NamedObject hierarchy from a json object (BSON context).
+ * @param j The json object.
+ * @param parent Optional parent.
+ * @return Shared pointer to the created object.
+ * @compliance [FE-0020.9.2] BSON conversion.
+ */
+std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr<NamedObject> parent) {
+  std::string name = j["name"].as<std::string>();
+  std::string type = j["type"].as<std::string>();
+  
+  std::shared_ptr<NamedObject> obj;
+  if (type == "NamedBitBuffer" || type == "BitBuffer") {
+      size_t bitSize = j["bitSize"].as<size_t>();
+      jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
+      std::shared_ptr<NamedBitBuffer> nbb = NamedBitBuffer::create(name, bitSize, parent);
+      for (size_t i = 0; i < bytes.size(); ++i) {
+          nbb->set(i, bytes[i]);
+      }
+      obj = nbb;
+  } else if (type == "NamedBuffer" || type == "Buffer") {
+      jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
+      std::vector<uint8_t> data(bytes.begin(), bytes.end());
+      obj = NamedBuffer::create(name, data, parent);
+  } else {
+      std::string value = j.contains("value") ? (j["value"].is_string() ? j["value"].as<std::string>() : "") : "";
+      obj = createFromTypeAndValue(name, type, value, parent);
+  }
+
+  if (j.contains("children")) {
+    for (const json& child : j["children"].array_range()) {
+        createFromBinaryJson(child, obj);
+    }
+  }
+  return obj;
+}
+
+std::vector<uint8_t> toBinary(const std::shared_ptr<NamedObject> &obj) {
+  json j = serializeToBinaryJson(obj);
+  std::vector<uint8_t> buffer;
+  jsoncons::bson::encode_bson(j, buffer);
+  return buffer;
+}
+
+std::shared_ptr<NamedObject> fromBinary(const std::vector<uint8_t> &data) {
+  json j = jsoncons::bson::decode_bson<json>(data);
+  return createFromBinaryJson(j, nullptr);
 }
 
 } // namespace quasar::named::serialization

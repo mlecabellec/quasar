@@ -332,158 +332,169 @@ void bindNamedObjectMethods(sol::usertype<LuaProxy<T>>& ut) {
 
 /** @brief Entry point for binding all Named derivatives to Lua [CS-0010.45] */
 void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
-    // [CS-0010.44] Each code block documented.
+    // --- Global quasar namespace table ---
+    sol::table quasarTable = lua["quasar"].get_or_create<sol::table>();
+    sol::table namedTable = quasarTable["named"].get_or_create<sol::table>();
+
     // --- IObserver Usertype ---
-    // (Used to allow passing QueuedObserver to subscribe)
     lua.new_usertype<IObserver>("IObserver", sol::no_constructor);
 
-    // [CS-0010.44] NamedObject binding.
     // --- NamedObject Proxy ---
     sol::usertype<LuaProxy<NamedObject>> utNamedObject = lua.new_usertype<LuaProxy<NamedObject>>("NamedObject", sol::no_constructor);
     bindNamedObjectMethods(utNamedObject);
+    
+    std::function<LuaProxy<NamedObject>(const std::string&, sol::object)> create_object = 
+        [](const std::string& name, sol::object parent) {
+            std::shared_ptr<NamedObject> ptr = NamedObject::create(name, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedObject>(ptr);
+        };
+    namedTable["createObject"] = create_object;
 
-    // [CS-0010.44] ScriptableNamedObject binding.
     // --- ScriptableNamedObject Proxy ---
     sol::usertype<LuaProxy<ScriptableNamedObject>> utScriptable = lua.new_usertype<LuaProxy<ScriptableNamedObject>>("ScriptableNamedObject", sol::no_constructor);
     bindNamedObjectMethods(utScriptable);
     
-    // [CS-0010.34] Explicit std::function for lambda.
     std::function<LuaProxy<ScriptableNamedObject>(const std::string&, sol::object)> create_scriptable = 
         [](const std::string& name, sol::object parent) {
-            return LuaProxy<ScriptableNamedObject>(ScriptableNamedObject::create(name, forceExtractNamedObject(parent)));
+            std::shared_ptr<ScriptableNamedObject> ptr = ScriptableNamedObject::create(name, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<ScriptableNamedObject>(ptr);
         };
-    utScriptable["new"] = create_scriptable;
-    utScriptable["create"] = create_scriptable;
+    namedTable["createScriptable"] = create_scriptable;
     utScriptable["onEvent"] = &proxy_scriptable_onEvent;
     utScriptable["setLuaSelf"] = &proxy_scriptable_setLuaSelf;
     utScriptable["getLuaSelf"] = &proxy_scriptable_getLuaSelf;
 
-    // [CS-0010.44] NamedLong binding.
     // --- NamedLong Proxy ---
     sol::usertype<LuaProxy<NamedLong>> utNamedLong = lua.new_usertype<LuaProxy<NamedLong>>("NamedLong", sol::no_constructor);
     bindNamedObjectMethods(utNamedLong);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedLong>(const std::string&, int64_t, sol::object)> create_long = 
         [](const std::string& name, int64_t value, sol::object parent) {
-            return LuaProxy<NamedLong>(NamedLong::create(name, value, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedLong> ptr = NamedLong::create(name, value, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedLong>(ptr);
         };
-    utNamedLong["new"] = create_long;
-    utNamedLong["create"] = create_long;
+    namedTable["createLong"] = create_long;
     utNamedLong["value"] = &proxy_long_value;
 
-    // [CS-0010.44] NamedDouble binding.
     // --- NamedDouble Proxy ---
     sol::usertype<LuaProxy<NamedDouble>> utNamedDouble = lua.new_usertype<LuaProxy<NamedDouble>>("NamedDouble", sol::no_constructor);
     bindNamedObjectMethods(utNamedDouble);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedDouble>(const std::string&, double, sol::object)> create_double = 
         [](const std::string& name, double value, sol::object parent) {
-            return LuaProxy<NamedDouble>(NamedDouble::create(name, value, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedDouble> ptr = NamedDouble::create(name, value, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedDouble>(ptr);
         };
-    utNamedDouble["new"] = create_double;
-    utNamedDouble["create"] = create_double;
+    namedTable["createDouble"] = create_double;
     utNamedDouble["value"] = &proxy_double_value;
 
-    // [CS-0010.44] NamedQuantity binding.
     // --- NamedQuantity Proxy ---
     sol::usertype<LuaProxy<NamedQuantity>> utNamedQuantity = lua.new_usertype<LuaProxy<NamedQuantity>>("NamedQuantity", sol::no_constructor);
     bindNamedObjectMethods(utNamedQuantity);
     
-    // [CS-0010.34] Explicit overload with std::function.
+    std::function<LuaProxy<NamedQuantity>(const std::string&, double, const std::string&, sol::object)> create_quantity_sym = 
+        [](const std::string& name, double value, const std::string& unitSymbol, sol::object parent) {
+            std::shared_ptr<NamedQuantity> ptr = NamedQuantity::create(name, value, unitSymbol, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedQuantity>(ptr);
+        };
+
     auto create_quantity = sol::overload(
         std::function<LuaProxy<NamedQuantity>(const std::string&, double, const quasar::coretypes::Unit&, sol::object)>(
             [](const std::string& name, double value, const quasar::coretypes::Unit& unit, sol::object parent) {
-                return LuaProxy<NamedQuantity>(NamedQuantity::create(name, value, unit, forceExtractNamedObject(parent)));
+                std::shared_ptr<NamedQuantity> ptr = NamedQuantity::create(name, value, unit, forceExtractNamedObject(parent));
+                if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+                return LuaProxy<NamedQuantity>(ptr);
             }),
-        std::function<LuaProxy<NamedQuantity>(const std::string&, double, const std::string&, sol::object)>(
-            [](const std::string& name, double value, const std::string& unitSymbol, sol::object parent) {
-                return LuaProxy<NamedQuantity>(NamedQuantity::create(name, value, unitSymbol, forceExtractNamedObject(parent)));
-            })
+        create_quantity_sym
     );
-    utNamedQuantity["new"] = create_quantity;
-    utNamedQuantity["create"] = create_quantity;
+    namedTable["createQuantity"] = create_quantity;
     utNamedQuantity["value"] = &proxy_quantity_value;
     utNamedQuantity["getUnitSymbol"] = &proxy_quantity_getUnitSymbol;
 
-    // [CS-0010.44] NamedVariant binding.
     // --- NamedVariant Proxy ---
     sol::usertype<LuaProxy<NamedVariant>> utNamedVariant = lua.new_usertype<LuaProxy<NamedVariant>>("NamedVariant", sol::no_constructor);
     bindNamedObjectMethods(utNamedVariant);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedVariant>(const std::string&, sol::object)> create_variant = 
         [](const std::string& name, sol::object parent) {
-            return LuaProxy<NamedVariant>(NamedVariant::create(name, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedVariant> ptr = NamedVariant::create(name, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedVariant>(ptr);
         };
-    utNamedVariant["new"] = create_variant;
-    utNamedVariant["create"] = create_variant;
+    namedTable["createVariant"] = create_variant;
     utNamedVariant["set"] = &proxy_variant_set;
     utNamedVariant["get"] = &proxy_variant_get;
 
-    // [CS-0010.44] NamedBuffer binding.
     // --- NamedBuffer Proxy ---
     sol::usertype<LuaProxy<NamedBuffer>> utNamedBuffer = lua.new_usertype<LuaProxy<NamedBuffer>>("NamedBuffer", sol::no_constructor);
     bindNamedObjectMethods(utNamedBuffer);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedBuffer>(const std::string&, size_t, sol::object)> create_buffer = 
         [](const std::string& name, size_t size, sol::object parent) {
-            return LuaProxy<NamedBuffer>(NamedBuffer::create(name, size, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedBuffer> ptr = NamedBuffer::create(name, size, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedBuffer>(ptr);
         };
-    utNamedBuffer["new"] = create_buffer;
-    utNamedBuffer["create"] = create_buffer;
+    namedTable["createBuffer"] = create_buffer;
     utNamedBuffer["getSize"] = &proxy_buffer_getSize;
     utNamedBuffer["read"] = &proxy_buffer_read;
-    utNamedBuffer["write"] = &proxy_buffer_write;
+    utNamedBuffer["write"] = [](LuaProxy<NamedBuffer> self, size_t offset, sol::table data) {
+        std::shared_ptr<NamedBuffer> buf = self.lock();
+        std::vector<uint8_t> vec;
+        vec.reserve(data.size());
+        for (size_t i = 1; i <= data.size(); ++i) {
+            vec.push_back(data.get<uint8_t>(i));
+        }
+        proxy_buffer_write(self, offset, vec);
+    };
 
-    // [CS-0010.44] NamedBitBuffer binding.
     // --- NamedBitBuffer Proxy ---
     sol::usertype<LuaProxy<NamedBitBuffer>> utNamedBitBuffer = lua.new_usertype<LuaProxy<NamedBitBuffer>>("NamedBitBuffer", sol::no_constructor);
     bindNamedObjectMethods(utNamedBitBuffer);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedBitBuffer>(const std::string&, size_t, sol::object)> create_bitbuffer = 
         [](const std::string& name, size_t bitCount, sol::object parent) {
-            return LuaProxy<NamedBitBuffer>(NamedBitBuffer::create(name, bitCount, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedBitBuffer> ptr = NamedBitBuffer::create(name, bitCount, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedBitBuffer>(ptr);
         };
-    utNamedBitBuffer["new"] = create_bitbuffer;
-    utNamedBitBuffer["create"] = create_bitbuffer;
+    namedTable["createBitBuffer"] = create_bitbuffer;
     utNamedBitBuffer["getBitCount"] = &proxy_bitbuffer_getBitCount;
     utNamedBitBuffer["getBit"] = &proxy_bitbuffer_getBit;
     utNamedBitBuffer["setBit"] = &proxy_bitbuffer_setBit;
 
-    // [CS-0010.44] NamedArray binding.
     // --- Collection Proxies ---
     sol::usertype<LuaProxy<NamedObjectArray>> utNamedArray = lua.new_usertype<LuaProxy<NamedObjectArray>>("NamedArray", sol::no_constructor);
     bindNamedObjectMethods(utNamedArray);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedObjectArray>(const std::string&, sol::object)> create_array = 
         [](const std::string& name, sol::object parent) {
-            return LuaProxy<NamedObjectArray>(NamedObjectArray::create(name, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedObjectArray> ptr = NamedObjectArray::create(name, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedObjectArray>(ptr);
         };
-    utNamedArray["new"] = create_array;
-    utNamedArray["create"] = create_array;
+    namedTable["createArray"] = create_array;
     utNamedArray["size"] = &proxy_array_size;
     utNamedArray["get"] = &proxy_array_get;
 
-    // [CS-0010.44] NamedMap binding.
     sol::usertype<LuaProxy<NamedObjectMap>> utNamedMap = lua.new_usertype<LuaProxy<NamedObjectMap>>("NamedMap", sol::no_constructor);
     bindNamedObjectMethods(utNamedMap);
     
-    // [CS-0010.34] No auto.
     std::function<LuaProxy<NamedObjectMap>(const std::string&, sol::object)> create_map = 
         [](const std::string& name, sol::object parent) {
-            return LuaProxy<NamedObjectMap>(NamedObjectMap::create(name, forceExtractNamedObject(parent)));
+            std::shared_ptr<NamedObjectMap> ptr = NamedObjectMap::create(name, forceExtractNamedObject(parent));
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<NamedObjectMap>(ptr);
         };
-    utNamedMap["new"] = create_map;
-    utNamedMap["create"] = create_map;
+    namedTable["createMap"] = create_map;
     utNamedMap["size"] = &proxy_map_size;
     utNamedMap["get"] = &proxy_map_get;
 
-    // [CS-0010.44] ActiveEntity binding.
     // --- ActiveEntity Proxy ---
     sol::usertype<LuaProxy<ActiveEntity>> utActiveEntity = lua.new_usertype<LuaProxy<ActiveEntity>>("ActiveEntity", sol::no_constructor);
     bindNamedObjectMethods(utActiveEntity);
@@ -491,21 +502,15 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utActiveEntity["unsubscribe"] = &proxy_active_unsubscribe;
     utActiveEntity["getState"] = &proxy_active_getState;
 
-    // [CS-0010.44] Global quasar namespace table.
-    // --- Global quasar table ---
-    sol::table quasarTable = lua.create_named_table("quasar");
+    // --- quasarTable methods ---
     quasarTable["resolve"] = &resolvePathProxy;
     
-    // [CS-0010.44] Observer Factory binding.
-    // Observer Factory
     quasarTable["createObserver"] = [weakService = std::weak_ptr<LuaService>(service)](sol::function callback, sol::optional<size_t> watermark) {
         return std::make_shared<QueuedObserver>(weakService.lock(), callback, watermark.value_or(1000));
     };
 
-    // [CS-0010.44] Lifecycle Tracking bindings.
-    // Lifecycle Tracking
     quasarTable["track"] = [](LuaProxy<NamedObject> obj) {
-        ObjectTracker::getInstance().track(obj.lock());
+        ObjectTracker::getInstance().trackStrong(obj.lock());
     };
     quasarTable["isAlive"] = [](LuaProxy<NamedObject> obj) {
         return obj.isAlive();

@@ -228,3 +228,14 @@ TEST_F(SerializationTest, JSONRoundTrip) {
   verifyHierarchy(restored);
 }
 
+TEST_F(SerializationTest, BinaryRoundTrip) {
+  // Proof of compliance: [FE-0020.9.2] BSON conversion.
+  // Proof of compliance: [TSK-20260311-004.2.1] efficient binary serialization.
+  // Step: Binary Round Trip (BSON)
+  std::cout << "Step: Binary Round Trip (BSON)" << std::endl;
+  std::shared_ptr<NamedObject> root = createTestHierarchy();
+  std::vector<uint8_t> binary = serialization::toBinary(root);
+  std::shared_ptr<NamedObject> restored = serialization::fromBinary(binary);
+  verifyHierarchy(restored);
+}
+

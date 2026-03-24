@@ -1,6 +1,7 @@
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/named/NamedConfig.hpp"
 #include <algorithm>
+#include <iostream>
 
 namespace quasar::scripting {
 
@@ -9,6 +10,28 @@ void ObjectTracker::track(std::shared_ptr<named::NamedObject> obj) {
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
     m_trackedObjects[obj.get()] = std::weak_ptr<named::NamedObject>(obj);
+}
+
+void ObjectTracker::trackStrong(std::shared_ptr<named::NamedObject> obj) {
+    if (!obj) return;
+    std::cout << "DEBUG: ObjectTracker::trackStrong locking" << std::endl;
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        std::cout << "DEBUG: ObjectTracker::trackStrong lock failed" << std::endl;
+        return;
+    }
+    std::cout << "DEBUG: ObjectTracker::trackStrong locked" << std::endl;
+    m_trackedObjects[obj.get()] = std::weak_ptr<named::NamedObject>(obj);
+    m_strongObjects[obj.get()] = obj;
+    std::cout << "DEBUG: ObjectTracker::trackStrong done" << std::endl;
+}
+
+void ObjectTracker::untrack(named::NamedObject* obj) {
+    if (!obj) return;
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) return;
+    m_trackedObjects.erase(obj);
+    m_strongObjects.erase(obj);
 }
 
 bool ObjectTracker::isAlive(std::shared_ptr<named::NamedObject> obj) const {

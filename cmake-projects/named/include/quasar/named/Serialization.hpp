@@ -83,6 +83,29 @@ std::string toJson(const std::shared_ptr<NamedObject> &obj);
  */
 std::shared_ptr<NamedObject> fromJson(const std::string &json);
 
+/**
+ * @brief Serializes a NamedObject hierarchy into a BSON binary buffer.
+ * 
+ * Fulfills [FE-0020.9.2] BSON conversion.
+ * Fulfills [TSK-20260311-004.2.1] efficient binary serialization.
+ * 
+ * @param obj The root object of the hierarchy to serialize.
+ * @return A vector of bytes containing the BSON representation.
+ */
+std::vector<uint8_t> toBinary(const std::shared_ptr<NamedObject> &obj);
+
+/**
+ * @brief Deserializes a NamedObject hierarchy from a BSON binary buffer.
+ * 
+ * Fulfills [FE-0020.9.2] BSON conversion.
+ * Fulfills [TSK-20260311-004.2.1] efficient binary serialization.
+ * 
+ * @param data The BSON binary buffer to parse.
+ * @return Shared pointer to the root of the reconstructed hierarchy.
+ * @throws std::runtime_error if parsing fails.
+ */
+std::shared_ptr<NamedObject> fromBinary(const std::vector<uint8_t> &data);
+
 } // namespace quasar::named::serialization
 
 #endif // QUASAR_NAMED_SERIALIZATION_HPP
