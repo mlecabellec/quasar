@@ -180,10 +180,23 @@ public:
    */
   const std::vector<SlaveInfo> &slaves() const { return slaves_; }
 
+  /**
+   * @brief Enable or disable verbose logging.
+   * @param verbose True to enable verbose console output.
+   */
+  void set_verbose(bool verbose) { verbose_ = verbose; }
+
+  /**
+   * @brief Check if verbose logging is enabled.
+   * @return true if verbose logging is active.
+   */
+  bool verbose() const { return verbose_; }
+
 private:
   RawSocket &socket_;             ///< Raw socket reference
   std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
   uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
+  bool verbose_ = false;          ///< Verbose logging flag
 
   // Internal helper methods
   int broadcast_read_count();

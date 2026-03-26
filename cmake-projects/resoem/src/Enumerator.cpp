@@ -17,30 +17,90 @@ namespace resoem {
 Enumerator::Enumerator(RawSocket &socket) : socket_(socket) {}
 
 Result<size_t> Enumerator::enumerate() {
-  std::cout << "Starting enumeration..." << std::endl;
+  if (verbose_) {
+    std::cout << "[VERBOSE] Starting network enumeration..." << std::endl;
+  }
   slaves_.clear();
 
   // Reset the network to a known state (INIT, clear FMMUs/SMs, etc.)
+  if (verbose_) {
+    std::cout << "[VERBOSE] Resetting slaves to INIT and clearing ESC registers..." << std::endl;
+  }
   reset_to_init();
 
   // [FE-0040.3.1] Automatically detect and count slaves on the wire using broadcast read.
   int slave_count = broadcast_read_count();
-  std::cout << "Found " << slave_count << " slaves." << std::endl;
+  if (verbose_) {
+    std::cout << "[VERBOSE] Broadcast read (BRD) found " << slave_count << " slaves on the bus." << std::endl;
+  } else {
+    std::cout << "Found " << slave_count << " slaves." << std::endl;
+  }
+  
   if (slave_count <= 0)
     return 0;
 
   // [FE-0040.3.2] Assign configured station addresses (starting at 0x1001) to each slave.
+  if (verbose_) {
+    std::cout << "[VERBOSE] Assigning station addresses starting at 0x1001..." << std::endl;
+  }
   assign_addresses(slave_count);
 
   // [FE-0040.3.3] Parse information (Vendor, Product, PDOs) from the SII (EEPROM) of each slave.
+  if (verbose_) {
+    std::cout << "[VERBOSE] Reading SII (EEPROM) data for all slaves..." << std::endl;
+  }
   read_sii_data(slave_count);
+
+  // Configure Mailbox SyncManagers (type 1 = Out, type 2 = In) before PRE_OP
+  if (verbose_) {
+    std::cout << "[VERBOSE] Configuring SyncManagers for Mailbox communication..." << std::endl;
+  }
+  struct SMConfig {
+    uint16_t start_addr;
+    uint16_t length;
+    uint32_t flags;
+  } __attribute__((packed));
+
+  for (size_t s_idx = 0; s_idx < slaves_.size(); ++s_idx) {
+    SlaveInfo &info = slaves_[s_idx];
+    if (verbose_) {
+      std::cout << "[VERBOSE] Slave " << s_idx << " (" << info.name << "):" << std::endl;
+    }
+    for (size_t i = 0; i < info.sync_managers.size(); ++i) {
+      const SyncManagerInfo &sm = info.sync_managers[i];
+      if (sm.type == 1 || sm.type == 2) {
+        // Ensure Enable bit is set (Activate register, bit 0 of the second 16-bit word)
+        // SII Category 0x0029 Word 3 Bit 0 is the Enable bit.
+        // In our 32-bit flags: [Control(8) | Status(8) | Activate(8) | PDI(8)]
+        // Activate is flags >> 16. Bit 16 is Activate bit 0.
+        uint32_t final_flags = sm.flags | 0x00010000;
+        SMConfig cfg{sm.start_addr, sm.length, final_flags};
+        
+        if (verbose_) {
+          std::cout << "  - SM" << i << " (Mbx " << (sm.type == 1 ? "Out" : "In") 
+                    << "): Start=0x" << std::hex << sm.start_addr 
+                    << ", Len=" << std::dec << sm.length 
+                    << ", Flags=0x" << std::hex << final_flags << std::dec << std::endl;
+        }
+
+        uint16_t sm_reg = regs::SM0 + static_cast<uint16_t>(i * 8);
+        write_register_fpwr<SMConfig>(info.configured_address, sm_reg, cfg);
+      }
+    }
+  }
 
   // Request all slaves to move to the PRE-OP state to allow mailbox
   // communication.
-  std::cout << "Transitioning all slaves to PRE_OP..." << std::endl;
+  if (verbose_) {
+    std::cout << "[VERBOSE] Requesting transition to PRE_OP for all slaves..." << std::endl;
+  }
   Result<> res = request_state_all(states::PRE_OP);
-  if (!res)
+  if (!res) {
+    if (verbose_) {
+      std::cerr << "[VERBOSE] Failed to reach PRE_OP state: " << res.error() << std::endl;
+    }
     return std::unexpected(res.error());
+  }
 
   return static_cast<size_t>(slave_count);
 }
@@ -51,6 +111,10 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
     return std::unexpected(ECError::ProtocolError);
 
   uint16_t cfg_addr = slaves_[slave_idx].configured_address;
+  if (verbose_) {
+    std::cout << "[VERBOSE] Slave " << slave_idx << ": Requesting state 0x" 
+              << std::hex << state << std::dec << "..." << std::endl;
+  }
 
   // Write requested state to the AL Control register.
   write_register_fpwr<uint16_t>(cfg_addr, regs::AL_CONTROL, state);
@@ -66,19 +130,29 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
         read_register_fprd<uint16_t>(cfg_addr, regs::AL_STATUS, wkc);
     if (wkc > 0) {
       uint16_t cur = status & regs::al_status::STATE_MASK;
-      if (cur == state)
+      if (cur == (state & regs::al_status::STATE_MASK)) {
+        if (verbose_) {
+          std::cout << "[VERBOSE] Slave " << slave_idx << ": Reached state 0x" 
+                    << std::hex << cur << std::dec << "." << std::endl;
+        }
         return cur;
+      }
 
       // If the error bit is set, read the error code and try to acknowledge it.
       if (status & regs::al_status::ERROR_BIT) {
         uint16_t code =
             read_register_fprd<uint16_t>(cfg_addr, regs::AL_STATUS_CODE, wkc);
-        std::cerr << "Slave " << slave_idx + 1 << " AL Status Error: 0x"
+        std::cerr << "Slave " << slave_idx << " AL Status Error: 0x"
                   << std::hex << code << ": " << al_status_code_to_string(code)
                   << std::dec << std::endl;
+        
+        if (verbose_) {
+          std::cout << "[VERBOSE] Slave " << slave_idx << ": Acknowledging error 0x" 
+                    << std::hex << code << std::dec << "..." << std::endl;
+        }
         // Write the error acknowledge bit.
         write_register_fpwr<uint16_t>(cfg_addr, regs::AL_CONTROL,
-                                      state | states::ACK);
+                                      (state & regs::al_status::STATE_MASK) | states::ACK);
       }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -90,6 +164,10 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
 
 Result<> Enumerator::request_state_all(uint16_t state,
                                        std::chrono::microseconds timeout) {
+  if (verbose_) {
+    std::cout << "[VERBOSE] Requesting state 0x" << std::hex << state 
+              << std::dec << " for all slaves via broadcast..." << std::endl;
+  }
   // Use a broadcast write to request state for all slaves at once.
   write_register_broadcast<uint16_t>(regs::AL_CONTROL, state);
 
@@ -105,18 +183,36 @@ Result<> Enumerator::request_state_all(uint16_t state,
           slaves_[j].configured_address, regs::AL_STATUS, wkc);
 
       // Check if this slave has reached the target state.
-      if (wkc > 0 && (status & regs::al_status::STATE_MASK) != state) {
-        all = false;
-        // If there is an error, try to handle it for this specific slave.
-        if (status & regs::al_status::ERROR_BIT)
-          request_state(static_cast<uint16_t>(j), state,
-                        std::chrono::milliseconds(100));
-      } else if (wkc <= 0) {
+      if (wkc > 0) {
+        uint16_t cur = status & regs::al_status::STATE_MASK;
+        if (cur != (state & regs::al_status::STATE_MASK)) {
+          all = false;
+          // If there is an error, try to handle it for this specific slave.
+          if (status & regs::al_status::ERROR_BIT) {
+            uint16_t code = read_register_fprd<uint16_t>(
+                slaves_[j].configured_address, regs::AL_STATUS_CODE, wkc);
+            std::cerr << "Slave " << j << " AL Status Error: 0x" << std::hex
+                      << code << ": " << al_status_code_to_string(code)
+                      << std::dec << std::endl;
+            // Write the error acknowledge bit.
+            write_register_fpwr<uint16_t>(slaves_[j].configured_address,
+                                          regs::AL_CONTROL,
+                                          (state & regs::al_status::STATE_MASK) | states::ACK);
+          }
+        }
+      } else {
         all = false;
       }
     }
-    if (all)
+
+    if (all) {
+      if (verbose_) {
+        std::cout << "[VERBOSE] All slaves reached state 0x" << std::hex 
+                  << state << std::dec << "." << std::endl;
+      }
       return {};
+    }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     if (i == 999999)
       throw std::runtime_error("Hard limit exceeded in request_state_all");
@@ -599,19 +695,22 @@ void Enumerator::read_sii_categories(int slave_idx) {
       sm.length = static_cast<uint16_t>(w12 >> 16);
       sm.flags = w34;
 
+      // ESC SyncManager Control Byte (Register 0x0804):
+      // Bits 0-1: Operating Mode (00=Buffered, 10=Mailbox)
+      // Bits 2-3: Direction (00=Read/Master Read, 01=Write/Master Write)
       uint8_t ctrl = static_cast<uint8_t>(sm.flags & 0xFF);
-      bool is_mailbox = ((ctrl >> 2) & 0x03) == 0x02;
-      bool is_out = (ctrl & 0x01) == 0;
+      bool is_mailbox = (ctrl & 0x03) == 0x02;
+      bool is_write = ((ctrl >> 2) & 0x03) == 0x01; // Master -> Slave
 
       if (is_mailbox) {
-        if (is_out) {
+        if (is_write) {
           info.mbx_out_offset = sm.start_addr;
           info.mbx_out_length = sm.length;
-          sm.type = 1; // Mailbox Out
+          sm.type = 1; // Mailbox Out (Master -> Slave)
         } else {
           info.mbx_in_offset = sm.start_addr;
           info.mbx_in_length = sm.length;
-          sm.type = 2; // Mailbox In
+          sm.type = 2; // Mailbox In (Slave -> Master)
         }
       }
       if (sm.length == 0)
