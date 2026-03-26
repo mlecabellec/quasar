@@ -99,8 +99,15 @@ public:
       SlaveInfo &slave, uint16_t index,
       std::chrono::microseconds timeout = std::chrono::seconds(2));
 
+  /**
+   * @brief Enable or disable verbose logging for CoE operations.
+   * @param verbose True to enable.
+   */
+  void set_verbose(bool verbose) { verbose_ = verbose; }
+
 private:
   MailboxHandler &mailbox_; ///< Low-level mailbox handler
+  bool verbose_ = false;    ///< Verbose logging flag
 
   // Internal helper to log and handle SDO aborts.
   void handle_sdo_abort(uint16_t slave_addr, uint16_t index,

@@ -1,6 +1,12 @@
 /**
  * @file simple_ng.cpp
- * @brief Port of simple_ng.c to resoem with enhanced verbosity and debug info.
+ * @brief Enhanced EtherCAT cyclic data exchange sample (Resoem).
+ * @details This sample demonstrates a full EtherCAT lifecycle:
+ * 1. Network initialization and slave discovery.
+ * 2. Logical memory mapping (FMMU).
+ * 3. State transitions (Init -> PreOp -> SafeOp -> Operational).
+ * 4. High-frequency cyclic process data exchange with health monitoring.
+ * 5. Graceful shutdown.
  */
 
 #include "resoem/Enumerator.hpp"
@@ -15,17 +21,29 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <signal.h>
 
 using namespace resoem;
 
+// Global flag for graceful exit on Ctrl+C
+volatile sig_atomic_t g_stop = 0;
+void handle_sigint(int) { g_stop = 1; }
+
+/**
+ * @brief Encapsulates the fieldbus state and context.
+ */
 struct Fieldbus {
   std::unique_ptr<RawSocket> socket;
   std::unique_ptr<Enumerator> enumerator;
   ProcessImage image;
   std::string iface;
   int roundtrip_time_us = 0;
+  uint16_t expected_wkc = 0;
 };
 
+/**
+ * @brief Performs a single process data exchange roundtrip.
+ */
 int fieldbus_roundtrip(Fieldbus &fb) {
   auto start = std::chrono::steady_clock::now();
   auto res = fb.enumerator->exchange_process_data(fb.image);
@@ -36,179 +54,187 @@ int fieldbus_roundtrip(Fieldbus &fb) {
           .count();
 
   if (!res)
-    return -1;
-  return *res;
+    return -1; // Timeout or internal error
+  return *res; // Return actual Working Counter
 }
 
-bool fieldbus_start(Fieldbus &fb) {
+/**
+ * @brief Orchestrates the startup sequence.
+ */
+bool fieldbus_start(Fieldbus &fb, bool verbose) {
   std::cout << "======================================================" << std::endl;
-  std::cout << "Starting EtherCAT Master on interface: " << fb.iface << std::endl;
+  std::cout << "Starting EtherCAT Master on: " << fb.iface << std::endl;
   std::cout << "======================================================" << std::endl;
 
   try {
-    std::cout << "[STEP 1] Initializing Raw Socket..." << std::endl;
+    std::cout << "[STEP 1] Opening Raw Socket (AF_PACKET)..." << std::endl;
     fb.socket = std::make_unique<RawSocket>(fb.iface);
     
     std::cout << "[STEP 2] Initializing Enumerator..." << std::endl;
     fb.enumerator = std::make_unique<Enumerator>(*fb.socket);
+    fb.enumerator->set_verbose(verbose);
+
+    std::cout << "[STEP 3] Scanning Bus..." << std::endl;
+    auto enum_res = fb.enumerator->enumerate();
+    if (!enum_res) {
+      std::cerr << "  [ERROR] Enumeration failed: " << static_cast<int>(enum_res.error()) << std::endl;
+      return false;
+    }
     
-    // Enable extensive debug logging
-    fb.enumerator->set_verbose(true);
-    std::cout << "[INFO] Verbose debug logging ENABLED." << std::endl;
+    size_t slave_count = *enum_res;
+    if (slave_count == 0) {
+      std::cerr << "  [ERROR] No slaves detected. Check cable/power." << std::endl;
+      return false;
+    }
+    std::cout << "  [INFO] Found " << slave_count << " slaves." << std::endl;
+
+    std::cout << "[STEP 4] Configuring Process Data Mappings (FMMU)..." << std::endl;
+    auto map_res = fb.enumerator->configure_fmmu(fb.image);
+    if (!map_res) {
+      std::cerr << "  [ERROR] FMMU configuration failed!" << std::endl;
+      return false;
+    }
+    std::cout << "  [INFO] Process Image size: " << *map_res << " bytes." << std::endl;
+
+    // Calculate expected WKC: usually (outputs_count * 2) + (inputs_count * 1) for LRW
+    // Or simpler: each slave contributing to process data adds to WKC.
+    fb.expected_wkc = 0;
+    for (const auto& s : fb.enumerator->slaves()) {
+        if (s.outputs_size_bits > 0) fb.expected_wkc += 2;
+        if (s.inputs_size_bits > 0) fb.expected_wkc += 1;
+    }
+    std::cout << "  [INFO] Expected Working Counter (WKC): " << fb.expected_wkc << std::endl;
+
+    std::cout << "[STEP 5] Distributed Clocks (DC) Setup..." << std::endl;
+    fb.enumerator->measure_propagation_delays();
+    std::cout << "  [INFO] Propagation delays compensated." << std::endl;
+
+    std::cout << "[STEP 6] Transitioning to SAFE-OP (Synchronizing)..." << std::endl;
+    if (!fb.enumerator->request_state_all(states::SAFE_OP)) {
+      std::cerr << "  [ERROR] Some slaves failed to reach SAFE-OP." << std::endl;
+      return false;
+    }
+
+    std::cout << "[STEP 7] Warm-up roundtrips..." << std::endl;
+    for(int i=0; i<10; ++i) fieldbus_roundtrip(fb);
+
+    std::cout << "[STEP 8] Transitioning to OPERATIONAL..." << std::endl;
+    fb.enumerator->request_state_all(states::OP);
+    
+    // Wait for OP state with monitor
+    bool all_op = false;
+    for (int i = 0; i < 50; ++i) {
+      fieldbus_roundtrip(fb);
+      fb.enumerator->check_slaves_status();
+      all_op = true;
+      for (const auto &s : fb.enumerator->slaves()) {
+        if (s.current_state != states::OP) { all_op = false; break; }
+      }
+      if (all_op) break;
+      std::cout << "." << std::flush;
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    std::cout << std::endl;
+
+    if (!all_op) {
+      std::cerr << "  [ERROR] Time-out waiting for Operational state." << std::endl;
+      for (size_t i=0; i<fb.enumerator->slaves().size(); ++i) {
+          auto s = fb.enumerator->slaves()[i];
+          if (s.current_state != states::OP)
+              std::cerr << "    - Slave " << i << " (" << s.name << ") is in " << get_diagnostics(fb, i) << std::endl;
+      }
+      return false;
+    }
+
+    std::cout << "[SUCCESS] Fieldbus is LIVE." << std::endl;
+    return true;
 
   } catch (const std::exception &e) {
-    std::cerr << "[ERROR] Initialization failed: " << e.what() << std::endl;
+    std::cerr << "[FATAL] Initialization exception: " << e.what() << std::endl;
     return false;
   }
-
-  std::cout << "\n[STEP 3] Discovering and Counting Slaves..." << std::endl;
-  auto enum_res = fb.enumerator->enumerate();
-  if (!enum_res) {
-    std::cerr << "[ERROR] Enumeration failed: " << enum_res.error() << std::endl;
-    return false;
-  }
-  
-  size_t slave_count = *enum_res;
-  if (slave_count == 0) {
-    std::cerr << "[ERROR] No EtherCAT slaves detected on the bus!" << std::endl;
-    return false;
-  }
-  std::cout << "[SUCCESS] Found " << slave_count << " slaves." << std::endl;
-
-  std::cout << "\n[STEP 4] Configuring FMMU (Logical Memory Mapping)..." << std::endl;
-  auto map_res = fb.enumerator->configure_fmmu(fb.image);
-  if (!map_res) {
-    std::cerr << "[ERROR] FMMU configuration failed!" << std::endl;
-    return false;
-  }
-  std::cout << "[SUCCESS] Process Image mapped: " << *map_res << " bytes." << std::endl;
-
-  std::cout << "\n[STEP 5] Measuring Bus Propagation Delays (DC)..." << std::endl;
-  fb.enumerator->measure_propagation_delays();
-  std::cout << "[INFO] DC propagation delays measured and compensated." << std::endl;
-
-  std::cout << "\n[STEP 6] Transitioning all slaves to SAFE-OP..." << std::endl;
-  auto state_res = fb.enumerator->request_state_all(states::SAFE_OP);
-  if (!state_res) {
-    std::cerr << "[ERROR] Failed to reach SAFE-OP state!" << std::endl;
-    return false;
-  }
-  std::cout << "[SUCCESS] All slaves in SAFE-OP." << std::endl;
-
-  std::cout << "\n[STEP 7] Initial Cyclic Data Exchange (Warming up)..." << std::endl;
-  fieldbus_roundtrip(fb);
-  std::cout << "[INFO] Initial roundtrip completed." << std::endl;
-
-  std::cout << "\n[STEP 8] Transitioning all slaves to OPERATIONAL..." << std::endl;
-  auto op_res = fb.enumerator->request_state_all(states::OP);
-  
-  std::cout << "Waiting for slaves to sync to OP state..." << std::flush;
-  bool all_op = false;
-  for (int i = 0; i < 100; ++i) { // Increase retry count
-    fieldbus_roundtrip(fb);
-    fb.enumerator->check_slaves_status();
-
-    all_op = true;
-    for (const auto &slave : fb.enumerator->slaves()) {
-      if (slave.current_state != states::OP) {
-        all_op = false;
-        break;
-      }
-    }
-    if (all_op)
-      break;
-    
-    std::cout << "." << std::flush;
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-  std::cout << std::endl;
-
-  if (all_op) {
-    std::cout << "[SUCCESS] All slaves are now OPERATIONAL and exchanging data." << std::endl;
-    std::cout << "------------------------------------------------------" << std::endl;
-    return true;
-  }
-
-  std::cerr << "[ERROR] Some slaves failed to reaching OP state!" << std::endl;
-  for (size_t i = 0; i < fb.enumerator->slaves().size(); ++i) {
-      const auto& s = fb.enumerator->slaves()[i];
-      if (s.current_state != states::OP) {
-          std::cerr << "  - Slave " << i << " (" << s.name << ") is in state 0x" 
-                    << std::hex << s.current_state << std::dec << std::endl;
-      }
-  }
-  return false;
 }
 
+/**
+ * @brief Helper to get detailed error info for a slave.
+ */
+std::string get_diagnostics(Fieldbus &fb, int slave_idx) {
+    int wkc;
+    uint16_t code = fb.enumerator->read_register_fprd<uint16_t>(
+        fb.enumerator->slaves()[slave_idx].configured_address, regs::AL_STATUS_CODE, wkc);
+    if (wkc > 0 && code != 0) {
+        return "Error 0x" + std::to_string(code) + ": " + std::string(al_status_code_to_string(code));
+    }
+    return "State 0x" + std::to_string(fb.enumerator->slaves()[slave_idx].current_state);
+}
+
+/**
+ * @brief Shutdown sequence.
+ */
 void fieldbus_stop(Fieldbus &fb) {
-  std::cout << "\n[SHUTDOWN] Requesting INIT state on all slaves..." << std::endl;
+  std::cout << "\n[SHUTDOWN] Reverting all slaves to INIT..." << std::endl;
   fb.enumerator->request_state_all(states::INIT);
-  std::cout << "[INFO] Shutdown complete." << std::endl;
-}
-
-bool fieldbus_dump(Fieldbus &fb) {
-  int wkc = fieldbus_roundtrip(fb);
-  
-  if (wkc < 0) {
-    std::cerr << "\n[ERROR] Bus communication timeout!" << std::endl;
-    return false;
-  }
-
-  printf("%6d us | WKC %d", fb.roundtrip_time_us, wkc);
-  
-  if (wkc <= 0) {
-    printf(" [MISMATCH]");
-  }
-
-  if (fb.image.size() > 0) {
-    printf(" | IO: ");
-    for (size_t i = 0; i < std::min((size_t)8, fb.image.size()); ++i) {
-      printf("%02X ", fb.image.data()[i]);
-    }
-  }
-  printf("\r");
-  fflush(stdout);
-  return true;
+  std::cout << "[INFO] Goodbye." << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    std::cout << "Usage: simple_ng IFNAME" << std::endl;
+  if (argc < 2) {
+    std::cout << "Usage: simple_ng IFNAME [-v]" << std::endl;
     return 1;
   }
 
+  signal(SIGINT, handle_sigint);
   Fieldbus fb;
   fb.iface = argv[1];
+  bool verbose = (argc > 2 && std::string(argv[2]) == "-v");
 
-  if (fieldbus_start(fb)) {
-    std::cout << "Running cyclic loop (Press Ctrl+C to stop)..." << std::endl;
+  if (fieldbus_start(fb, verbose)) {
+    std::cout << "Running cyclic loop. Press Ctrl+C to stop." << std::endl;
+    std::cout << "------------------------------------------------------" << std::endl;
     
-    int min_time = 999999, max_time = 0;
-    for (int i = 1; i <= 10000; ++i) {
-      if (i % 500 == 0) {
+    uint64_t cycle = 0;
+    while (!g_stop) {
+      int wkc = fieldbus_roundtrip(fb);
+      cycle++;
+
+      // Periodic health check (every 500 cycles)
+      if (cycle % 500 == 0) {
         fb.enumerator->check_slaves_status();
-        for (const auto& s : fb.enumerator->slaves()) {
+        for (size_t i=0; i<fb.enumerator->slaves().size(); ++i) {
+            const auto& s = fb.enumerator->slaves()[i];
             if (!s.online || s.current_state != states::OP) {
-                std::cerr << "\n[ALERT] Slave status changed! Slave " << s.configured_address 
-                          << " is " << (s.online ? "ONLINE" : "OFFLINE") 
-                          << " state=0x" << std::hex << s.current_state << std::dec << std::endl;
+                std::cerr << "\n[ALERT] Slave " << i << " (" << s.name << ") HEALTH ISSUE!" << std::endl;
+                std::cerr << "        Status: " << (s.online ? "ONLINE" : "OFFLINE") 
+                          << " | State: " << get_diagnostics(fb, i) << std::endl;
             }
         }
       }
 
-      if (!fieldbus_dump(fb)) {
-        std::cerr << "\n[FATAL] Bus error detected. Stopping." << std::endl;
-        break;
+      // Display live stats
+      if (cycle % 10 == 0) {
+          printf("\rCycle: %8lu | Latency: %5d us | WKC: %3d/%3d", 
+                 cycle, fb.roundtrip_time_us, wkc, fb.expected_wkc);
+          if (wkc != fb.expected_wkc) printf(" [BAD]");
+          else printf(" [OK] ");
+          
+          if (fb.image.size() > 0) {
+              printf(" | Data[0..3]: %02X %02X %02X %02X", 
+                     fb.image.data()[0], fb.image.data()[1], 
+                     fb.image.data()[2], fb.image.data()[3]);
+          }
+          fflush(stdout);
       }
 
-      if (fb.roundtrip_time_us < min_time) min_time = fb.roundtrip_time_us;
-      if (fb.roundtrip_time_us > max_time) max_time = fb.roundtrip_time_us;
-      
+      if (wkc < 0) {
+          std::cerr << "\n[FATAL] Bus Communication Timeout! Check link." << std::endl;
+          break;
+      }
+
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
     
-    std::cout << "\n\nLoop Finished." << std::endl;
-    std::cout << "Roundtrip time (us): min=" << min_time << " max=" << max_time << std::endl;
+    std::cout << "\n------------------------------------------------------" << std::endl;
+    std::cout << "Loop stopped after " << cycle << " cycles." << std::endl;
     fieldbus_stop(fb);
   }
 

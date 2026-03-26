@@ -64,23 +64,33 @@ Result<size_t> Enumerator::enumerate() {
   for (size_t s_idx = 0; s_idx < slaves_.size(); ++s_idx) {
     SlaveInfo &info = slaves_[s_idx];
     if (verbose_) {
-      std::cout << "[VERBOSE] Slave " << s_idx << " (" << info.name << "):" << std::endl;
+      std::cout << "[VERBOSE] Configuring Slave " << s_idx << " (" << info.name << ") SyncManagers..." << std::endl;
     }
     for (size_t i = 0; i < info.sync_managers.size(); ++i) {
       const SyncManagerInfo &sm = info.sync_managers[i];
       if (sm.type == 1 || sm.type == 2) {
-        // Ensure Enable bit is set (Activate register, bit 0 of the second 16-bit word)
-        // SII Category 0x0029 Word 3 Bit 0 is the Enable bit.
-        // In our 32-bit flags: [Control(8) | Status(8) | Activate(8) | PDI(8)]
-        // Activate is flags >> 16. Bit 16 is Activate bit 0.
-        uint32_t final_flags = sm.flags | 0x00010000;
+        // [FIX] AL Status 0x16: Invalid mailbox configuration.
+        // We must be careful not to write the informational 'Type' byte from SII 
+        // into the ESC PDI Control register (0x0807).
+        // SII Category 0x0029 Word 2/3 layout:
+        // bits 0..7:   Control Register (maps to ESC 0x0804)
+        // bits 8..15:  Status Register (maps to ESC 0x0805, usually ignored/0 in SII)
+        // bits 16..23: Enable Byte (maps to ESC 0x0806, bit 0 is Enable)
+        // bits 24..31: SM Type Byte (informational in SII, NOT ESC PDI Control)
+        
+        // We construct final_flags to:
+        // 1. Keep the original Control byte (bits 0-7).
+        // 2. Set the Status byte to 0 (bits 8-15).
+        // 3. Force the Enable bit (bit 16) and keep other bits from SII Enable byte (17-23)
+        // 4. Set PDI Control to 0 (bits 24-31) to avoid deactivating SM or requesting repeats.
+        uint32_t final_flags = (sm.flags & 0x00FF00FF) | 0x00010000;
         SMConfig cfg{sm.start_addr, sm.length, final_flags};
         
         if (verbose_) {
           std::cout << "  - SM" << i << " (Mbx " << (sm.type == 1 ? "Out" : "In") 
-                    << "): Start=0x" << std::hex << sm.start_addr 
+                    << "): Start=0x" << std::hex << std::setw(4) << std::setfill('0') << sm.start_addr 
                     << ", Len=" << std::dec << sm.length 
-                    << ", Flags=0x" << std::hex << final_flags << std::dec << std::endl;
+                    << ", Flags=0x" << std::hex << std::setw(8) << std::setfill('0') << final_flags << std::dec << std::endl;
         }
 
         uint16_t sm_reg = regs::SM0 + static_cast<uint16_t>(i * 8);
@@ -996,7 +1006,9 @@ void Enumerator::load_eni(const ec_enit *eni) {
 
   std::cout << "Loading ENI configuration..." << std::endl;
   MailboxHandler mbx(socket_);
+  mbx.set_verbose(verbose_);
   CoEHandler coe_handler(mbx);
+  coe_handler.set_verbose(verbose_);
 
   for (int i = 0; i < eni->slavecount; ++i) {
     const ec_enislavet &es = eni->slave[i];

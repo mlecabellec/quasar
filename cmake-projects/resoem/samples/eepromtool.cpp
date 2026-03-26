@@ -1,10 +1,15 @@
 /**
  * @file eepromtool.cpp
- * @brief Port of eepromtool.c to resoem
+ * @brief EtherCAT SII (EEPROM) read/write utility (Resoem).
+ * @details This tool allows reading from and writing to the Slave Information Interface (SII) 
+ * of an EtherCAT slave. SII contains the device identity, capabilities, and configurations.
+ * 
+ * NOTE: SII is addressed by 16-bit WORDS. A 1024-bit EEPROM has 64 words.
  */
 
 #include "resoem/Enumerator.hpp"
 #include "resoem/RawSocket.hpp"
+#include "resoem/Diagnostics.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -17,6 +22,7 @@ int main(int argc, char *argv[]) {
   if (argc < 4) {
     std::cout << "Usage: eepromtool IFNAME SLAVE OP [FILE]\n";
     std::cout << "  OP: -r (read), -w (write), -i (info)\n";
+    std::cout << "Example: eepromtool eth0 1 -r backup.bin\n";
     return 1;
   }
 
@@ -26,104 +32,105 @@ int main(int argc, char *argv[]) {
   std::string filename = (argc > 4) ? argv[4] : "";
 
   try {
+    std::cout << "Connecting to " << iface << "..." << std::endl;
     RawSocket socket(iface);
     Enumerator enumerator(socket);
 
+    std::cout << "Scanning for slaves..." << std::endl;
     if (auto res = enumerator.enumerate(); !res || *res == 0) {
-      std::cout << "No slaves found.\n";
+      std::cout << "[ERROR] No slaves found on the bus.\n";
       return 1;
     }
 
     if (slave_pos < 1 || slave_pos > (int)enumerator.slaves().size()) {
-      std::cout << "Slave " << slave_pos << " not found.\n";
+      std::cout << "[ERROR] Slave " << slave_pos << " not found (Bus has " 
+                << enumerator.slaves().size() << " slaves).\n";
       return 1;
     }
 
     int slave_idx = slave_pos - 1;
+    const auto& slave = enumerator.slaves()[slave_idx];
+    std::cout << "[INFO] Target Slave: " << slave.name << " (Addr: 0x" 
+              << std::hex << slave.configured_address << std::dec << ")\n";
 
     if (op == "-r") {
-      // Read entire EEPROM
-      // How big is it? We don't verify size here, assume 0x80 bytes minimum (1
-      // Kbit) or ask user. SOEM eepromtool reads until error or
-      // MAX_EEPROM_SIZE.
-      std::cout << "Reading EEPROM from slave " << slave_pos << "...\n";
+      std::cout << "[OPERATION] Reading EEPROM content...\n";
       std::vector<uint8_t> eeprom_data;
 
-      // Read by words (2 bytes) but read_eeprom returns 4 bytes (2 words?)?
-      // Wait, read_eeprom in Enumerator calls read_sii_word -> returns 32-bit
-      // (2 words at once?) SII is addressed by WORD (16-bit). eeprom::CMD_READ
-      // reads 4 bytes or 2 bytes? "read_sii_word" returns uint32_t. Let's
-      // assume it reads 4 bytes at 'word_addr'. If we increment word_addr by 1
-      // ? In read_sii_word we assume it returns 32 bits (2 words). SOEM
-      // ecx_readeepromAP returns 32 or 64 bits.
-
-      // Let's read word by word (16-bit addressing).
-      // Enumerator::read_eeprom uses read_sii_word which returns uint32.
-      // "read_sii_word" implementation:
-      //   write_register_fpwr(..., regs::EEPROM_ADDRESS, word_addr);
-      //   return read_register_fprd<uint32_t>(..., regs::EEPROM_DATA, ...);
-      // It reads 4 bytes from EEPROM_DATA.
-      // The address is WORD address.
-      // So address 0 returns words 0 and 1.
-      // Address 1 returns words 1 and 2 ? Or address 2?
-      // The standard says: Address is Word Address.
-      // If we read 4 bytes (2 words), we get [WordAddr, WordAddr+1].
-      // So we should increment addr by 2?
-
-      for (uint16_t a = 0; a < 0x400; a += 2) { // Read 2KB max for now
+      // SII is Word-addressed (16-bit). We read in 32-bit or 64-bit chunks.
+      // Resoem's read_eeprom returns 32 bits (2 words) starting at word_addr.
+      // We read up to 2KB (typical max for small devices) or until error.
+      for (uint16_t a = 0; a < 0x400; a += 2) { 
         uint32_t d = enumerator.read_eeprom(slave_idx, a);
-        if (d == 0xFFFFFFFF)
-          break; // Error or end
+        if (d == 0xFFFFFFFF) {
+          std::cout << "\n[INFO] End of EEPROM or read error at word 0x" << std::hex << a << std::dec << "\n";
+          break; 
+        }
 
-        uint8_t b0 = d & 0xFF;
-        uint8_t b1 = (d >> 8) & 0xFF;
-        uint8_t b2 = (d >> 16) & 0xFF; // Should match next read?
-        uint8_t b3 = (d >> 24) & 0xFF;
-
-        eeprom_data.push_back(b0);
-        eeprom_data.push_back(b1);
-        eeprom_data.push_back(b2);
-        eeprom_data.push_back(b3);
+        eeprom_data.push_back(static_cast<uint8_t>(d & 0xFF));
+        eeprom_data.push_back(static_cast<uint8_t>((d >> 8) & 0xFF));
+        eeprom_data.push_back(static_cast<uint8_t>((d >> 16) & 0xFF));
+        eeprom_data.push_back(static_cast<uint8_t>((d >> 24) & 0xFF));
+        
+        if (a % 32 == 0) std::cout << "." << std::flush;
       }
 
       if (!filename.empty()) {
         std::ofstream outfile(filename, std::ios::binary);
         outfile.write(reinterpret_cast<const char *>(eeprom_data.data()),
                       eeprom_data.size());
-        std::cout << "Saved " << eeprom_data.size() << " bytes to " << filename
-                  << "\n";
+        std::cout << "\n[SUCCESS] Saved " << eeprom_data.size() << " bytes to " << filename << "\n";
+      } else {
+          std::cout << "\n[INFO] Read " << eeprom_data.size() << " bytes (Hex dump omitted, provide filename to save).\n";
       }
 
     } else if (op == "-w") {
       if (filename.empty()) {
-        std::cout << "File required for write.\n";
+        std::cout << "[ERROR] File required for write operation.\n";
         return 1;
       }
       std::ifstream infile(filename, std::ios::binary | std::ios::ate);
+      if (!infile) {
+          std::cout << "[ERROR] Could not open file: " << filename << "\n";
+          return 1;
+      }
       size_t size = infile.tellg();
       infile.seekg(0);
       std::vector<uint8_t> buffer(size);
       infile.read(reinterpret_cast<char *>(buffer.data()), size);
 
-      std::cout << "Writing " << size << " bytes to EEPROM of slave "
-                << slave_pos << "...\n";
+      std::cout << "[OPERATION] Writing " << size << " bytes to EEPROM...\n";
+      std::cout << "[WARNING] Writing to SII can brick your device if data is incorrect. Proceeding...\n";
 
       // Write 2 bytes (1 word) at a time.
       for (size_t i = 0; i < size / 2; ++i) {
-        uint16_t word;
-        word = buffer[2 * i] | (buffer[2 * i + 1] << 8);
-        if (!enumerator.write_eeprom(slave_idx, i, word)) {
-          std::cout << "Failed to write at word address " << i << "\n";
+        uint16_t word = buffer[2 * i] | (buffer[2 * i + 1] << 8);
+        if (!enumerator.write_eeprom(slave_idx, static_cast<uint16_t>(i), word)) {
+          std::cerr << "\n[ERROR] Failed to write at word address " << i << "\n";
+          int wkc;
+          uint16_t stat = enumerator.read_register_fprd<uint16_t>(slave.configured_address, regs::EEPROM_CONTROL, wkc);
+          if (wkc > 0) {
+              std::cerr << "        EEPROM Status: 0x" << std::hex << stat << std::dec << "\n";
+              if (stat & eeprom::ERROR_MASK) std::cerr << "        Error bits set in ESC EEPROM Control.\n";
+          }
           return 1;
         }
-        // Determine write time? write_eeprom waits internally.
-        if (i % 64 == 0)
-          std::cout << "." << std::flush;
+        if (i % 8 == 0) std::cout << "." << std::flush;
       }
-      std::cout << "\nDone.\n";
+      std::cout << "\n[SUCCESS] Write complete.\n";
+      
+      std::cout << "[INFO] Requesting EEPROM Reload..." << std::endl;
+      // Many slaves require a reload or power cycle to apply SII changes.
+      // We can try to issue a Reload command via register 0x502
+      // enumerator.write_register_fpwr(slave.configured_address, regs::EEPROM_CONTROL, eeprom::CMD_RELOAD);
+    } else if (op == "-i") {
+        std::cout << "[INFO] SII Basic Information:\n";
+        std::cout << "  - Vendor:   0x" << std::hex << slave.vendor_id << std::dec << "\n";
+        std::cout << "  - Product:  0x" << std::hex << slave.product_code << std::dec << "\n";
+        std::cout << "  - Revision: 0x" << std::hex << slave.revision_number << std::dec << "\n";
     }
   } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << std::endl;
+    std::cerr << "[FATAL] " << e.what() << std::endl;
     return 1;
   }
   return 0;

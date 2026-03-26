@@ -54,15 +54,16 @@ public:
            std::chrono::microseconds timeout = std::chrono::milliseconds(100));
 
   /**
-   * @brief Set the number of retries for failed datagram transmissions.
-   * @param count Number of retries.
+   * @brief Enable or disable verbose logging for mailbox operations.
+   * @param verbose True to enable.
    */
-  void set_retries(int count) { retries_ = count; }
+  void set_verbose(bool verbose) { verbose_ = verbose; }
 
 private:
   RawSocket &socket_;        ///< Raw socket reference
   uint8_t current_idx_ = 0;  ///< Cyclic datagram index
   int retries_ = 3;          ///< Max transmission retries
+  bool verbose_ = false;     ///< Verbose logging flag
 
   // Internal helper methods
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
