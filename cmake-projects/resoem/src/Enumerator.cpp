@@ -525,8 +525,8 @@ uint16_t Enumerator::find_sii_category(uint16_t slave_cfg_addr,
       break; // End of categories
     uint16_t size = static_cast<uint16_t>(res >> 16);
     if (type == cat_type)
-      return ptr + 1; // Return pointer to category data
-    ptr += size + 1;  // Skip to next category
+      return ptr + 2; // Return pointer to category data
+    ptr += size + 2;  // Skip to next category
     if (loop_guard == 9999)
       throw std::runtime_error("Hard limit reached in find_sii_category");
   }
@@ -631,7 +631,7 @@ void Enumerator::read_sii_pdos(int slave_idx) {
         uint16_t ptr = find_sii_category(addr, cat);
         if (ptr == 0)
           return;
-        uint32_t sz = (read_sii_word(addr, ptr - 1) >> 16) * 2;
+        uint32_t sz = (read_sii_word(addr, ptr - 2) >> 16) * 2;
         uint16_t cur = 0;
         for (uint32_t loop_guard = 0; cur < sz && loop_guard < 10000;
              ++loop_guard) {
