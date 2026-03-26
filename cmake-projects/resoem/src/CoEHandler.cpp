@@ -78,8 +78,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
         reinterpret_cast<coe::SDOHeader *>(req_buf.data() + 2);
     sdo->index = index;
     sdo->subindex = complete_access ? 1 : subindex;
-    sdo->command =
-        complete_access ? coe::SDO_DOWNLOAD_INIT_CA : coe::SDO_DOWNLOAD_INIT;
+    sdo->command = coe::SDO_DOWNLOAD_INIT;
 
     // Total size of the object to be downloaded.
     uint32_t total_size = static_cast<uint32_t>(data.size());
@@ -202,8 +201,8 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
   if (rx_type != mailbox::COE || actual_len < 3)
     return std::unexpected(ECError::InvalidResponse);
 
-  coe::SDOHeader *resp_sdo =
-      reinterpret_cast<coe::SDOHeader *>(resp_buf.data() + 2);
+  const coe::SDOHeader *resp_sdo =
+      reinterpret_cast<const coe::SDOHeader *>(resp_buf.data() + 2);
   if (resp_sdo->command == coe::SDO_ABORT) {
     uint32_t abort_code;
     std::memcpy(&abort_code, resp_buf.data() + 2 + sizeof(coe::SDOHeader), 4);

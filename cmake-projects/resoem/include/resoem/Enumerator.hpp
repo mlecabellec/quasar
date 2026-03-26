@@ -34,7 +34,7 @@ public:
    * @brief Construct a new Enumerator.
    * @param socket The raw socket to use for communication.
    */
-  Enumerator(RawSocket &socket);
+  explicit Enumerator(RawSocket &socket);
 
   /**
    * @brief Run the full enumeration process.
@@ -148,7 +148,7 @@ public:
    * @param cycle_time Sync cycle time in nanoseconds.
    * @param shift_time Sync shift time in nanoseconds.
    */
-  void configure_dc(SlaveInfo &slave, uint32_t cycle_time, int32_t shift_time);
+  void configure_dc(const SlaveInfo &slave, uint32_t cycle_time, int32_t shift_time);
 
   /**
    * @brief Read the ESC error counters (CRC errors, link loss, etc.) for all

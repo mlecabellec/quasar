@@ -62,7 +62,7 @@ Result<size_t> Enumerator::enumerate() {
   } __attribute__((packed));
 
   for (size_t s_idx = 0; s_idx < slaves_.size(); ++s_idx) {
-    SlaveInfo &info = slaves_[s_idx];
+    const SlaveInfo &info = slaves_[s_idx];
     if (verbose_) {
       std::cout << "[VERBOSE] Configuring Slave " << s_idx << " (" << info.name << ") SyncManagers..." << std::endl;
     }
@@ -359,7 +359,7 @@ void Enumerator::sync_clocks() {
                std::span<byte>(reinterpret_cast<byte *>(&t), 8));
 }
 
-void Enumerator::configure_dc(SlaveInfo &s, uint32_t cyc, int32_t shift) {
+void Enumerator::configure_dc(const SlaveInfo &s, uint32_t cyc, int32_t shift) {
   if (!s.has_dc)
     return;
 

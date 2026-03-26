@@ -25,7 +25,7 @@ public:
    * @brief Construct a new Mailbox Handler object.
    * @param socket The raw socket for communication.
    */
-  MailboxHandler(RawSocket &socket);
+  explicit MailboxHandler(RawSocket &socket);
 
   /**
    * @brief Write data to the slave's output mailbox.

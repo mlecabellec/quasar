@@ -26,7 +26,7 @@ public:
    * @brief Construct a new FoE Handler object.
    * @param mailbox The low-level mailbox handler to use.
    */
-  FoEHandler(MailboxHandler &mailbox);
+  explicit FoEHandler(MailboxHandler &mailbox);
 
   /**
    * @brief Download a file to the slave.

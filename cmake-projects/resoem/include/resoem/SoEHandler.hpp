@@ -63,7 +63,7 @@ public:
    * @brief Construct a new SoE Handler object.
    * @param mailbox The low-level mailbox handler to use.
    */
-  SoEHandler(MailboxHandler &mailbox);
+  explicit SoEHandler(MailboxHandler &mailbox);
 
   /**
    * @brief Read an IDN from a slave.

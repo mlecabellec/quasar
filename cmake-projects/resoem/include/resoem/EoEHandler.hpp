@@ -26,7 +26,7 @@ public:
    * @brief Construct a new EoE Handler object.
    * @param mailbox The low-level mailbox handler to use.
    */
-  EoEHandler(MailboxHandler &mailbox);
+  explicit EoEHandler(MailboxHandler &mailbox);
 
   /**
    * @brief Send a standard Ethernet frame to the slave.

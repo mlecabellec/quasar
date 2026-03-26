@@ -26,7 +26,7 @@ public:
    * @brief Construct a new CoE Handler object.
    * @param mailbox The low-level mailbox handler to use.
    */
-  CoEHandler(MailboxHandler &mailbox);
+  explicit CoEHandler(MailboxHandler &mailbox);
 
   /**
    * @brief Perform an SDO Download (write to a slave's object dictionary).

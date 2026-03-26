@@ -30,7 +30,7 @@ public:
    * (e.g., "eth1") for redundancy.
    * @throws SocketError if the socket cannot be opened or bound.
    */
-  RawSocket(const std::string &interface_name,
+  explicit RawSocket(const std::string &interface_name,
             const std::string &secondary_interface_name = "");
 
   /**
