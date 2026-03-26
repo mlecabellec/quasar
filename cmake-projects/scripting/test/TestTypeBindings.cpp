@@ -100,7 +100,7 @@ TEST_F(TypeBindingsTest, VariantHandling) {
     engine.getState()["var"] = LuaProxy<NamedVariant>(var);
     
     sol::protected_function_result result = engine.executeString(R"(
-        val = NamedLong.create("initial", 100, var)
+        val = quasar.named.createLong("initial", 100, var)
         var:set(val)
         
         current = var:get()
@@ -140,7 +140,8 @@ TEST_F(TypeBindingsTest, CppVariantHandling) {
 }
 
 TEST_F(TypeBindingsTest, IsolatedCreation) {
-    engine.executeString("val = NamedLong.create('test', 123)");
+    sol::protected_function_result res1 = engine.executeString("val = quasar.named.createLong('test', 123, nil)");
+    ASSERT_TRUE(res1.valid());
     engine.executeString("assert(val:getName() == 'test')");
     engine.executeString("assert(val:asLong():value() == 123)");
 }

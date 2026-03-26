@@ -50,3 +50,31 @@ target_link_libraries(quasar_zmq PRIVATE
 )
 
 set_target_properties(quasar_zmq PROPERTIES PREFIX "")
+
+if(BUILD_TESTING)
+    add_executable(zmq_plugin_test test/TestZmqPlugin.cpp)
+    
+    target_include_directories(zmq_plugin_test PRIVATE
+        include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../named/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../coretypes/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../third-party/lua
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../third-party/sol2/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../third-party/googletest/googletest/include
+    )
+    
+    target_link_libraries(zmq_plugin_test PRIVATE
+        gtest_main
+        quasar_zmq
+        quasar_named
+    )
+    
+    if (TARGET libzmq)
+        target_link_libraries(zmq_plugin_test PRIVATE libzmq)
+    else()
+        target_link_libraries(zmq_plugin_test PRIVATE ${ZMQ_LIBRARIES})
+    endif()
+
+    add_test(NAME ZmqPluginTest COMMAND zmq_plugin_test)
+endif()

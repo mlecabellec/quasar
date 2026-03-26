@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <cerrno>
 #include <cstring>
+#include <optional>
 
 namespace quasar::zmq {
 
@@ -102,6 +103,37 @@ public:
     }
 
     /**
+     * @brief Sends a raw string message.
+     * @param msg The message string.
+     * @param flags ZeroMQ flags (e.g., ZMQ_DONTWAIT, ZMQ_SNDMORE). Default is 0.
+     * @throws std::runtime_error if transmission fails.
+     */
+    void send(const std::string& msg, int flags = 0) {
+        if (zmq_send(m_socket.get(), msg.data(), msg.size(), flags) < 0) {
+            throw std::runtime_error(std::string("Failed to send: ") + std::strerror(errno));
+        }
+    }
+
+    /**
+     * @brief Receives a raw string message.
+     * @param flags ZeroMQ flags (e.g., ZMQ_DONTWAIT). Default is 0.
+     * @return The received string, or std::nullopt if ZMQ_DONTWAIT is used and no message is ready.
+     * @throws std::runtime_error if receiving fails.
+     */
+    std::optional<std::string> receive(int flags = 0) {
+        zmq_msg_t part;
+        zmq_msg_init(&part);
+        if (zmq_msg_recv(&part, m_socket.get(), flags) < 0) {
+            zmq_msg_close(&part);
+            if (errno == EAGAIN) return std::nullopt;
+            throw std::runtime_error(std::string("Failed to receive: ") + std::strerror(errno));
+        }
+        std::string result(static_cast<const char*>(zmq_msg_data(&part)), zmq_msg_size(&part));
+        zmq_msg_close(&part);
+        return result;
+    }
+
+    /**
      * @brief Publishes a NamedObject tree to a topic.
      * 
      * Fulfills [TSK-20260311-004.3.1] publishTree method.
@@ -117,12 +149,24 @@ public:
             throw std::runtime_error(std::string("Failed to send topic: ") + std::strerror(errno));
         }
 
-        // Step 2: Serialize tree to binary (BSON)
-        // [CS-0010.34] auto forbidden.
-        std::vector<uint8_t> binary = quasar::named::serialization::toBinary(root);
+        // Step 2: Serialize tree to binary (BSON) inside unique_ptr to own the underlying buffer
+        std::unique_ptr<std::vector<uint8_t>> buffer = std::make_unique<std::vector<uint8_t>>(
+            quasar::named::serialization::toBinary(root)
+        );
 
-        // Step 3: Send binary payload
-        if (zmq_send(m_socket.get(), binary.data(), binary.size(), 0) < 0) {
+        // Step 3: Zero-copy send by transferring ownership to ZMQ
+        zmq_msg_t msg;
+        zmq_msg_init_data(&msg, buffer->data(), buffer->size(),
+            [](void*, void* hint) {
+                // Recover the unique_ptr and let it go out of scope to properly deallocate without 'delete' constraint
+                std::unique_ptr<std::vector<uint8_t>> p(static_cast<std::vector<uint8_t>*>(hint));
+            },
+            buffer.get()
+        );
+        buffer.release(); // ZMQ now owns it via the callback
+
+        if (zmq_msg_send(&msg, m_socket.get(), 0) < 0) {
+            zmq_msg_close(&msg);
             throw std::runtime_error(std::string("Failed to send tree data: ") + std::strerror(errno));
         }
     }

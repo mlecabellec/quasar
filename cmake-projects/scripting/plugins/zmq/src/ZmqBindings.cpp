@@ -62,6 +62,12 @@ extern "C" {
             "connect", &quasar::zmq::Socket::connect,
             "subscribe", &quasar::zmq::Socket::subscribe,
             "unsubscribe", &quasar::zmq::Socket::unsubscribe,
+            "send", [](quasar::zmq::Socket& self, const std::string& msg, sol::optional<int> flags) {
+                self.send(msg, flags.value_or(0));
+            },
+            "receive", [](quasar::zmq::Socket& self, sol::optional<int> flags) -> std::optional<std::string> {
+                return self.receive(flags.value_or(0));
+            },
             "publishTree", [](quasar::zmq::Socket& self, const std::string& topic, sol::object treeObj) {
                 std::shared_ptr<quasar::named::NamedObject> root = extractNamedObject(treeObj);
                 if (!root) {
@@ -78,6 +84,8 @@ extern "C" {
         // Constants
         zmq["PUB"] = ZMQ_PUB;
         zmq["SUB"] = ZMQ_SUB;
+        zmq["DONTWAIT"] = ZMQ_DONTWAIT;
+        zmq["SNDMORE"] = ZMQ_SNDMORE;
         
         // Additional socket types
         zmq["PUSH"] = ZMQ_PUSH;
