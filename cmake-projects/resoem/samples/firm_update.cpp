@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     Enumerator enumerator(socket);
     enumerator.set_verbose(verbose);
 
-    if (auto res = enumerator.enumerate(); !res || *res == 0) {
+    if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
       std::cout << "[ERROR] No slaves found on the bus.\n";
       return 1;
     }
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "[STEP 3] Requesting BOOT state..." << std::endl;
-    auto boot_res = enumerator.request_state(static_cast<uint16_t>(slave_idx), states::BOOT);
+    Result<uint16_t> boot_res = enumerator.request_state(static_cast<uint16_t>(slave_idx), states::BOOT);
     if (!boot_res) {
       std::cout << "[WARNING] Failed to switch to BOOT state: " << static_cast<int>(boot_res.error()) << "\n";
       std::cout << "          Continuing anyway (some slaves support FoE in PRE-OP).\n";
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     std::cout << "  - Destination filename: " << name_only << std::endl;
     std::cout << "  - Transferring... " << std::flush;
 
-    auto res = foe.write_file(slave, name_only, password, fw_data);
+    Result<> res = foe.write_file(slave, name_only, password, fw_data);
     
     if (res) {
       std::cout << "\n[SUCCESS] Firmware download completed successfully." << std::endl;

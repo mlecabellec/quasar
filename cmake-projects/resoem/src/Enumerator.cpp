@@ -107,7 +107,7 @@ Result<size_t> Enumerator::enumerate() {
   Result<> res = request_state_all(states::PRE_OP);
   if (!res) {
     if (verbose_) {
-      std::cerr << "[VERBOSE] Failed to reach PRE_OP state: " << res.error() << std::endl;
+      std::cerr << "[VERBOSE] Failed to reach PRE_OP state: " << static_cast<int>(res.error()) << std::endl;
     }
     return std::unexpected(res.error());
   }
@@ -501,10 +501,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
 
-  while (true) {
-    static uint64_t loop_count = 0;
-    if (++loop_count > 10'000'000)
-      throw std::runtime_error("Hard limit exceeded in send_receive loop");
+  for (uint64_t loop_count = 0; loop_count < 10'000'000; ++loop_count) {
     int port_idx = 0;
     size_t received = socket_.receive(rx_buffer, &port_idx);
 
@@ -547,6 +544,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
     }
     // If index doesn't match, loop again (ignore other frames/delayed frames)
   }
+  return -1;
 }
 
 template <typename T>
@@ -1225,5 +1223,31 @@ Result<> Enumerator::read_error_counters() {
   }
   return {};
 }
+
+// Explicit template instantiations to fix linker errors
+template uint8_t Enumerator::read_register_broadcast<uint8_t>(uint16_t, int&);
+template uint16_t Enumerator::read_register_broadcast<uint16_t>(uint16_t, int&);
+template uint32_t Enumerator::read_register_broadcast<uint32_t>(uint16_t, int&);
+template uint64_t Enumerator::read_register_broadcast<uint64_t>(uint16_t, int&);
+
+template int Enumerator::write_register_broadcast<uint8_t>(uint16_t, const uint8_t&);
+template int Enumerator::write_register_broadcast<uint16_t>(uint16_t, const uint16_t&);
+template int Enumerator::write_register_broadcast<uint32_t>(uint16_t, const uint32_t&);
+template int Enumerator::write_register_broadcast<uint64_t>(uint16_t, const uint64_t&);
+
+template int Enumerator::write_register_apwr<uint8_t>(uint16_t, uint16_t, const uint8_t&);
+template int Enumerator::write_register_apwr<uint16_t>(uint16_t, uint16_t, const uint16_t&);
+template int Enumerator::write_register_apwr<uint32_t>(uint16_t, uint16_t, const uint32_t&);
+template int Enumerator::write_register_apwr<uint64_t>(uint16_t, uint16_t, const uint64_t&);
+
+template uint8_t Enumerator::read_register_fprd<uint8_t>(uint16_t, uint16_t, int&);
+template uint16_t Enumerator::read_register_fprd<uint16_t>(uint16_t, uint16_t, int&);
+template uint32_t Enumerator::read_register_fprd<uint32_t>(uint16_t, uint16_t, int&);
+template uint64_t Enumerator::read_register_fprd<uint64_t>(uint16_t, uint16_t, int&);
+
+template int Enumerator::write_register_fpwr<uint8_t>(uint16_t, uint16_t, const uint8_t&);
+template int Enumerator::write_register_fpwr<uint16_t>(uint16_t, uint16_t, const uint16_t&);
+template int Enumerator::write_register_fpwr<uint32_t>(uint16_t, uint16_t, const uint32_t&);
+template int Enumerator::write_register_fpwr<uint64_t>(uint16_t, uint16_t, const uint64_t&);
 
 } // namespace resoem

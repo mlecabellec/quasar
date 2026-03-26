@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     // Step: Retrieve and display MAC address
     // [Compliance Proof] FE-0040.1.2: Interface-specific MAC address retrieval.
     std::cout << "Step: Retrieve and display MAC address" << std::endl;
-    auto mac = socket.get_mac_address();
+    std::array<uint8_t, 6> mac = socket.get_mac_address();
     std::cout << "Interface opened. MAC: ";
     for (int i = 0; i < 6; ++i)
       std::cout << std::hex << (int)mac[i] << (i < 5 ? ":" : "\n") << std::dec;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     // Step: Build frame
     // [Compliance Proof] FE-0040.2.3: Implement frame padding to minimum Ethernet size (64 bytes).
     std::cout << "Step: Build frame" << std::endl;
-    auto frame = builder.build();
+    std::span<const byte> frame = builder.build();
 
     // Step: Send frame
     // [Compliance Proof] FE-0040.1.3: Implement non-blocking send operation.

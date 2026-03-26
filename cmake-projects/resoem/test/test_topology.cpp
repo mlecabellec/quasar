@@ -41,7 +41,7 @@ void apply_topology_logic(std::vector<SlaveInfo> &slaves) {
   int count = slaves.size();
 
   // Reset topology info
-  for (auto &s : slaves) {
+  for (SlaveInfo &s : slaves) {
     s.parent_index = -1;
     s.children_indices.clear();
   }

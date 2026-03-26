@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     Enumerator enumerator(socket);
     enumerator.set_verbose(verbose);
 
-    if (auto res = enumerator.enumerate(); !res || *res == 0) {
+    if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
       std::cout << "[ERROR] No slaves found on the bus.\n";
       return 1;
     }
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 
       // 2. Check for incoming packets from EtherCAT (Slave -> OS)
       // We use a short timeout to keep the loop responsive
-      auto res = eoe.receive_frame(slave, std::chrono::microseconds(100));
+      Result<std::vector<byte>> res = eoe.receive_frame(slave, std::chrono::microseconds(100));
       if (res) {
         if (write(tun_fd, res->data(), res->size()) > 0) {
             rx_pkts++;

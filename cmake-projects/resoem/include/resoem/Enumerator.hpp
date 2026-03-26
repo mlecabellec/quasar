@@ -192,6 +192,20 @@ public:
    */
   bool verbose() const { return verbose_; }
 
+  // Low-level register access (Public for diagnostics)
+  template <typename T>
+  T read_register_fprd(uint16_t configured_addr, uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_fpwr(uint16_t configured_addr, uint16_t reg,
+                          const T &value);
+  template <typename T>
+  T read_register_aprd(uint16_t auto_inc_addr, uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_apwr(uint16_t auto_inc_addr, uint16_t reg, const T &value);
+  template <typename T> T read_register_broadcast(uint16_t reg, int &wkc);
+  template <typename T>
+  int write_register_broadcast(uint16_t reg, const T &value);
+
 private:
   RawSocket &socket_;             ///< Raw socket reference
   std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
@@ -206,27 +220,14 @@ private:
   void read_sii_categories(int slave_idx);
   void read_sii_pdos(int slave_idx);
   void map_topology(int count);
+    // Low‑level SII helpers (private)
+    uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
+    uint16_t find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
+    std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
+    void read_port_status();
 
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                    std::span<byte> data);
-
-  template <typename T> T read_register_broadcast(uint16_t reg, int &wkc);
-  template <typename T>
-  int write_register_broadcast(uint16_t reg, const T &value);
-  template <typename T>
-  T read_register_aprd(uint16_t auto_inc_addr, uint16_t reg, int &wkc);
-  template <typename T>
-  int write_register_apwr(uint16_t auto_inc_addr, uint16_t reg, const T &value);
-  template <typename T>
-  T read_register_fprd(uint16_t configured_addr, uint16_t reg, int &wkc);
-  template <typename T>
-  int write_register_fpwr(uint16_t configured_addr, uint16_t reg,
-                          const T &value);
-
-  uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
-  uint16_t find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
-  void read_port_status();
-  std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
 };
 
 } // namespace resoem

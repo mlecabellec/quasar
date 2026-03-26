@@ -2,6 +2,7 @@
 #include "resoem/EtherCATFrame.hpp"
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <thread>
 
 namespace resoem {

@@ -126,7 +126,7 @@ FoEHandler::read_file(SlaveInfo &slave, std::string_view filename,
   size_t max_payload = slave.mbx_in_length - sizeof(foe::Header);
 
   // 2. Receive data packets.
-  while (true) {
+  for (uint32_t loop_guard = 0; loop_guard < 10'000'000; ++loop_guard) {
     size_t len;
     mailbox::Type type;
     std::chrono::steady_clock::time_point start =
@@ -164,6 +164,7 @@ FoEHandler::read_file(SlaveInfo &slave, std::string_view filename,
     if (!recv)
       return std::unexpected(ECError::Timeout);
   }
+  return std::unexpected(ECError::Timeout);
 }
 
 } // namespace resoem

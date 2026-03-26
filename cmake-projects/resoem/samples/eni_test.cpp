@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     // 1. Enumerate slaves on network
     std::cout << "[STEP 2] Scanning physical bus..." << std::endl;
-    if (auto res = enumerator.enumerate(); !res || *res == 0) {
+    if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
       std::cout << "[ERROR] No slaves found. ENI application requires matching hardware.\n";
       return 1;
     }
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     // For now, we use SII-based FMMU config as implemented in Enumerator.
     std::cout << "[STEP 5] Mapping Process Image (FMMU)..." << std::endl;
     ProcessImage image;
-    auto map_res = enumerator.configure_fmmu(image);
+    Result<uint32_t> map_res = enumerator.configure_fmmu(image);
     if (!map_res) {
         std::cerr << "  [ERROR] FMMU mapping failed.\n";
         return 1;
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
         if (i % 100 == 0) {
           enumerator.check_slaves_status();
           bool op = true;
-          for (const auto &s : enumerator.slaves()) {
+          for (const SlaveInfo &s : enumerator.slaves()) {
             if (s.current_state != states::OP) op = false;
           }
           if (op)

@@ -32,6 +32,16 @@ void handle_sigint(int) { g_stop = 1; }
 /**
  * @brief Encapsulates the fieldbus state and context.
  */
+struct Fieldbus;
+
+/**
+ * @brief Helper to get detailed error info for a slave.
+ */
+std::string get_diagnostics(Fieldbus &fb, int slave_idx);
+
+/**
+ * @brief Encapsulates the fieldbus state and context.
+ */
 struct Fieldbus {
   std::unique_ptr<RawSocket> socket;
   std::unique_ptr<Enumerator> enumerator;
@@ -41,13 +51,15 @@ struct Fieldbus {
   uint16_t expected_wkc = 0;
 };
 
+std::string get_diagnostics(Fieldbus &fb, int slave_idx);
+
 /**
  * @brief Performs a single process data exchange roundtrip.
  */
 int fieldbus_roundtrip(Fieldbus &fb) {
-  auto start = std::chrono::steady_clock::now();
-  auto res = fb.enumerator->exchange_process_data(fb.image);
-  auto end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  Result<uint16_t> res = fb.enumerator->exchange_process_data(fb.image);
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   fb.roundtrip_time_us =
       std::chrono::duration_cast<std::chrono::microseconds>(end - start)
@@ -75,7 +87,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     fb.enumerator->set_verbose(verbose);
 
     std::cout << "[STEP 3] Scanning Bus..." << std::endl;
-    auto enum_res = fb.enumerator->enumerate();
+    Result<size_t> enum_res = fb.enumerator->enumerate();
     if (!enum_res) {
       std::cerr << "  [ERROR] Enumeration failed: " << static_cast<int>(enum_res.error()) << std::endl;
       return false;
@@ -89,7 +101,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     std::cout << "  [INFO] Found " << slave_count << " slaves." << std::endl;
 
     std::cout << "[STEP 4] Configuring Process Data Mappings (FMMU)..." << std::endl;
-    auto map_res = fb.enumerator->configure_fmmu(fb.image);
+    Result<uint32_t> map_res = fb.enumerator->configure_fmmu(fb.image);
     if (!map_res) {
       std::cerr << "  [ERROR] FMMU configuration failed!" << std::endl;
       return false;
@@ -99,7 +111,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     // Calculate expected WKC: usually (outputs_count * 2) + (inputs_count * 1) for LRW
     // Or simpler: each slave contributing to process data adds to WKC.
     fb.expected_wkc = 0;
-    for (const auto& s : fb.enumerator->slaves()) {
+    for (const SlaveInfo& s : fb.enumerator->slaves()) {
         if (s.outputs_size_bits > 0) fb.expected_wkc += 2;
         if (s.inputs_size_bits > 0) fb.expected_wkc += 1;
     }
@@ -127,7 +139,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
       fieldbus_roundtrip(fb);
       fb.enumerator->check_slaves_status();
       all_op = true;
-      for (const auto &s : fb.enumerator->slaves()) {
+      for (const SlaveInfo &s : fb.enumerator->slaves()) {
         if (s.current_state != states::OP) { all_op = false; break; }
       }
       if (all_op) break;
@@ -139,7 +151,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     if (!all_op) {
       std::cerr << "  [ERROR] Time-out waiting for Operational state." << std::endl;
       for (size_t i=0; i<fb.enumerator->slaves().size(); ++i) {
-          auto s = fb.enumerator->slaves()[i];
+          SlaveInfo s = fb.enumerator->slaves()[i];
           if (s.current_state != states::OP)
               std::cerr << "    - Slave " << i << " (" << s.name << ") is in " << get_diagnostics(fb, i) << std::endl;
       }
@@ -201,7 +213,7 @@ int main(int argc, char *argv[]) {
       if (cycle % 500 == 0) {
         fb.enumerator->check_slaves_status();
         for (size_t i=0; i<fb.enumerator->slaves().size(); ++i) {
-            const auto& s = fb.enumerator->slaves()[i];
+            const SlaveInfo& s = fb.enumerator->slaves()[i];
             if (!s.online || s.current_state != states::OP) {
                 std::cerr << "\n[ALERT] Slave " << i << " (" << s.name << ") HEALTH ISSUE!" << std::endl;
                 std::cerr << "        Status: " << (s.online ? "ONLINE" : "OFFLINE") 

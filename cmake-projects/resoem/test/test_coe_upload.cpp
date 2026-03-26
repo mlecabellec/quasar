@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 
     // Step: Enumerate slaves to get addresses and mailbox configs
     Enumerator enumerator(socket);
-    auto count_result = enumerator.enumerate();
+    Result<size_t> count_result = enumerator.enumerate();
     if (!count_result.has_value()) {
       std::cerr << "Error during enumeration: " << static_cast<int>(count_result.error()) << std::endl;
       return 1;
@@ -38,10 +38,10 @@ int main(int argc, char *argv[]) {
     MailboxHandler mailbox(socket);
     CoEHandler coe(mailbox);
 
-    const auto &slaves = enumerator.slaves();
+    const std::vector<SlaveInfo> &slaves = enumerator.slaves();
     for (size_t i = 0; i < slaves.size(); ++i) {
       // Need mutable reference to update mailbox counter
-      auto &slave = const_cast<SlaveInfo &>(slaves[i]);
+      SlaveInfo &slave = const_cast<SlaveInfo &>(slaves[i]);
 
       std::cout << "Processing Slave " << (i + 1) << ": " << slave.name << "\n";
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
       byte name_buf[64];
       size_t actual_size = 0;
       std::cout << "  Reading SDO 0x1008:00 (Device Name)...\n";
-      auto err = coe.sdo_read(slave, 0x1008, 0x00, name_buf, actual_size);
+      Result<size_t> err = coe.sdo_read(slave, 0x1008, 0x00, name_buf, actual_size);
 
       if (err.error() == ECError::Success) {
         std::string name(reinterpret_cast<char *>(name_buf), actual_size);

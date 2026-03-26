@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     Enumerator enumerator(socket);
 
     std::cout << "Scanning for slaves..." << std::endl;
-    if (auto res = enumerator.enumerate(); !res || *res == 0) {
+    if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
       std::cout << "[ERROR] No slaves found on the bus.\n";
       return 1;
     }
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     }
 
     int slave_idx = slave_pos - 1;
-    const auto& slave = enumerator.slaves()[slave_idx];
+    const SlaveInfo& slave = enumerator.slaves()[slave_idx];
     std::cout << "[INFO] Target Slave: " << slave.name << " (Addr: 0x" 
               << std::hex << slave.configured_address << std::dec << ")\n";
 

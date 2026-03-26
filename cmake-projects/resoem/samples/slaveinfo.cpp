@@ -37,13 +37,28 @@ void print_sm_type_desc(uint8_t type) {
  * @brief Helper to get AL State names.
  */
 std::string get_state_name(uint16_t state) {
-    switch(state & al_status::STATE_MASK) {
+    switch(state & regs::al_status::STATE_MASK) {
         case states::INIT:    return "INIT";
         case states::PRE_OP:  return "PRE-OP";
         case states::BOOT:    return "BOOT";
         case states::SAFE_OP: return "SAFE-OP";
         case states::OP:      return "OPERATIONAL";
         default:              return "UNKNOWN";
+    }
+}
+
+static void print_pdos(const std::string& label, const std::vector<PDOInfo>& pdos) {
+    std::cout << "  " << label << " (" << pdos.size() << " PDOs):" << std::endl;
+    if (pdos.empty()) std::cout << "    (None)\n";
+    for (const PDOInfo& p : pdos) {
+        std::cout << "    - PDO Index 0x" << std::hex << p.index << std::dec 
+                  << " (" << p.entries.size() << " entries)" << std::endl;
+        for (const PDOEntryInfo& e : p.entries) {
+            std::cout << "      - 0x" << std::hex << std::setw(4) << std::setfill('0') << e.index 
+                      << ":" << std::setw(2) << (int)e.subindex << std::dec 
+                      << " | Bits=" << std::setw(2) << (int)e.bit_length 
+                      << " | " << (e.name.empty() ? "(Unnamed)" : e.name) << std::endl;
+        }
     }
 }
 
@@ -97,7 +112,7 @@ void print_slave_info(const SlaveInfo &s, int idx) {
       std::cout << "  (No SyncManagers found in SII)\n";
   }
   for (size_t i = 0; i < s.sync_managers.size(); ++i) {
-    const auto &sm = s.sync_managers[i];
+    const SyncManagerInfo &sm = s.sync_managers[i];
     std::cout << "  SM" << i << ": Start=0x" << std::hex << std::setw(4) << std::setfill('0') << sm.start_addr
               << " | Len=" << std::dec << std::setw(4) << sm.length 
               << " | Flags=0x" << std::hex << std::setw(8) << sm.flags 
@@ -111,7 +126,7 @@ void print_slave_info(const SlaveInfo &s, int idx) {
       std::cout << "  (None configured yet - FMMUs are set during transition to SAFE-OP)\n";
   } else {
       for (size_t i = 0; i < s.fmmu.size(); ++i) {
-        const auto &f = s.fmmu[i];
+        const FMMUInfo &f = s.fmmu[i];
         std::cout << "  FMMU" << i << ": LogStart=0x" << std::hex << std::setw(8) << f.logical_start 
                   << " | Len=" << std::dec << std::setw(3) << f.length 
                   << " | Phys=0x" << std::hex << std::setw(4) << f.physical_start 
@@ -120,20 +135,6 @@ void print_slave_info(const SlaveInfo &s, int idx) {
   }
 
   std::cout << "\n [PDO CONFIGURATION]" << std::endl;
-  auto print_pdos = [](const std::string& label, const std::vector<PDOInfo>& pdos) {
-      std::cout << "  " << label << " (" << pdos.size() << " PDOs):" << std::endl;
-      if (pdos.empty()) std::cout << "    (None)\n";
-      for (const auto& p : pdos) {
-          std::cout << "    - PDO Index 0x" << std::hex << p.index << std::dec 
-                    << " (" << p.entries.size() << " entries)" << std::endl;
-          for (const auto& e : p.entries) {
-              std::cout << "      - 0x" << std::hex << std::setw(4) << std::setfill('0') << e.index 
-                        << ":" << std::setw(2) << (int)e.subindex << std::dec 
-                        << " | Bits=" << std::setw(2) << (int)e.bit_length 
-                        << " | " << (e.name.empty() ? "(Unnamed)" : e.name) << std::endl;
-          }
-      }
-  };
   print_pdos("RxPDOs (Master -> Slave / Outputs)", s.rx_pdos);
   print_pdos("TxPDOs (Slave -> Master / Inputs )", s.tx_pdos);
 }
@@ -168,7 +169,7 @@ int main(int argc, char *argv[]) {
     enumerator.set_verbose(verbose); 
 
     std::cout << "[PHASE 2] Enumerating Slaves..." << std::endl;
-    auto count_res = enumerator.enumerate();
+    Result<size_t> count_res = enumerator.enumerate();
 
     if (!count_res) {
       std::cerr << "[ERROR] Enumeration failed: " << static_cast<int>(count_res.error()) << std::endl;
@@ -185,7 +186,7 @@ int main(int argc, char *argv[]) {
 
     // Transition to PRE-OP to enable mailbox communication if needed for OD browsing
     std::cout << "[PHASE 3] Testing transition to PRE-OP..." << std::endl;
-    auto preop_res = enumerator.request_state_all(states::PRE_OP);
+    Result<> preop_res = enumerator.request_state_all(states::PRE_OP);
     if (!preop_res) {
         std::cerr << "[WARNING] Failed to reach PRE-OP state globally. Mailbox operations might fail." << std::endl;
     }
@@ -194,7 +195,7 @@ int main(int argc, char *argv[]) {
     enumerator.check_slaves_status();
 
     for (size_t i = 0; i < count; ++i) {
-      const auto& s = enumerator.slaves()[i];
+      const SlaveInfo& s = enumerator.slaves()[i];
       print_slave_info(s, i);
 
       // [OPTIONAL] CoE Object Dictionary browsing
@@ -211,11 +212,11 @@ int main(int argc, char *argv[]) {
             SlaveInfo &mut_s = const_cast<SlaveInfo &>(s);
 
             std::cout << "    Reading OD list... " << std::flush;
-            auto list_res = coe.read_od_list(mut_s);
+            Result<std::vector<uint16_t>> list_res = coe.read_od_list(mut_s);
             if (list_res) {
               std::cout << "Found " << list_res->size() << " objects." << std::endl;
               for (uint16_t idx : *list_res) {
-                auto desc_res = coe.read_od_description(mut_s, idx);
+                Result<CoEHandler::ODEntry> desc_res = coe.read_od_description(mut_s, idx);
                 if (desc_res) {
                   std::cout << "    - 0x" << std::hex << std::setw(4) << std::setfill('0') << idx 
                             << ": " << desc_res->name 
@@ -227,7 +228,7 @@ int main(int argc, char *argv[]) {
             } else {
               std::cout << "FAILED. (Mailbox might be busy, in error state, or timeout)\n";
               int wkc;
-              uint16_t al_code = read_register_fprd<uint16_t>(socket, s.configured_address, regs::AL_STATUS_CODE, wkc);
+              uint16_t al_code = enumerator.read_register_fprd<uint16_t>(s.configured_address, regs::AL_STATUS_CODE, wkc);
               if (wkc > 0 && al_code != 0) {
                   std::cout << "    AL Status Code: 0x" << std::hex << al_code << ": " 
                             << al_status_code_to_string(al_code) << std::dec << "\n";
@@ -251,26 +252,4 @@ int main(int argc, char *argv[]) {
   }
 
   return 0;
-}
-
-// Minimal helper for AL Status Code read if CoE fails
-template <typename T>
-T read_register_fprd(RawSocket &socket, uint16_t configured_addr, uint16_t reg, int &wkc) {
-  T val{};
-  std::span<byte> buf(reinterpret_cast<byte *>(&val), sizeof(T));
-  
-  FrameBuilder builder;
-  builder.add_datagram(cmds::FPRD, 0, configured_addr, reg, buf);
-  auto frame = builder.build();
-  socket.send(frame);
-  
-  std::vector<byte> rx(1500);
-  size_t rec = socket.receive(rx);
-  if (rec >= 28 + sizeof(T)) {
-      std::memcpy(&val, rx.data() + 26, sizeof(T));
-      std::memcpy(&wkc, rx.data() + 26 + sizeof(T), 2);
-  } else {
-      wkc = 0;
-  }
-  return val;
 }

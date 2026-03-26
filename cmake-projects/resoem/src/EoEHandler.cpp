@@ -53,7 +53,7 @@ EoEHandler::receive_frame(SlaveInfo &slave, std::chrono::microseconds timeout) {
 
   // Keep reading mailbox fragments until the 'last' fragment of an Ethernet
   // frame is reached.
-  while (true) {
+  for (uint32_t loop_guard = 0; loop_guard < 10'000'000; ++loop_guard) {
     size_t len;
     mailbox::Type type;
     if (mailbox_.read(slave, type, mbx, len, timeout) <= 0)
