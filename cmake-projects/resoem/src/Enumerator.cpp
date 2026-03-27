@@ -516,7 +516,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   try {
     socket_.send(frame);
   } catch (const SocketError &e) {
-    if (verbose_) std::cerr << "[VERBOSE] Socket send error: " << e.what() << std::endl;
+    if (verbose_level_ > 1) std::cerr << "[VERBOSE] Socket send error in send_receive: " << e.what() << std::endl;
     return -1;
   }
 
