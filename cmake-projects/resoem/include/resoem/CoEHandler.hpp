@@ -101,13 +101,13 @@ public:
 
   /**
    * @brief Enable or disable verbose logging for CoE operations.
-   * @param verbose True to enable.
+   * @param level Verbosity level.
    */
-  void set_verbose(bool verbose) { verbose_ = verbose; }
+  void set_verbose(int level) { verbose_level_ = level; }
 
 private:
-  MailboxHandler &mailbox_; ///< Low-level mailbox handler
-  bool verbose_ = false;    ///< Verbose logging flag
+  MailboxHandler &mailbox_;   ///< Low-level mailbox handler
+  int verbose_level_ = 0;     ///< Verbose logging flag
 
   // Internal helper to log and handle SDO aborts.
   void handle_sdo_abort(uint16_t slave_addr, uint16_t index,

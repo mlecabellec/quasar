@@ -141,21 +141,23 @@ void print_slave_info(const SlaveInfo &s, int idx) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    std::cout << "Usage: slaveinfo IFNAME [-od] [-v]\n";
+    std::cout << "Usage: slaveinfo IFNAME [-od] [-v | -vv]\n";
     std::cout << "Options:\n";
     std::cout << "  -od   Attempt to dump CoE Object Dictionary for each slave\n";
-    std::cout << "  -v    Enable verbose internal library logging\n";
+    std::cout << "  -v    Enable verbose logging\n";
+    std::cout << "  -vv   Enable extra verbose (debug) logging\n";
     return 1;
   }
 
   std::string iface = argv[1];
   bool print_od = false;
-  bool verbose = false;
+  int verbose_level = 0;
 
   for (int i = 2; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-od") print_od = true;
-    if (arg == "-v") verbose = true;
+    if (arg == "-v") verbose_level = 1;
+    if (arg == "-vv") verbose_level = 2;
   }
 
   try {
@@ -166,13 +168,25 @@ int main(int argc, char *argv[]) {
     std::cout << "[PHASE 1] Initializing Network on " << iface << "..." << std::endl;
     RawSocket socket(iface);
     Enumerator enumerator(socket);
-    enumerator.set_verbose(verbose); 
+    enumerator.set_verbose(verbose_level); 
 
     std::cout << "[PHASE 2] Enumerating Slaves..." << std::endl;
     Result<size_t> count_res = enumerator.enumerate();
 
     if (!count_res) {
       std::cerr << "[ERROR] Enumeration failed: " << static_cast<int>(count_res.error()) << std::endl;
+      
+      // Attempt to diagnose which slave failed
+      for (size_t i = 0; i < enumerator.slaves().size(); ++i) {
+          int wkc;
+          uint16_t code = enumerator.read_register_fprd<uint16_t>(
+              enumerator.slaves()[i].configured_address, regs::AL_STATUS_CODE, wkc);
+          if (wkc > 0 && code != 0) {
+              std::cerr << "  - Slave " << i << " (" << enumerator.slaves()[i].name 
+                        << ") AL Status Code: 0x" << std::hex << code << ": " 
+                        << al_status_code_to_string(code) << std::dec << std::endl;
+          }
+      }
       return 1;
     }
 
@@ -184,14 +198,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "[SUCCESS] Found " << count << " slaves. Performing detailed analysis..." << std::endl;
 
-    // Transition to PRE-OP to enable mailbox communication if needed for OD browsing
-    std::cout << "[PHASE 3] Testing transition to PRE-OP..." << std::endl;
-    Result<> preop_res = enumerator.request_state_all(states::PRE_OP);
-    if (!preop_res) {
-        std::cerr << "[WARNING] Failed to reach PRE-OP state globally. Mailbox operations might fail." << std::endl;
-    }
-    
-    // Update status to get latest AL states
+    // Update status to get latest AL states (slaves should already be in PRE-OP from enumerate())
     enumerator.check_slaves_status();
 
     for (size_t i = 0; i < count; ++i) {
@@ -205,9 +212,9 @@ int main(int argc, char *argv[]) {
         } else {
             std::cout << "\n  [COE OBJECT DICTIONARY]" << std::endl;
             MailboxHandler mbx(socket);
-            mbx.set_verbose(verbose);
+            mbx.set_verbose(verbose_level);
             CoEHandler coe(mbx);
-            coe.set_verbose(verbose);            
+            coe.set_verbose(verbose_level);            
             // Need mutable reference to update mailbox counters internally
             SlaveInfo &mut_s = const_cast<SlaveInfo &>(s);
 

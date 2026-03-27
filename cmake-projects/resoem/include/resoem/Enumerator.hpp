@@ -97,6 +97,14 @@ public:
       std::chrono::microseconds timeout = std::chrono::milliseconds(2));
 
   /**
+   * @brief Represents a category in the Slave Information Interface (SII).
+   */
+  struct SIICategory {
+    uint16_t offset;         ///< Word offset of the category data
+    uint16_t size_in_words;  ///< Size of the category data in words
+  };
+
+  /**
    * @brief Read a 32-bit word from the slave's SII (EEPROM).
    *
    * @param slave_idx Index of the slave.
@@ -135,8 +143,7 @@ public:
   /**
    * @brief Synchronize all slave clocks to the Reference Clock (usually the
    * first DC-capable slave).
-   * @details [FE-0040.6.2] Designate a Reference Clock.
-   * [FE-0040.6.3] Provide cyclic drift compensation using ARMW command.
+   * @details [FE-0040.6.3] Provide cyclic drift compensation using ARMW command.
    */
   void sync_clocks();
 
@@ -182,15 +189,15 @@ public:
 
   /**
    * @brief Enable or disable verbose logging.
-   * @param verbose True to enable verbose console output.
+   * @param level Verbosity level (0=off, 1=normal, 2=high).
    */
-  void set_verbose(bool verbose) { verbose_ = verbose; }
+  void set_verbose(int level) { verbose_level_ = level; }
 
   /**
    * @brief Check if verbose logging is enabled.
-   * @return true if verbose logging is active.
+   * @return Current verbosity level.
    */
-  bool verbose() const { return verbose_; }
+  int verbose() const { return verbose_level_; }
 
   // Low-level register access (Public for diagnostics)
   template <typename T>
@@ -210,7 +217,7 @@ private:
   RawSocket &socket_;             ///< Raw socket reference
   std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
   uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
-  bool verbose_ = false;          ///< Verbose logging flag
+  int verbose_level_ = 0;         ///< Verbose logging level
 
   // Internal helper methods
   int broadcast_read_count();
@@ -222,7 +229,7 @@ private:
   void map_topology(int count);
     // Low‑level SII helpers (private)
     uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
-    uint16_t find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
+    SIICategory find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
     std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
     void read_port_status();
 

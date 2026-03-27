@@ -55,15 +55,15 @@ public:
 
   /**
    * @brief Enable or disable verbose logging for mailbox operations.
-   * @param verbose True to enable.
+   * @param level Verbosity level (0=off, 1=normal, 2=high).
    */
-  void set_verbose(bool verbose) { verbose_ = verbose; }
+  void set_verbose(int level) { verbose_level_ = level; }
 
 private:
   RawSocket &socket_;        ///< Raw socket reference
   uint8_t current_idx_ = 0;  ///< Cyclic datagram index
   int retries_ = 3;          ///< Max transmission retries
-  bool verbose_ = false;     ///< Verbose logging flag
+  int verbose_level_ = 0;    ///< Verbose logging level
 
   // Internal helper methods
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,

@@ -18,101 +18,111 @@ namespace resoem {
 Enumerator::Enumerator(RawSocket &socket) : socket_(socket) {}
 
 Result<size_t> Enumerator::enumerate() {
-  if (verbose_) {
+  // Check if verbose logging is enabled and print start message.
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Starting network enumeration..." << std::endl;
   }
+  // Clear the existing list of slaves to prepare for a fresh scan.
   slaves_.clear();
 
-  // Reset the network to a known state (INIT, clear FMMUs/SMs, etc.)
-  if (verbose_) {
+  // Reset the network to a known state (INIT, clear FMMUs/SMs, etc.).
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Resetting slaves to INIT and clearing ESC registers..." << std::endl;
   }
+  // Issue broadcast commands to clear all slave controller states.
   reset_to_init();
 
-  // [FE-0040.3.1] Automatically detect and count slaves on the wire using broadcast read.
+  // Automatically detect and count slaves on the wire using broadcast read [FE-0040.3.1].
   int slave_count = broadcast_read_count();
-  if (verbose_) {
+  // Log the number of slaves found during the broadcast read.
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Broadcast read (BRD) found " << slave_count << " slaves on the bus." << std::endl;
-  } else {
-    std::cout << "Found " << slave_count << " slaves." << std::endl;
   }
   
-  if (slave_count <= 0)
+  // If no slaves are found, return zero immediately.
+  if (slave_count <= 0) {
     return 0;
+  }
 
-  // [FE-0040.3.2] Assign configured station addresses (starting at 0x1001) to each slave.
-  if (verbose_) {
+  // Assign configured station addresses (starting at 0x1001) to each slave [FE-0040.3.2].
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Assigning station addresses starting at 0x1001..." << std::endl;
   }
+  // Use auto-increment addressing to assign unique IDs to each discovered slave.
   assign_addresses(slave_count);
 
-  // [FE-0040.3.3] Parse information (Vendor, Product, PDOs) from the SII (EEPROM) of each slave.
-  if (verbose_) {
+  // Parse information (Vendor, Product, PDOs) from the SII (EEPROM) of each slave [FE-0040.3.3].
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Reading SII (EEPROM) data for all slaves..." << std::endl;
   }
+  // This step reads the identity and capabilities of every detected device.
   read_sii_data(slave_count);
 
-  // Configure Mailbox SyncManagers (type 1 = Out, type 2 = In) before PRE_OP
-  if (verbose_) {
+  // Configure Mailbox SyncManagers (type 1 = Out, type 2 = In) before transitioning to PRE_OP.
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Configuring SyncManagers for Mailbox communication..." << std::endl;
   }
+  // Define a packed structure for writing SM configuration to ESC registers.
   struct SMConfig {
     uint16_t start_addr;
     uint16_t length;
     uint32_t flags;
   } __attribute__((packed));
 
-  for (size_t s_idx = 0; s_idx < slaves_.size(); ++s_idx) {
+  // Loop through discovered slaves to program their SyncManagers.
+  // We use a hard limit of 65535 iterations [CS-0010.37].
+  for (size_t s_idx = 0; s_idx < slaves_.size() && s_idx < 65535; ++s_idx) {
     const SlaveInfo &info = slaves_[s_idx];
-    if (verbose_) {
+    if (verbose_level_ > 1) {
       std::cout << "[VERBOSE] Configuring Slave " << s_idx << " (" << info.name << ") SyncManagers..." << std::endl;
     }
-    for (size_t i = 0; i < info.sync_managers.size(); ++i) {
+    // Iterate through the SyncManagers identified during SII parsing.
+    // We use a hard limit of 16 iterations as defined by ESC hardware limits.
+    for (size_t i = 0; i < info.sync_managers.size() && i < 16; ++i) {
       const SyncManagerInfo &sm = info.sync_managers[i];
-      if (sm.type == 1 || sm.type == 2) {
-        // [FIX] AL Status 0x16: Invalid mailbox configuration.
-        // We must be careful not to write the informational 'Type' byte from SII 
-        // into the ESC PDI Control register (0x0807).
-        // SII Category 0x0029 Word 2/3 layout:
-        // bits 0..7:   Control Register (maps to ESC 0x0804)
-        // bits 8..15:  Status Register (maps to ESC 0x0805, usually ignored/0 in SII)
-        // bits 16..23: Enable Byte (maps to ESC 0x0806, bit 0 is Enable)
-        // bits 24..31: SM Type Byte (informational in SII, NOT ESC PDI Control)
+      // Only configure SyncManagers that are marked as valid mailbox or process data types.
+      if (sm.type >= 1 && sm.type <= 4) {
+        // Construct final_flags to ensure correct mailbox configuration.
+        // We preserve the control byte (bits 0-7) and PDI control byte (bits 24-31),
+        // and force the Enable bit (bit 16) in the Activate byte.
+        uint32_t final_flags = (sm.flags & 0xFF0000FF) | 0x00010000;
+        SMConfig cfg = {sm.start_addr, sm.length, final_flags};
         
-        // We construct final_flags to:
-        // 1. Keep the original Control byte (bits 0-7).
-        // 2. Set the Status byte to 0 (bits 8-15).
-        // 3. Force the Enable bit (bit 16) and keep other bits from SII Enable byte (17-23)
-        // 4. Set PDI Control to 0 (bits 24-31) to avoid deactivating SM or requesting repeats.
-        uint32_t final_flags = (sm.flags & 0x00FF00FF) | 0x00010000;
-        SMConfig cfg{sm.start_addr, sm.length, final_flags};
-        
-        if (verbose_) {
-          std::cout << "  - SM" << i << " (Mbx " << (sm.type == 1 ? "Out" : "In") 
+        // Log detailed SM configuration if verbose mode is active.
+        if (verbose_level_ > 1) {
+          std::string type_name = "Unknown";
+          if (sm.type == 1) type_name = "Mbx Out";
+          else if (sm.type == 2) type_name = "Mbx In";
+          else if (sm.type == 3) type_name = "Outputs";
+          else if (sm.type == 4) type_name = "Inputs";
+          
+          std::cout << "  - SM" << i << " (" << type_name 
                     << "): Start=0x" << std::hex << std::setw(4) << std::setfill('0') << sm.start_addr 
                     << ", Len=" << std::dec << sm.length 
                     << ", Flags=0x" << std::hex << std::setw(8) << std::setfill('0') << final_flags << std::dec << std::endl;
         }
 
-        uint16_t sm_reg = regs::SM0 + static_cast<uint16_t>(i * 8);
+        // Write the configuration to the ESC SyncManager registers starting at 0x0800.
+        uint16_t sm_reg = static_cast<uint16_t>(regs::SM0 + (i * 8));
         write_register_fpwr<SMConfig>(info.configured_address, sm_reg, cfg);
       }
     }
   }
 
-  // Request all slaves to move to the PRE-OP state to allow mailbox
-  // communication.
-  if (verbose_) {
+  // Request all slaves to move to the PRE-OP state to enable mailbox communication.
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Requesting transition to PRE_OP for all slaves..." << std::endl;
   }
+  // Transitioning to PRE-OP is mandatory before SDO/CoE operations can start.
   Result<> res = request_state_all(states::PRE_OP);
   if (!res) {
-    if (verbose_) {
+    if (verbose_level_ > 0) {
       std::cerr << "[VERBOSE] Failed to reach PRE_OP state: " << static_cast<int>(res.error()) << std::endl;
     }
     return std::unexpected(res.error());
   }
 
+  // Return the total number of slaves successfully discovered and initialized.
   return static_cast<size_t>(slave_count);
 }
 
@@ -122,7 +132,7 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
     return std::unexpected(ECError::ProtocolError);
 
   uint16_t cfg_addr = slaves_[slave_idx].configured_address;
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Slave " << slave_idx << ": Requesting state 0x" 
               << std::hex << state << std::dec << "..." << std::endl;
   }
@@ -142,7 +152,7 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
     if (wkc > 0) {
       uint16_t cur = status & regs::al_status::STATE_MASK;
       if (cur == (state & regs::al_status::STATE_MASK)) {
-        if (verbose_) {
+        if (verbose_level_ > 1) {
           std::cout << "[VERBOSE] Slave " << slave_idx << ": Reached state 0x" 
                     << std::hex << cur << std::dec << "." << std::endl;
         }
@@ -153,11 +163,13 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
       if (status & regs::al_status::ERROR_BIT) {
         uint16_t code =
             read_register_fprd<uint16_t>(cfg_addr, regs::AL_STATUS_CODE, wkc);
-        std::cerr << "Slave " << slave_idx << " AL Status Error: 0x"
-                  << std::hex << code << ": " << al_status_code_to_string(code)
-                  << std::dec << std::endl;
+        if (verbose_level_ > 0) {
+            std::cerr << "Slave " << slave_idx << " AL Status Error: 0x"
+                      << std::hex << code << ": " << al_status_code_to_string(code)
+                      << std::dec << std::endl;
+        }
         
-        if (verbose_) {
+        if (verbose_level_ > 1) {
           std::cout << "[VERBOSE] Slave " << slave_idx << ": Acknowledging error 0x" 
                     << std::hex << code << std::dec << "..." << std::endl;
         }
@@ -175,12 +187,15 @@ Result<uint16_t> Enumerator::request_state(uint16_t slave_idx, uint16_t state,
 
 Result<> Enumerator::request_state_all(uint16_t state,
                                        std::chrono::microseconds timeout) {
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Requesting state 0x" << std::hex << state 
               << std::dec << " for all slaves via broadcast..." << std::endl;
   }
   // Use a broadcast write to request state for all slaves at once.
-  write_register_broadcast<uint16_t>(regs::AL_CONTROL, state);
+  int wkc = write_register_broadcast<uint16_t>(regs::AL_CONTROL, state);
+  if (wkc < (int)slaves_.size() && verbose_level_ > 0) {
+      std::cerr << "[VERBOSE] Warning: AL_CONTROL broadcast WKC was " << wkc << ", expected " << slaves_.size() << std::endl;
+  }
 
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
@@ -202,9 +217,11 @@ Result<> Enumerator::request_state_all(uint16_t state,
           if (status & regs::al_status::ERROR_BIT) {
             uint16_t code = read_register_fprd<uint16_t>(
                 slaves_[j].configured_address, regs::AL_STATUS_CODE, wkc);
-            std::cerr << "Slave " << j << " AL Status Error: 0x" << std::hex
-                      << code << ": " << al_status_code_to_string(code)
-                      << std::dec << std::endl;
+            if (verbose_level_ > 0) {
+                std::cerr << "Slave " << j << " AL Status Error: 0x" << std::hex
+                          << code << ": " << al_status_code_to_string(code)
+                          << std::dec << std::endl;
+            }
             // Write the error acknowledge bit.
             write_register_fpwr<uint16_t>(slaves_[j].configured_address,
                                           regs::AL_CONTROL,
@@ -217,7 +234,7 @@ Result<> Enumerator::request_state_all(uint16_t state,
     }
 
     if (all) {
-      if (verbose_) {
+      if (verbose_level_ > 1) {
         std::cout << "[VERBOSE] All slaves reached state 0x" << std::hex 
                   << state << std::dec << "." << std::endl;
       }
@@ -258,7 +275,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
       // memory.
       FMMUInfo fmmu{offset, static_cast<uint16_t>(bytes),
                     0,      static_cast<uint8_t>((out_bits - 1) % 8),
-                    0x1000, 0,
+                    0, 0,
                     1,  // Type: Read (from physical)
                     1}; // Active
 
@@ -268,6 +285,8 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
                        [](const SyncManagerInfo &sm) { return sm.type == 3; });
       if (sm_it != info.sync_managers.end()) {
         fmmu.physical_start = sm_it->start_addr;
+      } else {
+          return std::unexpected(ECError::ProtocolError); // No output SM found
       }
 
       write_register_fpwr<FMMUInfo>(info.configured_address, regs::FMMU0, fmmu);
@@ -297,7 +316,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
 
       FMMUInfo fmmu{offset, static_cast<uint16_t>(bytes),
                     0,      static_cast<uint8_t>((in_bits - 1) % 8),
-                    0x1100, 0,
+                    0, 0,
                     2,  // Type: Write (to physical)
                     1}; // Active
 
@@ -307,6 +326,8 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
                        [](const SyncManagerInfo &sm) { return sm.type == 4; });
       if (sm_it != info.sync_managers.end()) {
         fmmu.physical_start = sm_it->start_addr;
+      } else {
+          return std::unexpected(ECError::ProtocolError); // No input SM found
       }
 
       // Use FMMU1 if FMMU0 is already taken by outputs.
@@ -417,7 +438,12 @@ bool Enumerator::recover_slave(int idx) {
 }
 
 void Enumerator::reset_to_init() {
-  // Clear any existing aliases and request INIT state with error
+  // Force all slaves to INIT state first. This helps recover from lingering error states.
+  // We write AL_CONTROL = 1 (INIT state) via broadcast.
+  write_register_broadcast<uint16_t>(regs::AL_CONTROL, states::INIT);
+  std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Give slaves time to react
+
+  // Clear any existing aliases and request INIT state again with error
   // acknowledgment.
   write_register_broadcast<uint8_t>(regs::DL_ALIAS, 0);
   uint16_t al_ctl = states::INIT | states::ACK;
@@ -468,9 +494,8 @@ void Enumerator::assign_addresses(int count) {
     info.configured_address = config_addr;
     info.online = true;
 
-    // For the first slave, ensure DL control is initialized.
-    if (i == 1)
-      write_register_fpwr<uint16_t>(config_addr, regs::DL_CONTROL, 0x0000);
+    // For all slaves, ensure DL control is initialized.
+    write_register_fpwr<uint16_t>(config_addr, regs::DL_CONTROL, 0x0000);
 
     int wkc;
     uint16_t dl_status =
@@ -488,12 +513,10 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   std::span<const byte> frame = builder.build();
 
   // Send the frame.
-  // In a full redundancy scenario, we might want to send on both if the loop is
-  // broken. For now, we rely on the primary send, and if the cable is
-  // redundant, it returns on secondary.
   try {
     socket_.send(frame);
-  } catch (const SocketError &) {
+  } catch (const SocketError &e) {
+    if (verbose_) std::cerr << "[VERBOSE] Socket send error: " << e.what() << std::endl;
     return -1;
   }
 
@@ -502,48 +525,53 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
 
-  for (uint64_t loop_count = 0; loop_count < 10'000'000; ++loop_count) {
+  // Use a reasonable loop count and always check the timer.
+  for (uint64_t loop_count = 0; loop_count < 100000; ++loop_count) {
     int port_idx = 0;
     size_t received = socket_.receive(rx_buffer, &port_idx);
 
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+
     if (received == 0) {
-      // Check timeout
-      std::chrono::steady_clock::time_point now =
-          std::chrono::steady_clock::now();
-      if (std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
-              .count() > 100) {
+      if (elapsed_ms > 100) {
         return -1; // Timeout
       }
       continue;
     }
 
     // Basic size check: Eth(14) + ECat(2) + DgramHeader(10) + WKC(2) = 28
-    if (received < 28)
+    if (received < 28) {
+      if (elapsed_ms > 100) return -1;
       continue;
+    }
 
-    // Check EtherType (0x88A4) - RawSocket binds to it, but good to be sure if
-    // we used ETH_P_ALL Check Index matches Eth(14) + ECat(2) -> Datagram
-    // starts at 16. Cmd(1) at 16, Idx(1) at 17.
     uint8_t received_idx = static_cast<uint8_t>(rx_buffer[17]);
 
     if (received_idx == idx) {
-      // Process this frame.
-      // Note: If we receive on port_idx == 1 (Secondary), it means redundancy
-      // is working!
-
-      size_t wkc_offset = 16 + 10 + data.size(); // 14+2 = 16
+      size_t wkc_offset = 16 + 10 + data.size(); 
       if (received < wkc_offset + 2)
         return -2; // Fragmented
 
       uint16_t wkc;
       std::memcpy(&wkc, rx_buffer.data() + wkc_offset, 2);
 
-      if (wkc > 0 || (cmd & 0x1) || (cmd == cmds::BWR)) // Read or WKC>0
+      // Improved Read command detection: 
+      // APRD(1), APRW(3), FPRD(4), FPRW(6), BRD(7), BRW(9), LRD(10), LRW(12)
+      bool is_read = (cmd == cmds::APRD || cmd == cmds::APRW || 
+                      cmd == cmds::FPRD || cmd == cmds::FPRW || 
+                      cmd == cmds::BRD  || cmd == cmds::BRW  ||
+                      cmd == cmds::LRD  || cmd == cmds::LRW);
+
+      if (wkc > 0 || is_read || (cmd == cmds::BWR))
         std::memcpy(data.data(), rx_buffer.data() + 16 + 10, data.size());
 
       return wkc;
     }
-    // If index doesn't match, loop again (ignore other frames/delayed frames)
+
+    if (elapsed_ms > 100) {
+      return -1; // Timeout even if receiving other packets
+    }
   }
   return -1;
 }
@@ -616,159 +644,299 @@ uint32_t Enumerator::read_sii_word(uint16_t slave_cfg_addr,
   return 0xFFFFFFFF;
 }
 
-uint16_t Enumerator::find_sii_category(uint16_t slave_cfg_addr,
-                                       uint16_t cat_type) {
+Enumerator::SIICategory Enumerator::find_sii_category(uint16_t slave_cfg_addr,
+                                              uint16_t cat_type) {
   // SII categories start at word 0x0040.
+  // We initialize the pointer to this start address.
   uint16_t ptr = 0x0040;
-  for (uint32_t loop_guard = 0; ptr < 0xFFFF && loop_guard < 10000;
+  // Initialize result with zero values (not found).
+  Enumerator::SIICategory result = {0, 0};
+
+  // Iterate through the SII categories list.
+  // We use a hard limit of 1000 iterations to avoid infinite loops [CS-0010.37].
+  for (uint32_t loop_guard = 0; ptr < 0xFFFF && loop_guard < 1000;
        ++loop_guard) {
+    // Read the category header (Type and Size).
+    // Word address ptr contains Type in lower 16 bits, Size in upper 16 bits.
     uint32_t res = read_sii_word(slave_cfg_addr, ptr);
-    if (res == 0xFFFFFFFF)
+    // If read fails (returns 0xFFFFFFFF), we stop the search.
+    if (res == 0xFFFFFFFF) {
       break;
+    }
+
+    // Extract category type from the lower 16 bits.
     uint16_t type = static_cast<uint16_t>(res & 0xFFFF);
-    if (type == 0xFFFF)
-      break; // End of categories
+    // If type is 0xFFFF, it indicates the end of the categories list.
+    if (type == 0xFFFF) {
+      break;
+    }
+
+    // Extract category size from the upper 16 bits.
     uint16_t size = static_cast<uint16_t>(res >> 16);
-    if (type == cat_type)
-      return ptr + 2; // Return pointer to category data
-    ptr += size + 2;  // Skip to next category
-    if (loop_guard == 9999)
+    // Check if this is the category we are looking for.
+    if (type == cat_type) {
+      // Data starts 1 word after the header.
+      result.offset = ptr + 1;
+      // Size of the data block in words.
+      result.size_in_words = size;
+      return result;
+    }
+    // Move to the next category: Header (1 word) + Data (size words).
+    ptr += size + 1;
+
+    // Check if we reached the hard limit [CS-0010.37].
+    if (loop_guard == 999) {
       throw std::runtime_error("Hard limit reached in find_sii_category");
+    }
   }
-  return 0;
+  // Return result (will be {0,0} if not found).
+  return result;
 }
 
 std::string Enumerator::read_sii_string(uint16_t slave_cfg_addr,
                                         uint8_t string_idx) {
-  if (string_idx == 0)
+  // Return empty string if requested index is zero.
+  if (string_idx == 0) {
     return "";
-  uint16_t cat_ptr = find_sii_category(slave_cfg_addr, 0x000A);
-  if (cat_ptr == 0)
+  }
+  // Find the STRINGS category (Type 10).
+  Enumerator::SIICategory cat = find_sii_category(slave_cfg_addr, 0x000A);
+  // If category is not found (offset=0), return empty string.
+  if (cat.offset == 0) {
     return "";
+  }
 
-  uint32_t res = read_sii_word(slave_cfg_addr, cat_ptr);
+  // Read the first word of the category to get the number of strings.
+  uint32_t res = read_sii_word(slave_cfg_addr, cat.offset);
+  // The first byte of the STRINGS category contains the string count.
   uint8_t num_strings = static_cast<uint8_t>(res & 0xFF);
-  if (string_idx > num_strings)
+  // If requested index exceeds available strings, return empty.
+  if (string_idx > num_strings) {
     return "";
+  }
 
-  uint16_t current_ptr = cat_ptr;
+  // Start iteration at the first string data word.
+  uint16_t current_ptr = cat.offset;
+  // Offset within the current word (0 or 1 bytes).
   uint8_t current_offset = 1;
-  for (uint8_t i = 1; i <= string_idx; ++i) {
-    uint16_t word =
-        static_cast<uint16_t>(read_sii_word(slave_cfg_addr, current_ptr) >>
-                              (8 * (current_offset % 2)));
+  // Iterate through strings until the target index is reached.
+  // We use a hard limit of 256 iterations [CS-0010.37].
+  for (uint16_t i = 1; i <= string_idx && i < 256; ++i) {
+    // Safety check to ensure we don't read past the category boundary.
+    if (current_ptr >= cat.offset + cat.size_in_words) {
+      break;
+    }
+    // Read the word containing the current string's length byte.
+    uint32_t word_data = read_sii_word(slave_cfg_addr, current_ptr);
+    // Extract length byte from the appropriate byte position.
+    uint16_t word = static_cast<uint16_t>(word_data >> (8 * (current_offset % 2)));
     uint8_t len = static_cast<uint8_t>(word & 0xFF);
+
+    // If this is the target string, extract the actual characters.
     if (i == string_idx) {
       std::string s;
-      for (uint8_t j = 0; j < len; ++j) {
-        uint8_t byte_offset = (current_offset + 1 + j);
-        uint32_t word_val =
-            read_sii_word(slave_cfg_addr, current_ptr + (byte_offset / 2));
+      // Loop through each character of the string.
+      // We use a hard limit of 256 iterations [CS-0010.37].
+      for (uint16_t j = 0; j < len && j < 256; ++j) {
+        // Calculate the byte offset relative to current_ptr.
+        uint8_t byte_offset = static_cast<uint8_t>(current_offset + 1 + j);
+        uint16_t target_ptr = static_cast<uint16_t>(current_ptr + (byte_offset / 2));
+        // Ensure the character read is within category bounds.
+        if (target_ptr >= cat.offset + cat.size_in_words) {
+          break;
+        }
+        // Read the word containing the character at the calculated offset.
+        uint32_t word_val = read_sii_word(slave_cfg_addr, target_ptr);
+        // Append the extracted character byte to the resulting string.
         s += static_cast<char>((word_val >> (8 * (byte_offset % 2))) & 0xFF);
       }
       return s;
     }
-    current_offset += len + 1;
-    current_ptr += current_offset / 2;
-    current_offset %= 2;
+    // Update the pointer and offset to skip the current string and its length byte.
+    current_offset = static_cast<uint8_t>(current_offset + len + 1);
+    current_ptr = static_cast<uint16_t>(current_ptr + (current_offset / 2));
+    current_offset = static_cast<uint8_t>(current_offset % 2);
   }
+  // Fallback return if the loop reaches hard limit or boundary.
   return "";
 }
 
 void Enumerator::read_sii_categories(int slave_idx) {
+  // Access the target slave info from the internal list.
   SlaveInfo &info = slaves_[slave_idx];
   uint16_t addr = info.configured_address;
 
-  // Read basic device information.
+  // Read basic device information (Vendor ID and Product Code).
+  // These are located at fixed SII word addresses 0x0008 and 0x000A.
   info.vendor_id = read_sii_word(addr, 0x0008);
   info.product_code = read_sii_word(addr, 0x000A);
+  // Retrieve the device name string from SII (usually index 1).
   info.name = read_sii_string(addr, 1);
 
-  // Read CoE details from General category.
-  uint16_t gen_ptr = find_sii_category(addr, 0x001E);
-  if (gen_ptr > 0)
-    info.coe_details =
-        static_cast<uint8_t>((read_sii_word(addr, gen_ptr + 3) >> 8) & 0xFF);
+  // Read CoE details from the General category (Type 30).
+  Enumerator::SIICategory gen_cat = find_sii_category(addr, 0x001E);
+  // If General category exists and has sufficient length (at least 4 words).
+  if (gen_cat.offset > 0 && gen_cat.size_in_words >= 4) {
+    // Extract CoE details byte from word 3 of the General category.
+    uint32_t gen_w3 = read_sii_word(addr, static_cast<uint16_t>(gen_cat.offset + 3));
+    info.coe_details = static_cast<uint8_t>((gen_w3 >> 8) & 0xFF);
+  }
 
-  // Read SyncManager configurations.
-  uint16_t sm_ptr = find_sii_category(addr, 0x0029);
-  if (sm_ptr > 0) {
-    for (int i = 0; i < 16; ++i) {
-      uint32_t w12 = read_sii_word(addr, sm_ptr + i * 4);
-      uint32_t w34 = read_sii_word(addr, sm_ptr + i * 4 + 2);
-      if (w12 == 0xFFFFFFFF)
+  // Read SyncManager configurations from category Type 41 (0x0029).
+  Enumerator::SIICategory sm_cat = find_sii_category(addr, 0x0029);
+  // If SyncManager category is found.
+  if (sm_cat.offset > 0) {
+    // Calculate the number of SyncManager records (each record is 4 words / 8 bytes).
+    uint16_t num_sm = static_cast<uint16_t>(sm_cat.size_in_words / 4);
+    // Limit to 16 SMs to match hardware and internal list size.
+    // We use a hard limit of 16 iterations [CS-0010.37].
+    for (uint16_t i = 0; i < num_sm && i < 16; ++i) {
+      // Read the 4 words comprising a single SyncManager record.
+      uint32_t w12 = read_sii_word(addr, static_cast<uint16_t>(sm_cat.offset + i * 4));
+      uint32_t w34 = read_sii_word(addr, static_cast<uint16_t>(sm_cat.offset + i * 4 + 2));
+      // If the read fails, terminate the loop.
+      if (w12 == 0xFFFFFFFF) {
         break;
+      }
 
+      // Initialize a temporary structure to hold SM info.
       SyncManagerInfo sm;
+      // Start address is the lower 16 bits of the first word.
       sm.start_addr = static_cast<uint16_t>(w12 & 0xFFFF);
+      // Length is the upper 16 bits of the first word.
       sm.length = static_cast<uint16_t>(w12 >> 16);
+      // Flags are stored in the second 32-bit word.
       sm.flags = w34;
 
-      // ESC SyncManager Control Byte (Register 0x0804):
-      // Bits 0-1: Operating Mode (00=Buffered, 10=Mailbox)
-      // Bits 2-3: Direction (00=Read/Master Read, 01=Write/Master Write)
+      // Validate the start address [SECURITY/SANITY CHECK].
+      // Addresses below 0x1000 are usually reserved for ESC registers and are invalid for SMs.
+      if (sm.start_addr < 0x1000 && sm.length > 0) {
+        if (verbose_level_ > 0) {
+          std::cerr << "Warning: Slave " << slave_idx << " has invalid SM" << i 
+                    << " address 0x" << std::hex << sm.start_addr << std::dec << ". Skipping." << std::endl;
+        }
+        continue;
+      }
+
+      // Parse SM type and direction from flags (ESC SyncManager Control byte).
+      // Bits 0-1: Operating Mode (00=Buffered, 10=Mailbox).
+      // Bits 2-3: Direction (00=Master Read, 01=Master Write).
       uint8_t ctrl = static_cast<uint8_t>(sm.flags & 0xFF);
       bool is_mailbox = (ctrl & 0x03) == 0x02;
-      bool is_write = ((ctrl >> 2) & 0x03) == 0x01; // Master -> Slave
+      bool is_write = ((ctrl >> 2) & 0x03) == 0x01;
 
+      // Handle mailbox SyncManagers.
       if (is_mailbox) {
         if (is_write) {
+          // Store mailbox output (Master -> Slave) parameters.
           info.mbx_out_offset = sm.start_addr;
           info.mbx_out_length = sm.length;
-          sm.type = 1; // Mailbox Out (Master -> Slave)
+          sm.type = 1;
         } else {
+          // Store mailbox input (Slave -> Master) parameters.
           info.mbx_in_offset = sm.start_addr;
           info.mbx_in_length = sm.length;
-          sm.type = 2; // Mailbox In (Slave -> Master)
+          sm.type = 2;
+        }
+      } else {
+        // Handle Process Data SyncManagers.
+        if (is_write) {
+          sm.type = 3; // Outputs (Master -> Slave)
+        } else {
+          sm.type = 4; // Inputs (Slave -> Master)
         }
       }
-      if (sm.length == 0)
-        break;
+      // Only add SM if it has a non-zero length or is a mandatory mailbox.
+      if (sm.length == 0 && !is_mailbox) {
+        continue;
+      }
+      // Add the validated SyncManager to the slave's list.
       info.sync_managers.push_back(sm);
     }
   }
 }
 
 void Enumerator::read_sii_pdos(int slave_idx) {
+  // Access the target slave info from the internal list.
   SlaveInfo &info = slaves_[slave_idx];
   uint16_t addr = info.configured_address;
 
-  // Lambda to parse RxPDO or TxPDO categories.
-  std::function<void(uint16_t, std::vector<PDOInfo> &)> parse =
-      [&](uint16_t cat, std::vector<PDOInfo> &pdos) {
-        uint16_t ptr = find_sii_category(addr, cat);
-        if (ptr == 0)
+  // Lambda function to parse PDO categories (RxPDO or TxPDO).
+  // Category Type 0x0032 (RxPDO) or 0x0033 (TxPDO).
+  std::function<void(uint16_t, std::vector<PDOInfo> &)> parse_pdo_category =
+      [&](uint16_t cat_type, std::vector<PDOInfo> &pdos) {
+        // Find the PDO category in the SII.
+        Enumerator::SIICategory cat = find_sii_category(addr, cat_type);
+        // If category is not found, skip.
+        if (cat.offset == 0) {
           return;
-        uint32_t sz = (read_sii_word(addr, ptr - 2) >> 16) * 2;
-        uint16_t cur = 0;
-        for (uint32_t loop_guard = 0; cur < sz && loop_guard < 10000;
+        }
+        
+        // Calculate the total size of the category data in words.
+        uint16_t total_words = cat.size_in_words;
+        // Pointer tracking our current position within the category.
+        uint16_t cur_word = 0;
+        
+        // Iterate through PDO records within the category boundary.
+        // We use a hard limit of 1000 iterations to avoid infinite loops [CS-0010.37].
+        for (uint16_t loop_guard = 0; cur_word < total_words && loop_guard < 1000;
              ++loop_guard) {
-          PDOInfo pdo;
-          uint32_t w1 = read_sii_word(addr, ptr + (cur / 2));
-          pdo.index = static_cast<uint16_t>(w1 & 0xFFFF);
-          uint8_t num = static_cast<uint8_t>((w1 >> 16) & 0xFF);
-          pdo.sync_manager = static_cast<uint8_t>((w1 >> 24) & 0xFF);
-          cur += 8;
-          for (uint8_t i = 0; i < num; ++i) {
-            PDOEntryInfo e;
-            uint32_t ew1 = read_sii_word(addr, ptr + (cur / 2));
-            uint32_t ew2 = read_sii_word(addr, ptr + (cur / 2) + 2);
-            e.index = static_cast<uint16_t>(ew1 & 0xFFFF);
-            e.subindex = static_cast<uint8_t>((ew1 >> 16) & 0xFF);
-            e.bit_length = static_cast<uint8_t>((ew2 >> 8) & 0xFF);
-            pdo.entries.push_back(e);
-            cur += 8;
+          // Read the first word of the PDO record.
+          uint32_t w1 = read_sii_word(addr, static_cast<uint16_t>(cat.offset + cur_word));
+          // If read fails, terminate the parsing.
+          if (w1 == 0xFFFFFFFF) {
+            break;
           }
+          
+          PDOInfo pdo;
+          // Extract PDO index from the lower 16 bits.
+          pdo.index = static_cast<uint16_t>(w1 & 0xFFFF);
+          // Number of entries in this PDO.
+          uint8_t num_entries = static_cast<uint8_t>((w1 >> 16) & 0xFF);
+          // SyncManager index this PDO is assigned to.
+          pdo.sync_manager = static_cast<uint8_t>((w1 >> 24) & 0xFF);
+          
+          // Move pointer past the PDO header (4 words / 8 bytes).
+          cur_word = static_cast<uint16_t>(cur_word + 4);
+          
+          // Parse each PDO entry associated with this PDO.
+          // We use a hard limit of 256 iterations [CS-0010.37].
+          for (uint16_t i = 0; i < num_entries && i < 256; ++i) {
+            // Check if we would read past the category boundary.
+            if (cur_word + 4 > total_words) {
+              break;
+            }
+            
+            PDOEntryInfo entry;
+            // Read words containing entry details.
+            uint32_t ew1 = read_sii_word(addr, static_cast<uint16_t>(cat.offset + cur_word));
+            uint32_t ew2 = read_sii_word(addr, static_cast<uint16_t>(cat.offset + cur_word + 2));
+            
+            // Extract index and subindex.
+            entry.index = static_cast<uint16_t>(ew1 & 0xFFFF);
+            entry.subindex = static_cast<uint8_t>((ew1 >> 16) & 0xFF);
+            // Extract bit length.
+            entry.bit_length = static_cast<uint8_t>((ew2 >> 8) & 0xFF);
+            
+            // Add entry to the current PDO.
+            pdo.entries.push_back(entry);
+            // Each entry record is 4 words / 8 bytes.
+            cur_word = static_cast<uint16_t>(cur_word + 4);
+          }
+          // Add completed PDO to the slave's list.
           pdos.push_back(pdo);
-          if (loop_guard == 9999)
-            throw std::runtime_error(
-                "Hard limit reached in read_sii_pdos loop");
+          
+          // Check if we reached the hard limit [CS-0010.37].
+          if (loop_guard == 999) {
+            throw std::runtime_error("Hard limit reached in read_sii_pdos loop");
+          }
         }
       };
 
-  parse(eeprom::CAT_PDO_RX, info.rx_pdos);
-  parse(eeprom::CAT_PDO_TX, info.tx_pdos);
-  parse(eeprom::CAT_PDO_TX, info.tx_pdos);
+  // Parse RxPDOs (Category Type 50 / 0x0032).
+  parse_pdo_category(eeprom::CAT_PDO_RX, info.rx_pdos);
+  // Parse TxPDOs (Category Type 51 / 0x0033).
+  parse_pdo_category(eeprom::CAT_PDO_TX, info.tx_pdos);
 }
 
 void Enumerator::read_sii_data(int count) {
@@ -1003,11 +1171,11 @@ void Enumerator::load_eni(const ec_enit *eni) {
   if (!eni)
     return;
 
-  std::cout << "Loading ENI configuration..." << std::endl;
+  if (verbose_level_ > 0) std::cout << "Loading ENI configuration..." << std::endl;
   MailboxHandler mbx(socket_);
-  mbx.set_verbose(verbose_);
+  mbx.set_verbose(verbose_level_);
   CoEHandler coe_handler(mbx);
-  coe_handler.set_verbose(verbose_);
+  coe_handler.set_verbose(verbose_level_);
 
   for (int i = 0; i < eni->slavecount; ++i) {
     const ec_enislavet &es = eni->slave[i];
@@ -1027,8 +1195,10 @@ void Enumerator::load_eni(const ec_enit *eni) {
                 << std::endl;
     }
 
-    std::cout << "Configuring Slave " << i << " (" << info.name << ")..."
-              << std::endl;
+    if (verbose_level_ > 1) {
+        std::cout << "Configuring Slave " << i << " (" << info.name << ")..."
+                  << std::endl;
+    }
 
     for (int j = 0; j < es.CoECmdCount; ++j) {
       const ec_enicoecmdt &cmd = es.CoECmds[j];

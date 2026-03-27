@@ -12,14 +12,14 @@ MailboxHandler::MailboxHandler(RawSocket &socket) : socket_(socket) {}
 int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
                           std::span<const byte> data,
                           std::chrono::microseconds timeout) {
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[MBX] Writing " << data.size() << " bytes to slave 0x" 
               << std::hex << slave.configured_address << " type=" << (int)type << std::dec << "..." << std::endl;
   }
 
   // Check if data fits into the slave's configured output mailbox.
   if (data.size() + sizeof(mailbox::Header) > slave.mbx_out_length) {
-    if (verbose_) std::cerr << "  [MBX ERROR] Data too large for mailbox out (" << slave.mbx_out_length << " B)" << std::endl;
+    if (verbose_level_ > 0) std::cerr << "  [MBX ERROR] Data too large for mailbox out (" << slave.mbx_out_length << " B)" << std::endl;
     return -1; // Data too large
   }
 
@@ -30,7 +30,7 @@ int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
     if (is_mailbox_empty(slave))
       break;
     if (std::chrono::steady_clock::now() - start > timeout) {
-      if (verbose_) std::cerr << "  [MBX ERROR] Timeout waiting for mailbox out to be empty." << std::endl;
+      if (verbose_level_ > 0) std::cerr << "  [MBX ERROR] Timeout waiting for mailbox out to be empty." << std::endl;
       return 0; // Timeout waiting for slave to clear mailbox
     }
     std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -58,14 +58,14 @@ int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
   // 3. Write the entire buffer to the SyncManager physical address.
   int wkc = send_receive(cmds::FPWR, slave.configured_address,
                       slave.mbx_out_offset, mbx_buffer);
-  if (verbose_ && wkc <= 0) std::cerr << "  [MBX ERROR] Write failed (WKC=" << wkc << ")" << std::endl;
+  if (verbose_level_ > 1 && wkc <= 0) std::cerr << "  [MBX ERROR] Write failed (WKC=" << wkc << ")" << std::endl;
   return wkc;
 }
 
 int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
                          std::span<byte> data, size_t &actual_len,
                          std::chrono::microseconds timeout) {
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[MBX] Reading from slave 0x" << std::hex << slave.configured_address << std::dec << "..." << std::endl;
   }
 
@@ -77,7 +77,7 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
     if (is_mailbox_full(slave))
       break;
     if (std::chrono::steady_clock::now() - start > timeout) {
-      if (verbose_) std::cerr << "  [MBX ERROR] Timeout waiting for response." << std::endl;
+      if (verbose_level_ > 0) std::cerr << "  [MBX ERROR] Timeout waiting for response." << std::endl;
       return 0; // Timeout waiting for response
     }
     std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -91,7 +91,7 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
                          slave.mbx_in_offset, mbx_buffer);
 
   if (wkc <= 0) {
-    if (verbose_) std::cerr << "  [MBX ERROR] Read failed (WKC=" << wkc << ")" << std::endl;
+    if (verbose_level_ > 1) std::cerr << "  [MBX ERROR] Read failed (WKC=" << wkc << ")" << std::endl;
     return wkc;
   }
 
@@ -101,7 +101,7 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
   uint16_t len = header->length;
   type = static_cast<mailbox::Type>(header->type & 0x0F);
 
-  if (verbose_) {
+  if (verbose_level_ > 1) {
       std::cout << "  [MBX] Received " << len << " bytes, type=" << (int)type << ", cnt=" << (int)(header->type >> 4) << std::endl;
   }
 

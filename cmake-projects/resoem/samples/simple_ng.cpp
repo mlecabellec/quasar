@@ -73,7 +73,7 @@ int fieldbus_roundtrip(Fieldbus &fb) {
 /**
  * @brief Orchestrates the startup sequence.
  */
-bool fieldbus_start(Fieldbus &fb, bool verbose) {
+bool fieldbus_start(Fieldbus &fb, int verbose_level) {
   std::cout << "======================================================" << std::endl;
   std::cout << "Starting EtherCAT Master on: " << fb.iface << std::endl;
   std::cout << "======================================================" << std::endl;
@@ -84,7 +84,7 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     
     std::cout << "[STEP 2] Initializing Enumerator..." << std::endl;
     fb.enumerator = std::make_unique<Enumerator>(*fb.socket);
-    fb.enumerator->set_verbose(verbose);
+    fb.enumerator->set_verbose(verbose_level);
 
     std::cout << "[STEP 3] Scanning Bus..." << std::endl;
     Result<size_t> enum_res = fb.enumerator->enumerate();
@@ -124,6 +124,11 @@ bool fieldbus_start(Fieldbus &fb, bool verbose) {
     std::cout << "[STEP 6] Transitioning to SAFE-OP (Synchronizing)..." << std::endl;
     if (!fb.enumerator->request_state_all(states::SAFE_OP)) {
       std::cerr << "  [ERROR] Some slaves failed to reach SAFE-OP." << std::endl;
+      for (size_t i=0; i<fb.enumerator->slaves().size(); ++i) {
+          const SlaveInfo& s = fb.enumerator->slaves()[i];
+          if (s.current_state != states::SAFE_OP)
+              std::cerr << "    - Slave " << i << " (" << s.name << ") is in " << get_diagnostics(fb, (int)i) << std::endl;
+      }
       return false;
     }
 
@@ -191,16 +196,25 @@ void fieldbus_stop(Fieldbus &fb) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    std::cout << "Usage: simple_ng IFNAME [-v]" << std::endl;
+    std::cout << "Usage: simple_ng IFNAME [-v | -vv]" << std::endl;
     return 1;
   }
 
   signal(SIGINT, handle_sigint);
   Fieldbus fb;
   fb.iface = argv[1];
-  bool verbose = (argc > 2 && std::string(argv[2]) == "-v");
+  
+  int verbose_level = 0;
+  if (argc > 2) {
+    std::string verbosity_flag = argv[2];
+    if (verbosity_flag == "-v") {
+      verbose_level = 1;
+    } else if (verbosity_flag == "-vv") {
+      verbose_level = 2;
+    }
+  }
 
-  if (fieldbus_start(fb, verbose)) {
+  if (fieldbus_start(fb, verbose_level)) {
     std::cout << "Running cyclic loop. Press Ctrl+C to stop." << std::endl;
     std::cout << "------------------------------------------------------" << std::endl;
     

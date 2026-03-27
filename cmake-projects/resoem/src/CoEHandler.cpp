@@ -12,7 +12,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
                                uint8_t subindex, std::span<const byte> data,
                                bool complete_access,
                                std::chrono::microseconds timeout) {
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[CoE] SDO Write to slave 0x" << std::hex << slave.configured_address 
               << " index 0x" << index << ":" << (int)subindex 
               << " size=" << std::dec << data.size() << " B" << std::endl;
@@ -27,7 +27,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
   // Use Expedited Transfer if data fits in 4 bytes and Complete Access is not
   // requested.
   if (data.size() <= 4 && !complete_access) {
-    if (verbose_) std::cout << "  - Using Expedited Transfer" << std::endl;
+    if (verbose_level_ > 1) std::cout << "  - Using Expedited Transfer" << std::endl;
     req_buf.resize(2 + sizeof(coe::SDOHeader) + 4);
     std::memcpy(req_buf.data(), &canopen_header, 2);
 
@@ -69,7 +69,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
       return std::unexpected(ECError::InvalidResponse);
 
   } else {
-    if (verbose_) std::cout << "  - Using Normal/Segmented Transfer" << std::endl;
+    if (verbose_level_ > 1) std::cout << "  - Using Normal/Segmented Transfer" << std::endl;
     // Perform Normal or Segmented Download Initiation.
     req_buf.resize(2 + sizeof(coe::SDOHeader) + 4);
     std::memcpy(req_buf.data(), &canopen_header, 2);
@@ -129,7 +129,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
       size_t seg_size = std::min(data.size() - sent, max_seg);
       bool last_seg = (sent + seg_size == data.size());
 
-      if (verbose_) std::cout << "    - Sending segment " << ++seg_count << " (" << seg_size << " B)" << std::endl;
+      if (verbose_level_ > 1) std::cout << "    - Sending segment " << ++seg_count << " (" << seg_size << " B)" << std::endl;
 
       std::vector<byte> seg_buf(2 + 1 + seg_size);
       std::memcpy(seg_buf.data(), &canopen_header, 2);
@@ -163,7 +163,7 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
       toggle ^= 0x10; // Flip toggle bit for the next segment.
     }
   }
-  if (verbose_) std::cout << "  - SDO Write Success" << std::endl;
+  if (verbose_level_ > 1) std::cout << "  - SDO Write Success" << std::endl;
   return {};
 }
 
@@ -171,7 +171,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
                                     uint8_t subindex, std::span<byte> data,
                                     bool complete_access,
                                     std::chrono::microseconds timeout) {
-  if (verbose_) {
+  if (verbose_level_ > 0) {
     std::cout << "[CoE] SDO Read from slave 0x" << std::hex << slave.configured_address 
               << " index 0x" << index << ":" << (int)subindex << std::dec << "..." << std::endl;
   }
@@ -215,7 +215,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
   if (resp_sdo->command & 0x02) {
     uint8_t size_ind = (resp_sdo->command >> 2) & 0x03;
     size_t len = 4 - ((resp_sdo->command & 0x01) ? size_ind : 0);
-    if (verbose_) std::cout << "  - Received Expedited response (" << len << " B)" << std::endl;
+    if (verbose_level_ > 1) std::cout << "  - Received Expedited response (" << len << " B)" << std::endl;
     actual_size = std::min(len, data.size());
     std::memcpy(data.data(), resp_buf.data() + 2 + sizeof(coe::SDOHeader),
                 actual_size);
@@ -224,10 +224,10 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
     // size.
     uint32_t total_size;
     std::memcpy(&total_size, resp_buf.data() + 2 + sizeof(coe::SDOHeader), 4);
-    if (verbose_) std::cout << "  - Starting Segmented upload (Total size: " << total_size << " B)" << std::endl;
+    if (verbose_level_ > 1) std::cout << "  - Starting Segmented upload (Total size: " << total_size << " B)" << std::endl;
     
     if (total_size > data.size()) {
-      if (verbose_) std::cerr << "    [CoE ERROR] Buffer too small (Provided: " << data.size() << " B)" << std::endl;
+      if (verbose_level_ > 0) std::cerr << "    [CoE ERROR] Buffer too small (Provided: " << data.size() << " B)" << std::endl;
       return std::unexpected(ECError::ProtocolError);
     }
 
@@ -237,7 +237,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
     if (initial_data_size > 0) {
       size_t to_copy =
           std::min(initial_data_size, static_cast<size_t>(total_size));
-      if (verbose_) std::cout << "    - Initial chunk: " << to_copy << " B" << std::endl;
+      if (verbose_level_ > 1) std::cout << "    - Initial chunk: " << to_copy << " B" << std::endl;
       std::memcpy(data.data(), resp_buf.data() + 10, to_copy);
       received = to_copy;
     }
@@ -271,7 +271,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
         if (seg_size >= bytes_not_valid)
           seg_size -= bytes_not_valid;
       }
-      if (verbose_) std::cout << "    - Received segment " << ++seg_count << " (" << seg_size << " B)" << (last_seg ? " [LAST]" : "") << std::endl;
+      if (verbose_level_ > 1) std::cout << "    - Received segment " << ++seg_count << " (" << seg_size << " B)" << (last_seg ? " [LAST]" : "") << std::endl;
       
       std::memcpy(data.data() + received, resp_buf.data() + 3, seg_size);
       received += seg_size;
@@ -281,7 +281,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
     }
     actual_size = received;
   }
-  if (verbose_) std::cout << "  - SDO Read Success (" << actual_size << " B)" << std::endl;
+  if (verbose_level_ > 1) std::cout << "  - SDO Read Success (" << actual_size << " B)" << std::endl;
   return actual_size;
 }
 
