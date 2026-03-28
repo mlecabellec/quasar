@@ -35,3 +35,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sample-eni.xml")
     AddENI(eni_test sample-eni.xml)
 endif()
 target_link_libraries(eni_test PRIVATE resoem)
+
+# 7. testmaster100
+# Dedicated EtherCAT master for the Beckhoff demo bus:
+#   EK1100 (coupler) + EL2809 (16x DO) + EL1809 (16x DI)
+#   + EL3318 (8x TC) + EL3314-0002 (4x TC)
+# Usage: sudo ./testmaster100 <iface>  (e.g. testmaster100 eno2)
+add_executable(testmaster100 testmaster100.cpp)
+target_link_libraries(testmaster100 PRIVATE resoem)
