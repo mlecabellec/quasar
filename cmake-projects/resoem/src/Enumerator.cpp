@@ -644,7 +644,9 @@ Result<> Enumerator::reconfigure_slave(uint16_t slave_idx) {
   configure_mailbox(slave_idx);
   
   // Transition to PRE_OP if not already there
-  return request_state(slave_idx, states::PRE_OP).transform([](uint16_t state){ (void)state; return; });
+  Result<uint16_t> res = request_state(slave_idx, states::PRE_OP);
+  if (!res) return std::unexpected(res.error());
+  return {};
 }
 
 Result<> Enumerator::reconfigure_all() {
