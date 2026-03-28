@@ -194,6 +194,27 @@ public:
   void check_slaves_status();
 
   /**
+   * @brief Scan for topology changes (gaining or losing slaves).
+   * @details Detects if slaves have been added or removed without resetting 
+   * the entire bus.
+   * @return Result<bool> True if topology changed.
+   */
+  Result<bool> check_topology();
+
+  /**
+   * @brief Reconfigure a specific slave.
+   * @param slave_idx Index of the slave.
+   * @return Result<> Success or error.
+   */
+  Result<> reconfigure_slave(uint16_t slave_idx);
+
+  /**
+   * @brief Reconfigure all slaves on the bus.
+   * @return Result<> Success or error.
+   */
+  Result<> reconfigure_all();
+
+  /**
    * @brief Attempt to recover a slave that has gone offline or errored.
    * @details [FE-0040.7.1] Automated slave recovery.
    *
@@ -253,6 +274,7 @@ private:
     SIICategory find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
     std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
     void read_port_status();
+    void configure_mailbox(uint16_t slave_idx);
 
   /**
    * @brief Internal per-slave FSM state used by request_state_all().

@@ -98,6 +98,7 @@ struct SlaveInfo {
   uint8_t ports_link_status;  ///< Link status of ESC ports
   int parent_index = -1;      ///< Index of the parent slave in the chain
   bool online = false;        ///< Whether the slave is currently online
+  bool ignored = false;       ///< Whether the slave is ignored due to errors
   uint16_t current_state = 0; ///< Current AL State
 
   // Mailbox configuration

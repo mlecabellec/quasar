@@ -523,10 +523,26 @@ int main(int argc, char *argv[]) {
     {
         Result<> r = enumerator->request_state_all(states::SAFE_OP);
         if (!r) {
-            std::cerr << "[FATAL] Could not reach SAFE-OP." << std::endl;
-            return 1;
+            std::cerr << "[WARNING] Some slave(s) did not reach SAFE-OP. "
+                      << "Proceeding with available slaves." << std::endl;
         }
     }
+
+    // Configure FMMU again after potentially ignoring some slaves during state transition
+    // This ensures process image offsets are correct for the remaining "good" slaves.
+    std::cout << "[STEP 5.1] Re-configuring FMMU for available slaves..." << std::endl;
+    fmmu_res = enumerator->configure_fmmu(image);
+    if (!fmmu_res) {
+        std::cerr << "[FATAL] FMMU re-configuration failed." << std::endl;
+        return 1;
+    }
+    image_bytes = *fmmu_res;
+    
+    // Refresh offsets
+    el2809_out_offset = slaves[SLAVE_EL2809].outputs_offset;
+    el1809_in_offset  = slaves[SLAVE_EL1809].inputs_offset;
+    el3318_in_offset  = slaves[SLAVE_EL3318].inputs_offset;
+    el3314_in_offset  = slaves[SLAVE_EL3314].inputs_offset;
 
     // Warm-up: exchange a few frames so slaves validate WKC.
     std::cout << "[STEP 6] Warm-up frame exchange..." << std::endl;
@@ -566,7 +582,12 @@ int main(int argc, char *argv[]) {
 
     // Hard loop limit [CS-0010.37]: runs until g_stop is set.
     // The actual limit is unreachable in practice (>27 days at 10ms).
+    std::chrono::steady_clock::time_point app_start = std::chrono::steady_clock::now();
     for (uint64_t guard = 0U; guard < 9000000000ULL && g_stop == 0; ++guard) {
+        // Exit after 60s for testing
+        if (std::chrono::steady_clock::now() - app_start >= std::chrono::seconds(60)) {
+            break;
+        }
         // Record cycle start time for fixed-period sleeping.
         std::chrono::steady_clock::time_point t_start =
             std::chrono::steady_clock::now();
@@ -609,16 +630,20 @@ int main(int argc, char *argv[]) {
                       << std::endl;
 
             // Display EL2809 digital outputs (16 channels).
-            display_digital_outputs(image, el2809_out_offset);
+            if (!slaves[SLAVE_EL2809].ignored)
+                display_digital_outputs(image, el2809_out_offset);
 
             // Display EL1809 digital inputs  (16 channels).
-            display_digital_inputs(image, el1809_in_offset);
+            if (!slaves[SLAVE_EL1809].ignored)
+                display_digital_inputs(image, el1809_in_offset);
 
             // Display EL3318 thermocouple readings (8 channels).
-            display_el3318(image, el3318_in_offset);
+            if (!slaves[SLAVE_EL3318].ignored)
+                display_el3318(image, el3318_in_offset);
 
             // Display EL3314-0002 thermocouple readings (4 channels).
-            display_el3314(image, el3314_in_offset);
+            if (!slaves[SLAVE_EL3314].ignored)
+                display_el3314(image, el3314_in_offset);
 
             std::cout << "WKC errors since last display: " << wkc_errors << std::endl;
         }

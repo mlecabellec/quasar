@@ -53,12 +53,11 @@ int main(int argc, char *argv[]) {
       // Step: Attempt SDO Read of Index 0x1008 (Device Name)
       // [Compliance Proof] FE-0040.4.1.1: Support SDO Read for expedited and normal transfers.
       byte name_buf[64];
-      size_t actual_size = 0;
       std::cout << "  Reading SDO 0x1008:00 (Device Name)...\n";
-      Result<size_t> err = coe.sdo_read(slave, 0x1008, 0x00, name_buf, actual_size);
+      Result<size_t> err = coe.sdo_read(slave, 0x1008, 0x00, name_buf);
 
-      if (err.error() == ECError::Success) {
-        std::string name(reinterpret_cast<char *>(name_buf), actual_size);
+      if (err) {
+        std::string name(reinterpret_cast<char *>(name_buf), *err);
         std::cout << "  Assertion: CoE Read Success. Value: \"" << name
                   << "\"\n";
       } else {
@@ -71,14 +70,13 @@ int main(int argc, char *argv[]) {
       std::cout << "  Reading SDO 0x1018:01 (Vendor ID)...\n";
       err =
           coe.sdo_read(slave, 0x1018, 0x01,
-                       std::span<byte>(reinterpret_cast<byte *>(&vendor_id), 4),
-                       actual_size);
+                       std::span<byte>(reinterpret_cast<byte *>(&vendor_id), 4));
 
-      if (err.error() == ECError::Success && actual_size == 4) {
+      if (err && *err == 4) {
         std::cout << "  Assertion: CoE Read Success. Vendor ID: 0x" << std::hex
                   << vendor_id << std::dec << "\n";
       } else {
-        std::cerr << "  Assertion Failed: CoE Read returned error " << static_cast<int>(err.error())
+        std::cerr << "  Assertion Failed: CoE Read returned error " << (err ? 0 : static_cast<int>(err.error()))
                   << "\n";
       }
     }

@@ -33,8 +33,7 @@ Result<> FoEHandler::write_file(SlaveInfo &slave, std::string_view filename,
     return std::unexpected(ECError::MailboxError);
 
   // Helper to wait for an ACK for a specific packet number.
-  const std::function<Result<>(uint32_t)> wait_ack =
-      [&](uint32_t pkt) -> Result<> {
+  std::function<Result<>(uint32_t)> wait_ack = [&](uint32_t pkt) -> Result<> {
     std::chrono::steady_clock::time_point start =
         std::chrono::steady_clock::now();
     std::vector<byte> resp_buf(slave.mbx_in_length);

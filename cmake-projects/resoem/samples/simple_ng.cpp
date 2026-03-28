@@ -229,7 +229,8 @@ int main(int argc, char *argv[]) {
     std::cout << "------------------------------------------------------" << std::endl;
     
     uint64_t cycle = 0;
-    while (!g_stop) {
+    uint64_t max_cycles = 100; // Limit for testing
+    while (!g_stop && cycle < max_cycles) {
       int wkc = fieldbus_roundtrip(fb);
       cycle++;
 

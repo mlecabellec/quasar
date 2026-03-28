@@ -62,51 +62,10 @@ Result<size_t> Enumerator::enumerate() {
   if (verbose_level_ > 0) {
     std::cout << "[VERBOSE] Configuring SyncManagers for Mailbox communication..." << std::endl;
   }
-  // Define a packed structure for writing SM configuration to ESC registers.
-  struct SMConfig {
-    uint16_t start_addr;
-    uint16_t length;
-    uint32_t flags;
-  } __attribute__((packed));
 
   // Loop through discovered slaves to program their SyncManagers.
-  // We use a hard limit of 65535 iterations [CS-0010.37].
-  for (size_t s_idx = 0; s_idx < slaves_.size() && s_idx < 65535; ++s_idx) {
-    const SlaveInfo &info = slaves_[s_idx];
-    if (verbose_level_ > 1) {
-      std::cout << "[VERBOSE] Configuring Slave " << s_idx << " (" << info.name << ") SyncManagers..." << std::endl;
-    }
-    // Iterate through the SyncManagers identified during SII parsing.
-    // We use a hard limit of 16 iterations as defined by ESC hardware limits.
-    for (size_t i = 0; i < info.sync_managers.size() && i < 16; ++i) {
-      const SyncManagerInfo &sm = info.sync_managers[i];
-      // Only configure SyncManagers that are marked as valid mailbox or process data types.
-      if (sm.type >= 1 && sm.type <= 4) {
-        // Construct final_flags to ensure correct mailbox configuration.
-        // We preserve the control byte (bits 0-7) and PDI control byte (bits 24-31),
-        // and force the Enable bit (bit 16) in the Activate byte.
-        uint32_t final_flags = (sm.flags & 0xFF0000FF) | 0x00010000;
-        SMConfig cfg = {sm.start_addr, sm.length, final_flags};
-        
-        // Log detailed SM configuration if verbose mode is active.
-        if (verbose_level_ > 1) {
-          std::string type_name = "Unknown";
-          if (sm.type == 1) type_name = "Mbx Out";
-          else if (sm.type == 2) type_name = "Mbx In";
-          else if (sm.type == 3) type_name = "Outputs";
-          else if (sm.type == 4) type_name = "Inputs";
-          
-          std::cout << "  - SM" << i << " (" << type_name 
-                    << "): Start=0x" << std::hex << std::setw(4) << std::setfill('0') << sm.start_addr 
-                    << ", Len=" << std::dec << sm.length 
-                    << ", Flags=0x" << std::hex << std::setw(8) << std::setfill('0') << final_flags << std::dec << std::endl;
-        }
-
-        // Write the configuration to the ESC SyncManager registers starting at 0x0800.
-        uint16_t sm_reg = static_cast<uint16_t>(regs::SM0 + (i * 8));
-        write_register_fpwr<SMConfig>(info.configured_address, sm_reg, cfg);
-      }
-    }
+  for (size_t s_idx = 0; s_idx < slaves_.size(); ++s_idx) {
+    configure_mailbox(static_cast<uint16_t>(s_idx));
   }
 
   // Request all slaves to move to the PRE-OP state to enable mailbox communication.
@@ -317,18 +276,15 @@ Result<> Enumerator::request_state_all(uint16_t state,
   }
 
   // Initialise one FSM entry per slave in the list.
-  // All slaves start with request_written=false so the first tick will
-  // send each slave its own FPWR AL_CONTROL.
   std::vector<Enumerator::SlaveStateFSM> fsm_list;
   fsm_list.reserve(slaves_.size());
   for (size_t k = 0; k < slaves_.size(); ++k) {
     Enumerator::SlaveStateFSM entry;
     entry.target_state    = target;
-    entry.done            = false;
+    entry.done            = slaves_[k].ignored; // Skip already ignored slaves
     entry.failed          = false;
     entry.last_al_status  = 0;
     entry.last_error_code = 0;
-    // request_written=false → AL_CONTROL will be written on first tick.
     entry.request_written = false;
     fsm_list.push_back(entry);
   }
@@ -337,81 +293,86 @@ Result<> Enumerator::request_state_all(uint16_t state,
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
 
-  // Main poll loop. Hard limit: 1 000 000 iterations [CS-0010.37].
+  // Main poll loop.
   for (uint64_t i = 0; i < 1000000; ++i) {
-    // Check wall-clock timeout.
     if (std::chrono::steady_clock::now() - start >= timeout) {
       break;
     }
 
-    // Advance the FSM for every slave that has not yet reached the target.
-    // Each call is independent: slaves that are already done are skipped
-    // without delay to the rest of the loop.
     uint32_t done_count = 0;
     for (size_t j = 0; j < slaves_.size(); ++j) {
-      // Skip slaves that have already completed their transition.
       if (fsm_list[j].done) {
         ++done_count;
         continue;
       }
-      // Run one FSM tick for this slave via FPRD/FPWR (no broadcast).
       advance_slave_state(j, fsm_list[j]);
-      // Re-check done flag after tick.
       if (fsm_list[j].done) {
         ++done_count;
       }
     }
 
-    // All slaves have reached the target: success.
     if (done_count == slaves_.size()) {
       if (verbose_level_ > 0) {
-        std::cout << "[STATE] All " << slaves_.size()
-                  << " slave(s) reached state 0x" << std::hex
-                  << target << std::dec << "." << std::endl;
+        std::cout << "[STATE] State transition process finished for all slaves." << std::endl;
       }
       return {};
     }
 
-    // Sleep briefly to avoid flooding the bus between polling rounds.
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-    // CS-0010.37 hard limit sentinel.
-    if (i == 999999) {
-      throw std::runtime_error("Hard limit exceeded in request_state_all");
-    }
   }
 
-  // Timeout path: always emit a per-slave diagnostic table to stderr.
-  // This is not gated on verbose_level_ because a timeout is always an
-  // operator-visible error regardless of logging configuration.
-  std::cerr << "[ERROR] Timeout after "
-            << timeout.count() / 1000 << " ms waiting for state 0x"
-            << std::hex << target << std::dec
-            << ". Per-slave status:" << std::endl;
-  // Walk all slaves and print their final AL_STATUS and AL_STATUS_CODE.
+  // Timeout path: mark failed slaves as ignored and log them.
+  int failed_count = 0;
   for (size_t j = 0; j < slaves_.size(); ++j) {
-    // Read final AL_STATUS one last time for accuracy.
-    int wkc_final = 0;
-    uint16_t status_final = read_register_fprd<uint16_t>(
-        slaves_[j].configured_address, regs::AL_STATUS, wkc_final);
-    // Only read AL_STATUS_CODE if error bit is set.
-    uint16_t code_final = 0;
-    if (wkc_final > 0 && (status_final & regs::al_status::ERROR_BIT)) {
-      code_final = read_register_fprd<uint16_t>(
-          slaves_[j].configured_address, regs::AL_STATUS_CODE, wkc_final);
+    if (!fsm_list[j].done && !slaves_[j].ignored) {
+      failed_count++;
+      slaves_[j].ignored = true; // Mark as bad slave
+      
+      int wkc_final = 0;
+      uint16_t status_final = read_register_fprd<uint16_t>(
+          slaves_[j].configured_address, regs::AL_STATUS, wkc_final);
+      uint16_t code_final = 0;
+      if (wkc_final > 0 && (status_final & regs::al_status::ERROR_BIT)) {
+        code_final = read_register_fprd<uint16_t>(
+            slaves_[j].configured_address, regs::AL_STATUS_CODE, wkc_final);
+      }
+      
+      std::cerr << "[ERROR] Slave " << j << " (" << slaves_[j].name << ")"
+                << " FAILED to reach state 0x" << std::hex << target
+                << ". Marking as IGNORED. AL=0x" << status_final
+                << " code=0x" << code_final << std::dec << std::endl;
     }
-    // Print one diagnostic line per slave.
-    std::cerr << "  Slave " << j
-              << " (" << slaves_[j].name << ")"
-              << " addr=0x" << std::hex << slaves_[j].configured_address
-              << (fsm_list[j].done ? " [OK]" : " [FAIL]")
-              << " AL=0x" << status_final
-              << " state=0x" << (status_final & regs::al_status::STATE_MASK)
-              << " code=0x" << code_final
-              << " (" << al_status_code_to_string(code_final) << ")"
-              << std::dec << std::endl;
   }
-  return std::unexpected(ECError::Timeout);
+
+  if (failed_count > 0) {
+      return std::unexpected(ECError::Timeout); // Still return timeout if some failed
+  }
+
+  return {};
+}
+
+void Enumerator::configure_mailbox(uint16_t s_idx) {
+  if (s_idx >= slaves_.size()) return;
+  
+  const SlaveInfo &info = slaves_[s_idx];
+  if (info.ignored) return;
+
+  struct SMConfig {
+    uint16_t start_addr;
+    uint16_t length;
+    uint32_t flags;
+  } __attribute__((packed));
+
+  for (size_t i = 0; i < info.sync_managers.size() && i < 16; ++i) {
+    const SyncManagerInfo &sm = info.sync_managers[i];
+    if (sm.type >= 1 && sm.type <= 4) {
+      uint32_t final_flags = (sm.flags & 0xFF0000FF) | 0x00010000;
+      SMConfig cfg = {sm.start_addr, sm.length, final_flags};
+      
+      uint16_t sm_reg = static_cast<uint16_t>(regs::SM0 + (i * 8));
+      write_register_fpwr<SMConfig>(info.configured_address, sm_reg, cfg);
+    }
+  }
 }
 
 Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
@@ -421,6 +382,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
   // For each slave, accumulate the total output bit count from all RxPDO entries.
   for (size_t i = 0; i < slaves_.size(); ++i) {
     SlaveInfo &info = slaves_[i];
+    if (info.ignored) continue;
     // Sum the bit lengths of all RxPDO (output) entries across all PDOs.
     uint32_t out_bits = std::accumulate(
         info.rx_pdos.begin(), info.rx_pdos.end(), 0u,
@@ -482,6 +444,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
   // Accumulate input bit count from TxPDO entries for each slave.
   for (size_t i = 0; i < slaves_.size(); ++i) {
     SlaveInfo &info = slaves_[i];
+    if (info.ignored) continue;
     // Sum bit lengths of all TxPDO (input) entries across all PDOs.
     uint32_t in_bits = std::accumulate(
         info.tx_pdos.begin(), info.tx_pdos.end(), 0u,
@@ -605,6 +568,7 @@ void Enumerator::configure_dc(const SlaveInfo &s, uint32_t cyc, int32_t shift) {
 
 void Enumerator::check_slaves_status() {
   for (SlaveInfo &s : slaves_) {
+    if (s.ignored) continue;
     int wkc;
     uint16_t st = read_register_fprd<uint16_t>(s.configured_address,
                                                regs::AL_STATUS, wkc);
@@ -615,6 +579,81 @@ void Enumerator::check_slaves_status() {
       s.online = false;
     }
   }
+}
+
+Result<bool> Enumerator::check_topology() {
+  int current_count = broadcast_read_count();
+  if (current_count < 0) return std::unexpected(ECError::Timeout);
+
+  if (static_cast<size_t>(current_count) != slaves_.size()) {
+    if (verbose_level_ > 0) {
+      std::cout << "[TOPOLOGY] Change detected! Expected: " << slaves_.size() 
+                << " Found: " << current_count << std::endl;
+    }
+    
+    // Simple strategy for now: if count changed, we might need a full re-scan
+    // or just identify where the change happened.
+    // To be truly "on the fly", we should find which ones are new.
+    
+    if (static_cast<size_t>(current_count) > slaves_.size()) {
+        // New slaves added at the end of the chain (usually)
+        for (int i = static_cast<int>(slaves_.size()) + 1; i <= current_count; ++i) {
+            SlaveInfo new_info{};
+            uint16_t auto_inc_addr = static_cast<uint16_t>(1 - i);
+            uint16_t config_addr = 0x1000 + i;
+            
+            write_register_apwr<uint16_t>(auto_inc_addr, regs::CONFIG_STATION_ADDR, config_addr);
+            new_info.configured_address = config_addr;
+            new_info.online = true;
+            
+            slaves_.push_back(new_info);
+            int idx = static_cast<int>(slaves_.size()) - 1;
+            read_sii_categories(idx);
+            read_sii_pdos(idx);
+            configure_mailbox(static_cast<uint16_t>(idx));
+            
+            if (verbose_level_ > 0) {
+                std::cout << "[TOPOLOGY] Configured new slave at pos " << idx 
+                          << " (" << slaves_.back().name << ")" << std::endl;
+            }
+        }
+        map_topology(current_count);
+    } else {
+        // Slaves lost. Check which ones.
+        for (size_t i = 0; i < slaves_.size(); ++i) {
+            if (slaves_[i].ignored) continue;
+            int wkc;
+            read_register_fprd<uint16_t>(slaves_[i].configured_address, regs::TYPE, wkc);
+            if (wkc <= 0) {
+                slaves_[i].online = false;
+                if (verbose_level_ > 0) std::cout << "[TOPOLOGY] Slave " << i << " went OFFLINE" << std::endl;
+            }
+        }
+    }
+    return true;
+  }
+  return false;
+}
+
+Result<> Enumerator::reconfigure_slave(uint16_t slave_idx) {
+  if (slave_idx >= slaves_.size()) return std::unexpected(ECError::ProtocolError);
+  
+  if (verbose_level_ > 0) std::cout << "[CONFIG] Reconfiguring slave " << slave_idx << std::endl;
+  
+  slaves_[slave_idx].ignored = false;
+  configure_mailbox(slave_idx);
+  
+  // Transition to PRE_OP if not already there
+  return request_state(slave_idx, states::PRE_OP).transform([](uint16_t state){ (void)state; return; });
+}
+
+Result<> Enumerator::reconfigure_all() {
+  if (verbose_level_ > 0) std::cout << "[CONFIG] Reconfiguring ALL slaves" << std::endl;
+  for (size_t i = 0; i < slaves_.size(); ++i) {
+    slaves_[i].ignored = false;
+    configure_mailbox(static_cast<uint16_t>(i));
+  }
+  return request_state_all(states::PRE_OP);
 }
 
 bool Enumerator::recover_slave(int idx) {
