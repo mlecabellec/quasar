@@ -66,6 +66,12 @@ public:
   const std::string &value() const;
 
   /**
+   * @brief Sets the internal string value.
+   * @param s The new string value.
+   */
+  void setValue(const std::string &s) { value_ = s; }
+
+  /**
    * @brief Returns the number of characters in the string.
    * @return The length of the string in characters.
    */

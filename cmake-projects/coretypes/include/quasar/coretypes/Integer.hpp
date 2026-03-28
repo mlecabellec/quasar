@@ -104,6 +104,12 @@ public:
   T value() const { return value_; }
 
   /**
+   * @brief Sets the primitive value.
+   * @param value The new value.
+   */
+  void setValue(T value) { value_ = value; }
+
+  /**
    * @brief Compares with another Integer of the same type T.
    * @param other The other Integer.
    * @return -1 if this < other, 1 if this > other, 0 if equal.

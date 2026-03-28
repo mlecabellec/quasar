@@ -202,6 +202,12 @@ public:
   T value() const { return value_; }
 
   /**
+   * @brief Sets the primitive floating point value.
+   * @param value The new value.
+   */
+  void setValue(T value) { value_ = value; }
+
+  /**
    * @brief Adds another FloatingPoint object of the same type.
    * 
    * Fulfills [FE-0010.1.3] Methods for addition.

@@ -20,7 +20,7 @@ std::vector<std::shared_ptr<NamedObject>> Transformer::transformRecursive(
     
     TransformContext ctx(node, depth, path);
 
-    for (const auto& rule : m_rules) {
+    for (const TransformationRule& rule : m_rules) {
         if (rule.matches(ctx)) {
             // Apply rule. It decides if/how to recurse.
             return rule.apply(ctx);
@@ -28,11 +28,11 @@ std::vector<std::shared_ptr<NamedObject>> Transformer::transformRecursive(
     }
 
     // Default behavior if no rules match: deep copy the node and recursively apply to children
-    auto cloned = node->clone(CopyPolicy::DUPLICATE);
-    for (const auto& child : node->getChildren()) {
+    std::shared_ptr<NamedObject> cloned = node->clone(CopyPolicy::DUPLICATE);
+    for (std::shared_ptr<NamedObject>& child : node->getChildren()) {
         std::string childPath = path + "/" + child->getName();
-        auto transformedChildren = transformRecursive(child, depth + 1, childPath);
-        for (const auto& tc : transformedChildren) {
+        std::vector<std::shared_ptr<NamedObject>> transformedChildren = transformRecursive(child, depth + 1, childPath);
+        for (std::shared_ptr<NamedObject>& tc : transformedChildren) {
             tc->setParent(cloned);
         }
     }
@@ -47,24 +47,24 @@ void Transformer::transformInPlace(std::shared_ptr<NamedObject> root) {
 void Transformer::transformInPlaceRecursive(std::shared_ptr<NamedObject> node, int depth, const std::string& path) {
     // In-place transformation is riskier.
     // We get a snapshot of children to avoid iterator invalidation.
-    auto children = node->getChildren();
+    std::list<std::shared_ptr<NamedObject>> children = node->getChildren();
     
-    for (const auto& child : children) {
+    for (std::shared_ptr<NamedObject>& child : children) {
         std::string childPath = path + "/" + child->getName();
         TransformContext ctx(child, depth + 1, childPath);
         
         bool matched = false;
-        for (const auto& rule : m_rules) {
+        for (const TransformationRule& rule : m_rules) {
             if (rule.matches(ctx)) {
                 matched = true;
-                auto generated = rule.apply(ctx);
+                std::vector<std::shared_ptr<NamedObject>> generated = rule.apply(ctx);
                 
                 // Replace child with generated sequence
                 // First remove the old child
                 child->setParent(nullptr); // detaches from node
                 
                 // Then add the new ones
-                for (const auto& g : generated) {
+                for (std::shared_ptr<NamedObject>& g : generated) {
                     g->setParent(node);
                 }
                 break;

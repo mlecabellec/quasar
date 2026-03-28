@@ -26,8 +26,8 @@ public:
    * @brief Current time using the system clock (wall clock)
    */
   static Timestamp now() {
-      auto now = std::chrono::system_clock::now();
-      auto duration = now.time_since_epoch();
+      std::chrono::system_clock::time_point now_tp = std::chrono::system_clock::now();
+      std::chrono::system_clock::duration duration = now_tp.time_since_epoch();
       return Timestamp(std::chrono::duration_cast<std::chrono::microseconds>(duration).count());
   }
 
@@ -41,7 +41,7 @@ public:
       std::tm tm;
       gmtime_r(&tt, &tm);
       
-      auto fractional = value() % 1000000;
+      int64_t fractional = value() % 1000000;
       if (fractional < 0) fractional += 1000000;
       
       std::ostringstream ss;

@@ -26,9 +26,9 @@ public:
    * @brief Current date based on system clock
    */
   static Date now() {
-      auto now = std::chrono::system_clock::now();
-      auto duration = now.time_since_epoch();
-      auto hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
+      std::chrono::system_clock::time_point now_tp = std::chrono::system_clock::now();
+      std::chrono::system_clock::duration duration = now_tp.time_since_epoch();
+      int64_t hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
       return Date(hours / 24);
   }
 

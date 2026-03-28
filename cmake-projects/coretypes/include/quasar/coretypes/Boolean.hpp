@@ -65,6 +65,12 @@ public:
   bool booleanValue() const;
 
   /**
+   * @brief Sets the primitive boolean value.
+   * @param value The new value.
+   */
+  void setValue(bool value) { value_ = value; }
+
+  /**
    * @brief Returns a String object representing this Boolean's value.
    *
    * Returns "true" if the value is true, and "false" otherwise.

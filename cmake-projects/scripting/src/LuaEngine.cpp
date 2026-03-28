@@ -1,6 +1,7 @@
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/TypeBindings.hpp"
 #include "quasar/scripting/RegistryBindings.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
 #include <iostream>
 
 namespace quasar {
@@ -44,13 +45,19 @@ LuaEngine::LuaEngine(std::weak_ptr<LuaService> service) {
     // Register Quasar bindings
     bindCoreTypes(m_lua);
     bindNamedTypes(m_lua, service.lock());
+
+    // [CS-0010.44] Store engine pointer in registry for retrieval from state
+    m_lua.registry()["__quasar_engine"] = this;
 }
 
 LuaEngine::~LuaEngine() {
-    // sol::state destroys the state automatically
+    std::unique_lock<std::recursive_mutex> lock = acquireLock();
+    // [CS-0010.44] Invalidate all methods that might hold references to this state.
+    ObjectTracker::getInstance().invalidateMethods();
 }
 
 sol::protected_function_result LuaEngine::executeString(const std::string& code) {
+    std::unique_lock<std::recursive_mutex> lock = acquireLock();
     return m_lua.safe_script(code, sol::script_pass_on_error);
 }
 

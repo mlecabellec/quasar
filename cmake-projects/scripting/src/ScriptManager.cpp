@@ -50,7 +50,7 @@ void ScriptManager::update(double dt) {
         std::cerr << "ScriptManager update timeout" << std::endl;
         return;
     }
-    for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
+    for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
         pair.second->onUpdate(dt);
     }
 }
@@ -61,7 +61,7 @@ void ScriptManager::tickGC(int stepSize) {
         std::cerr << "ScriptManager tickGC timeout" << std::endl;
         return;
     }
-    for (std::pair<const std::string, std::shared_ptr<LuaService>>& pair : m_services) {
+    for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
         pair.second->gcStep(stepSize);
     }
 }

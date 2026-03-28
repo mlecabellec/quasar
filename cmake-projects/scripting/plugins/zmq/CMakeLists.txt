@@ -68,7 +68,14 @@ if(BUILD_TESTING)
         gtest_main
         quasar_zmq
         quasar_named
+        quasar_scripting
     )
+
+    # Force ASan linkage if enabled to ensure correct initialization order
+    if (ENABLE_ASAN)
+        target_compile_options(zmq_plugin_test PRIVATE -fsanitize=address)
+        target_link_options(zmq_plugin_test PRIVATE -fsanitize=address)
+    endif()
     
     if (TARGET libzmq)
         target_link_libraries(zmq_plugin_test PRIVATE libzmq)

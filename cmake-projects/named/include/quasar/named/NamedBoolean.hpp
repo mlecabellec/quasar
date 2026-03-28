@@ -53,7 +53,7 @@ public:
    */
   std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     if (policy == CopyPolicy::SHARE && m_bound) {
-        auto newObj = create(getName(), booleanValue());
+        std::shared_ptr<NamedBoolean> newObj = create(getName(), booleanValue());
         newObj->bind(m_bound_offset, m_bound_length);
         return newObj;
     }

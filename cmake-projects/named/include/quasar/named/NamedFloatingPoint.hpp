@@ -74,7 +74,7 @@ public:
    */
   std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
     if (policy == CopyPolicy::SHARE && m_bound) {
-        auto newObj = create(this->getName(), this->value());
+        std::shared_ptr<NamedFloatingPoint<T>> newObj = create(this->getName(), this->value());
         newObj->bind(m_bound_offset, m_bound_length);
         return newObj;
     }

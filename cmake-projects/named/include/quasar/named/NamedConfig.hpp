@@ -27,7 +27,7 @@ inline constexpr std::size_t HARD_LIMIT_ITERATIONS = 1000000;
  * @brief Default timeout for mutex locking.
  * @compliance [CS-0010.26] Use mutex with timeout.
  */
-inline constexpr std::chrono::milliseconds DEFAULT_LOCK_TIMEOUT = std::chrono::milliseconds(1000);
+inline constexpr std::chrono::milliseconds DEFAULT_LOCK_TIMEOUT = std::chrono::milliseconds(5000);
 
 } // namespace config
 

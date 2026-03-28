@@ -33,7 +33,7 @@ public:
      * Queues the event for the Lua worker thread.
      */
     void notify(std::shared_ptr<named::NamedObject> eventData) override {
-        auto service = m_service.lock();
+        std::shared_ptr<LuaService> service = m_service.lock();
         if (!service) return;
 
         if (m_pendingCount >= m_watermark) {
@@ -52,14 +52,14 @@ public:
         std::weak_ptr<QueuedObserver> weakSelf = shared_from_this();
 
         service->postTask([weakSelf, eventData]() {
-            auto self = weakSelf.lock();
+            std::shared_ptr<QueuedObserver> self = weakSelf.lock();
             if (!self) return;
 
             self->m_pendingCount--;
 
             try {
                 // Call the Lua function with a proxy of the event data
-                auto result = self->m_callback(LuaProxy<named::NamedObject>(eventData));
+                sol::protected_function_result result = self->m_callback(LuaProxy<named::NamedObject>(eventData));
                 if (!result.valid()) {
                     sol::error err = result;
                     std::cerr << "QueuedObserver Lua error: " << err.what() << std::endl;

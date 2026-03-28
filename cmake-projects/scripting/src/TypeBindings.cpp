@@ -12,7 +12,7 @@ using namespace quasar::coretypes;
 
 void bindCoreTypes(sol::state& lua) {
     // --- Long (int64_t) ---
-    auto utLong = lua.new_usertype<Long>("Long", sol::call_constructor, sol::constructors<Long(int64_t), Long(const std::string&, int)>());
+    sol::usertype<Long> utLong = lua.new_usertype<Long>("Long", sol::call_constructor, sol::constructors<Long(int64_t), Long(const std::string&, int)>());
     utLong["new"] = sol::constructors<Long(int64_t), Long(const std::string&, int)>();
     utLong["value"] = &Long::value;
     utLong["toInt"] = &Long::toInt;
@@ -29,7 +29,7 @@ void bindCoreTypes(sol::state& lua) {
     utLong[sol::meta_function::to_string] = static_cast<std::string(Long::*)() const>(&Long::toString);
 
     // --- ULong (uint64_t) ---
-    auto utULong = lua.new_usertype<ULong>("ULong", sol::call_constructor, sol::constructors<ULong(uint64_t), ULong(const std::string&, int)>());
+    sol::usertype<ULong> utULong = lua.new_usertype<ULong>("ULong", sol::call_constructor, sol::constructors<ULong(uint64_t), ULong(const std::string&, int)>());
     utULong["new"] = sol::constructors<ULong(uint64_t), ULong(const std::string&, int)>();
     utULong["value"] = &ULong::value;
     utULong["toInt"] = &ULong::toInt;
@@ -46,7 +46,7 @@ void bindCoreTypes(sol::state& lua) {
     utULong[sol::meta_function::to_string] = static_cast<std::string(ULong::*)() const>(&ULong::toString);
 
     // --- Double (double) ---
-    auto utDouble = lua.new_usertype<Double>("Double", sol::call_constructor, sol::constructors<Double(double), Double(const std::string&)>());
+    sol::usertype<Double> utDouble = lua.new_usertype<Double>("Double", sol::call_constructor, sol::constructors<Double(double), Double(const std::string&)>());
     utDouble["new"] = sol::constructors<Double(double), Double(const std::string&)>();
     utDouble["value"] = &Double::value;
     utDouble["toString"] = static_cast<std::string(Double::*)() const>(&Double::toString);
@@ -58,7 +58,7 @@ void bindCoreTypes(sol::state& lua) {
     utDouble[sol::meta_function::to_string] = static_cast<std::string(Double::*)() const>(&Double::toString);
 
     // --- Timestamp ---
-    auto utTimestamp = lua.new_usertype<Timestamp>("Timestamp", sol::call_constructor, sol::constructors<Timestamp(int64_t)>());
+    sol::usertype<Timestamp> utTimestamp = lua.new_usertype<Timestamp>("Timestamp", sol::call_constructor, sol::constructors<Timestamp(int64_t)>());
     utTimestamp["new"] = sol::constructors<Timestamp(int64_t)>();
     utTimestamp["now"] = &Timestamp::now;
     utTimestamp["toISO8601"] = &Timestamp::toISO8601;
@@ -66,7 +66,7 @@ void bindCoreTypes(sol::state& lua) {
     utTimestamp[sol::meta_function::to_string] = &Timestamp::toISO8601;
 
     // --- Duration ---
-    auto utDuration = lua.new_usertype<Duration>("Duration", sol::call_constructor, sol::constructors<Duration(int64_t)>());
+    sol::usertype<Duration> utDuration = lua.new_usertype<Duration>("Duration", sol::call_constructor, sol::constructors<Duration(int64_t)>());
     utDuration["new"] = sol::constructors<Duration(int64_t)>();
     utDuration["fromSeconds"] = &Duration::fromSeconds;
     utDuration["toSeconds"] = &Duration::toSeconds;
@@ -74,7 +74,7 @@ void bindCoreTypes(sol::state& lua) {
     utDuration[sol::meta_function::to_string] = [](const Duration& d) { return std::to_string(d.toSeconds()) + "s"; };
 
     // --- Unit ---
-    auto utUnit = lua.new_usertype<Unit>("Unit", sol::call_constructor, sol::constructors<Unit()>());
+    sol::usertype<Unit> utUnit = lua.new_usertype<Unit>("Unit", sol::call_constructor, sol::constructors<Unit()>());
     utUnit["new"] = sol::constructors<Unit()>();
     utUnit["m"] = &Unit::m;
     utUnit["kg"] = &Unit::kg;
@@ -91,7 +91,7 @@ void bindCoreTypes(sol::state& lua) {
     utUnit["fromSymbol"] = &Units::fromSymbol;
 
     // --- Quantity ---
-    auto utQuantity = lua.new_usertype<Quantity>("Quantity", sol::call_constructor, sol::constructors<Quantity(double, const Unit&)>());
+    sol::usertype<Quantity> utQuantity = lua.new_usertype<Quantity>("Quantity", sol::call_constructor, sol::constructors<Quantity(double, const Unit&)>());
     utQuantity["new"] = sol::constructors<Quantity(double, const Unit&)>();
     utQuantity["value"] = &Quantity::value;
     utQuantity["getUnit"] = &Quantity::getUnit;

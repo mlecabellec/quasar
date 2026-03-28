@@ -44,27 +44,27 @@ public:
         int priority = 10) 
     {
         TransformPredicate pred = [targetBufferName](const TransformContext& ctx) {
-            auto node = ctx.getNode();
+            std::shared_ptr<NamedObject> node = ctx.getNode();
             return node->getName() == targetBufferName && 
                    (node->as<NamedBuffer>() != nullptr || node->as<NamedBufferSlice>() != nullptr);
         };
 
         TransformGenerator gen = [newIntName, offset](const TransformContext& ctx) -> std::vector<std::shared_ptr<NamedObject>> {
-            auto node = ctx.getNode();
+            std::shared_ptr<NamedObject> node = ctx.getNode();
             T value = 0;
-            if (auto buf = node->as<NamedBuffer>()) {
+            if (std::shared_ptr<NamedBuffer> buf = node->as<NamedBuffer>()) {
                 if (offset + sizeof(T) <= buf->size()) {
                     value = static_cast<T>(buf->readInt(offset));
                 }
-            } else if (auto slice = node->as<NamedBufferSlice>()) {
+            } else if (std::shared_ptr<NamedBufferSlice> slice = node->as<NamedBufferSlice>()) {
                 if (offset + sizeof(T) <= slice->size()) {
-                    auto parentBuf = slice->quasar::coretypes::BufferSlice::getParent();
+                    std::shared_ptr<quasar::coretypes::Buffer> parentBuf = slice->quasar::coretypes::BufferSlice::getParent();
                     if (parentBuf) {
                         value = static_cast<T>(parentBuf->readInt(offset + slice->getOffset()));
                     }
                 }
             }
-            auto intNode = NamedInteger<T>::create(newIntName, value);
+            std::shared_ptr<NamedInteger<T>> intNode = NamedInteger<T>::create(newIntName, value);
             return {intNode};
         };
 

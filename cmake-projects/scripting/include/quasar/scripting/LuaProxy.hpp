@@ -43,7 +43,7 @@ public:
      * @throws LuaProxyInvalidException if the object has been destroyed.
      */
     std::shared_ptr<T> lock() const {
-        auto ptr = m_weak.lock();
+        std::shared_ptr<T> ptr = m_weak.lock();
         if (!ptr) {
             throw LuaProxyInvalidException(typeid(T).name());
         }

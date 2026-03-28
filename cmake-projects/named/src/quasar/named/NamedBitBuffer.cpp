@@ -30,7 +30,7 @@ NamedBitBuffer::create(const std::string &name, size_t bitCount,
 std::shared_ptr<NamedObject> NamedBitBuffer::clone(CopyPolicy policy) const {
   // Fulfills [FE-0020.14] Utilities for copying parts of the tree.
   if (policy == CopyPolicy::SHARE && m_bound) {
-      auto newObj = create(getName(), bitSize());
+      std::shared_ptr<NamedBitBuffer> newObj = create(getName(), bitSize());
       newObj->bind(m_bound_offset, m_bound_length);
       return newObj;
   }

@@ -55,12 +55,18 @@ public:
      */
     void cleanup();
 
+    /**
+     * @brief Invalidates all tracked NamedLuaMethod objects.
+     */
+    void invalidateMethods();
+
 private:
     ObjectTracker() = default;
     
     mutable std::timed_mutex m_mutex;
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>> m_trackedObjects;
     std::map<named::NamedObject*, std::shared_ptr<named::NamedObject>> m_strongObjects;
+    std::vector<std::weak_ptr<named::NamedObject>> m_methods;
 };
 
 } // namespace quasar::scripting

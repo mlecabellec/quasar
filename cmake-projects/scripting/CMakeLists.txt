@@ -27,6 +27,7 @@ set(SOURCES
     src/ScriptManager.cpp
     src/ScriptConsole.cpp
     src/PluginLoader.cpp
+    src/NamedLuaMethod.cpp
 )
 
 # Header files (for IDEs)
@@ -43,6 +44,7 @@ set(HEADERS
     include/quasar/scripting/ScriptConsole.hpp
     include/quasar/scripting/PluginLoader.hpp
     include/quasar/scripting/PluginContract.hpp
+    include/quasar/scripting/NamedLuaMethod.hpp
 )
 
 # Create the library

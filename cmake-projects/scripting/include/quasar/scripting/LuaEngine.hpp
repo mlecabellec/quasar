@@ -8,7 +8,7 @@ extern "C" {
 }
 
 #include <sol/sol.hpp>
-
+#include <mutex>
 #include <string>
 #include <memory>
 #include <functional>
@@ -68,6 +68,14 @@ public:
      */
     void gcStep(int step_size);
 
+    /**
+     * @brief Acquires a lock on the Lua state for thread-safe operations.
+     * @return A unique_lock guarding the recursive mutex.
+     */
+    std::unique_lock<std::recursive_mutex> acquireLock() {
+        return std::unique_lock<std::recursive_mutex>(m_mutex);
+    }
+
 protected:
     /**
      * @brief Custom panic handler for the Lua state.
@@ -81,6 +89,7 @@ protected:
 
 private:
     sol::state m_lua;
+    std::recursive_mutex m_mutex;
 };
 
 } // namespace scripting

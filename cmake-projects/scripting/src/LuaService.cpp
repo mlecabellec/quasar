@@ -6,7 +6,7 @@ namespace quasar::scripting {
 
 std::shared_ptr<LuaService> LuaService::create(const std::string& name, std::shared_ptr<named::NamedObject> parent) {
     struct Enabler : public LuaService {
-        Enabler(const std::string& n) : LuaService(n) {}
+        explicit Enabler(const std::string& n) : LuaService(n) {}
     };
     std::shared_ptr<LuaService> svc = std::make_shared<Enabler>(name);
     svc->setSelf(svc);
@@ -134,9 +134,9 @@ void LuaService::gcStep(int stepSize) {
 }
 
 void LuaService::workerLoop() {
-    auto lastUpdate = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point lastUpdate = std::chrono::steady_clock::now();
     while (m_running) {
-        auto now = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
         double dt = std::chrono::duration<double>(now - lastUpdate).count();
         lastUpdate = now;
 
@@ -155,7 +155,7 @@ void LuaService::workerLoop() {
         });
 
         while (!m_taskQueue.empty() && m_running) {
-            auto task = std::move(m_taskQueue.front());
+            std::function<void()> task = std::move(m_taskQueue.front());
             m_taskQueue.pop();
             lock.unlock();
             try {
