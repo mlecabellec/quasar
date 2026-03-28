@@ -108,12 +108,22 @@ bool fieldbus_start(Fieldbus &fb, int verbose_level) {
     }
     std::cout << "  [INFO] Process Image size: " << *map_res << " bytes." << std::endl;
 
-    // Calculate expected WKC: usually (outputs_count * 2) + (inputs_count * 1) for LRW
-    // Or simpler: each slave contributing to process data adds to WKC.
+    // Calculate the expected Working Counter (WKC) for the LRW cyclic command.
+    // Per ETG.1000.4 §5.4.7 and IgH master datagram_pair.c:87-120:
+    //   - Each slave with OUTPUTS (Master -> Slave) contributes +1 to LRW WKC.
+    //     The slave *reads* from the logical image; a successful read increments WKC by 1.
+    //   - Each slave with INPUTS (Slave -> Master) contributes +2 to LRW WKC.
+    //     The slave *writes* to the logical image; a successful write increments WKC by 2.
+    //   - A slave with both directions active contributes +3 total.
+    // These constants are fixed by the EtherCAT standard for LRW commands. [CS-0010.39]
+    constexpr uint16_t WKC_LRW_OUTPUT_INCREMENT = 1U;  // Slave reads logical image
+    constexpr uint16_t WKC_LRW_INPUT_INCREMENT  = 2U;  // Slave writes logical image
+
     fb.expected_wkc = 0;
     for (const SlaveInfo& s : fb.enumerator->slaves()) {
-        if (s.outputs_size_bits > 0) fb.expected_wkc += 2;
-        if (s.inputs_size_bits > 0) fb.expected_wkc += 1;
+        // Accumulate WKC contributions from each slave that participates in process data.
+        if (s.outputs_size_bits > 0) { fb.expected_wkc += WKC_LRW_OUTPUT_INCREMENT; }
+        if (s.inputs_size_bits  > 0) { fb.expected_wkc += WKC_LRW_INPUT_INCREMENT; }
     }
     std::cout << "  [INFO] Expected Working Counter (WKC): " << fb.expected_wkc << std::endl;
 

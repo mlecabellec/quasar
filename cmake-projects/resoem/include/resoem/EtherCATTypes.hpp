@@ -180,23 +180,59 @@ constexpr uint16_t ACK = 0x10;     ///< Acknowledge bit
 /**
  * @brief EEPROM (SII) Control commands and constants.
  */
+/**
+ * @brief EEPROM (SII) access commands, status bits, and category identifiers.
+ * @details Per ETG.1000.6 §4 (EEPROM access) and §5.4 (category format).
+ */
 namespace eeprom {
-constexpr uint16_t CMD_NOP = 0x0000;    ///< No operation
-constexpr uint16_t CMD_READ = 0x0100;   ///< Read command
-constexpr uint16_t CMD_WRITE = 0x0200;  ///< Write command
-constexpr uint16_t CMD_RELOAD = 0x0300; ///< Reload command
 
-constexpr uint16_t ERROR_MASK = 0x7800; ///< Mask for error bits
-constexpr uint16_t BUSY = 0x8000;       ///< Busy bit
+// EEPROM control commands written to register 0x0502 [CS-0010.39].
+constexpr uint16_t CMD_NOP    = 0x0000; ///< No operation
+constexpr uint16_t CMD_READ   = 0x0100; ///< Initiate a 32-bit SII read
+constexpr uint16_t CMD_WRITE  = 0x0200; ///< Initiate a 16-bit SII write
+constexpr uint16_t CMD_RELOAD = 0x0300; ///< Reload SII from EEPROM
 
-// SII Categories
-constexpr uint16_t CAT_STRINGS = 10;      ///< Strings category
-constexpr uint16_t CAT_GENERAL = 30;      ///< General category
-constexpr uint16_t CAT_FMMU = 40;         ///< FMMU category
-constexpr uint16_t CAT_SYNC_MANAGER = 41; ///< SyncManager category
-constexpr uint16_t CAT_PDO_TX = 50;       ///< TxPDO category
-constexpr uint16_t CAT_PDO_RX = 51;       ///< RxPDO category
+// EEPROM control/status bit masks [CS-0010.39].
+constexpr uint16_t ERROR_MASK = 0x7800; ///< Mask for all error flag bits
+constexpr uint16_t BUSY       = 0x8000; ///< SII interface is busy
+
+// SII category type identifiers per ETG.1000.6 §5.4 [CS-0010.39].
+constexpr uint16_t CAT_STRINGS      = 10; ///< Device name strings
+constexpr uint16_t CAT_GENERAL      = 30; ///< General device info (CoE details, etc.)
+constexpr uint16_t CAT_FMMU         = 40; ///< FMMU usage description
+constexpr uint16_t CAT_SYNC_MANAGER = 41; ///< SyncManager configuration records
+constexpr uint16_t CAT_PDO_TX       = 50; ///< TxPDO mapping (Slave -> Master / Inputs)
+constexpr uint16_t CAT_PDO_RX       = 51; ///< RxPDO mapping (Master -> Slave / Outputs)
+
+/// @brief Word offset of the first SII category header in the EEPROM.
+/// @details Per ETG.1000.6 §5.4 and IgH globals.h:EC_FIRST_SII_CATEGORY_OFFSET.
+constexpr uint16_t SII_FIRST_CATEGORY_OFFSET = 0x0040;
+
+/// @brief Mask applied to the category type word to strip the reserved bit 15.
+/// @details Per ETG.1000.6 §5.4 and IgH fsm_slave_scan.c:810.
+constexpr uint16_t SII_CAT_TYPE_MASK = 0x7FFF;
+
 } // namespace eeprom
+
+/**
+ * @brief FMMU (Fieldbus Memory Management Unit) type identifiers.
+ * @details Per ETG.1000.4 §6.7.2 and IgH EtherCAT master fmmu_config.c:86.
+ * These values are written to the FMMU Type register (byte 11 of the FMMU page)
+ * to configure the transfer direction.
+ */
+namespace fmmu {
+
+/// @brief FMMU Read direction: ESC reads physical memory and makes it available
+/// at the logical address (used for Inputs: Slave -> Master).
+/// Verified against IgH fmmu_config.c line 86: EC_DIR_INPUT -> 0x01.
+constexpr uint8_t TYPE_READ  = 0x01;
+
+/// @brief FMMU Write direction: master writes to logical address and the ESC
+/// forwards the data to physical memory (used for Outputs: Master -> Slave).
+/// Verified against IgH fmmu_config.c line 86: EC_DIR_OUTPUT -> 0x02.
+constexpr uint8_t TYPE_WRITE = 0x02;
+
+} // namespace fmmu
 
 /**
  * @brief Mailbox protocol definitions.

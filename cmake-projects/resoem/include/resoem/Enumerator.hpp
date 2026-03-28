@@ -63,11 +63,32 @@ public:
                 std::chrono::microseconds timeout = std::chrono::seconds(3));
 
   /**
-   * @brief Request a state transition for ALL slaves simultaneously.
+   * @brief Per-slave outcome from a state transition attempt.
+   * @details Populated by request_state_all(); one entry per slave.
+   */
+  struct SlaveTransitionResult {
+    size_t   slave_idx;      ///< Index in the slaves() list
+    bool     success;        ///< True if slave reached the target state
+    uint16_t final_state;   ///< AL state bits at end of transition
+    uint16_t error_code;    ///< Last AL status code (0 = no error)
+  };
+
+  /**
+   * @brief Request a state transition for ALL slaves individually (no broadcast).
+   * @details Each slave receives its own FPWR AL_CONTROL write and is polled
+   * independently. Slaves that reach the target before the timeout do not block
+   * others. Slaves with ERROR_BIT set are acknowledged per-slave and
+   * retried up to the timeout deadline.
    *
-   * @param state Target AL state.
-   * @param timeout Maximum time to wait for all slaves to transition.
-   * @return Result<> Success or error.
+   * On timeout the function still returns an ok Result if ALL slaves succeeded;
+   * returns ECError::Timeout only if at least one slave never reached the target.
+   *
+   * Per-slave details are always printed to stderr on failure regardless of
+   * verbose_level.
+   *
+   * @param state   Target AL state (e.g. states::PRE_OP, states::SAFE_OP).
+   * @param timeout Maximum wall-clock time for the entire operation.
+   * @return Result<> ok, or ECError::Timeout if any slave failed.
    */
   Result<> request_state_all(uint16_t state, std::chrono::microseconds timeout =
                                                  std::chrono::seconds(3));
@@ -227,11 +248,39 @@ private:
   void read_sii_categories(int slave_idx);
   void read_sii_pdos(int slave_idx);
   void map_topology(int count);
-    // Low‑level SII helpers (private)
+    // Low-level SII helpers (private)
     uint32_t read_sii_word(uint16_t slave_cfg_addr, uint16_t word_addr);
     SIICategory find_sii_category(uint16_t slave_cfg_addr, uint16_t cat_type);
     std::string read_sii_string(uint16_t slave_cfg_addr, uint8_t string_idx);
     void read_port_status();
+
+  /**
+   * @brief Internal per-slave FSM state used by request_state_all().
+   * @details Tracks the transition progress for one slave through one
+   * call to request_state_all(). All fields are initialised before the
+   * polling loop starts and updated on every tick.
+   */
+  struct SlaveStateFSM {
+    uint16_t target_state;    ///< Masked target AL state bits
+    bool     done;            ///< True once the slave reached target
+    bool     failed;          ///< True if the slave reported a hard error
+    uint16_t last_al_status;  ///< Last raw AL_STATUS read
+    uint16_t last_error_code; ///< Last AL_STATUS_CODE (0 = none)
+    bool     request_written; ///< Whether AL_CONTROL has been written yet
+  };
+
+  /**
+   * @brief Perform one polling tick for a single slave in the state FSM.
+   * @details Called each iteration of the request_state_all() poll loop.
+   * If the slave has not yet been sent the AL_CONTROL request, writes it
+   * via FPWR. Then reads AL_STATUS and, if the error bit is set, reads
+   * AL_STATUS_CODE and acknowledges the error. Marks fsm.done when the
+   * slave reaches the target state.
+   *
+   * @param slave_idx  Index in slaves_ list.
+   * @param fsm        Per-slave FSM state (modified in place).
+   */
+  void advance_slave_state(size_t slave_idx, SlaveStateFSM &fsm);
 
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                    std::span<byte> data);

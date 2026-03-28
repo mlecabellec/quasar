@@ -14,8 +14,8 @@
 - [ ] Parse critical SII categories:
     - [x] General (Vendor ID, Product Code).
     - [x] Strings (Name).
-    - [ ] SyncManagers.
-    - [ ] FMMUs.
+    - [x] SyncManagers.  <!-- implemented in read_sii_categories() -->
+    - [x] FMMUs.         <!-- configure_fmmu() with corrected type direction (see bug fix plan) -->
 
 ## Phase 3: Mailbox & CoE
 

@@ -201,6 +201,7 @@ int main(int argc, char *argv[]) {
     // Update status to get latest AL states (slaves should already be in PRE-OP from enumerate())
     enumerator.check_slaves_status();
 
+    std::cout << "\n[PHASE 3] Reporting detailed slave information..." << std::endl;
     for (size_t i = 0; i < count; ++i) {
       const SlaveInfo& s = enumerator.slaves()[i];
       print_slave_info(s, i);
@@ -246,6 +247,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "\n[PHASE 4] Cleaning up..." << std::endl;
+    // Gracefully return all slaves to INIT state before exit.
     std::cout << "Returning all slaves to INIT state..." << std::endl;
     enumerator.request_state_all(states::INIT);
 
