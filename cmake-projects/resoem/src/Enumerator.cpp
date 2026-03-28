@@ -732,7 +732,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
     size_t received = socket_.receive(rx_buffer, &port_idx);
 
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    int64_t elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
 
     if (received == 0) {
       if (elapsed_ms > 100) {
