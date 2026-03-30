@@ -1,0 +1,116 @@
+@startuml Quasar LogicEngine Overview
+
+package "quasar::logic" {
+    abstract class LogicComponent <<ActiveEntity>> {
+        + start()
+        + stop()
+        + pause()
+        + resume()
+        + {abstract} step(dt: duration)
+    }
+
+    class LogicEngine <<NamedObject>> {
+        - components: List<LogicComponent>
+        - scheduler: SchedulerPtr
+        + addComponent(comp: LogicComponent)
+        + runCycle()
+    }
+
+    LogicEngine "1" *-- "n" LogicComponent
+
+    package "State Machine (HSM)" {
+        class StateMachine <<LogicComponent>> {
+            - rootState: State
+            - currentState: State
+            - eventQueue: Queue<Event>
+            + postEvent(ev: Event)
+            - processTransitions()
+            - calculateLCA(s1, s2): State
+        }
+
+        class State <<NamedObject>> {
+            - parent: State
+            - children: List<State>
+            - onEntry: Action
+            - onExit: Action
+            - onDo: Action
+            + isChildOf(other): bool
+        }
+
+        class Transition {
+            - source: State
+            - target: State
+            - guard: Condition
+            - effect: Action
+            - trigger: EventType
+        }
+
+        StateMachine *-- State
+        State "1" *-- "n" State : composite
+        State "1" o-- "n" Transition
+    }
+
+    package "SFC (Grafcet)" {
+        class SFC <<LogicComponent>> {
+            - steps: Map<string, Step>
+            - transitions: List<SFCTransition>
+            + evaluate()
+        }
+
+        class Step <<NamedObject>> {
+            - isActive: bool
+            - activeTime: duration
+            - actions: List<ActionBlock>
+            + X: bool <<reflexive>>
+            + T: duration <<reflexive>>
+        }
+
+        class ActionBlock {
+            - qualifier: QualifierType
+            - target: Action
+            - parameter: variant
+            + execute(stepState, stepTime)
+        }
+
+        enum QualifierType {
+            N, L, D, P, S, R, SD, DS, SL
+        }
+
+        class SFCTransition {
+            - from: List<Step>
+            - to: List<Step>
+            - condition: Condition
+            + canFire(): bool
+        }
+
+        SFC *-- Step
+        SFC *-- SFCTransition
+        Step *-- ActionBlock
+        ActionBlock ..> QualifierType
+    }
+
+    package "Rule & Matrix" {
+        class CauseEffectMatrix <<LogicComponent>> {
+            - causeVector: BitVector
+            - effectVector: BitVector
+            - andMasks: List<BitVector>
+            - orMasks: List<BitVector>
+            + evaluate()
+        }
+
+        class RuleEngine <<LogicComponent>> {
+            - rules: List<Rule>
+            + evaluate()
+        }
+
+        class Rule {
+            - condition: Condition
+            - thenAction: Action
+            - elseAction: Action
+        }
+
+        RuleEngine *-- Rule
+    }
+}
+
+@enduml
