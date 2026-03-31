@@ -21,9 +21,9 @@
 - [ ] **[TSK-20260311-006]** CAN Bus / SocketCAN Integration
 - [ ] **[TSK-20260311-007]** Apache Kafka Integration
 - [ ] **[TSK-20260311-008]** Web UI Dashboard & REST API
-- [ ] **[TSK-20260311-009]** LogicEngine (FSM/HSM/SFC/Grafcet)
 
 ## ✅ Recently Completed
+- [x] **[TSK-20260311-009]** LogicEngine (FSM/HSM/SFC/Grafcet)
 - [x] **[TSK-20260310-001]** Standalone Script Runner (`sre`)
 - [x] **[TSK-20260308-001]** Full Polymorphic Integer Dispatch
 - [x] **[TSK-20260308-002]** ActiveEntity Base Implementation
