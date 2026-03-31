@@ -7,15 +7,25 @@
 #include "quasar/logic/Expression.hpp"
 #include <pthread.h>
 #include <signal.h>
+#include <iostream>
 
 namespace quasar::logic {
 
 static std::mutex s_workersMutex;
+static thread_local LogicWorker* s_currentWorker = nullptr;
+
+// Lua hook function
+static void luaInstructionHook(lua_State* L, lua_Debug* /*ar*/) {
+    if (s_currentWorker && s_currentWorker->isCancelled()) {
+        luaL_error(L, "Script execution timeout (Watchdog killed)");
+    }
+}
 
 // --- LogicWorker Implementation ---
 
 LogicWorker::LogicWorker(std::size_t id) : m_id(id) {
     m_lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::bit32);
+    lua_sethook(m_lua.lua_state(), luaInstructionHook, LUA_MASKCOUNT, 1000);
 }
 
 LogicWorker::~LogicWorker() {
@@ -25,34 +35,20 @@ LogicWorker::~LogicWorker() {
 }
 
 void LogicWorker::start(std::function<void(LogicWorker&)> mainLoop) {
-    m_thread = std::thread(mainLoop, std::ref(*this));
+    m_thread = std::thread([this, mainLoop]() {
+        s_currentWorker = this;
+        mainLoop(*this);
+    });
 }
 
-void LogicWorker::kill() {
-    {
-        std::lock_guard<std::mutex> lock(m_workerMutex);
-        if (m_busy && m_currentTask) {
-            {
-                std::lock_guard<std::mutex> taskLock(m_currentTask->mutex);
-                if (!m_currentTask->completed) {
-                    m_currentTask->status = EvaluationStatus::Timeout;
-                    m_currentTask->completed = true;
-                    m_currentTask->cv.notify_all();
-                }
-            }
-            m_currentTask.reset();
-        }
-    }
-    
-    pthread_cancel(m_thread.native_handle());
-    if (m_thread.joinable()) {
-        m_thread.join(); 
-    }
+void LogicWorker::cancel() {
+    m_cancelRequested = true;
 }
 
 void LogicWorker::setTask(std::shared_ptr<EvaluationTask> task) {
     std::lock_guard<std::mutex> lock(m_workerMutex);
     m_currentTask = std::move(task);
+    m_cancelRequested = false;
     m_lastTaskStart = std::chrono::steady_clock::now();
     m_busy = true;
 }
@@ -61,6 +57,7 @@ void LogicWorker::clearTask() {
     std::lock_guard<std::mutex> lock(m_workerMutex);
     m_currentTask.reset();
     m_busy = false;
+    m_cancelRequested = false;
 }
 
 std::chrono::milliseconds LogicWorker::getElapsed() const {
@@ -117,8 +114,6 @@ EvaluationStatus EvaluationPool::evaluate(const std::vector<std::byte>& bytecode
 }
 
 void EvaluationPool::workerLoop(LogicWorker& worker) {
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
-
     while (m_running) {
         std::shared_ptr<EvaluationTask> task;
         {
@@ -132,9 +127,6 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
         worker.setTask(task);
         EvaluationStatus finalStatus = EvaluationStatus::Error;
         
-        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
-        pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
-
         try {
             Expression::bindContext(worker.getLua(), task->contextRoot);
 
@@ -144,18 +136,22 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
                 sol::protected_function_result result = func();
                 if (result.valid()) {
                     finalStatus = result.get<bool>() ? EvaluationStatus::Success : EvaluationStatus::LogicFalse;
+                } else {
+                    sol::error err = result;
+                    std::cout << "[LUA ERROR] " << err.what() << std::endl;
+                    if (std::string(err.what()).find("Watchdog killed") != std::string::npos) {
+                        finalStatus = EvaluationStatus::Timeout;
+                    }
                 }
             }
-        } catch (const sol::error&) {
-            finalStatus = EvaluationStatus::Error;
-        } catch (const std::exception&) {
-            finalStatus = EvaluationStatus::Error;
         } catch (...) {
-            throw; // CRITICAL: Rethrow abi::__forced_unwind from pthread_cancel
+            // Error fallback
+        }
+        
+        if (worker.isCancelled() && finalStatus == EvaluationStatus::Error) {
+            finalStatus = EvaluationStatus::Timeout;
         }
 
-        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
-        
         {
             std::lock_guard<std::mutex> taskLock(task->mutex);
             if (!task->completed) {
@@ -175,11 +171,7 @@ void EvaluationPool::watchdogLoop() {
         std::lock_guard<std::mutex> lock(s_workersMutex);
         for (std::size_t i = 0; i < m_workers.size(); ++i) {
             if (m_workers[i] && m_workers[i]->getElapsed() > m_hardTimeout) {
-                m_workers[i]->kill();
-                std::unique_ptr<LogicWorker> worker = std::make_unique<LogicWorker>(i);
-                LogicWorker* rawPtr = worker.get();
-                worker->start([this, rawPtr](LogicWorker& /*w*/) { workerLoop(*rawPtr); });
-                m_workers[i] = std::move(worker);
+                m_workers[i]->cancel();
             }
         }
     }
