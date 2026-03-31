@@ -17,49 +17,31 @@ namespace quasar::logic {
 /**
  * @class Expression
  * @brief Encapsulates a Lua expression compiled to bytecode for fast cyclic evaluation.
- * 
- * **Compliance**:
- * - [CS-0010.34] No auto.
- * - [TSK-20260311-009.5] Integration & Scripting.
  */
 class Expression {
 public:
-    /**
-     * @brief Constructs an expression from Lua source code.
-     * @param lua Reference to the sol::state.
-     * @param source Lua code (e.g., "ctx.temperature > 50").
-     */
     Expression(sol::state& lua, const std::string& source);
-
-    /**
-     * @brief Default constructor for empty/always-true expressions.
-     */
     Expression() = default;
 
     /**
      * @brief Evaluates the expression against a root context tree.
-     * @param contextRoot The root NamedObject representing 'ctx' in Lua.
-     * @return Boolean result of the expression.
+     * Uses the global EvaluationPool for safety.
      */
     bool evaluate(const std::shared_ptr<quasar::named::NamedObject>& contextRoot) const;
 
-    /**
-     * @brief Checks if the expression is empty (always returns true).
-     */
     bool isEmpty() const { return m_bytecode.empty(); }
 
-private:
-    /** @brief Compiled bytecode of the expression. */
-    std::vector<std::byte> m_bytecode;
-    /** @brief Lua state used for evaluation. */
-    sol::state* m_lua{nullptr};
+    /** @brief Gets the internal bytecode. */
+    const std::vector<std::byte>& getBytecode() const { return m_bytecode; }
 
     /**
-     * @brief Recursively maps a NamedObject tree to a Lua table.
-     * @param node Current NamedObject node.
-     * @param table Destination Lua table.
+     * @brief Binds a NamedObject tree to the Lua state as the global 'ctx'.
      */
-    static void mapTreeToLua(const std::shared_ptr<quasar::named::NamedObject>& node, sol::table& table);
+    static void bindContext(sol::state& lua, const std::shared_ptr<quasar::named::NamedObject>& contextRoot);
+
+private:
+    std::vector<std::byte> m_bytecode;
+    sol::state* m_lua{nullptr};
 };
 
 } // namespace quasar::logic

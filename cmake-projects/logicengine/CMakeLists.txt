@@ -20,13 +20,14 @@ set(SOURCE_FILES
     src/StateMachine.cpp
     src/SFC.cpp
     src/Expression.cpp
+    src/EvaluationPool.cpp
 )
 
 # Library target
 add_library(quasar_logicengine STATIC ${SOURCE_FILES})
 
 # Link dependencies
-target_link_libraries(quasar_logicengine quasar_coretypes quasar_named quasar_scripting)
+target_link_libraries(quasar_logicengine quasar_coretypes quasar_named quasar_scripting pthread)
 
 # Testing
 if(BUILD_TESTING)
@@ -51,6 +52,7 @@ if(BUILD_TESTING)
         test/LogicEngineTest.cpp
         test/StateMachineTest.cpp
         test/SFCTest.cpp
+        test/LogicStressTest.cpp
     )
     target_link_libraries(logicengine_test quasar_logicengine GTest::gtest_main)
     

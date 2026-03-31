@@ -41,6 +41,14 @@ void SFC::step(duration dt) {
 }
 
 void SFC::processCycle(duration /*dt*/) {
+    // [TSK-20260311-009.4] Resource Safety
+    const std::size_t MAX_TOKENS = 100;
+    if (m_activeStates.size() > MAX_TOKENS) {
+        m_activeStates.clear();
+        m_activeStates.insert(m_groundState);
+        return;
+    }
+
     std::set<std::shared_ptr<State>> nextActiveStates;
     std::set<std::shared_ptr<State>> statesToProcess = m_activeStates;
 
@@ -54,12 +62,14 @@ void SFC::processCycle(duration /*dt*/) {
             continue; 
         }
 
-        // 2. Evaluate all outgoing transitions (SFC splits tokens if multiple are true)
-        std::vector<std::shared_ptr<Transition>> transitions = currentState->getTransitions();
+        // 2. Evaluate all outgoing transitions
+        // Transitions are already sorted by priority in State::addTransition.
+        // We assume names are unique, providing deterministic order for same priority.
+        const std::vector<std::shared_ptr<Transition>>& transitions = currentState->getTransitions();
         bool transitioned = false;
 
-        for (std::vector<std::shared_ptr<Transition>>::iterator tIt = transitions.begin(); tIt != transitions.end(); ++tIt) {
-            std::shared_ptr<Transition>& transition = *tIt;
+        for (std::vector<std::shared_ptr<Transition>>::const_iterator tIt = transitions.begin(); tIt != transitions.end(); ++tIt) {
+            const std::shared_ptr<Transition>& transition = *tIt;
 
             if (transition->getPreCondition().evaluate(m_contextRoot)) {
                 // 3. Action

@@ -1,9 +1,10 @@
 /**
  * @file Expression.cpp
- * @brief Implementation of the Lua expression bridge.
+ * @brief Implementation of the Lua expression bridge with Proxy support.
  */
 
 #include "quasar/logic/Expression.hpp"
+#include "quasar/logic/EvaluationPool.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedBoolean.hpp"
 #include "quasar/named/NamedString.hpp"
@@ -12,8 +13,51 @@
 
 namespace quasar::logic {
 
+/**
+ * @class LogicProxy
+ * @brief Provides safe access from Lua to the NamedObject tree.
+ */
+class LogicProxy {
+public:
+    explicit LogicProxy(quasar::named::NamedObject* node) : m_node(node) {}
+
+    sol::object index(const std::string& name, sol::this_state s) {
+        if (!m_node) return sol::nil;
+        
+        quasar::named::NamedObject* child = nullptr;
+        
+        try {
+            std::list<std::shared_ptr<quasar::named::NamedObject>> children = m_node->getChildren();
+            for (std::list<std::shared_ptr<quasar::named::NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
+                if (*it && (*it)->getName() == name) {
+                    child = (*it).get();
+                    break;
+                }
+            }
+        } catch (const std::exception&) {
+            return sol::nil;
+        }
+        
+        if (!child) return sol::nil;
+
+        // Leaf detection
+        if (const quasar::named::NamedInteger<int64_t>* i64 = dynamic_cast<const quasar::named::NamedInteger<int64_t>*>(child)) return sol::make_object(s, i64->value());
+        if (const quasar::named::NamedInteger<int32_t>* i32 = dynamic_cast<const quasar::named::NamedInteger<int32_t>*>(child)) return sol::make_object(s, i32->value());
+        if (const quasar::named::NamedInteger<int>* i = dynamic_cast<const quasar::named::NamedInteger<int>*>(child)) return sol::make_object(s, i->value());
+        if (const quasar::named::NamedBoolean* b = dynamic_cast<const quasar::named::NamedBoolean*>(child)) return sol::make_object(s, b->booleanValue());
+        if (const quasar::named::NamedString* str = dynamic_cast<const quasar::named::NamedString*>(child)) return sol::make_object(s, str->toString());
+        if (const quasar::named::NamedFloatingPoint<double>* d = dynamic_cast<const quasar::named::NamedFloatingPoint<double>*>(child)) return sol::make_object(s, d->value());
+        if (const quasar::named::NamedFloatingPoint<float>* f = dynamic_cast<const quasar::named::NamedFloatingPoint<float>*>(child)) return sol::make_object(s, f->value());
+
+        // Return a proxy for the sub-branch
+        return sol::make_object(s, LogicProxy(child));
+    }
+
+private:
+    quasar::named::NamedObject* m_node;
+};
+
 Expression::Expression(sol::state& lua, const std::string& source) : m_lua(&lua) {
-    // Compile to bytecode
     sol::load_result loadResult = m_lua->load("return (" + source + ")");
     if (!loadResult.valid()) {
         sol::error err = loadResult;
@@ -31,62 +75,20 @@ bool Expression::evaluate(const std::shared_ptr<quasar::named::NamedObject>& con
         return true;
     }
 
-    // Prepare 'ctx' table
-    sol::table ctx = m_lua->create_table();
-    if (contextRoot) {
-        mapTreeToLua(contextRoot, ctx);
-    }
-    (*m_lua)["ctx"] = ctx;
-
-    // Load and execute bytecode
-    sol::load_result loadResult = m_lua->load(std::string_view(reinterpret_cast<const char*>(m_bytecode.data()), m_bytecode.size()));
-    if (!loadResult.valid()) {
-        return false;
-    }
-
-    sol::protected_function func = loadResult;
-    sol::protected_function_result result = func();
-    
-    if (!result.valid()) {
-        return false;
-    }
-
-    return result.get<bool>();
+    EvaluationStatus status = EvaluationPool::getInstance().evaluate(m_bytecode, contextRoot);
+    return status == EvaluationStatus::Success;
 }
 
-void Expression::mapTreeToLua(const std::shared_ptr<quasar::named::NamedObject>& node, sol::table& table) {
-    if (!node) return;
+void Expression::bindContext(sol::state& lua, const std::shared_ptr<quasar::named::NamedObject>& contextRoot) {
+    if (!contextRoot) return;
 
-    // Iterate over children
-    std::list<std::shared_ptr<quasar::named::NamedObject>> children = node->getChildren();
-    for (std::list<std::shared_ptr<quasar::named::NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
-        std::shared_ptr<quasar::named::NamedObject>& child = *it;
-        const std::string& name = child->getName();
-
-        // Handle primitives using raw dynamic_cast for template detection
-        quasar::named::NamedObject* raw = child.get();
-
-        if (const quasar::named::NamedInteger<int64_t>* int64Obj = dynamic_cast<const quasar::named::NamedInteger<int64_t>*>(raw)) {
-            table[name] = int64Obj->value();
-        } else if (const quasar::named::NamedInteger<int32_t>* int32Obj = dynamic_cast<const quasar::named::NamedInteger<int32_t>*>(raw)) {
-            table[name] = int32Obj->value();
-        } else if (const quasar::named::NamedInteger<int>* intObj = dynamic_cast<const quasar::named::NamedInteger<int>*>(raw)) {
-            table[name] = intObj->value();
-        } else if (const quasar::named::NamedBoolean* boolObj = dynamic_cast<const quasar::named::NamedBoolean*>(raw)) {
-            table[name] = boolObj->booleanValue();
-        } else if (const quasar::named::NamedString* strObj = dynamic_cast<const quasar::named::NamedString*>(raw)) {
-            table[name] = strObj->toString();
-        } else if (const quasar::named::NamedFloatingPoint<double>* doubleObj = dynamic_cast<const quasar::named::NamedFloatingPoint<double>*>(raw)) {
-            table[name] = doubleObj->value();
-        } else if (const quasar::named::NamedFloatingPoint<float>* floatObj = dynamic_cast<const quasar::named::NamedFloatingPoint<float>*>(raw)) {
-            table[name] = floatObj->value();
-        } else {
-            // It's a branch, recurse
-            sol::table subTable = table.create_with();
-            mapTreeToLua(child, subTable);
-            table[name] = subTable;
-        }
+    if (lua["LogicProxy"] == sol::nil) {
+        lua.new_usertype<LogicProxy>("LogicProxy",
+            sol::meta_function::index, &LogicProxy::index
+        );
     }
+
+    lua["ctx"] = LogicProxy(contextRoot.get());
 }
 
 } // namespace quasar::logic
