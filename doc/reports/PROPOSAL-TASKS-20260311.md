@@ -6,27 +6,27 @@
 
 ## 1. Executive Summary
 
-A comprehensive review of the `doc/project/tasks` directory identified 14 formal task definitions. Of these, **13 remain Open or Not Started**, representing a significant scope of work spanning core infrastructure, industrial connectivity, and high-level services. This report proposes a **5-Phase Roadmap** designed to resolve technical dependencies early and build momentum toward complex UI and logic systems.
+A comprehensive review of the `doc/project/tasks` directory identified **15 formal task definitions** (including TSK-20260310-001 and TSK-20260328-001 added after the initial report). As of **2026-04-03**: **2 Completed**, **4 In Progress**, and **9 Not Started**. This report proposes a **5-Phase Roadmap** designed to resolve technical dependencies early and build momentum toward complex UI and logic systems.
 
-## 2. Inventory of Open Tasks
+## 2. Inventory of Tasks
 
-The following tasks are currently identified as "Not Started":
-
-| Task ID | Goal | Estimated Complexity | Core Dependencies |
-| :--- | :--- | :--- | :--- |
-| **TSK-20260311-011** | Lua Engine Validation | Medium-High | None (Core) |
-| **TSK-20260311-001** | Advanced Tree Transformations | Medium-High | `named` library |
-| **TSK-20260311-010** | Calibration Framework | Medium | `named`, `coretypes` |
-| **TSK-20260311-002** | Networking Server (Lua) | Medium | `asio`, `CppServer` |
-| **TSK-20260311-003** | Networking Client (Lua) | Medium | `asio`, `CppServer` |
-| **TSK-20260311-004** | ZeroMQ Plugin | Medium | `named`, `libzmq` |
-| **TSK-20260303-001** | Data Logging / Acquisition | High | `named`, `coretypes` |
-| **TSK-20260311-006** | CAN Bus (SocketCAN) | High | `datacodec`, `named` |
-| **TSK-20260311-005** | OPC UA Server/Client | High | `named`, `networking` |
-| **TSK-20260311-009** | LogicEngine (FSM/SFC) | High | `named`, `scheduler` |
-| **TSK-20260311-008** | Web UI & REST/WS API | High | `named`, `networking` |
-| **TSK-20260311-007** | Apache Kafka Integration | High | `named`, `librdkafka` |
-| **TSK-20260303-004** | Python Bindings | High | `coretypes`, `named` |
+| Task ID | Goal | Estimated Complexity | Core Dependencies | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **TSK-20260311-011** | Lua Engine Validation | Medium-High | None (Core) | 🔄 In Progress |
+| **TSK-20260311-001** | Advanced Tree Transformations | Medium-High | `named` library | 🔄 In Progress |
+| **TSK-20260311-010** | Calibration Framework | Medium | `named`, `coretypes` | 🔄 In Progress |
+| **TSK-20260311-002** | Networking Server (Lua) | Medium | `asio`, `CppServer` | 🔲 Not Started |
+| **TSK-20260311-003** | Networking Client (Lua) | Medium | `asio`, `CppServer` | 🔲 Not Started |
+| **TSK-20260311-004** | ZeroMQ Plugin | Medium | `named`, `libzmq` | 🔄 In Progress |
+| **TSK-20260303-001** | Data Logging / Acquisition | High | `named`, `coretypes` | 🔲 Not Started |
+| **TSK-20260311-006** | CAN Bus (SocketCAN) | High | `datacodec`, `named` | 🔲 Not Started |
+| **TSK-20260311-005** | OPC UA Server/Client | High | `named`, `networking` | 🔲 Not Started |
+| **TSK-20260311-009** | LogicEngine (FSM/SFC) | High | `named`, `scheduler` | ✅ Completed |
+| **TSK-20260311-008** | Web UI & REST/WS API | High | `named`, `networking` | 🔲 Not Started |
+| **TSK-20260311-007** | Apache Kafka Integration | High | `named`, `librdkafka` | 🔲 Not Started |
+| **TSK-20260303-004** | Python Bindings | High | `coretypes`, `named` | 🔲 Not Started |
+| **TSK-20260310-001** | Standalone Script Runner (`sre`) | Medium | `scripting`, `named` | ✅ Completed |
+| **TSK-20260328-001** | Reflexive Execution & Service Orchestration | High | `named`, `scripting` | 🔲 Not Started |
 
 ## 3. Implementation Roadmap
 
