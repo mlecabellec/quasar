@@ -84,7 +84,7 @@ UA_StatusCode OpcUaSecurityManager::configureServer(UA_Server* server, UA_Server
             UA_ByteString_copy(&m_trustList[i], &trustList.trustedCertificates[i]);
         }
         
-        UA_NodeId certGroupId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_CERTIFICATEGROUP_DEFAULTAPPLICATIONGROUP);
+        UA_NodeId certGroupId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVERCONFIGURATION_CERTIFICATEGROUPS_DEFAULTAPPLICATIONGROUP);
         UA_CertificateGroup_Memorystore(&config->secureChannelPKI, &certGroupId, &trustList, config->logging, nullptr);
         UA_CertificateGroup_Memorystore(&config->sessionPKI, &certGroupId, &trustList, config->logging, nullptr);
         
@@ -92,7 +92,6 @@ UA_StatusCode OpcUaSecurityManager::configureServer(UA_Server* server, UA_Server
     }
 
     // 2. Add Security Policies
-    // Always add "None" for internal use/tests if needed, but in production we might want to disable it
     UA_ServerConfig_addSecurityPolicyNone(config, &m_certificate);
     
     if (m_certificate.length > 0 && m_privateKey.length > 0) {
@@ -108,9 +107,24 @@ UA_StatusCode OpcUaSecurityManager::configureClient(UA_Client* client) {
     
     UA_ClientConfig* config = UA_Client_getConfig(client);
     
+    // In open62541-v1.3+, secure policies are added via specific plugin functions or by setting them in config
+    // For clients, if we want to support encrypted endpoints, we need to add the policies to the config.
+    
     if (m_certificate.length > 0 && m_privateKey.length > 0) {
-        UA_ByteString_copy(&m_certificate, &config->clientCertificate);
-        UA_ByteString_copy(&m_privateKey, &config->clientPrivateKey);
+        // Free old if any
+        if (config->securityPoliciesSize > 0) {
+            // Note: client_config_default usually adds "None"
+        }
+        
+        // Add Basic256Sha256 to client
+        UA_SecurityPolicy *sp = (UA_SecurityPolicy*)UA_realloc(config->securityPolicies, 
+                                                               sizeof(UA_SecurityPolicy) * (config->securityPoliciesSize + 1));
+        if (sp) {
+            config->securityPolicies = sp;
+            UA_SecurityPolicy_Basic256Sha256(&config->securityPolicies[config->securityPoliciesSize],
+                                             m_certificate, m_privateKey, config->logging);
+            config->securityPoliciesSize++;
+        }
     }
 
     if (m_trustList.empty()) {
@@ -124,7 +138,7 @@ UA_StatusCode OpcUaSecurityManager::configureClient(UA_Client* client) {
             UA_ByteString_copy(&m_trustList[i], &trustList.trustedCertificates[i]);
         }
         
-        UA_NodeId certGroupId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_CERTIFICATEGROUP_DEFAULTAPPLICATIONGROUP);
+        UA_NodeId certGroupId = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVERCONFIGURATION_CERTIFICATEGROUPS_DEFAULTAPPLICATIONGROUP);
         UA_CertificateGroup_Memorystore(&config->certificateVerification, &certGroupId, &trustList, config->logging, nullptr);
         
         UA_TrustListDataType_clear(&trustList);
@@ -135,8 +149,6 @@ UA_StatusCode OpcUaSecurityManager::configureClient(UA_Client* client) {
 
 UA_StatusCode OpcUaSecurityManager::generateSelfSigned(const std::string& outputCertPath, const std::string& outputKeyPath) {
     (void)outputCertPath; (void)outputKeyPath;
-    // Self-generation requires complex OpenSSL/mbedTLS calls or using open62541's tools if exposed.
-    // For now, we expect certificates to be provided or generated via external scripts.
     return UA_STATUSCODE_BADNOTIMPLEMENTED;
 }
 

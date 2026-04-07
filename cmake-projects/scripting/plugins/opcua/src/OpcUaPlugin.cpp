@@ -39,6 +39,12 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         }
         self.lock()->loadTrustList(v);
     };
+    utServer["addUser"] = [](LuaProxy<OpcUaServerService> self, const std::string& u, const std::string& p) {
+        self.lock()->addUser(u, p);
+    };
+    utServer["setAllowAnonymous"] = [](LuaProxy<OpcUaServerService> self, bool allow) {
+        self.lock()->setAllowAnonymous(allow);
+    };
 
     opcuaTable["createServer"] = [](const std::string& name, sol::object parent) {
         auto ptr = OpcUaServerService::create(name, extractNamedObject(parent));
@@ -67,6 +73,9 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
             v.push_back(kv.second.as<std::string>());
         }
         self.lock()->loadTrustList(v);
+    };
+    utClient["setCredentials"] = [](LuaProxy<OpcUaClientService> self, const std::string& u, const std::string& p) {
+        self.lock()->setCredentials(u, p);
     };
 
     opcuaTable["createClient"] = [](const std::string& name, sol::object parent) {
