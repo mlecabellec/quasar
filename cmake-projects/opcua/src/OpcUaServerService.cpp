@@ -174,15 +174,16 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
         UA_Argument_init(&inputArgument);
         inputArgument.description = UA_LOCALIZEDTEXT_ALLOC("en-US", "JSON Arguments");
         inputArgument.name = UA_STRING_ALLOC("Args");
-        inputArgument.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
+        inputArgument.dataType = UA_NODEID_NUMERIC(0, UA_NS0ID_STRING);
         inputArgument.valueRank = UA_VALUERANK_SCALAR;
 
         UA_Argument outputArgument;
         UA_Argument_init(&outputArgument);
         outputArgument.description = UA_LOCALIZEDTEXT_ALLOC("en-US", "JSON Result");
         outputArgument.name = UA_STRING_ALLOC("Result");
-        outputArgument.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
+        outputArgument.dataType = UA_NODEID_NUMERIC(0, UA_NS0ID_STRING);
         outputArgument.valueRank = UA_VALUERANK_SCALAR;
+
 
         UA_Server_addMethodNode(m_server, UA_NODEID_NULL, parentNodeId,
                                 UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
@@ -229,7 +230,13 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
     if (!UA_NodeId_isNull(&newNodeId)) {
         m_objectToNodeMap[obj] = newNodeId;
         obj->subscribe(m_observer);
+        
+        UA_String s = UA_STRING_NULL;
+        UA_NodeId_print(&newNodeId, &s);
+        printf("[C++] Server mapped %s to %.*s\n", objName.c_str(), (int)s.length, s.data);
+        UA_String_clear(&s);
     }
+
 
     for (auto const& child : obj->getChildren()) {
         mapObject(child, newNodeId);

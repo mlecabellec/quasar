@@ -131,7 +131,13 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             
             std::shared_ptr<NamedObject> localObj;
             
+            UA_String s = UA_STRING_NULL;
+            UA_NodeId_print(&ref->nodeId.nodeId, &s);
+            printf("[C++] Client found %s class %d id %.*s\n", name.c_str(), ref->nodeClass, (int)s.length, s.data);
+            UA_String_clear(&s);
+
             if (ref->nodeClass == UA_NODECLASS_METHOD) {
+
                 UA_NodeId methodId;
                 UA_NodeId_copy(&ref->nodeId.nodeId, &methodId);
                 UA_NodeId objectId;
