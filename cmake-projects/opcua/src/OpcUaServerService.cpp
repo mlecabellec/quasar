@@ -150,12 +150,10 @@ UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeI
                                                 void *objectContext, size_t inputSize,
                                                 const UA_Variant *input, size_t outputSize,
                                                 UA_Variant *output) {
-    (void)server; (void)sessionId; (void)sessionContext; (void)methodId; (void)methodContext; (void)objectId;
-    if (!objectContext || inputSize == 0 || outputSize == 0) return UA_STATUSCODE_BADINTERNALERROR;
+    (void)server; (void)sessionId; (void)sessionContext; (void)methodId; (void)methodContext; (void)objectId; (void)objectContext;
+    if (!methodContext || inputSize == 0 || outputSize == 0) return UA_STATUSCODE_BADINTERNALERROR;
 
-    NamedObject* obj = static_cast<NamedObject*>(objectContext);
-    auto method = std::dynamic_pointer_cast<NamedMethod>(obj->getSelf());
-    if (!method) return UA_STATUSCODE_BADINTERNALERROR;
+    NamedMethod* method = static_cast<NamedMethod*>(methodContext);
     
     if (input[0].type != &UA_TYPES[UA_TYPES_STRING]) return UA_STATUSCODE_BADTYPEMISMATCH;
     UA_String uas = *(UA_String*)input[0].data;
@@ -212,6 +210,19 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
                                 browseName, mAttr, &onMethodCall,
                                 1, &inputArgument, 1, &outputArgument,
                                 obj.get(), &newNodeId);
+        
+        // Ensure the methodContext is also set to obj.get() if it was not handled by the previous call
+        // Actually, open62541 uses the last argument as both nodeContext and methodContext in some versions,
+        // but explicitly setting it via UA_Server_setNodeContext is safer if needed.
+        // However, looking at UA_Server_addMethodNode signature:
+        // UA_Server_addMethodNode(UA_Server *server, const UA_NodeId requestedNewNodeId,
+        //                        const UA_NodeId parentNodeId, const UA_NodeId referenceTypeId,
+        //                        const UA_QualifiedName browseName, const UA_MethodAttributes attr,
+        //                        UA_MethodCallback method,
+        //                        size_t inputArgumentsSize, const UA_Argument *inputArguments,
+        //                        size_t outputArgumentsSize, const UA_Argument *outputArguments,
+        //                        void *nodeContext, UA_NodeId *outNewNodeId)
+        // In open62541, nodeContext IS what's passed as methodContext to the callback.
         
         UA_String_clear(&inputArgument.name);
         UA_LocalizedText_clear(&inputArgument.description);

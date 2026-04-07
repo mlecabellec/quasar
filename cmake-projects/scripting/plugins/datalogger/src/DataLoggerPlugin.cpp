@@ -70,5 +70,3 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         self.lock()->addFilter(filter);
     };
 }
-;
-}

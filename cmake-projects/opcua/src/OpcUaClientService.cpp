@@ -173,18 +173,25 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
         for (size_t j = 0; j < bRes.results[i].referencesSize; ++j) {
             UA_ReferenceDescription *ref = &bRes.results[i].references[j];
             
+            UA_NodeId targetId;
+            UA_NodeId_init(&targetId);
+            UA_NodeId_copy(&ref->nodeId.nodeId, &targetId);
+
             std::string rawName((char*)ref->browseName.name.data, ref->browseName.name.length);
-            printf("[C++] Found ref: %s (ns=%d, class=%d)\n", rawName.c_str(), ref->nodeId.nodeId.namespaceIndex, ref->nodeClass);
+            printf("[C++] Found ref: %s (ns=%d, class=%d)\n", rawName.c_str(), targetId.namespaceIndex, ref->nodeClass);
             std::string name = sanitizeName(rawName);
             
-            if (ref->nodeId.nodeId.namespaceIndex == 0 && 
-                (rawName == "Server" || rawName == "Types" || rawName == "Views")) continue;
+            if (targetId.namespaceIndex == 0 && 
+                (rawName == "Server" || rawName == "Types" || rawName == "Views")) {
+                UA_NodeId_clear(&targetId);
+                continue;
+            }
 
             std::shared_ptr<NamedObject> localObj;
             
             if (ref->nodeClass == UA_NODECLASS_METHOD) {
                 UA_NodeId methodId;
-                UA_NodeId_copy(&ref->nodeId.nodeId, &methodId);
+                UA_NodeId_copy(&targetId, &methodId);
                 UA_NodeId objectId;
                 UA_NodeId_copy(&remoteNodeId, &objectId);
                 
@@ -233,7 +240,7 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             } else {
                 UA_Variant value;
                 UA_Variant_init(&value);
-                UA_Client_readValueAttribute(m_client, ref->nodeId.nodeId, &value);
+                UA_Client_readValueAttribute(m_client, targetId, &value);
                 
                 if (value.type == &UA_TYPES[UA_TYPES_INT32]) {
                     localObj = NamedInteger<int32_t>::create(name, *(UA_Int32*)value.data);
@@ -256,7 +263,7 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             if (ref->nodeClass == UA_NODECLASS_VARIABLE) {
                 if (m_subscriptionId != 0) {
                     UA_MonitoredItemCreateRequest monRequest =
-                        UA_MonitoredItemCreateRequest_default(ref->nodeId.nodeId);
+                        UA_MonitoredItemCreateRequest_default(targetId);
                     UA_Client_MonitoredItems_createDataChange(m_client, m_subscriptionId,
                                                               UA_TIMESTAMPSTORETURN_BOTH, monRequest,
                                                               localObj.get(), onDataChange, nullptr);
@@ -264,10 +271,12 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             }
             
             if (ref->nodeClass == UA_NODECLASS_OBJECT || ref->nodeClass == UA_NODECLASS_VARIABLE) {
-                if (ref->nodeId.nodeId.namespaceIndex != 0) {
-                    browseAndMirror(ref->nodeId.nodeId, localObj);
+                // Recursively mirror children if they are not system objects
+                if (!(targetId.namespaceIndex == 0 && targetId.identifierType == UA_NODEIDTYPE_NUMERIC && targetId.identifier.numeric < 100)) {
+                    browseAndMirror(targetId, localObj);
                 }
             }
+            UA_NodeId_clear(&targetId);
         }
     }
     
