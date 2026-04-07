@@ -8,6 +8,8 @@
 
 namespace quasar::scripting {
 
+class LuaService;
+
 /**
  * @struct NamedLuaMethodImpl
  * @brief Internal implementation for NamedLuaMethod to allow safe invalidation.
@@ -15,7 +17,9 @@ namespace quasar::scripting {
 struct NamedLuaMethodImpl {
     sol::function func;
     std::recursive_mutex mutex;
+    std::weak_ptr<LuaService> service;
 };
+
 
 /**
  * @class NamedLuaMethod

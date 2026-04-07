@@ -28,6 +28,7 @@ add_subdirectory(logicengine)
 add_subdirectory(opcua)
 add_subdirectory(sample-models)
 add_subdirectory(sim-test)
+add_subdirectory(datalogger)
 
 # CPack Configuration
 set(CPACK_GENERATOR "DEB")

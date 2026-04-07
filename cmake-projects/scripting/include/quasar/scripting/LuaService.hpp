@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
+#include <future>
 #include <functional>
 
 namespace quasar::scripting {
@@ -80,6 +81,22 @@ public:
      * @brief Posts a task to be executed on the service's worker thread.
      */
     void postTask(std::function<void()> task);
+
+    /**
+     * @brief Posts a task to be executed on the service's worker thread and returns a future for the result.
+     */
+    template<typename T>
+    std::future<T> postTaskWithResult(std::function<T()> task) {
+        auto promise = std::make_shared<std::promise<T>>();
+        postTask([task, promise]() {
+            try {
+                promise->set_value(task());
+            } catch (...) {
+                promise->set_exception(std::current_exception());
+            }
+        });
+        return promise->get_future();
+    }
 
     /**
      * @brief Perform a thread-safe garbage collection step on the Lua engine.
