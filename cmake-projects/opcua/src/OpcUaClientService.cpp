@@ -174,6 +174,7 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             UA_ReferenceDescription *ref = &bRes.results[i].references[j];
             
             std::string rawName((char*)ref->browseName.name.data, ref->browseName.name.length);
+            printf("[C++] Found ref: %s (ns=%d, class=%d)\n", rawName.c_str(), ref->nodeId.nodeId.namespaceIndex, ref->nodeClass);
             std::string name = sanitizeName(rawName);
             
             if (ref->nodeId.nodeId.namespaceIndex == 0 && 
@@ -263,7 +264,6 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             }
             
             if (ref->nodeClass == UA_NODECLASS_OBJECT || ref->nodeClass == UA_NODECLASS_VARIABLE) {
-                // Limit recursion to avoid loops or deep standard trees
                 if (ref->nodeId.nodeId.namespaceIndex != 0) {
                     browseAndMirror(ref->nodeId.nodeId, localObj);
                 }
