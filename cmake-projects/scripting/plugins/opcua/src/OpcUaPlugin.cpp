@@ -29,6 +29,16 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     utServer["setRootObject"] = [](LuaProxy<OpcUaServerService> self, sol::object root) { 
         self.lock()->setRootObject(extractNamedObject(root)); 
     };
+    utServer["loadCertificate"] = [](LuaProxy<OpcUaServerService> self, const std::string& cert, const std::string& key) {
+        self.lock()->loadCertificate(cert, key);
+    };
+    utServer["loadTrustList"] = [](LuaProxy<OpcUaServerService> self, sol::table paths) {
+        std::vector<std::string> v;
+        for (auto const& kv : paths) {
+            v.push_back(kv.second.as<std::string>());
+        }
+        self.lock()->loadTrustList(v);
+    };
 
     opcuaTable["createServer"] = [](const std::string& name, sol::object parent) {
         auto ptr = OpcUaServerService::create(name, extractNamedObject(parent));
@@ -48,6 +58,16 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     utClient["start"] = [](LuaProxy<OpcUaClientService> self) { self.lock()->start(); };
     utClient["stop"] = [](LuaProxy<OpcUaClientService> self) { self.lock()->stop(); };
     utClient["setUrl"] = [](LuaProxy<OpcUaClientService> self, const std::string& url) { self.lock()->setUrl(url); };
+    utClient["loadCertificate"] = [](LuaProxy<OpcUaClientService> self, const std::string& cert, const std::string& key) {
+        self.lock()->loadCertificate(cert, key);
+    };
+    utClient["loadTrustList"] = [](LuaProxy<OpcUaClientService> self, sol::table paths) {
+        std::vector<std::string> v;
+        for (auto const& kv : paths) {
+            v.push_back(kv.second.as<std::string>());
+        }
+        self.lock()->loadTrustList(v);
+    };
 
     opcuaTable["createClient"] = [](const std::string& name, sol::object parent) {
         auto ptr = OpcUaClientService::create(name, extractNamedObject(parent));

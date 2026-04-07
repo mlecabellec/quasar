@@ -7,8 +7,25 @@
 #include "quasar/named/NamedString.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
 #include <open62541/types.h>
+#include <string>
 
 namespace quasar::opcua {
+
+inline UA_String UA_String_fromStdString(const std::string& s) {
+    UA_String uas;
+    uas.length = s.length();
+    uas.data = (UA_Byte*)UA_malloc(uas.length);
+    memcpy(uas.data, s.c_str(), uas.length);
+    return uas;
+}
+
+inline UA_ByteString UA_ByteString_fromStdString(const std::string& s) {
+    UA_ByteString uabs;
+    uabs.length = s.length();
+    uabs.data = (UA_Byte*)UA_malloc(uabs.length);
+    memcpy(uabs.data, s.c_str(), uabs.length);
+    return uabs;
+}
 
 inline UA_Variant toUaVariant(std::shared_ptr<named::NamedObject> obj) {
     UA_Variant v;

@@ -2,6 +2,7 @@
 #define QUASAR_OPCUA_OPCUACLIENTSERVICE_HPP
 
 #include "quasar/named/NamedService.hpp"
+#include "quasar/opcua/OpcUaSecurityManager.hpp"
 #include <open62541/client.h>
 #include <open62541/client_config_default.h>
 #include <open62541/client_subscriptions.h>
@@ -11,6 +12,8 @@
 #include <functional>
 #include <future>
 #include <mutex>
+#include <vector>
+#include <string>
 
 namespace quasar::opcua {
 
@@ -57,6 +60,26 @@ public:
      * @return "OpcUaClientService".
      */
     std::string getType() const override;
+
+    /**
+     * @brief Loads client certificate and private key.
+     * @param certPath Path to certificate (DER).
+     * @param keyPath Path to private key (DER).
+     */
+    void loadCertificate(const std::string& certPath, const std::string& keyPath);
+
+    /**
+     * @brief Loads trust list for server certificate validation.
+     * @param trustListPaths List of paths to trusted certificates (DER).
+     */
+    void loadTrustList(const std::vector<std::string>& trustListPaths);
+
+    /**
+     * @brief Sets the credentials for username/password authentication.
+     * @param username The username.
+     * @param password The password.
+     */
+    void setCredentials(const std::string& username, const std::string& password);
 
     /**
      * @brief Queues a task to be executed on the client thread.
@@ -124,6 +147,13 @@ private:
     /** @brief Server URL. */
     std::string m_url{"opc.tcp://localhost:4840"};
     
+    /** @brief Security manager. */
+    OpcUaSecurityManager m_securityManager;
+
+    /** @brief Credentials for username/password login. */
+    std::string m_username;
+    std::string m_password;
+
     /** @brief Mapping from remote NodeId to local NamedObject. */
     std::map<std::string, std::shared_ptr<named::NamedObject>> m_nodeToLocalMap;
 

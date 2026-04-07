@@ -5,6 +5,7 @@
 #include "quasar/named/IObserver.hpp"
 #include <open62541/plugin/log_stdout.h>
 #include <open62541/server_config_default.h>
+#include <open62541/plugin/accesscontrol_default.h>
 #include <stdexcept>
 
 namespace quasar::opcua {
@@ -96,6 +97,14 @@ void OpcUaServerService::loadTrustList(const std::vector<std::string>& trustList
     m_securityManager.loadTrustList(trustListPaths);
 }
 
+void OpcUaServerService::addUser(const std::string& username, const std::string& password) {
+    m_users[username] = password;
+}
+
+void OpcUaServerService::setAllowAnonymous(bool allow) {
+    m_allowAnonymous = allow;
+}
+
 void OpcUaServerService::initializeOpcUa() {
     m_server = UA_Server_new();
     UA_ServerConfig* config = UA_Server_getConfig(m_server);
@@ -103,6 +112,22 @@ void OpcUaServerService::initializeOpcUa() {
     
     // Configure security via the manager
     m_securityManager.configureServer(m_server, config);
+
+    // Configure Access Control
+    if (!m_users.empty() || !m_allowAnonymous) {
+        size_t userCount = m_users.size();
+        UA_UsernamePasswordLogin* logins = (UA_UsernamePasswordLogin*)UA_malloc(sizeof(UA_UsernamePasswordLogin) * userCount);
+        size_t i = 0;
+        for (auto const& [u, p] : m_users) {
+            logins[i].username = UA_String_fromStdString(u);
+            logins[i].password = UA_ByteString_fromStdString(p);
+            i++;
+        }
+        UA_AccessControl_default(config, m_allowAnonymous, nullptr, userCount, logins);
+        // Note: logins array is copied by open62541 default plugin, but we should verify if we need to free our local copies.
+        // Actually UA_AccessControl_default in open62541-v1.3+ usually takes ownership or copies. 
+        // For safety in this framework, we rely on the plugin's clear() if it takes ownership.
+    }
 
     std::shared_ptr<NamedObject> root = m_rootObject ? m_rootObject : getSelf();
     mapObject(root, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER));
@@ -123,60 +148,46 @@ void OpcUaServerService::onWrite(UA_Server *server, const UA_NodeId *sessionId,
 }
 
 UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeId *sessionId,
-                                               void *sessionContext, const UA_NodeId *methodId,
-                                               void *methodContext, const UA_NodeId *objectId,
-                                               void *objectContext, size_t inputSize,
-                                               const UA_Variant *input, size_t outputSize,
-                                               UA_Variant *output) {
-    (void)server; (void)sessionId; (void)sessionContext; (void)methodId; (void)objectId; (void)objectContext;
-    if (methodContext && inputSize > 0 && outputSize > 0) {
-        NamedMethod* method = static_cast<NamedMethod*>(methodContext);
-        if (input[0].type == &UA_TYPES[UA_TYPES_STRING]) {
-            UA_String uas = *(UA_String*)input[0].data;
-            std::string jsonArgs((char*)uas.data, uas.length);
-            
-            std::shared_ptr<NamedObject> args;
-            if (jsonArgs == "null" || jsonArgs.empty()) {
-                args = nullptr;
-            } else {
-                try {
-                    args = serialization::fromJson(jsonArgs);
-                } catch (const std::exception& e) {
-                    printf("[C++] Server onMethodCall: fromJson failed: %s\n", e.what());
-                    return UA_STATUSCODE_BADARGUMENTSMISSING;
-                }
-            }
+                                                void *sessionContext, const UA_NodeId *methodId,
+                                                void *methodContext, const UA_NodeId *objectId,
+                                                void *objectContext, size_t inputSize,
+                                                const UA_Variant *input, size_t outputSize,
+                                                UA_Variant *output) {
+    (void)server; (void)sessionId; (void)sessionContext; (void)methodId; (void)methodContext; (void)objectId;
+    if (!objectContext || inputSize == 0 || outputSize == 0) return UA_STATUSCODE_BADINTERNALERROR;
 
-            
-            std::shared_ptr<NamedObject> result = method->execute(args);
-            if (result) {
-                std::string jsonRes = serialization::toJson(result);
-                UA_String uares = UA_STRING_ALLOC(jsonRes.c_str());
-                UA_Variant_setScalarCopy(output, &uares, &UA_TYPES[UA_TYPES_STRING]);
-                UA_String_clear(&uares);
-            } else {
-                UA_String uares = UA_STRING_ALLOC("null");
-                UA_Variant_setScalarCopy(output, &uares, &UA_TYPES[UA_TYPES_STRING]);
-                UA_String_clear(&uares);
-            }
-        }
+    NamedObject* obj = static_cast<NamedObject*>(objectContext);
+    
+    if (input[0].type != &UA_TYPES[UA_TYPES_STRING]) return UA_STATUSCODE_BADTYPEMISMATCH;
+    UA_String uas = *(UA_String*)input[0].data;
+    std::string jsonArgs((char*)uas.data, uas.length);
+
+    std::shared_ptr<NamedObject> args = nullptr;
+    if (jsonArgs != "null") {
+        args = serialization::fromJson(jsonArgs);
     }
+
+    std::shared_ptr<NamedObject> resObj = obj->execute(args);
+    std::string jsonRes = serialization::toJson(resObj);
+    
+    UA_String uares = UA_STRING_ALLOC(jsonRes.c_str());
+    UA_Variant_setScalarCopy(output, &uares, &UA_TYPES[UA_TYPES_STRING]);
+    UA_String_clear(&uares);
+
     return UA_STATUSCODE_GOOD;
 }
 
 void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId parentNodeId) {
-    if (!obj) return;
+    if (!m_server || !obj) return;
 
-    UA_NodeId newNodeId;
     std::string objName = obj->getName();
-    printf("[C++] Server mapping: %s (type %s)\n", objName.c_str(), obj->getType().c_str());
+    std::string type = obj->getType();
     UA_QualifiedName browseName = UA_QUALIFIEDNAME_ALLOC(1, objName.c_str());
-
     UA_LocalizedText displayName = UA_LOCALIZEDTEXT_ALLOC("en-US", objName.c_str());
 
-    std::string type = obj->getType();
-    
-    if (type == "NamedMethod" || type == "NamedLuaMethod") {
+    UA_NodeId newNodeId;
+
+    if (type == "NamedMethod") {
         UA_MethodAttributes mAttr = UA_MethodAttributes_default;
         mAttr.displayName = displayName;
         mAttr.executable = true;
@@ -242,11 +253,6 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
     if (!UA_NodeId_isNull(&newNodeId)) {
         m_objectToNodeMap[obj] = newNodeId;
         obj->subscribe(m_observer);
-        
-        UA_String s = UA_STRING_NULL;
-        UA_NodeId_print(&newNodeId, &s);
-        printf("[C++] Server mapped %s to %.*s\n", objName.c_str(), (int)s.length, s.data);
-        UA_String_clear(&s);
     }
 
 

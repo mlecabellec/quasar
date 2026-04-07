@@ -73,6 +73,19 @@ std::string OpcUaClientService::getType() const {
     return "OpcUaClientService";
 }
 
+void OpcUaClientService::loadCertificate(const std::string& certPath, const std::string& keyPath) {
+    m_securityManager.loadCertificate(certPath, keyPath);
+}
+
+void OpcUaClientService::loadTrustList(const std::vector<std::string>& trustListPaths) {
+    m_securityManager.loadTrustList(trustListPaths);
+}
+
+void OpcUaClientService::setCredentials(const std::string& username, const std::string& password) {
+    m_username = username;
+    m_password = password;
+}
+
 void OpcUaClientService::processTasks() {
     std::queue<std::function<void(UA_Client*)>> currentTasks;
     {
@@ -114,8 +127,17 @@ void OpcUaClientService::onDataChange(UA_Client *client, UA_UInt32 subId, void *
 
 void OpcUaClientService::initializeClient() {
     m_client = UA_Client_new();
-    UA_ClientConfig_setDefault(UA_Client_getConfig(m_client));
-    
+    UA_ClientConfig* config = UA_Client_getConfig(m_client);
+    UA_ClientConfig_setDefault(config);
+
+    // Configure security via the manager
+    m_securityManager.configureClient(m_client);
+
+    // Configure Credentials
+    if (!m_username.empty()) {
+        UA_ClientConfig_setUserNamePassword(config, m_username.c_str(), m_password.c_str());
+    }
+
     UA_StatusCode retval = UA_Client_connect(m_client, m_url.c_str());
     if (retval != UA_STATUSCODE_GOOD) {
         UA_Client_delete(m_client);

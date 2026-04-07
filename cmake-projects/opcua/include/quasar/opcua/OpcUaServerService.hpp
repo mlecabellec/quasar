@@ -8,6 +8,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <string>
 
 namespace quasar::opcua {
 
@@ -74,6 +75,19 @@ public:
      */
     void loadTrustList(const std::vector<std::string>& trustListPaths);
 
+    /**
+     * @brief Adds a user for username/password authentication.
+     * @param username The username.
+     * @param password The password.
+     */
+    void addUser(const std::string& username, const std::string& password);
+
+    /**
+     * @brief Sets whether anonymous login is allowed.
+     * @param allow True to allow anonymous login.
+     */
+    void setAllowAnonymous(bool allow);
+
 protected:
     /**
      * @brief Constructor.
@@ -115,6 +129,11 @@ private:
     std::shared_ptr<named::NamedObject> m_rootObject;
     /** @brief Security manager. */
     OpcUaSecurityManager m_securityManager;
+    /** @brief Allowed users (username -> password). */
+    std::map<std::string, std::string> m_users;
+    /** @brief Allow anonymous login. */
+    bool m_allowAnonymous{true};
+
     /** @brief Map from NamedObject to OPC UA NodeId. */
     std::map<std::shared_ptr<named::NamedObject>, UA_NodeId> m_objectToNodeMap;
     
