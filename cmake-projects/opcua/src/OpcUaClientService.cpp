@@ -107,6 +107,7 @@ void OpcUaClientService::onDataChange(UA_Client *client, UA_UInt32 subId, void *
     (void)client; (void)subId; (void)subContext; (void)monId;
     if (monContext && value->hasValue) {
         NamedObject* obj = static_cast<NamedObject*>(monContext);
+        printf("[C++] Client onDataChange: %s changed\n", obj->getName().c_str());
         fromUaVariant(&value->value, obj->getSelf());
     }
 }
@@ -120,6 +121,14 @@ void OpcUaClientService::initializeClient() {
         UA_Client_delete(m_client);
         m_client = nullptr;
         throw std::runtime_error("Failed to connect to OPC UA server: " + m_url);
+    }
+
+    // Create a single subscription for all variables
+    UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
+    UA_CreateSubscriptionResponse response = UA_Client_Subscriptions_create(m_client, request,
+                                                                            nullptr, nullptr, nullptr);
+    if (response.responseHeader.serviceResult == UA_STATUSCODE_GOOD) {
+        m_subscriptionId = response.subscriptionId;
     }
 
     browseAndMirror(UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), getSelf());
@@ -220,13 +229,10 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             }
             
             if (ref->nodeClass == UA_NODECLASS_VARIABLE) {
-                UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
-                UA_CreateSubscriptionResponse response = UA_Client_Subscriptions_create(m_client, request,
-                                                                                        nullptr, nullptr, nullptr);
-                if (response.responseHeader.serviceResult == UA_STATUSCODE_GOOD) {
+                if (m_subscriptionId != 0) {
                     UA_MonitoredItemCreateRequest monRequest =
                         UA_MonitoredItemCreateRequest_default(ref->nodeId.nodeId);
-                    UA_Client_MonitoredItems_createDataChange(m_client, response.subscriptionId,
+                    UA_Client_MonitoredItems_createDataChange(m_client, m_subscriptionId,
                                                               UA_TIMESTAMPSTORETURN_BOTH, monRequest,
                                                               localObj.get(), onDataChange, nullptr);
                 }

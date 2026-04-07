@@ -18,15 +18,15 @@ inline UA_Variant toUaVariant(std::shared_ptr<named::NamedObject> obj) {
 
     std::string type = obj->getType();
     if (type == "NamedInteger") {
-        if (auto ni = std::dynamic_pointer_cast<named::NamedInteger<int32_t>>(obj)) {
-            UA_Int32 val = ni->value();
+        if (auto ni32 = std::dynamic_pointer_cast<named::NamedInteger<int32_t>>(obj)) {
+            UA_Int32 val = ni32->value();
             UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_INT32]);
         } else if (auto ni64 = std::dynamic_pointer_cast<named::NamedInteger<int64_t>>(obj)) {
             UA_Int64 val = ni64->value();
             UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_INT64]);
         } else if (auto num = std::dynamic_pointer_cast<coretypes::Number>(obj)) {
-            UA_Int32 val = num->toInt32();
-            UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_INT32]);
+            UA_Int64 val = num->toInt64();
+            UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_INT64]);
         }
     } else if (type == "NamedBoolean") {
         UA_Boolean val = std::dynamic_pointer_cast<named::NamedBoolean>(obj)->booleanValue();
@@ -36,11 +36,9 @@ inline UA_Variant toUaVariant(std::shared_ptr<named::NamedObject> obj) {
         UA_String uas = UA_STRING_ALLOC(s.c_str());
         UA_Variant_setScalarCopy(&v, &uas, &UA_TYPES[UA_TYPES_STRING]);
         UA_String_clear(&uas);
-    } else if (type == "NamedFloatingPoint") {
-        if (auto num = std::dynamic_pointer_cast<coretypes::Number>(obj)) {
-            UA_Double val = num->toDouble();
-            UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-        }
+    } else if (auto num = std::dynamic_pointer_cast<coretypes::Number>(obj)) {
+        UA_Double val = num->toDouble();
+        UA_Variant_setScalarCopy(&v, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
     }
     return v;
 }
@@ -48,13 +46,16 @@ inline UA_Variant toUaVariant(std::shared_ptr<named::NamedObject> obj) {
 inline void fromUaVariant(const UA_Variant *v, std::shared_ptr<named::NamedObject> obj) {
     if (!obj || !v) return;
     std::string type = obj->getType();
+    
     if (type == "NamedInteger") {
         if (v->type == &UA_TYPES[UA_TYPES_INT32]) {
             int32_t val = *(UA_Int32*)v->data;
             if (auto ni = std::dynamic_pointer_cast<named::NamedInteger<int32_t>>(obj)) ni->setValue(val);
+            else if (auto ni64 = std::dynamic_pointer_cast<named::NamedInteger<int64_t>>(obj)) ni64->setValue(val);
         } else if (v->type == &UA_TYPES[UA_TYPES_INT64]) {
             int64_t val = *(UA_Int64*)v->data;
-            if (auto ni = std::dynamic_pointer_cast<named::NamedInteger<int64_t>>(obj)) ni->setValue(val);
+            if (auto ni64 = std::dynamic_pointer_cast<named::NamedInteger<int64_t>>(obj)) ni64->setValue(val);
+            else if (auto ni = std::dynamic_pointer_cast<named::NamedInteger<int32_t>>(obj)) ni->setValue(static_cast<int32_t>(val));
         }
     } else if (type == "NamedBoolean") {
         if (v->type == &UA_TYPES[UA_TYPES_BOOLEAN]) {

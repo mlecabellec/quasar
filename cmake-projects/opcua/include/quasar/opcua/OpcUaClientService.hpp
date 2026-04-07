@@ -132,6 +132,8 @@ private:
     /** @brief Task queue for cross-thread client calls. */
     std::queue<std::function<void(UA_Client*)>> m_tasks;
 
+    /** @brief The single subscription ID for monitoring all variables. */
+    UA_UInt32 m_subscriptionId{0};
     /** @brief Callback for data change notifications. */
     static void onDataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
                              UA_UInt32 monId, void *monContext, UA_DataValue *value);

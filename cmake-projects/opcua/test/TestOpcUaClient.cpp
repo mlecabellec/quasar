@@ -20,10 +20,18 @@ protected:
         
         serverMethod = NamedMethod::create("Multiply", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
             (void)owner;
-            if (!args || args->getType() != "NamedInteger") return nullptr;
-            auto input = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args);
-            if (!input) return nullptr;
-            return NamedInteger<int64_t>::create("result", input->value() * 2);
+            if (!args) return nullptr;
+            
+            int64_t val = 0;
+            if (auto i32 = std::dynamic_pointer_cast<NamedInteger<int32_t>>(args)) {
+                val = i32->value();
+            } else if (auto i64 = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args)) {
+                val = i64->value();
+            } else {
+                return nullptr;
+            }
+            
+            return NamedInteger<int64_t>::create("result", val * 2);
         }, serverData);
 
         server = OpcUaServerService::create("OpcUaServer");
@@ -108,8 +116,8 @@ TEST_F(OpcUaIntegrationTest, MethodExecution) {
     
     ASSERT_NE(resultObj, nullptr) << "Remote method execution returned nullptr (timed out or failed)";
     
-    auto resultInt = std::dynamic_pointer_cast<NamedInteger<int64_t>>(resultObj);
-    ASSERT_NE(resultInt, nullptr) << "Result is not a NamedInteger<int64_t>";
+    auto resultNum = std::dynamic_pointer_cast<quasar::coretypes::Number>(resultObj);
+    ASSERT_NE(resultNum, nullptr) << "Result is not a coretypes::Number";
     
-    EXPECT_EQ(resultInt->value(), 42) << "Mathematical operation failed remotely";
+    EXPECT_EQ(resultNum->toInt64(), 42) << "Mathematical operation failed remotely";
 }
