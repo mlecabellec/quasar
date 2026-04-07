@@ -7,7 +7,7 @@ MathFilter::MathFilter(const std::string& targetSourcePath, double scale, double
 
 std::optional<LogEntry> MathFilter::process(LogEntry entry) {
     if (std::holds_alternative<DataSample>(entry.payload)) {
-        auto& ds = std::get<DataSample>(entry.payload);
+        DataSample& ds = std::get<DataSample>(entry.payload);
         if (ds.sourcePath == m_targetSourcePath) {
             if (std::holds_alternative<double>(ds.value)) {
                 ds.value = std::get<double>(ds.value) * m_scale + m_offset;

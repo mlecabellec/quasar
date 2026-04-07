@@ -8,7 +8,7 @@ log("Starting Lua DataLogger Test")
 
 local root = quasar.named.createObject("root")
 local service = quasar.datalogger.createService("MyDataLogger", 1000, root)
-local csvWriter = quasar.datalogger.createCsvWriter("CsvWriter", "lua_datalogger_out.csv", service)
+local csvWriter = quasar.datalogger.createCsvWriter("CsvWriter", "lua_datalogger_out.csv", nil)
 
 service:addCsvRecorder(csvWriter)
 

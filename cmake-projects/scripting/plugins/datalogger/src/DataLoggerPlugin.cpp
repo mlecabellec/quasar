@@ -43,8 +43,8 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         sol::base_classes, sol::bases<ILuaProxy>());
         
     dlTable["createCsvWriter"] = [](const std::string& name, const std::string& path, sol::object parent) {
-        auto parentPtr = extractNamedObject(parent);
-        auto ptr = std::make_shared<CsvFileWriter>(name, path);
+        std::shared_ptr<quasar::named::NamedObject> parentPtr = extractNamedObject(parent);
+        std::shared_ptr<CsvFileWriter> ptr = std::make_shared<CsvFileWriter>(name, path);
         if (parentPtr) {
             ptr->setParent(parentPtr);
         }
@@ -69,4 +69,6 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     utServer["addFilter"] = [](LuaProxy<DataLoggerService> self, std::shared_ptr<IFilter> filter) {
         self.lock()->addFilter(filter);
     };
+}
+;
 }

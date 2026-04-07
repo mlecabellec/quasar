@@ -75,7 +75,7 @@ void CsvFileWriter::writerLoop() {
 }
 
 std::string CsvFileWriter::formatIso8601(const std::chrono::system_clock::time_point& tp) const {
-    auto time_c = std::chrono::system_clock::to_time_t(tp);
+    std::time_t time_c = std::chrono::system_clock::to_time_t(tp);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
     std::tm tm_buf;
     localtime_r(&time_c, &tm_buf);
@@ -86,7 +86,7 @@ std::string CsvFileWriter::formatIso8601(const std::chrono::system_clock::time_p
 }
 
 void CsvFileWriter::writeBuffer(const std::vector<LogEntry>& buffer) {
-    for (const auto& entry : buffer) {
+    for (const LogEntry& entry : buffer) {
         m_file << formatIso8601(entry.timestamp) << ",";
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -105,3 +105,4 @@ void CsvFileWriter::writeBuffer(const std::vector<LogEntry>& buffer) {
 }
 
 } // namespace quasar::datalogger
+asar::datalogger

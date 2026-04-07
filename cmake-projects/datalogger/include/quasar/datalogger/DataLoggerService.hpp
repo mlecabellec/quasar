@@ -60,9 +60,9 @@ public:
      */
     std::string getType() const override;
 
-protected:
+public:
     /**
-     * @brief Protected constructor.
+     * @brief Protected constructor made public for std::make_shared.
      */
     DataLoggerService(const std::string& name, size_t ringBufferCapacity);
 

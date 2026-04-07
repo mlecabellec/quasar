@@ -11,11 +11,7 @@ DataLoggerService::DataLoggerService(const std::string& name, size_t ringBufferC
 DataLoggerService::~DataLoggerService() = default;
 
 std::shared_ptr<DataLoggerService> DataLoggerService::create(const std::string& name, size_t ringBufferCapacity, std::shared_ptr<quasar::named::NamedObject> parent) {
-    struct MakeSharedEnabler : public DataLoggerService {
-        MakeSharedEnabler(const std::string& name, size_t capacity) : DataLoggerService(name, capacity) {}
-    };
-    
-    auto service = std::make_shared<MakeSharedEnabler>(name, ringBufferCapacity);
+    auto service = std::make_shared<DataLoggerService>(name, ringBufferCapacity);
     if (parent) {
         service->setParent(parent);
     }
@@ -65,7 +61,7 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
     (void)args;
     
     // Process all currently available items in the ring buffer
-    while (auto optEntry = m_ringBuffer->pop()) {
+    while (std::optional<LogEntry> optEntry = m_ringBuffer->pop()) {
         LogEntry entry = std::move(optEntry.value());
         
         std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
@@ -92,3 +88,5 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
 }
 
 } // namespace quasar::datalogger
+er
+asar::datalogger
