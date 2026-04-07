@@ -35,6 +35,7 @@ std::shared_ptr<OpcUaClientService> OpcUaClientService::create(const std::string
         (void)owner; (void)args;
         if (std::shared_ptr<OpcUaClientService> s = weakSelf.lock()) {
             if (s->m_client) {
+                s->processTasks();
                 UA_Client_run_iterate(s->m_client, 0);
             }
         }
@@ -70,6 +71,19 @@ void OpcUaClientService::stop() {
 
 std::string OpcUaClientService::getType() const {
     return "OpcUaClientService";
+}
+
+void OpcUaClientService::processTasks() {
+    std::queue<std::function<void(UA_Client*)>> currentTasks;
+    {
+        std::lock_guard<std::mutex> lock(m_queueMutex);
+        std::swap(currentTasks, m_tasks);
+    }
+    
+    while (!currentTasks.empty()) {
+        currentTasks.front()(m_client);
+        currentTasks.pop();
+    }
 }
 
 static std::string sanitizeName(const std::string& name) {
@@ -131,61 +145,62 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             
             std::shared_ptr<NamedObject> localObj;
             
-            UA_String s = UA_STRING_NULL;
-            UA_NodeId_print(&ref->nodeId.nodeId, &s);
-            printf("[C++] Client found %s class %d id %.*s\n", name.c_str(), ref->nodeClass, (int)s.length, s.data);
-            UA_String_clear(&s);
-
             if (ref->nodeClass == UA_NODECLASS_METHOD) {
-
                 UA_NodeId methodId;
                 UA_NodeId_copy(&ref->nodeId.nodeId, &methodId);
                 UA_NodeId objectId;
                 UA_NodeId_copy(&remoteNodeId, &objectId);
                 
-                std::weak_ptr<OpcUaClientService> weakSelf = std::dynamic_pointer_cast<OpcUaClientService>(getSelf());
-                localObj = NamedMethod::create(name, [weakSelf, methodId, objectId](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
-                    auto s = weakSelf.lock();
-                    if (!s || !s->m_client) return nullptr;
+                std::weak_ptr<OpcUaClientService> weakSvc = std::dynamic_pointer_cast<OpcUaClientService>(getSelf());
+                localObj = NamedMethod::create(name, [weakSvc, methodId, objectId](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+                    (void)owner;
+                    auto s = weakSvc.lock();
+                    if (!s || !s->isRunning()) return nullptr;
                     
-                    UA_Variant input;
-                    UA_Variant_init(&input);
-                    std::string jsonArgs = serialization::toJson(args);
-                    UA_String uas = UA_STRING_ALLOC(jsonArgs.c_str());
-                    UA_Variant_setScalarCopy(&input, &uas, &UA_TYPES[UA_TYPES_STRING]);
-                    UA_String_clear(&uas);
-                    
-                    size_t outputSize = 0;
-                    UA_Variant *output = nullptr;
-                    
-                    UA_StatusCode retval = UA_Client_call(s->m_client, objectId, methodId, 1, &input, &outputSize, &output);
-
-
-                    UA_Variant_clear(&input);
-                    
-                    if (retval != UA_STATUSCODE_GOOD) {
-                        printf("[C++] Method call failed with status: 0x%08X\n", retval);
-                    }
-
-
-                    
-                    std::shared_ptr<NamedObject> res = nullptr;
-                    if (retval == UA_STATUSCODE_GOOD && outputSize > 0 && output[0].type == &UA_TYPES[UA_TYPES_STRING]) {
-                        UA_String uares = *(UA_String*)output[0].data;
-                        std::string jsonRes((char*)uares.data, uares.length);
-                        if (jsonRes != "null") {
-                            res = serialization::fromJson(jsonRes);
+                    auto task = [methodId, objectId, args](UA_Client* client) -> std::shared_ptr<NamedObject> {
+                        UA_Variant input;
+                        UA_Variant_init(&input);
+                        std::string jsonArgs = serialization::toJson(args);
+                        UA_String uas = UA_STRING_ALLOC(jsonArgs.c_str());
+                        UA_Variant_setScalarCopy(&input, &uas, &UA_TYPES[UA_TYPES_STRING]);
+                        UA_String_clear(&uas);
+                        
+                        size_t outputSize = 0;
+                        UA_Variant *output = nullptr;
+                        UA_StatusCode retval = UA_Client_call(client, objectId, methodId, 1, &input, &outputSize, &output);
+                        UA_Variant_clear(&input);
+                        
+                        std::shared_ptr<NamedObject> res = nullptr;
+                        if (retval == UA_STATUSCODE_GOOD && outputSize > 0 && output[0].type == &UA_TYPES[UA_TYPES_STRING]) {
+                            UA_String uares = *(UA_String*)output[0].data;
+                            std::string jsonRes((char*)uares.data, uares.length);
+                            if (jsonRes != "null") {
+                                res = serialization::fromJson(jsonRes);
+                            }
                         }
+                        UA_Array_delete(output, outputSize, &UA_TYPES[UA_TYPES_VARIANT]);
+                        return res;
+                    };
+
+                    try {
+                        auto future = s->enqueueTask<std::shared_ptr<NamedObject>>(task);
+                        // Wait for response with timeout
+                        if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
+                            return future.get();
+                        } else {
+                            printf("[C++] Method call timed out\n");
+                            return nullptr;
+                        }
+                    } catch (const std::exception& e) {
+                        printf("[C++] Method call exception: %s\n", e.what());
+                        return nullptr;
                     }
-                    UA_Array_delete(output, outputSize, &UA_TYPES[UA_TYPES_VARIANT]);
-                    return res;
                 }, localParent);
             } else {
                 UA_Variant value;
                 UA_Variant_init(&value);
                 UA_Client_readValueAttribute(m_client, ref->nodeId.nodeId, &value);
                 
-                // Simplified creation logic here for now
                 if (value.type == &UA_TYPES[UA_TYPES_INT32]) {
                     localObj = NamedInteger<int32_t>::create(name, *(UA_Int32*)value.data);
                 } else if (value.type == &UA_TYPES[UA_TYPES_INT64]) {
