@@ -105,4 +105,3 @@ void CsvFileWriter::writeBuffer(const std::vector<LogEntry>& buffer) {
 }
 
 } // namespace quasar::datalogger
-asar::datalogger

@@ -88,5 +88,3 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
 }
 
 } // namespace quasar::datalogger
-er
-asar::datalogger
