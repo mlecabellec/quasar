@@ -120,7 +120,6 @@ void OpcUaClientService::onDataChange(UA_Client *client, UA_UInt32 subId, void *
     (void)client; (void)subId; (void)subContext; (void)monId;
     if (monContext && value->hasValue) {
         NamedObject* obj = static_cast<NamedObject*>(monContext);
-        printf("[C++] Client onDataChange: %s changed\n", obj->getName().c_str());
         fromUaVariant(&value->value, obj->getSelf());
     }
 }
@@ -163,7 +162,9 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
     bReq.requestedMaxReferencesPerNode = 0;
     bReq.nodesToBrowse = UA_BrowseDescription_new();
     bReq.nodesToBrowseSize = 1;
-    bReq.nodesToBrowse[0].nodeId = remoteNodeId;
+    UA_NodeId_copy(&remoteNodeId, &bReq.nodesToBrowse[0].nodeId);
+    bReq.nodesToBrowse[0].referenceTypeId = UA_NODEID_NULL;
+    bReq.nodesToBrowse[0].includeSubtypes = true;
     bReq.nodesToBrowse[0].resultMask = UA_BROWSERESULTMASK_ALL;
 
     UA_BrowseResponse bRes = UA_Client_Service_browse(m_client, bReq);
@@ -175,6 +176,9 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             std::string rawName((char*)ref->browseName.name.data, ref->browseName.name.length);
             std::string name = sanitizeName(rawName);
             
+            if (ref->nodeId.nodeId.namespaceIndex == 0 && 
+                (rawName == "Server" || rawName == "Types" || rawName == "Views")) continue;
+
             std::shared_ptr<NamedObject> localObj;
             
             if (ref->nodeClass == UA_NODECLASS_METHOD) {
@@ -216,15 +220,12 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
 
                     try {
                         auto future = s->enqueueTask<std::shared_ptr<NamedObject>>(task);
-                        // Wait for response with timeout
                         if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
                             return future.get();
                         } else {
-                            printf("[C++] Method call timed out\n");
                             return nullptr;
                         }
-                    } catch (const std::exception& e) {
-                        printf("[C++] Method call exception: %s\n", e.what());
+                    } catch (...) {
                         return nullptr;
                     }
                 }, localParent);
@@ -261,8 +262,11 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
                 }
             }
             
-            if (ref->nodeClass == UA_NODECLASS_OBJECT) {
-                browseAndMirror(ref->nodeId.nodeId, localObj);
+            if (ref->nodeClass == UA_NODECLASS_OBJECT || ref->nodeClass == UA_NODECLASS_VARIABLE) {
+                // Limit recursion to avoid loops or deep standard trees
+                if (ref->nodeId.nodeId.namespaceIndex != 0) {
+                    browseAndMirror(ref->nodeId.nodeId, localObj);
+                }
             }
         }
     }
