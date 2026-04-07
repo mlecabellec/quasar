@@ -124,9 +124,6 @@ void OpcUaServerService::initializeOpcUa() {
             i++;
         }
         UA_AccessControl_default(config, m_allowAnonymous, nullptr, userCount, logins);
-        // Note: logins array is copied by open62541 default plugin, but we should verify if we need to free our local copies.
-        // Actually UA_AccessControl_default in open62541-v1.3+ usually takes ownership or copies. 
-        // For safety in this framework, we rely on the plugin's clear() if it takes ownership.
     }
 
     std::shared_ptr<NamedObject> root = m_rootObject ? m_rootObject : getSelf();
@@ -157,6 +154,8 @@ UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeI
     if (!objectContext || inputSize == 0 || outputSize == 0) return UA_STATUSCODE_BADINTERNALERROR;
 
     NamedObject* obj = static_cast<NamedObject*>(objectContext);
+    auto method = std::dynamic_pointer_cast<NamedMethod>(obj->getSelf());
+    if (!method) return UA_STATUSCODE_BADINTERNALERROR;
     
     if (input[0].type != &UA_TYPES[UA_TYPES_STRING]) return UA_STATUSCODE_BADTYPEMISMATCH;
     UA_String uas = *(UA_String*)input[0].data;
@@ -167,7 +166,7 @@ UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeI
         args = serialization::fromJson(jsonArgs);
     }
 
-    std::shared_ptr<NamedObject> resObj = obj->execute(args);
+    std::shared_ptr<NamedObject> resObj = method->execute(args);
     std::string jsonRes = serialization::toJson(resObj);
     
     UA_String uares = UA_STRING_ALLOC(jsonRes.c_str());

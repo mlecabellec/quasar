@@ -129,13 +129,14 @@ void OpcUaClientService::initializeClient() {
     m_client = UA_Client_new();
     UA_ClientConfig* config = UA_Client_getConfig(m_client);
     UA_ClientConfig_setDefault(config);
+    config->allowNonePolicyPassword = true;
 
     // Configure security via the manager
     m_securityManager.configureClient(m_client);
 
     // Configure Credentials
     if (!m_username.empty()) {
-        UA_ClientConfig_setUserNamePassword(config, m_username.c_str(), m_password.c_str());
+        UA_ClientConfig_setAuthenticationUsername(config, m_username.c_str(), m_password.c_str());
     }
 
     UA_StatusCode retval = UA_Client_connect(m_client, m_url.c_str());
