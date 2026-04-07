@@ -129,10 +129,12 @@ UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeI
             } else {
                 try {
                     args = serialization::fromJson(jsonArgs);
-                } catch (...) {
+                } catch (const std::exception& e) {
+                    printf("[C++] Server onMethodCall: fromJson failed: %s\n", e.what());
                     return UA_STATUSCODE_BADARGUMENTSMISSING;
                 }
             }
+
             
             std::shared_ptr<NamedObject> result = method->execute(args);
             if (result) {
@@ -155,7 +157,9 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
 
     UA_NodeId newNodeId;
     std::string objName = obj->getName();
+    printf("[C++] Server mapping: %s (type %s)\n", objName.c_str(), obj->getType().c_str());
     UA_QualifiedName browseName = UA_QUALIFIEDNAME_ALLOC(1, objName.c_str());
+
     UA_LocalizedText displayName = UA_LOCALIZEDTEXT_ALLOC("en-US", objName.c_str());
 
     std::string type = obj->getType();

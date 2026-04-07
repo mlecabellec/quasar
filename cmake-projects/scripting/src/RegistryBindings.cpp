@@ -32,29 +32,33 @@ namespace quasar::scripting {
 
 using namespace quasar::named;
 
-/** @brief Extract shared_ptr from sol::object if it's a proxy [CS-0010.45] */
-template<typename T>
-static std::shared_ptr<T> tryExtract(sol::object obj) {
-    if (obj.is<LuaProxy<T>>()) return obj.as<LuaProxy<T>>().lock();
-    return nullptr;
-}
-
 std::shared_ptr<NamedObject> extractNamedObject(sol::object obj) {
     if (!obj.valid() || obj.is<sol::nil_t>()) return nullptr;
-    if (std::shared_ptr<NamedObject> p = tryExtract<NamedObject>(obj)) return p;
-    if (std::shared_ptr<ScriptableNamedObject> p = tryExtract<ScriptableNamedObject>(obj)) return p;
-    if (std::shared_ptr<NamedInteger<int64_t>> p = tryExtract<NamedInteger<int64_t>>(obj)) return p;
-    if (std::shared_ptr<NamedFloatingPoint<double>> p = tryExtract<NamedFloatingPoint<double>>(obj)) return p;
-    if (std::shared_ptr<NamedQuantity> p = tryExtract<NamedQuantity>(obj)) return p;
-    if (std::shared_ptr<NamedVariant> p = tryExtract<NamedVariant>(obj)) return p;
-    if (std::shared_ptr<NamedBuffer> p = tryExtract<NamedBuffer>(obj)) return p;
-    if (std::shared_ptr<NamedBitBuffer> p = tryExtract<NamedBitBuffer>(obj)) return p;
-    if (std::shared_ptr<NamedArray<NamedObject>> p = tryExtract<NamedArray<NamedObject>>(obj)) return p;
-    if (std::shared_ptr<NamedMap<NamedObject>> p = tryExtract<NamedMap<NamedObject>>(obj)) return p;
-    if (std::shared_ptr<ActiveEntity> p = tryExtract<ActiveEntity>(obj)) return p;
-    if (std::shared_ptr<NamedMethod> p = tryExtract<NamedMethod>(obj)) return p;
-    if (std::shared_ptr<NamedLuaMethod> p = tryExtract<NamedLuaMethod>(obj)) return p;
-    if (std::shared_ptr<NamedService> p = tryExtract<NamedService>(obj)) return p;
+    
+    // Attempt to extract as a generic ILuaProxy
+    try {
+        if (obj.is<ILuaProxy>()) {
+            return obj.as<ILuaProxy&>().lockAsNamedObject();
+        }
+    } catch (...) {
+        // Fallback to explicit checks if base class info is missing or failed
+    }
+    
+    if (obj.is<LuaProxy<NamedObject>>()) return obj.as<LuaProxy<NamedObject>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<ScriptableNamedObject>>()) return obj.as<LuaProxy<ScriptableNamedObject>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedInteger<int64_t>>>()) return obj.as<LuaProxy<NamedInteger<int64_t>>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedFloatingPoint<double>>>()) return obj.as<LuaProxy<NamedFloatingPoint<double>>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedQuantity>>()) return obj.as<LuaProxy<NamedQuantity>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedVariant>>()) return obj.as<LuaProxy<NamedVariant>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedBuffer>>()) return obj.as<LuaProxy<NamedBuffer>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedBitBuffer>>()) return obj.as<LuaProxy<NamedBitBuffer>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedArray<NamedObject>>>()) return obj.as<LuaProxy<NamedArray<NamedObject>>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedMap<NamedObject>>>()) return obj.as<LuaProxy<NamedMap<NamedObject>>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<ActiveEntity>>()) return obj.as<LuaProxy<ActiveEntity>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedMethod>>()) return obj.as<LuaProxy<NamedMethod>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedLuaMethod>>()) return obj.as<LuaProxy<NamedLuaMethod>>().lockAsNamedObject();
+    if (obj.is<LuaProxy<NamedService>>()) return obj.as<LuaProxy<NamedService>>().lockAsNamedObject();
+
     return nullptr;
 }
 
@@ -119,10 +123,14 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     sol::table quasarTable = lua["quasar"].get_or_create<sol::table>();
     sol::table namedTable = quasarTable["named"].get_or_create<sol::table>();
 
+    lua.new_usertype<ILuaProxy>("ILuaProxy", sol::no_constructor,
+        "isAlive", &ILuaProxy::isAlive
+    );
+
     lua.new_usertype<IObserver>("IObserver", sol::no_constructor);
 
     // NamedObject
-    sol::usertype<LuaProxy<NamedObject>> utNamedObject = lua.new_usertype<LuaProxy<NamedObject>>("NamedObject", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedObject>> utNamedObject = lua.new_usertype<LuaProxy<NamedObject>>("NamedObject", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedObject>(utNamedObject);
     namedTable["createObject"] = [](const std::string& name, sol::object parent) {
         std::shared_ptr<NamedObject> ptr = NamedObject::create(name, extractNamedObject(parent));
@@ -131,7 +139,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // ScriptableNamedObject
-    sol::usertype<LuaProxy<ScriptableNamedObject>> utScriptable = lua.new_usertype<LuaProxy<ScriptableNamedObject>>("ScriptableNamedObject", sol::no_constructor);
+    sol::usertype<LuaProxy<ScriptableNamedObject>> utScriptable = lua.new_usertype<LuaProxy<ScriptableNamedObject>>("ScriptableNamedObject", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<ScriptableNamedObject>(utScriptable);
     utScriptable["onEvent"] = [](LuaProxy<ScriptableNamedObject> self, const std::string& ev, sol::object data) { self.lock()->onEvent(ev, data); };
     utScriptable["setLuaSelf"] = [](LuaProxy<ScriptableNamedObject> self, sol::table t) { self.lock()->setLuaSelf(t); };
@@ -144,7 +152,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     // NamedLong
     using NamedLong = NamedInteger<int64_t>;
-    sol::usertype<LuaProxy<NamedLong>> utNamedLong = lua.new_usertype<LuaProxy<NamedLong>>("NamedLong", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedLong>> utNamedLong = lua.new_usertype<LuaProxy<NamedLong>>("NamedLong", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedLong>(utNamedLong);
     utNamedLong["value"] = [](LuaProxy<NamedLong> self) { return self.lock()->value(); };
     utNamedLong["setValue"] = [](LuaProxy<NamedLong> self, int64_t v) { self.lock()->setValue(v); };
@@ -156,7 +164,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     // NamedDouble
     using NamedDouble = NamedFloatingPoint<double>;
-    sol::usertype<LuaProxy<NamedDouble>> utNamedDouble = lua.new_usertype<LuaProxy<NamedDouble>>("NamedDouble", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedDouble>> utNamedDouble = lua.new_usertype<LuaProxy<NamedDouble>>("NamedDouble", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedDouble>(utNamedDouble);
     utNamedDouble["value"] = [](LuaProxy<NamedDouble> self) { return self.lock()->value(); };
     utNamedDouble["setValue"] = [](LuaProxy<NamedDouble> self, double v) { self.lock()->setValue(v); };
@@ -167,7 +175,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // NamedQuantity
-    sol::usertype<LuaProxy<NamedQuantity>> utNamedQuantity = lua.new_usertype<LuaProxy<NamedQuantity>>("NamedQuantity", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedQuantity>> utNamedQuantity = lua.new_usertype<LuaProxy<NamedQuantity>>("NamedQuantity", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedQuantity>(utNamedQuantity);
     utNamedQuantity["value"] = [](LuaProxy<NamedQuantity> self) { return self.lock()->value(); };
     utNamedQuantity["getUnitSymbol"] = [](LuaProxy<NamedQuantity> self) { return self.lock()->getUnitSymbol(); };
@@ -185,7 +193,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     );
 
     // NamedVariant
-    sol::usertype<LuaProxy<NamedVariant>> utNamedVariant = lua.new_usertype<LuaProxy<NamedVariant>>("NamedVariant", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedVariant>> utNamedVariant = lua.new_usertype<LuaProxy<NamedVariant>>("NamedVariant", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedVariant>(utNamedVariant);
     utNamedVariant["set"] = [](LuaProxy<NamedVariant> self, sol::object obj) { self.lock()->set(extractNamedObject(obj)); };
     utNamedVariant["get"] = [](LuaProxy<NamedVariant> self) -> std::optional<LuaProxy<NamedObject>> {
@@ -199,7 +207,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // NamedBuffer
-    sol::usertype<LuaProxy<NamedBuffer>> utNamedBuffer = lua.new_usertype<LuaProxy<NamedBuffer>>("NamedBuffer", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedBuffer>> utNamedBuffer = lua.new_usertype<LuaProxy<NamedBuffer>>("NamedBuffer", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedBuffer>(utNamedBuffer);
     utNamedBuffer["getSize"] = [](LuaProxy<NamedBuffer> self) { return self.lock()->size(); };
     utNamedBuffer["read"] = [](LuaProxy<NamedBuffer> self, size_t off, size_t sz) {
@@ -220,7 +228,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // NamedBitBuffer
-    sol::usertype<LuaProxy<NamedBitBuffer>> utNamedBitBuffer = lua.new_usertype<LuaProxy<NamedBitBuffer>>("NamedBitBuffer", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedBitBuffer>> utNamedBitBuffer = lua.new_usertype<LuaProxy<NamedBitBuffer>>("NamedBitBuffer", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedBitBuffer>(utNamedBitBuffer);
     utNamedBitBuffer["getBitCount"] = [](LuaProxy<NamedBitBuffer> self) { return self.lock()->bitSize(); };
     utNamedBitBuffer["getBit"] = [](LuaProxy<NamedBitBuffer> self, size_t i) { return self.lock()->getBit(i); };
@@ -233,7 +241,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     // Collections
     using NamedObjectArray = NamedArray<NamedObject>;
-    sol::usertype<LuaProxy<NamedObjectArray>> utNamedArray = lua.new_usertype<LuaProxy<NamedObjectArray>>("NamedArray", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedObjectArray>> utNamedArray = lua.new_usertype<LuaProxy<NamedObjectArray>>("NamedArray", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedObjectArray>(utNamedArray);
     utNamedArray["size"] = [](LuaProxy<NamedObjectArray> self) { return self.lock()->size(); };
     utNamedArray["get"] = [](LuaProxy<NamedObjectArray> self, size_t i) -> std::optional<LuaProxy<NamedObject>> {
@@ -246,7 +254,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     using NamedObjectMap = NamedMap<NamedObject>;
-    sol::usertype<LuaProxy<NamedObjectMap>> utNamedMap = lua.new_usertype<LuaProxy<NamedObjectMap>>("NamedMap", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedObjectMap>> utNamedMap = lua.new_usertype<LuaProxy<NamedObjectMap>>("NamedMap", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedObjectMap>(utNamedMap);
     utNamedMap["size"] = [](LuaProxy<NamedObjectMap> self) { return self.lock()->size(); };
     utNamedMap["get"] = [](LuaProxy<NamedObjectMap> self, const std::string& k) -> std::optional<LuaProxy<NamedObject>> {
@@ -259,14 +267,14 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // ActiveEntity
-    sol::usertype<LuaProxy<ActiveEntity>> utActiveEntity = lua.new_usertype<LuaProxy<ActiveEntity>>("ActiveEntity", sol::no_constructor);
+    sol::usertype<LuaProxy<ActiveEntity>> utActiveEntity = lua.new_usertype<LuaProxy<ActiveEntity>>("ActiveEntity", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<ActiveEntity>(utActiveEntity);
     utActiveEntity["subscribe"] = [](LuaProxy<ActiveEntity> self, std::shared_ptr<IObserver> obs) { self.lock()->subscribe(obs); };
     utActiveEntity["unsubscribe"] = [](LuaProxy<ActiveEntity> self, std::shared_ptr<IObserver> obs) { self.lock()->unsubscribe(obs); };
     utActiveEntity["getState"] = [](LuaProxy<ActiveEntity> self) { return (int)self.lock()->getState(); };
 
     // NamedMethod
-    sol::usertype<LuaProxy<NamedMethod>> utNamedMethod = lua.new_usertype<LuaProxy<NamedMethod>>("NamedMethod", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedMethod>> utNamedMethod = lua.new_usertype<LuaProxy<NamedMethod>>("NamedMethod", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedMethod>(utNamedMethod);
     utNamedMethod["execute"] = [](LuaProxy<NamedMethod> self, sol::object args) -> std::optional<LuaProxy<NamedObject>> {
         std::shared_ptr<NamedObject> res = self.lock()->execute(extractNamedObject(args));
@@ -274,7 +282,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // NamedLuaMethod
-    sol::usertype<LuaProxy<NamedLuaMethod>> utNamedLuaMethod = lua.new_usertype<LuaProxy<NamedLuaMethod>>("NamedLuaMethod", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedLuaMethod>> utNamedLuaMethod = lua.new_usertype<LuaProxy<NamedLuaMethod>>("NamedLuaMethod", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedLuaMethod>(utNamedLuaMethod);
     utNamedLuaMethod["execute"] = [](LuaProxy<NamedLuaMethod> self, sol::object args) -> std::optional<LuaProxy<NamedObject>> {
         std::shared_ptr<NamedObject> res = self.lock()->execute(extractNamedObject(args));
@@ -287,7 +295,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
 
     // NamedService
-    sol::usertype<LuaProxy<NamedService>> utNamedService = lua.new_usertype<LuaProxy<NamedService>>("NamedService", sol::no_constructor);
+    sol::usertype<LuaProxy<NamedService>> utNamedService = lua.new_usertype<LuaProxy<NamedService>>("NamedService", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedService>(utNamedService);
     utNamedService["start"] = [](LuaProxy<NamedService> self) { self.lock()->start(); };
     utNamedService["stop"] = [](LuaProxy<NamedService> self) { self.lock()->stop(); };

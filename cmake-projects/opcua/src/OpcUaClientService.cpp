@@ -5,7 +5,6 @@
 #include <open62541/client_config_default.h>
 #include <open62541/client_subscriptions.h>
 #include <open62541/client_highlevel.h>
-
 #include <stdexcept>
 #include <sstream>
 
@@ -83,35 +82,10 @@ static std::string sanitizeName(const std::string& name) {
             res += '_';
         }
     }
-    // Ensure it doesn't start with a digit
     if (std::isdigit(res[0])) {
         res = "_" + res;
     }
     return res;
-}
-
-static std::shared_ptr<NamedObject> createLocalFromRemote(const UA_QualifiedName& browseName, const UA_Variant* value) {
-    std::string rawName((char*)browseName.name.data, browseName.name.length);
-    std::string name = sanitizeName(rawName);
-
-    if (!value || UA_Variant_isEmpty(value)) {
-        return NamedObject::create(name);
-    }
-    
-    if (value->type == &UA_TYPES[UA_TYPES_INT32]) {
-        return NamedInteger<int32_t>::create(name, *(UA_Int32*)value->data);
-    } else if (value->type == &UA_TYPES[UA_TYPES_INT64]) {
-        return NamedInteger<int64_t>::create(name, *(UA_Int64*)value->data);
-    } else if (value->type == &UA_TYPES[UA_TYPES_BOOLEAN]) {
-        return NamedBoolean::create(name, *(UA_Boolean*)value->data);
-    } else if (value->type == &UA_TYPES[UA_TYPES_STRING]) {
-        UA_String uas = *(UA_String*)value->data;
-        return NamedString::create(name, std::string((char*)uas.data, uas.length));
-    } else if (value->type == &UA_TYPES[UA_TYPES_DOUBLE]) {
-        return NamedFloatingPoint<double>::create(name, *(UA_Double*)value->data);
-    }
-    
-    return NamedObject::create(name);
 }
 
 void OpcUaClientService::onDataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
@@ -152,15 +126,79 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
         for (size_t j = 0; j < bRes.results[i].referencesSize; ++j) {
             UA_ReferenceDescription *ref = &bRes.results[i].references[j];
             
-            UA_Variant value;
-            UA_Variant_init(&value);
-            UA_Client_readValueAttribute(m_client, ref->nodeId.nodeId, &value);
+            std::string rawName((char*)ref->browseName.name.data, ref->browseName.name.length);
+            std::string name = sanitizeName(rawName);
             
-            std::shared_ptr<NamedObject> localObj = createLocalFromRemote(ref->browseName, &value);
-            localObj->setParent(localParent);
+            std::shared_ptr<NamedObject> localObj;
+            
+            if (ref->nodeClass == UA_NODECLASS_METHOD) {
+                UA_NodeId methodId;
+                UA_NodeId_copy(&ref->nodeId.nodeId, &methodId);
+                UA_NodeId objectId;
+                UA_NodeId_copy(&remoteNodeId, &objectId);
+                
+                std::weak_ptr<OpcUaClientService> weakSelf = std::dynamic_pointer_cast<OpcUaClientService>(getSelf());
+                localObj = NamedMethod::create(name, [weakSelf, methodId, objectId](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+                    auto s = weakSelf.lock();
+                    if (!s || !s->m_client) return nullptr;
+                    
+                    UA_Variant input;
+                    UA_Variant_init(&input);
+                    std::string jsonArgs = serialization::toJson(args);
+                    UA_String uas = UA_STRING_ALLOC(jsonArgs.c_str());
+                    UA_Variant_setScalarCopy(&input, &uas, &UA_TYPES[UA_TYPES_STRING]);
+                    UA_String_clear(&uas);
+                    
+                    size_t outputSize = 0;
+                    UA_Variant *output = nullptr;
+                    
+                    UA_StatusCode retval = UA_Client_call(s->m_client, objectId, methodId, 1, &input, &outputSize, &output);
+
+
+                    UA_Variant_clear(&input);
+                    
+                    if (retval != UA_STATUSCODE_GOOD) {
+                        printf("[C++] Method call failed with status: 0x%08X\n", retval);
+                    }
+
+
+                    
+                    std::shared_ptr<NamedObject> res = nullptr;
+                    if (retval == UA_STATUSCODE_GOOD && outputSize > 0 && output[0].type == &UA_TYPES[UA_TYPES_STRING]) {
+                        UA_String uares = *(UA_String*)output[0].data;
+                        std::string jsonRes((char*)uares.data, uares.length);
+                        if (jsonRes != "null") {
+                            res = serialization::fromJson(jsonRes);
+                        }
+                    }
+                    UA_Array_delete(output, outputSize, &UA_TYPES[UA_TYPES_VARIANT]);
+                    return res;
+                }, localParent);
+            } else {
+                UA_Variant value;
+                UA_Variant_init(&value);
+                UA_Client_readValueAttribute(m_client, ref->nodeId.nodeId, &value);
+                
+                // Simplified creation logic here for now
+                if (value.type == &UA_TYPES[UA_TYPES_INT32]) {
+                    localObj = NamedInteger<int32_t>::create(name, *(UA_Int32*)value.data);
+                } else if (value.type == &UA_TYPES[UA_TYPES_INT64]) {
+                    localObj = NamedInteger<int64_t>::create(name, *(UA_Int64*)value.data);
+                } else if (value.type == &UA_TYPES[UA_TYPES_BOOLEAN]) {
+                    localObj = NamedBoolean::create(name, *(UA_Boolean*)value.data);
+                } else if (value.type == &UA_TYPES[UA_TYPES_STRING]) {
+                    UA_String uas = *(UA_String*)value.data;
+                    localObj = NamedString::create(name, std::string((char*)uas.data, uas.length));
+                } else if (value.type == &UA_TYPES[UA_TYPES_DOUBLE]) {
+                    localObj = NamedFloatingPoint<double>::create(name, *(UA_Double*)value.data);
+                } else {
+                    localObj = NamedObject::create(name);
+                }
+                UA_Variant_clear(&value);
+                localObj->setParent(localParent);
+            }
             
             if (ref->nodeClass == UA_NODECLASS_VARIABLE) {
-                // Setup subscription and monitored item
                 UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
                 UA_CreateSubscriptionResponse response = UA_Client_Subscriptions_create(m_client, request,
                                                                                         nullptr, nullptr, nullptr);
@@ -176,8 +214,6 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
             if (ref->nodeClass == UA_NODECLASS_OBJECT) {
                 browseAndMirror(ref->nodeId.nodeId, localObj);
             }
-            
-            UA_Variant_clear(&value);
         }
     }
     

@@ -5,7 +5,21 @@
 #include <string>
 #include <stdexcept>
 
+namespace quasar::named {
+class NamedObject;
+}
+
 namespace quasar::scripting {
+
+/**
+ * @brief Non-templated base interface for all Lua proxies.
+ */
+class ILuaProxy {
+public:
+    virtual ~ILuaProxy() = default;
+    virtual bool isAlive() const = 0;
+    virtual std::shared_ptr<quasar::named::NamedObject> lockAsNamedObject() const = 0;
+};
 
 /**
  * @brief Exception thrown when a Lua script attempts to access a destroyed C++ object.
@@ -24,7 +38,7 @@ public:
  * allowing C++ to reclaim the memory when needed.
  */
 template<typename T>
-class LuaProxy {
+class LuaProxy : public ILuaProxy {
 public:
     /**
      * @brief Constructs a proxy from a shared pointer.
@@ -34,7 +48,7 @@ public:
     /**
      * @brief Checks if the underlying C++ object is still alive.
      */
-    bool isAlive() const {
+    bool isAlive() const override {
         return !m_weak.expired();
     }
 
@@ -62,6 +76,15 @@ public:
      */
     bool operator==(const LuaProxy<T>& other) const {
         return m_weak.lock() == other.m_weak.lock();
+    }
+
+    /**
+     * @brief Implementation of ILuaProxy interface.
+     */
+    std::shared_ptr<quasar::named::NamedObject> lockAsNamedObject() const override {
+        std::shared_ptr<T> ptr = m_weak.lock();
+        // [CS-0010.34] auto forbidden.
+        return std::dynamic_pointer_cast<quasar::named::NamedObject>(ptr);
     }
 
 private:

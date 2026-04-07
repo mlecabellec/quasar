@@ -49,7 +49,23 @@ if remoteRoot then
     else
         log("FAILED to find remote MyInt")
     end
+
+    log("Testing remote method call...")
+    local remoteMethod = quasar.resolve(remoteRoot, "Data/Multiply")
+    if remoteMethod then
+        log("Found remote Multiply method")
+        local args = quasar.named.createLong("input", 21)
+        local result = remoteMethod:asMethod():execute(args)
+        if result then
+            log("Method call result: " .. tostring(result:asLong():value()))
+        else
+            log("FAILED to get method result")
+        end
+    else
+        log("FAILED to find remote Multiply method")
+    end
 else
+
     log("FAILED to find remote root")
 end
 
