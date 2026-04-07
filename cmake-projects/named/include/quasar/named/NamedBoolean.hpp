@@ -75,13 +75,16 @@ public:
   }
 
   /**
-   * @brief Sets the boolean value and notifies observers.
+   * @brief Sets the boolean value and notifies observers if changed.
    * @param value The new value.
    */
   void setValue(bool value) {
-      quasar::coretypes::Boolean::setValue(value);
-      notifyObservers(getSelf());
+      if (quasar::coretypes::Boolean::booleanValue() != value) {
+          quasar::coretypes::Boolean::setValue(value);
+          notifyObservers(getSelf());
+      }
   }
+
 
   /**
    * @brief Returns the type of the object.

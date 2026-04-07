@@ -97,13 +97,16 @@ public:
   }
 
   /**
-   * @brief Sets the floating point value and notifies observers.
+   * @brief Sets the floating point value and notifies observers if changed.
    * @param value The new value.
    */
   void setValue(T value) {
-      quasar::coretypes::FloatingPoint<T>::setValue(value);
-      notifyObservers(getSelf());
+      if (quasar::coretypes::FloatingPoint<T>::value() != value) {
+          quasar::coretypes::FloatingPoint<T>::setValue(value);
+          notifyObservers(getSelf());
+      }
   }
+
 
   /**
    * @brief Returns the type of the object.

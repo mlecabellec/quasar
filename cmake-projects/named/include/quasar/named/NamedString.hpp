@@ -61,13 +61,16 @@ public:
   }
 
   /**
-   * @brief Sets the string value and notifies observers.
+   * @brief Sets the string value and notifies observers if changed.
    * @param value The new value.
    */
   void setValue(const std::string& value) {
-      quasar::coretypes::String::setValue(value);
-      notifyObservers(getSelf());
+      if (quasar::coretypes::String::toString() != value) {
+          quasar::coretypes::String::setValue(value);
+          notifyObservers(getSelf());
+      }
   }
+
 
   /**
    * @brief Returns the type of the object.

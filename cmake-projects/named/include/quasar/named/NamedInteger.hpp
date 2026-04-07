@@ -97,13 +97,16 @@ public:
   }
 
   /**
-   * @brief Sets the integer value and notifies observers.
+   * @brief Sets the integer value and notifies observers if changed.
    * @param value The new value.
    */
   void setValue(T value) {
-      quasar::coretypes::Integer<T>::setValue(value);
-      notifyObservers(getSelf());
+      if (quasar::coretypes::Integer<T>::value() != value) {
+          quasar::coretypes::Integer<T>::setValue(value);
+          notifyObservers(getSelf());
+      }
   }
+
 
   /**
    * @brief Returns the type of the object.

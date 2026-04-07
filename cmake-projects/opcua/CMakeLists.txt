@@ -39,3 +39,8 @@ install(TARGETS quasar_opcua
 install(DIRECTORY include/
     DESTINATION include
 )
+
+# Testing
+enable_testing()
+add_subdirectory(test)
+
