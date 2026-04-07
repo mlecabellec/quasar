@@ -12,11 +12,11 @@ TEST(TestDataloggerRingBuffer, BasicPushPop) {
     EXPECT_TRUE(buffer.push(2));
     EXPECT_EQ(buffer.size(), 2);
 
-    auto val1 = buffer.pop();
+    std::optional<int> val1 = buffer.pop();
     EXPECT_TRUE(val1.has_value());
     EXPECT_EQ(val1.value(), 1);
 
-    auto val2 = buffer.pop();
+    std::optional<int> val2 = buffer.pop();
     EXPECT_TRUE(val2.has_value());
     EXPECT_EQ(val2.value(), 2);
 

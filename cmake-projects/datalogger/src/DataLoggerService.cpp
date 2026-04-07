@@ -67,8 +67,8 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
         std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
         if (lock.try_lock_for(std::chrono::milliseconds(10))) {
             bool drop = false;
-            for (auto& filter : m_filters) {
-                auto filtered = filter->process(std::move(entry));
+            for (std::shared_ptr<IFilter>& filter : m_filters) {
+                std::optional<LogEntry> filtered = filter->process(std::move(entry));
                 if (!filtered) {
                     drop = true;
                     break;
@@ -77,7 +77,7 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
             }
             
             if (!drop) {
-                for (auto& recorder : m_recorders) {
+                for (std::shared_ptr<IRecorder>& recorder : m_recorders) {
                     recorder->record(entry);
                 }
             }

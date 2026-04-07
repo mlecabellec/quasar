@@ -76,7 +76,7 @@ void CsvFileWriter::writerLoop() {
 
 std::string CsvFileWriter::formatIso8601(const std::chrono::system_clock::time_point& tp) const {
     std::time_t time_c = std::chrono::system_clock::to_time_t(tp);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
     std::tm tm_buf;
     localtime_r(&time_c, &tm_buf);
     std::ostringstream oss;
@@ -85,20 +85,29 @@ std::string CsvFileWriter::formatIso8601(const std::chrono::system_clock::time_p
     return oss.str();
 }
 
+struct SampleVisitor {
+    std::ofstream& m_file;
+    void operator()(double val) { m_file << val; }
+    void operator()(int64_t val) { m_file << val; }
+    void operator()(const std::string& val) { m_file << val; }
+    void operator()(bool val) { m_file << val; }
+};
+
+struct EntryVisitor {
+    std::ofstream& m_file;
+    void operator()(const EventLog& arg) {
+        m_file << "EVENT," << static_cast<int>(arg.level) << ",\"" << arg.message << "\"";
+    }
+    void operator()(const DataSample& arg) {
+        m_file << "DATA," << arg.sourcePath << ",";
+        std::visit(SampleVisitor{m_file}, arg.value);
+    }
+};
+
 void CsvFileWriter::writeBuffer(const std::vector<LogEntry>& buffer) {
     for (const LogEntry& entry : buffer) {
         m_file << formatIso8601(entry.timestamp) << ",";
-        std::visit([this](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, EventLog>) {
-                m_file << "EVENT," << static_cast<int>(arg.level) << ",\"" << arg.message << "\"";
-            } else if constexpr (std::is_same_v<T, DataSample>) {
-                m_file << "DATA," << arg.sourcePath << ",";
-                std::visit([this](auto&& val) {
-                    m_file << val;
-                }, arg.value);
-            }
-        }, entry.payload);
+        std::visit(EntryVisitor{m_file}, entry.payload);
         m_file << "\n";
     }
     m_file.flush();

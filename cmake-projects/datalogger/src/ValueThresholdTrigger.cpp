@@ -8,7 +8,7 @@ ValueThresholdTrigger::ValueThresholdTrigger(const std::string& targetSourcePath
 
 std::optional<LogEntry> ValueThresholdTrigger::process(LogEntry entry) {
     if (std::holds_alternative<DataSample>(entry.payload)) {
-        const auto& ds = std::get<DataSample>(entry.payload);
+        const DataSample& ds = std::get<DataSample>(entry.payload);
         if (ds.sourcePath == m_targetSourcePath) {
             double numericValue = 0.0;
             bool isNumeric = false;

@@ -19,7 +19,7 @@ TEST(TestDataloggerStress, RingBufferMultithread) {
     std::atomic<int> consumeCount{0};
     std::atomic<bool> producersDone{false};
 
-    auto consumer = [&]() {
+    std::function<void()> consumer = [&]() {
         while (!producersDone || buffer.size() > 0) {
             if (std::optional<int> val = buffer.pop(std::chrono::milliseconds(1))) {
                 consumeCount++;

@@ -16,11 +16,11 @@ public:
 };
 
 TEST(TestDataLoggerService, PipelineTest) {
-    auto service = DataLoggerService::create("LogService", 1024);
-    auto recorder = std::make_shared<DummyRecorder>();
+    std::shared_ptr<DataLoggerService> service = DataLoggerService::create("LogService", 1024);
+    std::shared_ptr<DummyRecorder> recorder = std::make_shared<DummyRecorder>();
     service->addRecorder(recorder);
     
-    auto filter = std::make_shared<MathFilter>("Sensor", 2.0, 10.0);
+    std::shared_ptr<MathFilter> filter = std::make_shared<MathFilter>("Sensor", 2.0, 10.0);
     service->addFilter(filter);
     
     service->setCycleTime(std::chrono::milliseconds(10));
@@ -39,16 +39,16 @@ TEST(TestDataLoggerService, PipelineTest) {
     
     ASSERT_EQ(recorder->entries.size(), 2);
     
-    auto& dataEntry = recorder->entries[0];
+    LogEntry& dataEntry = recorder->entries[0];
     ASSERT_TRUE(std::holds_alternative<DataSample>(dataEntry.payload));
-    auto& ds = std::get<DataSample>(dataEntry.payload);
+    DataSample& ds = std::get<DataSample>(dataEntry.payload);
     ASSERT_EQ(ds.sourcePath, "Sensor");
     ASSERT_TRUE(std::holds_alternative<double>(ds.value));
     EXPECT_DOUBLE_EQ(std::get<double>(ds.value), 20.0); // 5 * 2 + 10
 
-    auto& evEntry = recorder->entries[1];
+    LogEntry& evEntry = recorder->entries[1];
     ASSERT_TRUE(std::holds_alternative<EventLog>(evEntry.payload));
-    auto& ev = std::get<EventLog>(evEntry.payload);
+    EventLog& ev = std::get<EventLog>(evEntry.payload);
     EXPECT_EQ(ev.level, LogLevel::INFO);
     EXPECT_EQ(ev.message, "Processing started");
 }
