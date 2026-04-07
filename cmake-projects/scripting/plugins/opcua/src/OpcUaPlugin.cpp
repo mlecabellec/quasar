@@ -17,7 +17,11 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
 
     // OpcUaServerService binding
     sol::usertype<LuaProxy<OpcUaServerService>> utServer = lua.new_usertype<LuaProxy<OpcUaServerService>>("OpcUaServerService", sol::no_constructor);
-    // Bind base NamedService methods (should ideally be done via sol2 base class support, but LuaProxy uses lockdown)
+    utServer["getName"] = [](LuaProxy<OpcUaServerService> self) { return self.lock()->getName(); };
+    utServer["getChild"] = [](LuaProxy<OpcUaServerService> self, const std::string& n) -> std::optional<LuaProxy<NamedObject>> {
+        auto c = self.lock()->getChild(n);
+        return c ? std::make_optional(LuaProxy<NamedObject>(c)) : std::nullopt;
+    };
     utServer["start"] = [](LuaProxy<OpcUaServerService> self) { self.lock()->start(); };
     utServer["stop"] = [](LuaProxy<OpcUaServerService> self) { self.lock()->stop(); };
     utServer["setPort"] = [](LuaProxy<OpcUaServerService> self, uint16_t port) { self.lock()->setPort(port); };
@@ -33,9 +37,15 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
 
     // OpcUaClientService binding
     sol::usertype<LuaProxy<OpcUaClientService>> utClient = lua.new_usertype<LuaProxy<OpcUaClientService>>("OpcUaClientService", sol::no_constructor);
+    utClient["getName"] = [](LuaProxy<OpcUaClientService> self) { return self.lock()->getName(); };
+    utClient["getChild"] = [](LuaProxy<OpcUaClientService> self, const std::string& n) -> std::optional<LuaProxy<NamedObject>> {
+        auto c = self.lock()->getChild(n);
+        return c ? std::make_optional(LuaProxy<NamedObject>(c)) : std::nullopt;
+    };
     utClient["start"] = [](LuaProxy<OpcUaClientService> self) { self.lock()->start(); };
     utClient["stop"] = [](LuaProxy<OpcUaClientService> self) { self.lock()->stop(); };
     utClient["setUrl"] = [](LuaProxy<OpcUaClientService> self, const std::string& url) { self.lock()->setUrl(url); };
+
 
     opcuaTable["createClient"] = [](const std::string& name, sol::object parent) {
         auto ptr = OpcUaClientService::create(name, extractNamedObject(parent));
