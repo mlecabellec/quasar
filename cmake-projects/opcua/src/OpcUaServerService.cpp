@@ -77,10 +77,12 @@ void OpcUaServerService::stop() {
     NamedService::stop();
 
     if (m_server) {
+        UA_Server_run_shutdown(m_server);
         UA_Server_delete(m_server);
         m_server = nullptr;
     }
 }
+
 
 std::string OpcUaServerService::getType() const {
     return "OpcUaServerService";
@@ -92,7 +94,10 @@ void OpcUaServerService::initializeOpcUa() {
 
     std::shared_ptr<NamedObject> root = m_rootObject ? m_rootObject : getSelf();
     mapObject(root, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER));
+
+    UA_Server_run_startup(m_server);
 }
+
 
 void OpcUaServerService::onWrite(UA_Server *server, const UA_NodeId *sessionId,
                                  void *sessionContext, const UA_NodeId *nodeId,

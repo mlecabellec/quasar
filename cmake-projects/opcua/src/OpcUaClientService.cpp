@@ -73,8 +73,27 @@ std::string OpcUaClientService::getType() const {
     return "OpcUaClientService";
 }
 
+static std::string sanitizeName(const std::string& name) {
+    if (name.empty()) return "unnamed";
+    std::string res;
+    for (char c : name) {
+        if (std::isalnum(c) || c == '_') {
+            res += c;
+        } else {
+            res += '_';
+        }
+    }
+    // Ensure it doesn't start with a digit
+    if (std::isdigit(res[0])) {
+        res = "_" + res;
+    }
+    return res;
+}
+
 static std::shared_ptr<NamedObject> createLocalFromRemote(const UA_QualifiedName& browseName, const UA_Variant* value) {
-    std::string name((char*)browseName.name.data, browseName.name.length);
+    std::string rawName((char*)browseName.name.data, browseName.name.length);
+    std::string name = sanitizeName(rawName);
+
     if (!value || UA_Variant_isEmpty(value)) {
         return NamedObject::create(name);
     }
