@@ -77,22 +77,10 @@ public:
      */
     EntityState getState() const;
 
-    // --- Phase 2: Observer/Producer Pattern ---
-
-    /**
-     * @brief Subscribes an observer to this entity's events.
-     * @param observer Weak pointer to the observer.
-     * @compliance [FE-0130.2.2] Thread-safe subscription engine.
-     */
-    void subscribe(std::weak_ptr<IObserver> observer);
-
-    /**
-     * @brief Unsubscribes an observer.
-     * @param observer Weak pointer to the observer to remove.
-     */
-    void unsubscribe(std::weak_ptr<IObserver> observer);
+    // --- Phase 2: Observer/Producer Pattern inherited from NamedObject ---
 
     // --- Phase 3: Field Reflexivity ---
+
 
     /**
      * @brief Retrieves a registered child field by its registered string name.
@@ -148,14 +136,8 @@ protected:
     void setState(EntityState state);
 
     /**
-     * @brief Broadcasts an event to all subscribed observers.
-     * @param eventData The data payload to notify.
-     * @compliance [FE-0130.2.3] Dispatch mechanism to broadcast events.
-     */
-    void notifyObservers(std::shared_ptr<NamedObject> eventData);
-
-    /**
      * @brief Registers a child NamedObject field to expose it via reflexivity.
+
      * @param name Name representing the field.
      * @param field The NamedObject to expose.
      * @compliance [FE-0130.3.1] Mechanism to register fields.
@@ -174,12 +156,8 @@ private:
     /** @brief Internal state machine. */
     std::atomic<EntityState> m_state{EntityState::Uninitialized};
 
-    /** @brief Mutex for observer list protection. */
-    mutable std::recursive_timed_mutex m_observerMutex;
-    /** @brief List of weak pointers to observers. */
-    std::vector<std::weak_ptr<IObserver>> m_observers;
-
     /** @brief Mutex for field map protection. */
+
     mutable std::recursive_timed_mutex m_fieldMutex;
     /** @brief Map of registered reflexive fields. */
     std::unordered_map<std::string, std::weak_ptr<NamedObject>> m_fields;

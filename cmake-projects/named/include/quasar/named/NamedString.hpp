@@ -61,7 +61,17 @@ public:
   }
 
   /**
+   * @brief Sets the string value and notifies observers.
+   * @param value The new value.
+   */
+  void setValue(const std::string& value) {
+      quasar::coretypes::String::setValue(value);
+      notifyObservers(getSelf());
+  }
+
+  /**
    * @brief Returns the type of the object.
+
    * @return "NamedString"
    */
   std::string getType() const override;

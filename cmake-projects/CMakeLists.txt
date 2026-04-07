@@ -25,6 +25,7 @@ add_subdirectory(scripting)
 add_subdirectory(calibration)
 add_subdirectory(resoem)
 add_subdirectory(logicengine)
+add_subdirectory(opcua)
 add_subdirectory(sample-models)
 add_subdirectory(sim-test)
 

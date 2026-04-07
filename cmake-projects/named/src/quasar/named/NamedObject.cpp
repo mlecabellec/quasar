@@ -143,6 +143,9 @@ void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
     }
   }
   m_children.push_back(child);
+
+  // Notify about hierarchy change.
+  notifyObservers(getSelf());
 }
 
 void NamedObject::removeChild(const std::string &name) {
@@ -157,9 +160,19 @@ void NamedObject::removeChild(const std::string &name) {
   std::string nameCopy = name;
 
   // Remove any child with the matching name.
-  m_children.remove_if([&nameCopy](const std::shared_ptr<NamedObject> &c) {
-    return c->getName() == nameCopy;
+  bool removed = false;
+  m_children.remove_if([&nameCopy, &removed](const std::shared_ptr<NamedObject> &c) {
+    if (c->getName() == nameCopy) {
+        removed = true;
+        return true;
+    }
+    return false;
   });
+
+  if (removed) {
+      // Notify about hierarchy change.
+      notifyObservers(getSelf());
+  }
 }
 
 void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
@@ -177,6 +190,8 @@ void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
   if (it != m_children.end()) {
     // Replace it with the new child.
     *it = newChild;
+    // Notify about hierarchy change.
+    notifyObservers(getSelf());
   } else {
     throw std::runtime_error("Old child not found in parent: " +
                              oldChild->getName());
@@ -226,6 +241,9 @@ void NamedObject::setName(const std::string &name) {
     // No parent, just rename
     m_name = name;
   }
+
+  // Notify observers about name change.
+  notifyObservers(getSelf());
 }
 
 
@@ -458,5 +476,63 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
   return clonedObj;
 }
 
-} // namespace quasar::named
+void NamedObject::subscribe(std::weak_ptr<IObserver> observer) {
+  // [CS-0010.21], [CS-0010.26] timed lock.
+  std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex,
+                                                    config::DEFAULT_LOCK_TIMEOUT);
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring observer mutex in subscribe");
+  }
+  m_observers.push_back(observer);
+}
 
+void NamedObject::unsubscribe(std::weak_ptr<IObserver> observer) {
+  // [CS-0010.21], [CS-0010.26] timed lock.
+  std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex,
+                                                    config::DEFAULT_LOCK_TIMEOUT);
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring observer mutex in unsubscribe");
+  }
+  std::shared_ptr<IObserver> spObs = observer.lock();
+  if (!spObs)
+    return;
+
+  // [CS-0010.34] auto forbidden.
+  m_observers.erase(
+      std::remove_if(m_observers.begin(), m_observers.end(),
+                     [&spObs](const std::weak_ptr<IObserver> &wInfo) {
+                       std::shared_ptr<IObserver> spInfo = wInfo.lock();
+                       return !spInfo || spInfo == spObs;
+                     }),
+      m_observers.end());
+}
+
+void NamedObject::notifyObservers(std::shared_ptr<NamedObject> eventData) {
+  // [CS-0010.21], [CS-0010.26] timed lock.
+  std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex,
+                                                    config::DEFAULT_LOCK_TIMEOUT);
+  if (!lock.owns_lock()) {
+    throw std::runtime_error(
+        "Timeout acquiring observer mutex in notifyObservers");
+  }
+
+  // [CS-0010.34] auto forbidden.
+  std::vector<std::weak_ptr<IObserver>>::iterator it = m_observers.begin();
+  std::size_t iterations = 0;
+  while (it != m_observers.end()) {
+    // [CS-0010.37] Hard limit on loops.
+    if (++iterations > config::HARD_LIMIT_ITERATIONS) {
+      throw std::runtime_error("Hard limit reached in notifyObservers loop");
+    }
+
+    if (std::shared_ptr<IObserver> obs = it->lock()) {
+      obs->notify(eventData);
+      ++it;
+    } else {
+      // Remove expired observers
+      it = m_observers.erase(it);
+    }
+  }
+}
+
+} // namespace quasar::named

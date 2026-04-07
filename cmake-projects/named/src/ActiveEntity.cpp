@@ -17,61 +17,8 @@ void ActiveEntity::setState(EntityState state) {
     m_state.store(state);
 }
 
-void ActiveEntity::subscribe(std::weak_ptr<IObserver> observer) {
-    // [CS-0010.21], [CS-0010.26] timed lock.
-    std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        throw std::runtime_error("Timeout acquiring observer mutex in subscribe");
-    }
-    m_observers.push_back(observer);
-}
-
-void ActiveEntity::unsubscribe(std::weak_ptr<IObserver> observer) {
-    // [CS-0010.21], [CS-0010.26] timed lock.
-    std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        throw std::runtime_error("Timeout acquiring observer mutex in unsubscribe");
-    }
-    std::shared_ptr<IObserver> spObs = observer.lock();
-    if (!spObs) return;
-    
-    // [CS-0010.34] auto forbidden.
-    m_observers.erase(
-        std::remove_if(m_observers.begin(), m_observers.end(),
-                       [&spObs](const std::weak_ptr<IObserver>& wInfo) {
-                           std::shared_ptr<IObserver> spInfo = wInfo.lock();
-                           return !spInfo || spInfo == spObs;
-                       }),
-        m_observers.end());
-}
-
-void ActiveEntity::notifyObservers(std::shared_ptr<NamedObject> eventData) {
-    // [CS-0010.21], [CS-0010.26] timed lock.
-    std::unique_lock<std::recursive_timed_mutex> lock(m_observerMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        throw std::runtime_error("Timeout acquiring observer mutex in notifyObservers");
-    }
-    
-    // [CS-0010.34] auto forbidden.
-    std::vector<std::weak_ptr<IObserver>>::iterator it = m_observers.begin();
-    std::size_t iterations = 0;
-    while (it != m_observers.end()) {
-        // [CS-0010.37] Hard limit on loops.
-        if (++iterations > config::HARD_LIMIT_ITERATIONS) {
-            throw std::runtime_error("Hard limit reached in notifyObservers loop");
-        }
-        
-        if (std::shared_ptr<IObserver> obs = it->lock()) {
-            obs->notify(eventData);
-            ++it;
-        } else {
-            // Remove expired observers
-            it = m_observers.erase(it);
-        }
-    }
-}
-
 void ActiveEntity::registerField(const std::string& name, std::shared_ptr<NamedObject> field) {
+
     // [CS-0010.21], [CS-0010.26] timed lock.
     std::unique_lock<std::recursive_timed_mutex> lock(m_fieldMutex, config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) {

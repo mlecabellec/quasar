@@ -75,7 +75,17 @@ public:
   }
 
   /**
+   * @brief Sets the boolean value and notifies observers.
+   * @param value The new value.
+   */
+  void setValue(bool value) {
+      quasar::coretypes::Boolean::setValue(value);
+      notifyObservers(getSelf());
+  }
+
+  /**
    * @brief Returns the type of the object.
+
    * @return "NamedBoolean"
    */
   std::string getType() const override;

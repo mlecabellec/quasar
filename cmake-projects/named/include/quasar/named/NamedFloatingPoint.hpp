@@ -97,7 +97,17 @@ public:
   }
 
   /**
+   * @brief Sets the floating point value and notifies observers.
+   * @param value The new value.
+   */
+  void setValue(T value) {
+      quasar::coretypes::FloatingPoint<T>::setValue(value);
+      notifyObservers(getSelf());
+  }
+
+  /**
    * @brief Returns the type of the object.
+
    * @return "NamedFloatingPoint"
    */
   std::string getType() const override { return "NamedFloatingPoint"; }

@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "quasar/named/CopyPolicy.hpp"
+#include "quasar/named/IObserver.hpp"
 
 /**
  * @namespace quasar::named
@@ -275,6 +276,18 @@ public:
    */
   std::shared_ptr<NamedObject> getSelf() const;
 
+  /**
+   * @brief Subscribes an observer to this object's events.
+   * @param observer Weak pointer to the observer.
+   */
+  void subscribe(std::weak_ptr<IObserver> observer);
+
+  /**
+   * @brief Unsubscribes an observer.
+   * @param observer Weak pointer to the observer to remove.
+   */
+  void unsubscribe(std::weak_ptr<IObserver> observer);
+
 protected:
   /**
    * @brief Protected constructor to enforce use of create() factory.
@@ -313,6 +326,12 @@ protected:
    */
   void setSelf(std::shared_ptr<NamedObject> self) { m_self = self; }
 
+  /**
+   * @brief Broadcasts an event to all subscribed observers.
+   * @param eventData The data payload to notify.
+   */
+  void notifyObservers(std::shared_ptr<NamedObject> eventData);
+
 private:
   /** @brief The object name. Unique within parent scope. */
   std::string m_name;
@@ -329,6 +348,11 @@ private:
   /** @brief Internal weak pointer to self, used for retrieving a shared_ptr
    * from this. */
   std::weak_ptr<NamedObject> m_self;
+
+  /** @brief Mutex for observer list protection. */
+  mutable std::recursive_timed_mutex m_observerMutex;
+  /** @brief List of weak pointers to observers. */
+  std::vector<std::weak_ptr<IObserver>> m_observers;
 
   /**
    * @brief Validates if a name follows the allowed format.

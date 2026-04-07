@@ -97,7 +97,17 @@ public:
   }
 
   /**
+   * @brief Sets the integer value and notifies observers.
+   * @param value The new value.
+   */
+  void setValue(T value) {
+      quasar::coretypes::Integer<T>::setValue(value);
+      notifyObservers(getSelf());
+  }
+
+  /**
    * @brief Returns the type of the object.
+
    * @return "NamedInteger"
    */
   std::string getType() const override { return "NamedInteger"; }
