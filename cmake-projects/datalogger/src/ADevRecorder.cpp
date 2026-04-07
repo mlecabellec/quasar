@@ -2,11 +2,8 @@
 
 namespace quasar::datalogger {
 
-ADevRecorder::ADevRecorder(const std::string& name, std::shared_ptr<quasar::named::NamedObject> parent)
+ADevRecorder::ADevRecorder(const std::string& name)
     : quasar::named::NamedObject(name) {
-    if (parent) {
-        setParent(parent);
-    }
 }
 
 } // namespace quasar::datalogger

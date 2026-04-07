@@ -15,9 +15,8 @@ public:
     /**
      * @brief Constructs a new ADevRecorder.
      * @param name The name of the recorder object.
-     * @param parent Optional parent object.
      */
-    explicit ADevRecorder(const std::string& name, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
+    explicit ADevRecorder(const std::string& name);
     
     /**
      * @brief Virtual destructor.

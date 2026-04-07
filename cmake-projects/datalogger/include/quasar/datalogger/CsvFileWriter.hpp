@@ -22,9 +22,8 @@ public:
      * @brief Constructs a new CsvFileWriter.
      * @param name The name of the recorder object.
      * @param filePath The path to the CSV file.
-     * @param parent Optional parent NamedObject.
      */
-    CsvFileWriter(const std::string& name, const std::string& filePath, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
+    CsvFileWriter(const std::string& name, const std::string& filePath);
 
     /**
      * @brief Destructor. Ensures all background writes complete.

@@ -6,8 +6,8 @@
 
 namespace quasar::datalogger {
 
-CsvFileWriter::CsvFileWriter(const std::string& name, const std::string& filePath, std::shared_ptr<quasar::named::NamedObject> parent)
-    : ADevRecorder(name, parent), m_filePath(filePath), m_chunkSize(1000), m_running(true), m_swapReady(false) {
+CsvFileWriter::CsvFileWriter(const std::string& name, const std::string& filePath)
+    : ADevRecorder(name), m_filePath(filePath), m_chunkSize(1000), m_running(true), m_swapReady(false) {
     
     m_file.open(m_filePath, std::ios::out | std::ios::app);
     if (!m_file.is_open()) {
