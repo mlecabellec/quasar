@@ -2,10 +2,12 @@
 #define QUASAR_OPCUA_OPCUASERVERSERVICE_HPP
 
 #include "quasar/named/NamedService.hpp"
+#include "quasar/opcua/OpcUaSecurityManager.hpp"
 #include <open62541/server.h>
 #include <open62541/plugin/log_stdout.h>
 #include <memory>
 #include <map>
+#include <vector>
 
 namespace quasar::opcua {
 
@@ -59,6 +61,19 @@ public:
      */
     std::string getType() const override;
 
+    /**
+     * @brief Loads server certificate and private key.
+     * @param certPath Path to certificate (DER).
+     * @param keyPath Path to private key (DER).
+     */
+    void loadCertificate(const std::string& certPath, const std::string& keyPath);
+
+    /**
+     * @brief Loads trust list for client certificate validation.
+     * @param trustListPaths List of paths to trusted certificates (DER).
+     */
+    void loadTrustList(const std::vector<std::string>& trustListPaths);
+
 protected:
     /**
      * @brief Constructor.
@@ -98,11 +113,10 @@ private:
     uint16_t m_port{4840};
     /** @brief The root object to expose. */
     std::shared_ptr<named::NamedObject> m_rootObject;
+    /** @brief Security manager. */
+    OpcUaSecurityManager m_securityManager;
     /** @brief Map from NamedObject to OPC UA NodeId. */
     std::map<std::shared_ptr<named::NamedObject>, UA_NodeId> m_objectToNodeMap;
-    /** @brief Map from OPC UA NodeId to NamedObject (for callbacks). */
-    // NodeId comparison is tricky, better use a custom comparator or string representation if needed.
-    // For now we will use a simple mapping if possible.
     
     /** @brief Helper to track changes. */
     class TreeObserver;

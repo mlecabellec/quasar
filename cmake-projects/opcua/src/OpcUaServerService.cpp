@@ -88,9 +88,21 @@ std::string OpcUaServerService::getType() const {
     return "OpcUaServerService";
 }
 
+void OpcUaServerService::loadCertificate(const std::string& certPath, const std::string& keyPath) {
+    m_securityManager.loadCertificate(certPath, keyPath);
+}
+
+void OpcUaServerService::loadTrustList(const std::vector<std::string>& trustListPaths) {
+    m_securityManager.loadTrustList(trustListPaths);
+}
+
 void OpcUaServerService::initializeOpcUa() {
     m_server = UA_Server_new();
-    UA_ServerConfig_setMinimal(UA_Server_getConfig(m_server), m_port, nullptr);
+    UA_ServerConfig* config = UA_Server_getConfig(m_server);
+    UA_ServerConfig_setMinimal(config, m_port, nullptr);
+    
+    // Configure security via the manager
+    m_securityManager.configureServer(m_server, config);
 
     std::shared_ptr<NamedObject> root = m_rootObject ? m_rootObject : getSelf();
     mapObject(root, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER));
