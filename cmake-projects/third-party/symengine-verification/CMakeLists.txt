@@ -16,6 +16,7 @@ add_executable(symengine_test main.cpp)
 target_include_directories(symengine_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../symengine
     ${CMAKE_CURRENT_BINARY_DIR}/../symengine
+    ${CMAKE_CURRENT_BINARY_DIR}/../symengine/symengine/utilities/teuchos
 )
 target_link_libraries(symengine_test PRIVATE symengine)
 
