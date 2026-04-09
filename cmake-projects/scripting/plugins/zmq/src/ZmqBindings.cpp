@@ -7,6 +7,7 @@
 #include "quasar/zmq/Context.hpp"
 #include "quasar/scripting/PluginContract.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedBuffer.hpp"
@@ -77,6 +78,9 @@ extern "C" {
             },
             "receiveTree", [](quasar::zmq::Socket& self) {
                 std::shared_ptr<quasar::named::NamedObject> root = self.receiveTree();
+                if (root) {
+                    quasar::scripting::ObjectTracker::getInstance().trackStrong(root);
+                }
                 return quasar::scripting::LuaProxy<quasar::named::NamedObject>(root);
             }
         );
