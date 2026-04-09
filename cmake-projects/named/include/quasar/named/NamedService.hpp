@@ -16,6 +16,9 @@ namespace quasar::named {
  * 
  * NamedService can be used to encapsulate autonomous logic, such as fieldbus masters,
  * protocol handlers, or periodic tasks.
+ * 
+ * @reference [TSK-20260328-001] Reflexive Execution & Service Orchestration
+ * @reference [FE-0260.3] Service Orchestration (NamedService)
  */
 class NamedService : public NamedObject {
 public:

@@ -15,7 +15,7 @@ CsvFileWriter::CsvFileWriter(const std::string& name, const std::string& filePat
     }
     
     // Write header
-    m_file << "Timestamp,Type,Source/Level,Value/Message\n";
+    m_file << "Timestamp,Type,Source/Level,Value/Message" << std::endl;
     
     m_frontBuffer.reserve(m_chunkSize);
     m_backBuffer.reserve(m_chunkSize);
@@ -53,7 +53,7 @@ void CsvFileWriter::flush() {
         m_cv.notify_one();
     }
     // Briefly wait for back buffer to empty
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
 
 void CsvFileWriter::writerLoop() {

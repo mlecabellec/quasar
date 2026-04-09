@@ -33,6 +33,9 @@ namespace coretypes {
  * - Fulfills [TSK-20260308-001.1] Full Polymorphic Dispatch.
  * - Fulfills [TSK-20260308-001.2] Precision Safety (uses common_type_t).
  * 
+ * @reference [FE-0030.1.1] Add methods for comparison with other Number objects.
+ * @reference [FE-0030.1.2] Add methods for comparison with primitive types.
+ * 
  * @tparam T The underlying integral primitive type.
  */
 template <typename T> class Integer : public Number {

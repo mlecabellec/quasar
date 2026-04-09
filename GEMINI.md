@@ -53,6 +53,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 - **[TSK-20260311-004]**: ZeroMQ PUB/SUB Plugin for `NamedBuffer` distribution.
 - **[TSK-20260311-010]**: Calibration Framework (Polynomial/Point-Pair transforms).
 - **[TSK-20260311-011]**: Lua Environment Validation (Intensive stress testing).
+- **[TSK-20260409-001]**: Global Logging Singleton & Macros (LOG_INFO, etc.).
 
 ### Current Directive
 - **[TSK-20260328-001]**: **Reflexive Execution & Service Orchestration**.

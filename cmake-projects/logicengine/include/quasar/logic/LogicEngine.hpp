@@ -19,6 +19,7 @@ namespace quasar::logic {
  * 
  * **Compliance**:
  * - Fulfills [TSK-20260311-009.1.1] Core logic project.
+ * - @reference [FE-0240.1] Core Logic Project
  */
 class LogicEngine : public quasar::named::NamedObject {
 public:

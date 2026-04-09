@@ -11,6 +11,9 @@ namespace quasar::named::traversal {
 /**
  * @class Transformer
  * @brief An engine to apply rules to a NamedObject tree, XSLT-style.
+ * 
+ * @reference [TSK-20260311-001] XSLT-inspired tree transformation engine
+ * @reference [FE-0150] Tree Transformation Engine
  */
 class Transformer {
 public:

@@ -11,7 +11,9 @@ namespace quasar::scripting {
  * 
  * Capable of taking a shared library path, resolving the registerPluginComponents
  * entry point, and invoking it securely. 
- * @details Contributes to [FE-0140].
+ * 
+ * @reference [TSK-20260310-001.3] Dynamic Library Loading
+ * @reference [FE-0140] Standalone Script Runner and Plug-in System
  */
 class PluginLoader {
 public:

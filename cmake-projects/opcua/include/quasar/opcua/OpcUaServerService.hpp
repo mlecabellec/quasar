@@ -16,7 +16,8 @@ namespace quasar::opcua {
  * @class OpcUaServerService
  * @brief NamedService that exposes a NamedObject tree via OPC UA.
  * 
- * Fulfills [TSK-20260311-005.2] OPC UA Server as NamedService.
+ * @reference [TSK-20260311-005.2] OPC UA Server as NamedService
+ * @reference [FE-0200.2] OPC UA Server Service
  */
 class OpcUaServerService : public named::NamedService {
 public:

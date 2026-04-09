@@ -19,6 +19,7 @@ namespace quasar::logic {
  * **Compliance**:
  * - Fulfills [TSK-20260311-009.4] Rule Engine & Cause-Effect Matrix (IEC 62881).
  * - Fulfills [TSK-20260311-009.4.2] Optimize AND/OR matrix evaluation.
+ * - @reference [FE-0240.4] Rule Engine & Cause-Effect Matrix
  */
 class CauseEffectMatrix : public LogicComponent {
 public:

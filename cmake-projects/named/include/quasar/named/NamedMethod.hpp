@@ -13,6 +13,9 @@ namespace quasar::named {
  * 
  * NamedMethod allows encapsulating logic as a node in the tree.
  * It can be discovered and executed dynamically.
+ * 
+ * @reference [TSK-20260328-001] Reflexive Execution & Service Orchestration
+ * @reference [FE-0260.1] Reflexive Methods (NamedMethod)
  */
 class NamedMethod : public NamedObject, public ICommand {
 public:

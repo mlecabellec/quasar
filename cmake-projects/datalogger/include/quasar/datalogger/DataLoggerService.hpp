@@ -14,6 +14,9 @@ namespace quasar::datalogger {
 /**
  * @brief Orchestrates data logging, pulling from a ring buffer, 
  * applying filters, and dispatching to recorders.
+ * 
+ * @reference [TSK-20260303-001] Modular Data Logging and Acquisition System
+ * @reference [FE-0160] Data Logging and Acquisition
  */
 class DataLoggerService : public quasar::named::NamedService {
 public:
@@ -24,6 +27,34 @@ public:
      * @param parent Optional parent in the hierarchy.
      */
     static std::shared_ptr<DataLoggerService> create(const std::string& name, size_t ringBufferCapacity, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
+
+    /**
+     * @brief Returns the global singleton instance of the DataLoggerService.
+     * 
+     * If the instance does not exist, it is created with default settings 
+     * (name: "GlobalLogger", capacity: 2048, writer: "log.csv").
+     * 
+     * @return std::shared_ptr<DataLoggerService> The singleton instance.
+     */
+    static std::shared_ptr<DataLoggerService> getInstance();
+
+    /**
+     * @brief Explicitly initializes the global logger with custom settings.
+     * 
+     * Must be called before the first call to getInstance() or any LOG_* macro 
+     * if custom settings are required.
+     * 
+     * @param filePath The path to the default CSV log file.
+     * @param capacity The capacity of the ring buffer.
+     */
+    static void initDefault(const std::string& filePath = "log.csv", size_t capacity = 2048);
+
+    /**
+     * @brief Resets the singleton instance. Primarily for testing.
+     * 
+     * Stops the current service if it is running.
+     */
+    static void resetInstance();
 
     /**
      * @brief Destructor.
@@ -54,6 +85,11 @@ public:
      * @param message The log message.
      */
     void logEvent(LogLevel level, const std::string& message);
+
+    /**
+     * @brief Flushes all attached recorders.
+     */
+    void flush();
 
     /**
      * @brief Returns the class type.

@@ -17,6 +17,9 @@ namespace quasar::logic {
 /**
  * @class SFC
  * @brief Executes an SFC with multi-token parallel transactional logic.
+ * 
+ * @reference [TSK-20260311-009.3] Sequential Function Chart (SFC) / Grafcet
+ * @reference [FE-0240.3] Sequential Function Chart (SFC) / Grafcet
  */
 class SFC : public LogicComponent {
 public:

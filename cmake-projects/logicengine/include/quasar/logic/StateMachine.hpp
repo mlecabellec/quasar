@@ -16,6 +16,9 @@ namespace quasar::logic {
 /**
  * @class StateMachine
  * @brief Executes a state machine with cyclic transactional guarantees.
+ * 
+ * @reference [TSK-20260311-009.2] State Machine (FSM/HSM) Support
+ * @reference [FE-0240.2] State Machine Support (HSM)
  */
 class StateMachine : public LogicComponent {
 public:

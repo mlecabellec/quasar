@@ -24,6 +24,9 @@ struct NamedLuaMethodImpl {
 /**
  * @class NamedLuaMethod
  * @brief A NamedMethod that executes a Lua function.
+ * 
+ * @reference [TSK-20260328-001] Reflexive Execution & Service Orchestration
+ * @reference [FE-0260.2] Scriptable Methods (NamedLuaMethod)
  */
 class NamedLuaMethod : public quasar::named::NamedMethod {
 public:

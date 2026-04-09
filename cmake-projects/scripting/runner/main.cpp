@@ -8,7 +8,9 @@
 /**
  * @brief Main execution entry point for the standalone runner.
  * @details Implements the CLI script execution and dynamic plugin loading.
- *          Contributes to [FE-0140].
+ * 
+ * @reference [TSK-20260310-001.1] Standalone Executable
+ * @reference [FE-0140] Standalone Script Runner and Plug-in System
  */
 
 void printUsage() {

@@ -21,7 +21,9 @@ namespace quasar::opcua {
  * @class OpcUaClientService
  * @brief NamedService that mirrors a remote OPC UA tree locally.
  * 
- * Fulfills [TSK-20260311-005.3] OPC UA Client as NamedService.
+ * @reference [TSK-20260311-005.3] OPC UA Client as NamedService
+ * @reference [FE-0200.3] OPC UA Client Service
+ * 
  * Handles thread-safety by queuing all client operations to its service thread.
  */
 class OpcUaClientService : public named::NamedService {

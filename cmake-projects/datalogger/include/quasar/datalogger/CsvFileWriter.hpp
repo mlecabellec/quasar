@@ -15,6 +15,9 @@ namespace quasar::datalogger {
  * 
  * Uses double-buffering and a background thread to prevent blocking 
  * the data acquisition pipeline during file I/O operations.
+ * 
+ * @reference [TSK-20260303-001.2] High-Performance CSV Recorder
+ * @reference [FE-0160.2.1] Provide a CsvFileWriter supporting high-performance CSV recording
  */
 class CsvFileWriter : public ADevRecorder {
 public:
