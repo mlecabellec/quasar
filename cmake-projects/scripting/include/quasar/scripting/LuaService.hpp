@@ -99,7 +99,12 @@ public:
     }
 
     /**
-     * @brief Perform a thread-safe garbage collection step on the Lua engine.
+     * @brief Check if the service is currently running.
+     */
+    bool isRunning() const { return m_running; }
+
+    /**
+     * @brief Performs a thread-safe garbage collection step on the Lua engine.
      */
     void gcStep(int stepSize);
 

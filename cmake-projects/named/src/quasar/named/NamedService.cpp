@@ -108,10 +108,12 @@ std::shared_ptr<NamedObject> NamedService::callHook(const std::string& methodNam
     std::shared_ptr<NamedObject> child = getChild(methodName);
     if (child) {
         // [CS-0010.44] Both C++ and Lua methods are supported.
-        if (child->getType() == "NamedMethod" || child->getType() == "NamedLuaMethod") {
-            std::shared_ptr<NamedMethod> method = std::dynamic_pointer_cast<NamedMethod>(child);
-            if (method) {
+        std::shared_ptr<NamedMethod> method = std::dynamic_pointer_cast<NamedMethod>(child);
+        if (method) {
+            try {
                 return method->execute(args);
+            } catch (const std::exception& e) {
+                std::cerr << "NamedService [" << getName() << "] error executing hook '" << methodName << "': " << e.what() << std::endl;
             }
         }
     }

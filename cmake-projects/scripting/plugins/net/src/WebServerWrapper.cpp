@@ -1,6 +1,11 @@
 #include "quasar/net/WebServerWrapper.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 
 namespace quasar::net {
+
+using namespace quasar::scripting;
 
 void LuaWSSession::onConnected() {
     auto id_str = id().string();
@@ -63,39 +68,73 @@ void LuaWSSession::onError(int error, const std::string& category, const std::st
 void bindWebServer(sol::state_view& lua) {
     auto serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
 
-    serverTable.new_usertype<LuaWSServer>("WebServer",
-        sol::factories([](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
-            return std::make_shared<LuaWSServer>(service, port);
-        }),
-        "start", [](LuaWSServer& self) { return self.Start(); },
-        "stop", [](LuaWSServer& self) { return self.Stop(); },
-        "restart", [](LuaWSServer& self) { return self.Restart(); },
-        "multicastText", [](LuaWSServer& self, const std::string& data) { return self.MulticastText(data.data(), data.size()); },
-        "multicastBinary", [](LuaWSServer& self, const std::string& data) { return self.MulticastBinary(data.data(), data.size()); },
-        "sendText", [](LuaWSServer& self, const std::string& id, const std::string& data) {
-             auto session = self.getLuaSession(id);
-             if (session) session->SendTextAsync(data.data(), data.size());
-        },
-        "sendBinary", [](LuaWSServer& self, const std::string& id, const std::string& data) {
-             auto session = self.getLuaSession(id);
-             if (session) session->SendBinaryAsync(data.data(), data.size());
-        },
-        "sendResponse", [](LuaWSServer& self, const std::string& id, int status, const std::string& message, const std::string& body) {
-             auto session = self.getLuaSession(id);
-             if (session) {
-                 CppServer::HTTP::HTTPResponse response;
-                 response.SetBegin(status, message);
-                 response.SetBody(body);
-                 session->SendResponseAsync(response);
-             }
-        },
-        "onConnected", &LuaWSServer::onConnectedCb,
-        "onDisconnected", &LuaWSServer::onDisconnectedCb,
-        "onReceivedRequest", &LuaWSServer::onReceivedRequestCb,
-        "onWSConnected", &LuaWSServer::onWSConnectedCb,
-        "onWSDisconnected", &LuaWSServer::onWSDisconnectedCb,
-        "onWSReceived", &LuaWSServer::onWSReceivedCb,
-        "onError", &LuaWSServer::onErrorCb
+    sol::usertype<LuaProxy<LuaWSServer>> ut = lua.new_usertype<LuaProxy<LuaWSServer>>("WebServer",
+        sol::no_constructor,
+        sol::base_classes, sol::bases<ILuaProxy>());
+
+    serverTable["WebServer"] = lua.create_table_with(
+        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
+            auto ptr = std::make_shared<LuaWSServer>(service, port);
+            ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<LuaWSServer>(ptr);
+        }
+    );
+
+    ut["start"] = [](LuaProxy<LuaWSServer> self) { return self.lock()->Start(); };
+    ut["stop"] = [](LuaProxy<LuaWSServer> self) { return self.lock()->Stop(); };
+    ut["restart"] = [](LuaProxy<LuaWSServer> self) { return self.lock()->Restart(); };
+    ut["multicastText"] = [](LuaProxy<LuaWSServer> self, const std::string& data) { 
+        return self.lock()->MulticastText(data.data(), data.size()); 
+    };
+    ut["multicastBinary"] = [](LuaProxy<LuaWSServer> self, const std::string& data) { 
+        return self.lock()->MulticastBinary(data.data(), data.size()); 
+    };
+    ut["sendText"] = [](LuaProxy<LuaWSServer> self, const std::string& id, const std::string& data) {
+         auto session = self.lock()->getLuaSession(id);
+         if (session) session->SendTextAsync(data.data(), data.size());
+    };
+    ut["sendBinary"] = [](LuaProxy<LuaWSServer> self, const std::string& id, const std::string& data) {
+         auto session = self.lock()->getLuaSession(id);
+         if (session) session->SendBinaryAsync(data.data(), data.size());
+    };
+    ut["sendResponse"] = [](LuaProxy<LuaWSServer> self, const std::string& id, int status, const std::string& message, const std::string& body) {
+         auto session = self.lock()->getLuaSession(id);
+         if (session) {
+             CppServer::HTTP::HTTPResponse response;
+             response.SetBegin(status, message);
+             response.SetBody(body);
+             session->SendResponseAsync(response);
+         }
+    };
+    
+    // Callbacks
+    ut["onConnected"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onConnectedCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onConnectedCb = cb; }
+    );
+    ut["onDisconnected"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onDisconnectedCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onDisconnectedCb = cb; }
+    );
+    ut["onReceivedRequest"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onReceivedRequestCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onReceivedRequestCb = cb; }
+    );
+    ut["onWSConnected"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onWSConnectedCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onWSConnectedCb = cb; }
+    );
+    ut["onWSDisconnected"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onWSDisconnectedCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onWSDisconnectedCb = cb; }
+    );
+    ut["onWSReceived"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onWSReceivedCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onWSReceivedCb = cb; }
+    );
+    ut["onError"] = sol::property(
+        [](LuaProxy<LuaWSServer>& self) { return self.lock()->onErrorCb; },
+        [](LuaProxy<LuaWSServer>& self, sol::function cb) { self.lock()->onErrorCb = cb; }
     );
 }
 

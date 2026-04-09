@@ -30,6 +30,7 @@ client:start()
 
 -- Give it some time to connect and browse the tree.
 print("Waiting for connection and browse... (2 seconds)")
+-- [CS-0010.46] quasar.sleep releases engine lock for background network processing.
 if quasar.sleep then quasar.sleep(2000) else os.execute("sleep 2") end
 
 -- 5. Interacting with the mirrored tree

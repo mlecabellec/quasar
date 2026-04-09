@@ -184,7 +184,7 @@ void OpcUaServerService::mapObject(std::shared_ptr<NamedObject> obj, UA_NodeId p
 
     UA_NodeId newNodeId;
 
-    if (type == "NamedMethod") {
+    if (type == "NamedMethod" || type == "NamedLuaMethod") {
         UA_MethodAttributes mAttr = UA_MethodAttributes_default;
         mAttr.displayName = displayName;
         mAttr.executable = true;

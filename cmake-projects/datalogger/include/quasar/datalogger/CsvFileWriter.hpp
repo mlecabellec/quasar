@@ -22,6 +22,18 @@ namespace quasar::datalogger {
 class CsvFileWriter : public ADevRecorder {
 public:
     /**
+     * @brief Factory method for creating and correctly initializing a CsvFileWriter.
+     */
+    static std::shared_ptr<CsvFileWriter> create(const std::string& name, const std::string& filePath) {
+        struct Enabler : public CsvFileWriter {
+            Enabler(const std::string& n, const std::string& f) : CsvFileWriter(n, f) {}
+        };
+        auto ptr = std::make_shared<Enabler>(name, filePath);
+        ptr->setSelf(ptr);
+        return ptr;
+    }
+
+    /**
      * @brief Constructs a new CsvFileWriter.
      * @param name The name of the recorder object.
      * @param filePath The path to the CSV file.

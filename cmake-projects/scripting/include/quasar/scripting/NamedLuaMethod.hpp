@@ -5,10 +5,12 @@
 #include <sol/sol.hpp>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 namespace quasar::scripting {
 
 class LuaService;
+class LuaEngine;
 
 /**
  * @struct NamedLuaMethodImpl
@@ -18,6 +20,8 @@ struct NamedLuaMethodImpl {
     sol::function func;
     std::recursive_mutex mutex;
     std::weak_ptr<LuaService> service;
+    LuaEngine* engine = nullptr;
+    std::atomic<bool> valid{true};
 };
 
 

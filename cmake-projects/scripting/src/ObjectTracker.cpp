@@ -13,31 +13,8 @@ void ObjectTracker::track(std::shared_ptr<named::NamedObject> obj) {
     
     m_trackedObjects[obj.get()] = obj;
     
-    // [CS-0010.44] Specialized tracking for methods to allow invalidation on shutdown.
     if (obj->getType() == "NamedLuaMethod") {
         m_methods.push_back(obj);
-        // [CS-0010.44] Periodically prune the methods vector during tracking to avoid unbounded growth.
-        if (m_methods.size() % 100 == 0) {
-            m_methods.erase(std::remove_if(m_methods.begin(), m_methods.end(), 
-                [](const std::weak_ptr<named::NamedObject>& w) { return w.expired(); }), m_methods.end());
-        }
-    }
-}
-
-void ObjectTracker::trackStrong(std::shared_ptr<named::NamedObject> obj) {
-    if (!obj) return;
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) return;
-    
-    m_strongObjects[obj.get()] = obj;
-    m_trackedObjects[obj.get()] = obj;
-
-    if (obj->getType() == "NamedLuaMethod") {
-        m_methods.push_back(obj);
-        if (m_methods.size() % 100 == 0) {
-            m_methods.erase(std::remove_if(m_methods.begin(), m_methods.end(), 
-                [](const std::weak_ptr<named::NamedObject>& w) { return w.expired(); }), m_methods.end());
-        }
     }
 }
 
@@ -47,7 +24,8 @@ void ObjectTracker::untrack(named::NamedObject* obj) {
     if (!lock.owns_lock()) return;
     
     m_trackedObjects.erase(obj);
-    m_strongObjects.erase(obj);
+    // Note: We don't easily untrack from m_anyStrongObjects as it is std::any vector.
+    // Cleanup() will handle it if we ever implement scoped strong tracking.
 }
 
 bool ObjectTracker::isAlive(std::shared_ptr<named::NamedObject> obj) const {
@@ -64,7 +42,7 @@ bool ObjectTracker::isAlive(std::shared_ptr<named::NamedObject> obj) const {
 size_t ObjectTracker::getTrackedCount() const {
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return 0;
-    return m_trackedObjects.size();
+    return m_trackedObjects.size() + m_anyStrongObjects.size();
 }
 
 void ObjectTracker::cleanup() {
@@ -81,18 +59,17 @@ void ObjectTracker::cleanup() {
     }
 
     m_methods.erase(std::remove_if(m_methods.begin(), m_methods.end(), 
-        [](const std::weak_ptr<named::NamedObject>& w) { return w.expired(); }), m_methods.end());
+        [](const std::shared_ptr<named::NamedObject>& s) { return s.use_count() <= 1; }), m_methods.end());
 }
 
 void ObjectTracker::invalidateMethods() {
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
 
-    for (std::weak_ptr<named::NamedObject>& weak_obj : m_methods) {
-        if (std::shared_ptr<named::NamedObject> obj = weak_obj.lock()) {
-            if (std::shared_ptr<NamedLuaMethod> method = std::dynamic_pointer_cast<NamedLuaMethod>(obj)) {
-                method->invalidate();
-            }
+    for (const std::shared_ptr<named::NamedObject>& obj : m_methods) {
+        std::shared_ptr<NamedLuaMethod> method = std::dynamic_pointer_cast<NamedLuaMethod>(obj);
+        if (method) {
+            method->invalidate();
         }
     }
     m_methods.clear();

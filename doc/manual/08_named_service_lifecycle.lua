@@ -46,9 +46,13 @@ worker:start()
 
 -- 5. Wait for the magic
 print("Monitoring bee for 3 seconds...")
-local start = os.time()
-while os.difftime(os.time(), start) < 3 do
-    os.execute("sleep 0.2")
+if quasar.sleep then
+    quasar.sleep(3000)
+else
+    local start = os.time()
+    while os.difftime(os.time(), start) < 3 do
+        os.execute("sleep 0.2")
+    end
 end
 
 -- 6. Disengage

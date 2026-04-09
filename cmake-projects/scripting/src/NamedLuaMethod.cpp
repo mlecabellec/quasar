@@ -21,58 +21,50 @@ NamedLuaMethod::NamedLuaMethod(const std::string& name, sol::function func)
 NamedLuaMethod::NamedLuaMethod(const std::string& name, std::shared_ptr<NamedLuaMethodImpl> impl)
     : NamedMethod(name, [impl](std::shared_ptr<quasar::named::NamedObject> owner, std::shared_ptr<quasar::named::NamedObject> args) -> std::shared_ptr<quasar::named::NamedObject> {
         
-        auto executeInternal = [impl, owner, args]() -> std::shared_ptr<quasar::named::NamedObject> {
-            std::unique_lock<std::recursive_mutex> implLock(impl->mutex);
-            if (!impl->func.valid()) {
-                return nullptr;
-            }
+        std::function<std::shared_ptr<quasar::named::NamedObject>()> executeInternal = [impl, owner, args]() -> std::shared_ptr<quasar::named::NamedObject> {
+            if (!impl->valid || !impl->engine) return nullptr;
 
-            sol::state_view lua(impl->func.lua_state());
-            sol::object engineObj = lua.registry()["__quasar_engine"];
-            std::unique_lock<std::recursive_mutex> lock;
-            
-            if (engineObj.is<LuaEngine*>()) {
-                LuaEngine* engine = engineObj.as<LuaEngine*>();
-                lock = engine->acquireLock();
+            // [CS-0010.46] Always acquire engine lock before touching the state from any thread.
+            std::unique_lock<std::recursive_mutex> lock = impl->engine->acquireLock();
+
+            std::unique_lock<std::recursive_mutex> implLock(impl->mutex);
+            if (!impl->func.valid() || !impl->valid) {
+                return nullptr;
             }
 
             sol::protected_function_result result = impl->func(LuaProxy<quasar::named::NamedObject>(owner), LuaProxy<quasar::named::NamedObject>(args));
             
             if (!result.valid()) {
                 sol::error err = result;
-                throw std::runtime_error("NamedLuaMethod execution error: " + std::string(err.what()));
+                std::cerr << "NamedLuaMethod [" << owner->getName() << "] execution error: " << err.what() << std::endl;
+                return nullptr;
             }
             
             return extractNamedObject(result);
         };
 
-        // Check if we need to marshal to a different thread
-        if (auto svc = impl->service.lock()) {
-            // Marshall to the service's worker thread
-            auto future = svc->postTaskWithResult<std::shared_ptr<quasar::named::NamedObject>>(executeInternal);
-            
-            // Wait for completion. 
-            // NOTE: If we are calling from the same thread, this might deadlock if not careful.
-            // But LuaService worker thread doesn't typically call its own methods synchronously via this path.
-            if (future.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
-                return future.get();
-            } else {
-                throw std::runtime_error("NamedLuaMethod execution timed out (marshalling)");
+        std::shared_ptr<LuaService> svc = impl->service.lock();
+        if (svc) {
+            if (svc->isRunning()) {
+                std::future<std::shared_ptr<quasar::named::NamedObject>> future = svc->postTaskWithResult<std::shared_ptr<quasar::named::NamedObject>>(executeInternal);
+                if (future.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
+                    return future.get();
+                } else {
+                    return nullptr;
+                }
             }
-        } else {
-            // No associated service (or calling from a thread that owns the state)
-            return executeInternal();
         }
+
+        return executeInternal();
     }), m_impl(impl) {}
 
 NamedLuaMethod::~NamedLuaMethod() {
-    try {
-        invalidate();
-    } catch (...) {}
+    invalidate();
 }
 
 void NamedLuaMethod::invalidate() {
     if (m_impl) {
+        m_impl->valid = false;
         std::unique_lock<std::recursive_mutex> lock(m_impl->mutex);
         if (m_impl->func.valid()) {
             m_impl->func.abandon();
@@ -90,10 +82,17 @@ std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, 
     std::shared_ptr<NamedLuaMethod> self = std::make_shared<make_shared_enabler>(name, func);
     self->setSelf(self);
     
-    // Associate with parent if it's a LuaService or under one
+    // Setup LuaEngine pointer
+    sol::state_view lua(func.lua_state());
+    sol::object engineObj = lua["__quasar_engine"];
+    if (engineObj.is<LuaEngine*>()) {
+        self->m_impl->engine = engineObj.as<LuaEngine*>();
+    }
+    
     std::shared_ptr<quasar::named::NamedObject> p = parent;
     while (p) {
-        if (auto svc = std::dynamic_pointer_cast<LuaService>(p)) {
+        std::shared_ptr<LuaService> svc = std::dynamic_pointer_cast<LuaService>(p);
+        if (svc) {
             self->m_impl->service = svc;
             break;
         }

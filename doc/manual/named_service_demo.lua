@@ -54,7 +54,7 @@ print("Main script waiting for " .. duration .. " seconds...")
 
 while os.difftime(os.time(), startTime) < duration do
     -- Yield CPU to let background thread work
-    os.execute("sleep 0.1")
+    if quasar.sleep then quasar.sleep(100) else os.execute("sleep 0.1") end
 end
 
 -- 8. Stop the Service
@@ -62,6 +62,6 @@ print("Stopping service...")
 service:stop()
 
 -- Wait a bit for the thread to actually finish
-os.execute("sleep 0.5")
+if quasar.sleep then quasar.sleep(500) else os.execute("sleep 0.5") end
 
 print("--- Example Finished ---")

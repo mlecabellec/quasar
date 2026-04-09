@@ -122,6 +122,9 @@ void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
 }
 
 void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
+  if (!child) {
+      throw std::invalid_argument("Cannot add a null child to NamedObject");
+  }
   // Fulfills [FE-0020.1.3.1] strong reference to children.
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
                                                     config::DEFAULT_LOCK_TIMEOUT);

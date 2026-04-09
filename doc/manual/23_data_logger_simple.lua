@@ -23,7 +23,7 @@ local logger = quasar.datalogger.createService("PressureLogger", 100, root)
 -- 2. Define the recording logic using a simple hook
 -- Real DataLoggers in Quasar track objects automatically, but here we can simulate 
 -- pulling data into the logger or using the logger's background loop.
-n.createLuaMethod("run", function(owner, args)
+local simRun = n.createLuaMethod("sim_run", function(owner, args)
     local p = owner:getParent():getChild("Pressure"):asDouble():value()
     -- Here we simulate the logger recording the value. 
     -- In a full C++ setup, you'd add recorders to the service.
@@ -36,8 +36,10 @@ logger:start()
 
 print("\nSimulating Pressure Changes...")
 for i = 1, 5 do
+    -- [CS-0010.46] Use quasar.sleep to release engine lock for logger service threads.
     if quasar.sleep then quasar.sleep(250) else os.execute("sleep 0.25") end
     pressure:setValue(1.0 + (i * 0.5))
+    simRun:execute(nil)
 end
 
 -- 4. Stop Logging

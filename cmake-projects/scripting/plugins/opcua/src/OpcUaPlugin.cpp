@@ -20,7 +20,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         sol::base_classes, sol::bases<ILuaProxy>());
     utServer["getName"] = [](LuaProxy<OpcUaServerService> self) { return self.lock()->getName(); };
     utServer["getChild"] = [](LuaProxy<OpcUaServerService> self, const std::string& n) -> std::optional<LuaProxy<NamedObject>> {
-        auto c = self.lock()->getChild(n);
+        std::shared_ptr<NamedObject> c = self.lock()->getChild(n);
         return c ? std::make_optional(LuaProxy<NamedObject>(c)) : std::nullopt;
     };
     utServer["start"] = [](LuaProxy<OpcUaServerService> self) { self.lock()->start(); };
@@ -34,7 +34,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
     utServer["loadTrustList"] = [](LuaProxy<OpcUaServerService> self, sol::table paths) {
         std::vector<std::string> v;
-        for (auto const& kv : paths) {
+        for (std::pair<sol::object, sol::object> const& kv : paths) {
             v.push_back(kv.second.as<std::string>());
         }
         self.lock()->loadTrustList(v);
@@ -47,7 +47,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
 
     opcuaTable["createServer"] = [](const std::string& name, sol::object parent) {
-        auto ptr = OpcUaServerService::create(name, extractNamedObject(parent));
+        std::shared_ptr<OpcUaServerService> ptr = OpcUaServerService::create(name, extractNamedObject(parent));
         if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
         return LuaProxy<OpcUaServerService>(ptr);
     };
@@ -58,7 +58,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         sol::base_classes, sol::bases<ILuaProxy>());
     utClient["getName"] = [](LuaProxy<OpcUaClientService> self) { return self.lock()->getName(); };
     utClient["getChild"] = [](LuaProxy<OpcUaClientService> self, const std::string& n) -> std::optional<LuaProxy<NamedObject>> {
-        auto c = self.lock()->getChild(n);
+        std::shared_ptr<NamedObject> c = self.lock()->getChild(n);
         return c ? std::make_optional(LuaProxy<NamedObject>(c)) : std::nullopt;
     };
     utClient["start"] = [](LuaProxy<OpcUaClientService> self) { self.lock()->start(); };
@@ -69,7 +69,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
     utClient["loadTrustList"] = [](LuaProxy<OpcUaClientService> self, sol::table paths) {
         std::vector<std::string> v;
-        for (auto const& kv : paths) {
+        for (std::pair<sol::object, sol::object> const& kv : paths) {
             v.push_back(kv.second.as<std::string>());
         }
         self.lock()->loadTrustList(v);
@@ -79,7 +79,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
 
     opcuaTable["createClient"] = [](const std::string& name, sol::object parent) {
-        auto ptr = OpcUaClientService::create(name, extractNamedObject(parent));
+        std::shared_ptr<OpcUaClientService> ptr = OpcUaClientService::create(name, extractNamedObject(parent));
         if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
         return LuaProxy<OpcUaClientService>(ptr);
     };

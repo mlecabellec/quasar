@@ -41,6 +41,7 @@ server:start()
 -- 5. Simulate Data Changes in the background
 print("Simulating machine movement for 5 seconds...")
 for i = 1, 5 do
+    -- [CS-0010.46] Always use quasar.sleep to release engine lock for background threads.
     if quasar.sleep then quasar.sleep(1000) else os.execute("sleep 1") end
     local x = xPos:value()
     xPos:setValue(x + 10.5)

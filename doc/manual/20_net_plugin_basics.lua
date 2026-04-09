@@ -11,11 +11,11 @@ if not quasar.net then
 end
 
 -- 1. Create the underlying ASIO Service
-local asio = quasar.net.server.AsioService()
+local asio = quasar.net.server.AsioService.new()
 asio:start()
 
 -- 2. Create the TCP Server on port 8080
-local server = quasar.net.server.TCPServer(asio, 8080)
+local server = quasar.net.server.TCPServer.new(asio, 8080)
 
 -- 3. Define Callbacks
 -- "A good server always knows who's talking and what they're saying."

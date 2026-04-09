@@ -24,7 +24,19 @@ print("Publishing tree...")
 pub:publishTree("topic", root)
 
 print("Receiving tree...")
-local restored = sub:receiveTree()
+local restored = nil
+local retries = 10
+while not restored and retries > 0 do
+    restored = sub:receiveTree()
+    if not restored then
+        if quasar.sleep then quasar.sleep(100) end
+        retries = retries - 1
+    end
+end
+
+if not restored then
+    error("FAILED to receive tree after retries")
+end
 
 print("Restored tree name: " .. restored:getName())
 if restored:getName() ~= "root" then

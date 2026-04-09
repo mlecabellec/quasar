@@ -1,28 +1,41 @@
 #include "quasar/net/SSLContextWrapper.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 
 namespace quasar::net {
+
+using namespace quasar::scripting;
 
 void bindSSLContext(sol::state_view& lua) {
     sol::table netT = lua["quasar"]["net"].get_or_create<sol::table>();
     sol::table securityTable = netT["security"].get_or_create<sol::table>();
 
-    // We expose CppServer::Asio::SSLContext
-    // Note: CppServer::Asio::SSLContext is typically created via std::make_shared<CppServer::Asio::SSLContext>(asio::ssl::context::tlsv12)
-    // We'll wrap its constructor and expose relevant method properties using lambdas.
+    sol::usertype<LuaProxy<CppServer::Asio::SSLContext>> ut = lua.new_usertype<LuaProxy<CppServer::Asio::SSLContext>>("SSLContext",
+        sol::no_constructor,
+        sol::base_classes, sol::bases<ILuaProxy>());
 
-    // Expose the raw SSL context natively
-    securityTable.new_usertype<CppServer::Asio::SSLContext>("SSLContext",
-        sol::constructors<CppServer::Asio::SSLContext(asio::ssl::context_base::method)>(),
-        "setOptions", [](CppServer::Asio::SSLContext& self, int options) { self.set_options(options); },
-        "setPassword", [](CppServer::Asio::SSLContext& self, const std::string& pwd) { self.set_password_callback([pwd](std::size_t, asio::ssl::context_base::password_purpose) { return pwd; }); },
-        "useCertificateChainFile", [](CppServer::Asio::SSLContext& self, const std::string& filename) { self.use_certificate_chain_file(filename); },
-        "usePrivateKeyFile", [](CppServer::Asio::SSLContext& self, const std::string& filename) { self.use_private_key_file(filename, asio::ssl::context::pem); },
-        "useTmpDhFile", [](CppServer::Asio::SSLContext& self, const std::string& filename) { self.use_tmp_dh_file(filename); },
-        "loadVerifyFile", [](CppServer::Asio::SSLContext& self, const std::string& filename) { self.load_verify_file(filename); },
-        "setVerifyMode", [](CppServer::Asio::SSLContext& self, int mode) { self.set_verify_mode(mode); }
+    securityTable["SSLContext"] = lua.create_table_with(
+        "new", [](asio::ssl::context_base::method m) {
+            auto ptr = std::make_shared<CppServer::Asio::SSLContext>(m);
+            // SSLContext doesn't inherit NamedObject, but we still track it for lifetime
+            // Actually ObjectTracker is specialized for NamedObject.
+            // For non-NamedObjects we rely on shared_ptr in the proxy if we want them to stay alive.
+            return LuaProxy<CppServer::Asio::SSLContext>(ptr);
+        }
     );
 
-    // Provide enumeration for basic SSL methods since they map to asio::ssl::c    // Context methods enum
+    ut["setOptions"] = [](LuaProxy<CppServer::Asio::SSLContext> self, int options) { self.lock()->set_options(options); };
+    ut["setPassword"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& pwd) { 
+        self.lock()->set_password_callback([pwd](std::size_t, asio::ssl::context_base::password_purpose) { return pwd; }); 
+    };
+    ut["useCertificateChainFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->use_certificate_chain_file(filename); };
+    ut["usePrivateKeyFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->use_private_key_file(filename, asio::ssl::context::pem); };
+    ut["useTmpDhFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->use_tmp_dh_file(filename); };
+    ut["loadVerifyFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->load_verify_file(filename); };
+    ut["setVerifyMode"] = [](LuaProxy<CppServer::Asio::SSLContext> self, int mode) { self.lock()->set_verify_mode(mode); };
+
+    // Context methods enum
     securityTable["method"] = lua.create_table_with(
         "sslv2", asio::ssl::context_base::sslv2,
         "sslv23", asio::ssl::context::sslv23,

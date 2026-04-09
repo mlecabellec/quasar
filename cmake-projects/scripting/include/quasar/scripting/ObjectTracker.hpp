@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <any>
 
 namespace quasar::scripting {
 
@@ -14,7 +15,7 @@ namespace quasar::scripting {
  * 
  * ObjectTracker provides a way to verify if a NamedObject is still
  * valid and present in C++ memory, even if Lua holds a shared_ptr
- * to it.
+ * to it. It also manages strong references for standalone objects.
  */
 class ObjectTracker {
 public:
@@ -29,9 +30,24 @@ public:
     void track(std::shared_ptr<named::NamedObject> obj);
 
     /**
-     * @brief Registers an object for tracking (strong reference, keeps it alive).
+     * @brief Registers any shared object for tracking (strong reference, keeps it alive).
      */
-    void trackStrong(std::shared_ptr<named::NamedObject> obj);
+    template<typename T>
+    void trackStrong(std::shared_ptr<T> obj) {
+        if (!obj) return;
+        std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) return;
+        
+        m_anyStrongObjects.push_back(obj);
+
+        // If it's a NamedObject, also track it in the weak map for isAlive() checks
+        if constexpr (std::is_base_of_v<named::NamedObject, T>) {
+            m_trackedObjects[obj.get()] = std::static_pointer_cast<named::NamedObject>(obj);
+            if (obj->getType() == "NamedLuaMethod") {
+                m_methods.push_back(std::static_pointer_cast<named::NamedObject>(obj));
+            }
+        }
+    }
 
     /**
      * @brief Removes an object from tracking.
@@ -40,8 +56,6 @@ public:
 
     /**
      * @brief Checks if an object is still alive in the C++ hierarchy.
-     * @param obj The object to check.
-     * @return True if the object is still managed by C++.
      */
     bool isAlive(std::shared_ptr<named::NamedObject> obj) const;
 
@@ -65,8 +79,8 @@ private:
     
     mutable std::timed_mutex m_mutex;
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>> m_trackedObjects;
-    std::map<named::NamedObject*, std::shared_ptr<named::NamedObject>> m_strongObjects;
-    std::vector<std::weak_ptr<named::NamedObject>> m_methods;
+    std::vector<std::shared_ptr<named::NamedObject>> m_methods; // Special handling for methods
+    std::vector<std::any> m_anyStrongObjects;
 };
 
 } // namespace quasar::scripting

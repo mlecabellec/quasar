@@ -26,7 +26,8 @@ sub:connect("tcp://127.0.0.1:5556")
 sub:subscribe("QuasarUpdates") -- Subscribe to the topic
 
 -- Wait for connection to establish
-if quasar.sleep then quasar.sleep(100) else os.execute("sleep 0.1") end
+-- [CS-0010.46] quasar.sleep releases the engine lock, allowing background ZMQ threads to work.
+if quasar.sleep then quasar.sleep(500) else os.execute("sleep 0.5") end
 
 -- 2. Setup the Data
 local root = n.createObject("WeatherStation")
@@ -44,7 +45,17 @@ pub:publishTree("QuasarUpdates", root)
 
 -- 4. Receive the Tree
 print("Subscriber waiting for tree...")
-local restoredRoot = sub:receiveTree()
+local restoredRoot = nil
+local retries = 10
+
+-- [TSK-20260311-004.3.2] receiveTree is non-blocking if topic part not ready.
+while not restoredRoot and retries > 0 do
+    restoredRoot = sub:receiveTree()
+    if not restoredRoot then
+        if quasar.sleep then quasar.sleep(200) end
+        retries = retries - 1
+    end
+end
 
 if restoredRoot then
     print("Successfully received tree: " .. restoredRoot:getName())

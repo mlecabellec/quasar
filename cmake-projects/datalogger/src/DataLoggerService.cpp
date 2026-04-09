@@ -73,13 +73,18 @@ void DataLoggerService::resetInstance() {
 
 std::shared_ptr<DataLoggerService> DataLoggerService::create(const std::string& name, size_t ringBufferCapacity, std::shared_ptr<quasar::named::NamedObject> parent) {
     std::shared_ptr<DataLoggerService> service = std::make_shared<DataLoggerService>(name, ringBufferCapacity);
+    service->setSelf(service);
     if (parent) {
         service->setParent(parent);
     }
     
+    std::weak_ptr<DataLoggerService> weakSvc = service;
     quasar::named::NamedMethod::create("run",
-        [svc = service.get()](std::shared_ptr<quasar::named::NamedObject> owner, std::shared_ptr<quasar::named::NamedObject> args) {
-            return svc->processRingBuffer(owner, args);
+        [weakSvc](std::shared_ptr<quasar::named::NamedObject> owner, std::shared_ptr<quasar::named::NamedObject> args) {
+            if (auto svc = weakSvc.lock()) {
+                return svc->processRingBuffer(owner, args);
+            }
+            return std::shared_ptr<quasar::named::NamedObject>(nullptr);
         }, service);
         
     return service;

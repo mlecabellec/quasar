@@ -4,6 +4,10 @@
 #include <sol/sol.hpp>
 #include <string>
 #include <stdexcept>
+#include <typeindex>
+#include <map>
+#include <functional>
+#include <type_traits>
 
 namespace quasar::named {
 class NamedObject;
@@ -83,8 +87,17 @@ public:
      */
     std::shared_ptr<quasar::named::NamedObject> lockAsNamedObject() const override {
         std::shared_ptr<T> ptr = m_weak.lock();
-        // [CS-0010.34] auto forbidden.
-        return std::dynamic_pointer_cast<quasar::named::NamedObject>(ptr);
+        if (!ptr) return nullptr;
+
+        // Compile-time branching for base-class check
+        if constexpr (std::is_base_of_v<quasar::named::NamedObject, T>) {
+            return std::static_pointer_cast<quasar::named::NamedObject>(ptr);
+        } else if constexpr (std::is_polymorphic_v<T>) {
+            return std::dynamic_pointer_cast<quasar::named::NamedObject>(ptr);
+        } else {
+            // T is not a NamedObject and not polymorphic, cannot be cast to NamedObject
+            return nullptr;
+        }
     }
 
 private:

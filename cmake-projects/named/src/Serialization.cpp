@@ -46,11 +46,7 @@ createFromTypeAndValue(const std::string &name, const std::string &type,
   if (type == "NamedBoolean" || type == "Boolean") {
     return NamedBoolean::create(name, valueStr == "true", parent);
   } else if (type == "NamedInteger" || type == "Integer") {
-    try {
-      return NamedInteger<int32_t>::create(name, std::stoi(valueStr), parent);
-    } catch (...) {
-      return NamedInteger<int64_t>::create(name, std::stoll(valueStr), parent);
-    }
+    return NamedInteger<int64_t>::create(name, std::stoll(valueStr), parent);
   } else if (type == "NamedFloatingPoint" || type == "FloatingPoint") {
     return NamedFloatingPoint<double>::create(name, std::stod(valueStr), parent);
   } else if (type == "NamedBuffer" || type == "Buffer") {

@@ -78,10 +78,10 @@ end, oven)
 oven:setCycleTime(200)
 oven:start()
 
-os.execute("sleep 1.0")
+if quasar.sleep then quasar.sleep(1000) else os.execute("sleep 1.0") end
 print("Chef: 'Turn up the heat to 250!'")
 temp:setValue(250)
-os.execute("sleep 1.0")
+if quasar.sleep then quasar.sleep(1000) else os.execute("sleep 1.0") end
 
 oven:stop()
 

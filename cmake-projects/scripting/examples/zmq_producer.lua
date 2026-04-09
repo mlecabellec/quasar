@@ -28,5 +28,10 @@ while true do
         print("Producer: Published " .. tostring(counter) .. " trees.")
     end
     
-    quasar.os.sleep(100) -- Sleep ~100ms
+    -- [CS-0010.46] Use engine-aware sleep to release lock for background services.
+    if quasar.sleep then
+        quasar.sleep(100)
+    else
+        os.execute("sleep 0.1")
+    end
 end

@@ -1,13 +1,17 @@
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/PluginLoader.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <thread>
+#include <chrono>
 
 /**
  * @brief Main execution entry point for the standalone runner.
  * @details Implements the CLI script execution and dynamic plugin loading.
+ *          Enhanced to support background services and graceful shutdown.
  * 
  * @reference [TSK-20260310-001.1] Standalone Executable
  * @reference [FE-0140] Standalone Script Runner and Plug-in System
@@ -49,15 +53,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    quasar::scripting::LuaEngine engine;
-    sol::state& lua = engine.getState();
-
-    for (const auto& pluginPath : plugins) {
-        if (!quasar::scripting::PluginLoader::loadPlugin(pluginPath, lua)) {
-            std::cerr << "Warning: Failed to load plugin " << pluginPath << "\n";
-        }
-    }
-
     std::string code;
     if (!scriptFile.empty()) {
         std::ifstream file(scriptFile);
@@ -74,16 +69,29 @@ int main(int argc, char** argv) {
         code = buffer.str();
     }
 
-    try {
-        auto result = engine.executeString(code);
-        if (!result.valid()) {
-            sol::error err = result;
-            std::cerr << "Lua Execution Error:\n" << err.what() << "\n";
+    {
+        quasar::scripting::LuaEngine engine;
+        sol::state& lua = engine.getState();
+
+        // Load plugins
+        for (const auto& pluginPath : plugins) {
+            if (!quasar::scripting::PluginLoader::loadPlugin(pluginPath, lua)) {
+                std::cerr << "Warning: Failed to load plugin " << pluginPath << "\n";
+            }
+        }
+
+        // Execute the main script
+        try {
+            sol::protected_function_result result = engine.executeString(code);
+            if (!result.valid()) {
+                sol::error err = result;
+                std::cerr << "Lua Execution Error:\n" << err.what() << "\n";
+                return 1;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Execution exception: " << e.what() << "\n";
             return 1;
         }
-    } catch (const std::exception& e) {
-        std::cerr << "Execution exception: " << e.what() << "\n";
-        return 1;
     }
 
     return 0;

@@ -61,6 +61,9 @@ for i = 60, 120, 20 do
     print("\n   -> Setting temp to " .. i)
     tempSensor:setValue(i)
     
+    -- [CS-0010.46] Use quasar.sleep to allow observers/background tasks to run.
+    if quasar.sleep then quasar.sleep(100) end
+
     -- If observers aren't natively supported on primitives in this build,
     -- we manually execute the logic hook.
     if not tempSensor:asActive() then checkTemp:execute(nil) end
@@ -68,6 +71,7 @@ end
 
 print("\n[Simulation] Cooling down reactor...")
 tempSensor:setValue(90)
+if quasar.sleep then quasar.sleep(100) end
 if not tempSensor:asActive() then checkTemp:execute(nil) end
 
 print("\n--- Reactive Logic Finished ---")

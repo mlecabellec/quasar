@@ -46,8 +46,8 @@ LuaEngine::LuaEngine(std::weak_ptr<LuaService> service) {
     bindCoreTypes(m_lua);
     bindNamedTypes(m_lua, service.lock());
 
-    // [CS-0010.44] Store engine pointer in registry for retrieval from state
-    m_lua.registry()["__quasar_engine"] = this;
+    // [CS-0010.44] Store engine pointer in a global for retrieval from state by internal C++ logic
+    m_lua["__quasar_engine"] = this;
 }
 
 LuaEngine::~LuaEngine() {

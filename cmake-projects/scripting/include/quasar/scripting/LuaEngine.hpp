@@ -76,6 +76,11 @@ public:
         return std::unique_lock<std::recursive_mutex>(m_mutex);
     }
 
+    /**
+     * @brief Exposes the raw recursive mutex for advanced yielding operations.
+     */
+    std::recursive_mutex& getMutex() { return m_mutex; }
+
 protected:
     /**
      * @brief Custom panic handler for the Lua state.

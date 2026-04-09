@@ -176,16 +176,18 @@ public:
      * 
      * Fulfills [TSK-20260311-004.3.2] receiveTree method.
      * 
-     * @return Shared pointer to the reconstructed tree.
+     * @param flags ZeroMQ flags (e.g., ZMQ_DONTWAIT). Default is 0.
+     * @return Shared pointer to the reconstructed tree, or nullptr if DONTWAIT is used and no message is ready.
      * @throws std::runtime_error if receiving or parsing fails.
      */
-    std::shared_ptr<quasar::named::NamedObject> receiveTree() {
+    std::shared_ptr<quasar::named::NamedObject> receiveTree(int flags = 0) {
         zmq_msg_t part;
         
-        // Step 1: Receive topic (discard or validate if needed, for now discard)
+        // Step 1: Receive topic
         zmq_msg_init(&part);
-        if (zmq_msg_recv(&part, m_socket.get(), 0) < 0) {
+        if (zmq_msg_recv(&part, m_socket.get(), flags) < 0) {
             zmq_msg_close(&part);
+            if (errno == EAGAIN) return nullptr;
             throw std::runtime_error(std::string("Failed to receive topic part: ") + std::strerror(errno));
         }
         
@@ -197,8 +199,9 @@ public:
 
         // Step 2: Receive binary tree payload
         zmq_msg_init(&part);
-        if (zmq_msg_recv(&part, m_socket.get(), 0) < 0) {
+        if (zmq_msg_recv(&part, m_socket.get(), flags) < 0) {
             zmq_msg_close(&part);
+            if (errno == EAGAIN) return nullptr;
             throw std::runtime_error(std::string("Failed to receive tree part: ") + std::strerror(errno));
         }
 

@@ -198,10 +198,10 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
                 std::weak_ptr<OpcUaClientService> weakSvc = std::dynamic_pointer_cast<OpcUaClientService>(getSelf());
                 localObj = NamedMethod::create(name, [weakSvc, methodId, objectId](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
                     (void)owner;
-                    auto s = weakSvc.lock();
+                    std::shared_ptr<OpcUaClientService> s = weakSvc.lock();
                     if (!s || !s->isRunning()) return nullptr;
                     
-                    auto task = [methodId, objectId, args](UA_Client* client) -> std::shared_ptr<NamedObject> {
+                    std::function<std::shared_ptr<NamedObject>(UA_Client*)> task = [methodId, objectId, args](UA_Client* client) -> std::shared_ptr<NamedObject> {
                         UA_Variant input;
                         UA_Variant_init(&input);
                         std::string jsonArgs = serialization::toJson(args);
@@ -223,18 +223,24 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
                             }
                         }
                         UA_Array_delete(output, outputSize, &UA_TYPES[UA_TYPES_VARIANT]);
+                        
+                        // [FE-0130.4.3] Ensure we return a valid NamedObject for Lua, even if method had no output
+                        if (!res) {
+                            res = NamedObject::create("void");
+                        }
                         return res;
                     };
 
                     try {
-                        auto future = s->enqueueTask<std::shared_ptr<NamedObject>>(task);
+                        std::future<std::shared_ptr<NamedObject>> future = s->enqueueTask<std::shared_ptr<NamedObject>>(task);
                         if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
-                            return future.get();
+                            std::shared_ptr<NamedObject> r = future.get();
+                            return r ? r : NamedObject::create("void");
                         } else {
-                            return nullptr;
+                            return NamedObject::create("timeout");
                         }
                     } catch (...) {
-                        return nullptr;
+                        return NamedObject::create("error");
                     }
                 }, localParent);
             } else {

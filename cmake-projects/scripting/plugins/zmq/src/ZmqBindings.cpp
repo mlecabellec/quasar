@@ -8,28 +8,14 @@
 #include "quasar/scripting/PluginContract.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedBuffer.hpp"
 #include <sol/sol.hpp>
 
 namespace {
-
-/** @brief Helper to extract NamedObject from various proxy types. */
-std::shared_ptr<quasar::named::NamedObject> extractNamedObject(sol::object obj) {
-    using namespace quasar::scripting;
-    using namespace quasar::named;
-
-    if (!obj.valid() || obj.is<sol::nil_t>()) return nullptr;
-
-    if (obj.is<LuaProxy<NamedObject>>()) return obj.as<LuaProxy<NamedObject>>().lock();
-    if (obj.is<LuaProxy<NamedInteger<int64_t>>>()) return obj.as<LuaProxy<NamedInteger<int64_t>>>().lock();
-    if (obj.is<LuaProxy<NamedBuffer>>()) return obj.as<LuaProxy<NamedBuffer>>().lock();
-    // Add other types as needed, or use a more generic approach if available.
-    
-    return nullptr;
-}
-
+// Helper removed, now using quasar::scripting::extractNamedObject
 } // namespace
 
 extern "C" {
@@ -70,18 +56,19 @@ extern "C" {
                 return self.receive(flags.value_or(0));
             },
             "publishTree", [](quasar::zmq::Socket& self, const std::string& topic, sol::object treeObj) {
-                std::shared_ptr<quasar::named::NamedObject> root = extractNamedObject(treeObj);
+                std::shared_ptr<quasar::named::NamedObject> root = quasar::scripting::extractNamedObject(treeObj);
                 if (!root) {
                     throw std::runtime_error("Argument to publishTree must be a NamedObject proxy");
                 }
                 self.publishTree(topic, root);
             },
-            "receiveTree", [](quasar::zmq::Socket& self) {
-                std::shared_ptr<quasar::named::NamedObject> root = self.receiveTree();
+            "receiveTree", [](quasar::zmq::Socket& self, sol::optional<int> flags, sol::this_state L) -> sol::object {
+                std::shared_ptr<quasar::named::NamedObject> root = self.receiveTree(flags.value_or(0));
                 if (root) {
                     quasar::scripting::ObjectTracker::getInstance().trackStrong(root);
+                    return sol::make_object(L, quasar::scripting::LuaProxy<quasar::named::NamedObject>(root));
                 }
-                return quasar::scripting::LuaProxy<quasar::named::NamedObject>(root);
+                return sol::make_object(L, sol::nil);
             }
         );
 

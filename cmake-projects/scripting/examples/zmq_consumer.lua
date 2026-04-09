@@ -12,7 +12,8 @@ print("Consumer: Connected to tcp://localhost:5555. Waiting for data on 'mytopic
 local receiveCount = 0
 
 while true do
-    -- Blocking receive
+    -- [TSK-20260311-004.3.2] receiveTree is non-blocking.
+    -- We use a loop with quasar.sleep to avoid busy-waiting while allowing other threads to run.
     local tree = sub:receiveTree()
     if tree ~= nil then
         receiveCount = receiveCount + 1
@@ -27,5 +28,8 @@ while true do
                       " | sensor_data[4] = " .. tostring(data[5]))
             end
         end
+    else
+        -- [CS-0010.46] Yield engine lock to let other background services work.
+        quasar.sleep(10)
     end
 end

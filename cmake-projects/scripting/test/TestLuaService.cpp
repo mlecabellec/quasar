@@ -2,6 +2,8 @@
 #include "quasar/scripting/LuaService.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/NamedLuaMethod.hpp"
+#include "quasar/named/NamedService.hpp"
 #include <fstream>
 
 namespace quasar::scripting {
@@ -118,6 +120,43 @@ TEST_F(LuaServiceTest, ObjectTracking) {
     
     ObjectTracker::getInstance().cleanup();
     EXPECT_EQ(ObjectTracker::getInstance().getTrackedCount(), 0);
+}
+
+TEST_F(LuaServiceTest, NamedServiceLuaHooks) {
+    std::shared_ptr<LuaService> luaSvc = LuaService::create("HostLuaSvc");
+    sol::state& lua = luaSvc->getEngine()->getState();
+
+    {
+        auto lock = luaSvc->getEngine()->acquireLock();
+        lua["counter"] = 0;
+        lua.script("function runHook(owner, args) counter = counter + 1 end");
+    }
+    
+    auto namedSvc = quasar::named::NamedService::create("BackgroundSvc");
+    
+    sol::function luaFunc;
+    {
+        auto lock = luaSvc->getEngine()->acquireLock();
+        luaFunc = lua["runHook"];
+    }
+
+    auto runHook = NamedLuaMethod::create("run", luaFunc, namedSvc);
+
+    namedSvc->setCycleTime(std::chrono::milliseconds(10));
+    namedSvc->start();
+
+    // Wait for some cycles
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    namedSvc->stop();
+
+    int finalCount = 0;
+    {
+        auto lock = luaSvc->getEngine()->acquireLock();
+        finalCount = lua["counter"];
+    }
+    EXPECT_GT(finalCount, 0);
+    std::cout << "NamedService executed " << finalCount << " Lua hook iterations." << std::endl;
 }
 
 } // namespace quasar::scripting

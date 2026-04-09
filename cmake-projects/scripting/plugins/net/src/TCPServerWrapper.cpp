@@ -1,6 +1,11 @@
 #include "quasar/net/TCPServerWrapper.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 
 namespace quasar::net {
+
+using namespace quasar::scripting;
 
 void bindTCPServer(sol::state_view& lua) {
     auto serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
@@ -13,42 +18,62 @@ void bindTCPServer(sol::state_view& lua) {
         "restart", [](std::shared_ptr<CppServer::Asio::Service> self) { return self->Restart(); }
     );
 
-    serverTable.new_usertype<LuaTCPServer>("TCPServer",
-        sol::factories([](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
-            return std::make_shared<LuaTCPServer>(service, port);
-        }),
-        "start", [](std::shared_ptr<LuaTCPServer> self) { return self->Start(); },
-        "stop", [](std::shared_ptr<LuaTCPServer> self) { return self->Stop(); },
-        "restart", [](std::shared_ptr<LuaTCPServer> self) { return self->Restart(); },
-        "disconnectAll", [](std::shared_ptr<LuaTCPServer> self) { return self->DisconnectAll(); },
-        "disconnect", [](std::shared_ptr<LuaTCPServer> self, const std::string& id_str) {
-            try {
-                CppCommon::UUID id(id_str);
-                auto session = self->FindSession(id);
-                if (session) {
-                    return session->Disconnect();
-                }
-                return false;
-            } catch (...) { return false; }
-        },
-        "sendAsync", [](std::shared_ptr<LuaTCPServer> self, const std::string& id_str, const std::string& data) {
-            try {
-                CppCommon::UUID id(id_str);
-                auto session = self->FindSession(id);
-                if (session) {
-                    return session->SendAsync(data.data(), data.size());
-                }
-                return false;
-            } catch (...) { return false; }
-        },
-        // Multicast
-        "multicast", [](std::shared_ptr<LuaTCPServer> self, const std::string& data) {
-            return self->Multicast(data.data(), data.size());
-        },
-        "onConnected", &LuaTCPServer::onConnectedCb,
-        "onDisconnected", &LuaTCPServer::onDisconnectedCb,
-        "onReceived", &LuaTCPServer::onReceivedCb,
-        "onError", &LuaTCPServer::onErrorCb
+    sol::usertype<LuaProxy<LuaTCPServer>> ut = lua.new_usertype<LuaProxy<LuaTCPServer>>("TCPServer",
+        sol::no_constructor,
+        sol::base_classes, sol::bases<ILuaProxy>());
+
+    serverTable["TCPServer"] = lua.create_table_with(
+        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
+            auto ptr = std::make_shared<LuaTCPServer>(service, port);
+            ObjectTracker::getInstance().trackStrong(ptr);
+            return LuaProxy<LuaTCPServer>(ptr);
+        }
+    );
+
+    ut["start"] = [](LuaProxy<LuaTCPServer> self) { return self.lock()->Start(); };
+    ut["stop"] = [](LuaProxy<LuaTCPServer> self) { return self.lock()->Stop(); };
+    ut["restart"] = [](LuaProxy<LuaTCPServer> self) { return self.lock()->Restart(); };
+    ut["disconnectAll"] = [](LuaProxy<LuaTCPServer> self) { return self.lock()->DisconnectAll(); };
+    ut["disconnect"] = [](LuaProxy<LuaTCPServer> self, const std::string& id_str) {
+        try {
+            CppCommon::UUID id(id_str);
+            auto session = self.lock()->FindSession(id);
+            if (session) {
+                return session->Disconnect();
+            }
+            return false;
+        } catch (...) { return false; }
+    };
+    ut["sendAsync"] = [](LuaProxy<LuaTCPServer> self, const std::string& id_str, const std::string& data) {
+        try {
+            CppCommon::UUID id(id_str);
+            auto session = self.lock()->FindSession(id);
+            if (session) {
+                return session->SendAsync(data.data(), data.size());
+            }
+            return false;
+        } catch (...) { return false; }
+    };
+    ut["multicast"] = [](LuaProxy<LuaTCPServer> self, const std::string& data) {
+        return self.lock()->Multicast(data.data(), data.size());
+    };
+    
+    // Callbacks
+    ut["onConnected"] = sol::property(
+        [](LuaProxy<LuaTCPServer>& self) { return self.lock()->onConnectedCb; },
+        [](LuaProxy<LuaTCPServer>& self, sol::function cb) { self.lock()->onConnectedCb = cb; }
+    );
+    ut["onDisconnected"] = sol::property(
+        [](LuaProxy<LuaTCPServer>& self) { return self.lock()->onDisconnectedCb; },
+        [](LuaProxy<LuaTCPServer>& self, sol::function cb) { self.lock()->onDisconnectedCb = cb; }
+    );
+    ut["onReceived"] = sol::property(
+        [](LuaProxy<LuaTCPServer>& self) { return self.lock()->onReceivedCb; },
+        [](LuaProxy<LuaTCPServer>& self, sol::function cb) { self.lock()->onReceivedCb = cb; }
+    );
+    ut["onError"] = sol::property(
+        [](LuaProxy<LuaTCPServer>& self) { return self.lock()->onErrorCb; },
+        [](LuaProxy<LuaTCPServer>& self, sol::function cb) { self.lock()->onErrorCb = cb; }
     );
 }
 
