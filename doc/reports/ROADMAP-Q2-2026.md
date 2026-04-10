@@ -1,50 +1,52 @@
 # Quasar Strategic Roadmap: Q2 2026 Update
 
 **Date:** 2026-04-10  
-**Status:** Strategic Alignment & Execution Phase
+**Status:** Strategic Expansion & Industrial Hardening
 
 ## 1. Executive Implementation Summary
-The Quasar project has successfully transitioned from foundational library development to **industrial connectivity and high-level orchestration**. As of April 10, 2026, the module status is as follows:
+The Quasar project has expanded its scope to include **professional-grade EtherCAT engineering**. We are transitioning from simple driver implementation to a reflexive, redundant, and user-friendly industrial master suite.
 
 | Category | Status | Count | Key Modules |
 | :--- | :--- | :--- | :--- |
-| ✅ **Completed** | Production-Ready | 8 | `logicengine` (HSM/SFC), `sre` (Script Runner), Core Types, Deep Copy, Reflexive Interface (`ActiveEntity`), Global Logging. |
-| 🔄 **In Progress** | Active Dev | 6 | **OPC UA Integration**, **Tree Transformations**, **Data Logging**, **ZeroMQ PUB/SUB**, **Calibration Framework**, **Lua Stability**. |
-| 🔲 **Not Started** | Backlog | 7 | Web UI, CAN Bus (SocketCAN), Apache Kafka, Python Bindings, Networking (TCP/UDP/HTTP), Service Orchestration. |
+| ✅ **Completed** | Production-Ready | 8 | `logicengine`, `sre`, Core Types, Deep Copy, `ActiveEntity`, Global Logging. |
+| 🔄 **In Progress** | Active Dev | 6 | **OPC UA**, **Tree Transformations**, **Data Logging**, **ZeroMQ**, **Calibration**, **Lua Stability**. |
+| 🔲 **Not Started** | Backlog/New | 12 | Web UI, CAN Bus, Kafka, Python Bindings, **Reflexive EtherCAT**, **ENI Engineering**, **ecat-top TUI**, **Passive Master**. |
 
 ---
 
 ## 2. Technical Health & Stability Baseline
 
 ### 2.1 Lua Execution Environment
-- **Status:** ✅ **Verified Stable** (per `LUA-STABILITY-VALIDATION-20260409.md`).
-- **Key Fixes:** Resolved initialization race conditions, implemented cooperative lock yielding for blocking calls, and established strict `ObjectTracker` proxy patterns.
+- **Status:** ✅ **Verified Stable**.
+- **Focus:** Maintaining strict `ObjectTracker` patterns as we introduce complex EtherCAT and ZMQ bindings.
 
-### 2.2 OPC UA Industrial Protocol
-- **Status:** 🔄 **Active Troubleshooting** (per `opcua-progress-report-2026-04-07.md`).
-- **Current Blocker:** Recursive mirroring logic is failing to discover Methods and Variables in Namespace 1 (NS1), limiting reflexive control over the network.
-
-### 2.3 Standards Compliance (CS-0010)
-- **Baseline:** High adherence in core modules (`named`, `coretypes`, `logicengine`).
-- **Corrective Actions:** Refactoring `opcua` to eliminate C-style casts and `sim-test` to remove raw `new` calls is required for full architectural integrity.
+### 2.2 EtherCAT Master (`resoem`)
+- **Status:** 🔄 **Strategic Enhancement Phase**.
+- **New Direction:** Decoupling diagnostic sweeps from cyclic exchange, implementing identity-based topology matching, and providing a modern TUI (`ecat-top`).
 
 ---
 
-## 3. Short-Term Roadmap (Q2 2026)
+## 3. Short-Term Roadmap (Q2 - Q3 2026)
 
-### Phase A: Finalizing Industrial Data Pipelines (April - May)
-*   **Tree Transformation Engine (TSK-20260311-001):** Finalize the XSLT-inspired reinterpretation engine to enable zero-copy mapping of raw buffers into structured OOP hierarchies.
-*   **Calibration Framework (TSK-20260311-010):** Deliver polynomial and point-pair interpolation for engineering unit conversion.
-*   **Data Acquisition (TSK-20260303-001):** Validate the high-performance CSV/Binary recorder at 50,000 samples/sec sustained load.
+### Phase A: Industrial Data Pipelines (April - May)
+*   **Tree Transformation Engine (TSK-20260311-001):** Finalize zero-copy reinterpretation.
+*   **Calibration Framework (TSK-20260311-010):** Deliver engineering unit conversion.
+*   **Data Acquisition (TSK-20260303-001):** Validate 50kHz logging.
 
 ### Phase B: Connectivity & Protocol Stabilization (May - June)
-*   **OPC UA Hardening (TSK-20260311-005):** Resolve NS1 discovery blockers and implement UADP (UDP) transport for PubSub.
-*   **ZeroMQ Plugin (TSK-20260311-004):** Complete the Tree Serialization bridge for low-latency telemetry distribution.
-*   **Networking Foundations (TSK-20260311-002/003):** Establish the asynchronous TCP/UDP/HTTP client/server plugins for the Lua environment.
+*   **OPC UA Hardening (TSK-20260311-005):** Resolve NS1 discovery and implement UDP transport.
+*   **Reflexive EtherCAT (TSK-20260410-001):** Implement `EthercatMasterService` with reflexive methods and decoupled diagnostics.
+*   **Networking Foundations (TSK-20260311-002/003):** Establish async TCP/UDP/HTTP plugins.
 
 ### Phase C: Orchestration & Visibility (June - July)
-*   **Reflexive Orchestration (TSK-20260328-001):** Implement `NamedMethod` and `NamedService` to allow system behavior to be discoverable and executable via protocols.
-*   **Web Dashboard (TSK-20260311-008):** Begin development of the React-based "Live View" for real-time system monitoring and control.
+*   **Reflexive Orchestration (TSK-20260328-001):** Implement `NamedMethod` and `NamedService` logic.
+*   **Interactive TUI (TSK-20260410-004):** Deliver `ecat-top` for real-time bus orchestration over SSH.
+*   **Web Dashboard (TSK-20260311-008):** Begin React-based "Live View" development.
+
+### Phase D: Advanced Industrial Engineering (July - Sept)
+*   **Advanced Topology (TSK-20260410-002):** Implement ENI (ETG.2100) generation and Hot Connect support.
+*   **Master Redundancy (TSK-20260410-005):** Implement Passive Master and Redundancy Ring failover.
+*   **ESI Cache (TSK-20260410-003):** Index vendor SDO sequences for automated configuration.
 
 ---
 
@@ -52,9 +54,9 @@ The Quasar project has successfully transitioned from foundational library devel
 
 | Risk | Mitigation Strategy |
 | :--- | :--- |
-| **OPC UA Mirroring Failure** | Prioritize deep-dive GDB analysis of reference filtering in the `browse` request. |
-| **Memory Leaks in Plugins** | Enforce mandatory `LuaProxy<T>` usage and `ObjectTracker` validation for all new bindings. |
-| **Concurrency Jitter** | Mandatory **TSan** (ThreadSanitizer) runs for all modules introducing background service threads. |
+| **Topology Mismatch** | Implement identity-tuple matching `(Vendor, Product, Revision, Position)` in `ecat-top`. |
+| **Failover Jitter** | Utilize host OS clock synchronization and target < 2 cycle takeover in `RedundantEthercatMaster`. |
+| **OPC UA Mirroring** | Prioritize GDB analysis of Namespace 1 reference filtering. |
 
 ---
 *Roadmap approved and maintained by Quasar Engineering.*

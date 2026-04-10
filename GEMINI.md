@@ -49,11 +49,16 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 ## 🚀 Active Roadmap & Task Context
 
 ### Ongoing & In Progress
+- **[TSK-20260410-001]**: **Reflexive EtherCAT Master**: Specialized diagnostic tools and reflexive slave management.
+- **[TSK-20260410-004]**: **Interactive TUI (`ecat-top`)**: Keyboard-driven bus orchestration over SSH.
+- **[TSK-20260311-005]**: **OPC UA Integration**: Resolving Namespace 1 mirroring and recursive discovery.
 - **[TSK-20260311-001]**: Tree Transformation Engine (XSLT-inspired rule matching).
-- **[TSK-20260311-004]**: ZeroMQ PUB/SUB Plugin for `NamedBuffer` distribution.
 - **[TSK-20260311-010]**: Calibration Framework (Polynomial/Point-Pair transforms).
 - **[TSK-20260311-011]**: Lua Environment Validation (Intensive stress testing).
-- **[TSK-20260409-001]**: Global Logging Singleton & Macros (LOG_INFO, etc.).
+
+### New Initiatives (Backlog)
+- **[TSK-20260410-002]**: **ENI Engineering**: ETG.2100 generation and Hot Connect topology resilience.
+- **[TSK-20260410-005]**: **Master Redundancy**: Passive monitoring and redundancy ring failover logic.
 
 ### Current Directive
 - **[TSK-20260328-001]**: **Reflexive Execution & Service Orchestration**.
