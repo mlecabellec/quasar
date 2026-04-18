@@ -261,9 +261,12 @@ private:
   uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
   int verbose_level_ = 0;         ///< Verbose logging level
 
+public:
+  void reset_to_init();
+
+private:
   // Internal helper methods
   int broadcast_read_count();
-  void reset_to_init();
   void assign_addresses(int count);
   void read_sii_data(int count);
   void read_sii_categories(int slave_idx);

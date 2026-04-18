@@ -28,6 +28,7 @@ set(SOURCES
     src/ScriptConsole.cpp
     src/PluginLoader.cpp
     src/NamedLuaMethod.cpp
+    src/LuaObserver.cpp
 )
 
 # Header files (for IDEs)
@@ -45,6 +46,7 @@ set(HEADERS
     include/quasar/scripting/PluginLoader.hpp
     include/quasar/scripting/PluginContract.hpp
     include/quasar/scripting/NamedLuaMethod.hpp
+    include/quasar/scripting/LuaObserver.hpp
 )
 
 # Create the library
@@ -71,3 +73,4 @@ add_subdirectory(plugins/net)
 add_subdirectory(plugins/zmq)
 add_subdirectory(plugins/opcua)
 add_subdirectory(plugins/datalogger)
+add_subdirectory(plugins/resoem)

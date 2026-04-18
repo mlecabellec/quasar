@@ -246,6 +246,12 @@ public:
    *
    * @return Shared pointer to a new object with the same name and data.
    */
+  /**
+   * @brief Broadcasts an event to all subscribed observers.
+   * @param eventData Shared pointer containing the event payload.
+   */
+  void notifyObservers(std::shared_ptr<NamedObject> eventData);
+
   virtual std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
@@ -325,12 +331,6 @@ protected:
    * @param self Shared pointer to self.
    */
   void setSelf(std::shared_ptr<NamedObject> self) { m_self = self; }
-
-  /**
-   * @brief Broadcasts an event to all subscribed observers.
-   * @param eventData The data payload to notify.
-   */
-  void notifyObservers(std::shared_ptr<NamedObject> eventData);
 
 private:
   /** @brief The object name. Unique within parent scope. */

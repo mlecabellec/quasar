@@ -1,0 +1,112 @@
+#include "ftxui/component/component.hpp"
+#include "ftxui/component/screen_interactive.hpp"
+#include "ftxui/dom/elements.hpp"
+#include "resoem/EthercatMasterService.hpp"
+#include "quasar/named/NamedObject.hpp"
+#include "quasar/named/NamedInteger.hpp"
+#include <memory>
+#include <vector>
+#include <string>
+#include <thread>
+#include <mutex>
+
+using namespace ftxui;
+using namespace resoem;
+using namespace quasar::named;
+
+int main(int argc, char* argv[]) {
+    // 1. Initialize Service
+    auto root = NamedObject::create("root");
+    auto service = EthercatMasterService::create("EcatMaster", root);
+    service->setInterface("lo");
+    service->start();
+
+    auto screen = ScreenInteractive::TerminalOutput();
+
+    // 2. State & UI Components
+    int selected_slave = 0;
+    std::vector<std::string> slaves_list_cache = {"<No Slaves Found>"};
+    std::mutex data_mutex;
+
+    // 3. Logic to fetch tree data
+    auto update_data = [&]() {
+        std::lock_guard<std::mutex> lock(data_mutex);
+        std::vector<std::string> list;
+        auto slavesNode = service->getChild("slaves");
+        if (slavesNode) {
+            auto children = slavesNode->getChildren();
+            for (auto child : children) {
+                list.push_back(child->getName());
+            }
+        }
+        if (list.empty()) list.push_back("<No Slaves Found>");
+        slaves_list_cache = std::move(list);
+    };
+
+    // 4. Component Definitions
+    auto menu = Menu(&slaves_list_cache, &selected_slave);
+
+    auto renderer = Renderer(menu, [&] {
+        std::lock_guard<std::mutex> lock(data_mutex);
+        
+        // Detailed info for selected slave
+        Elements details;
+        auto slavesNode = service->getChild("slaves");
+        if (slavesNode) {
+            auto children = slavesNode->getChildren();
+            if (selected_slave < static_cast<int>(children.size())) {
+                auto it = children.begin();
+                std::advance(it, selected_slave);
+                auto slave = *it;
+                details.push_back(text("Name: " + slave->getName()));
+                if (auto diag = slave->getChild("diagnostics")) {
+                     if (auto st = diag->getChild("al_status")) {
+                         if (auto stInt = std::dynamic_pointer_cast<NamedInteger<uint16_t>>(st)) {
+                            details.push_back(text("Status: 0x" + std::to_string(stInt->value())));
+                         }
+                     }
+                }
+            }
+        }
+
+        return hbox(
+            window(text(" Physical Bus "), menu->Render()) | flex,
+            window(text(" Slave Details "), vbox(std::move(details))) | flex
+        );
+    });
+
+    // 5. Global Actions
+    renderer |= CatchEvent([&](Event event) {
+        if (event == Event::Character('q')) {
+            screen.Exit();
+            return true;
+        }
+        if (event == Event::Character('r')) {
+            // Find and execute the method manually since NamedService doesn't expose execute()
+            auto methodObj = service->getChild("refreshStatus");
+            if (auto method = std::dynamic_pointer_cast<NamedMethod>(methodObj)) {
+                method->execute(nullptr);
+            }
+            return true;
+        }
+        return false;
+    });
+
+    // 6. Refresh loop (separate thread)
+    std::atomic<bool> refresh_active{true};
+    std::thread refresh_thread([&] {
+        while (refresh_active) {
+            update_data();
+            screen.PostEvent(Event::Custom);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    });
+
+    screen.Loop(renderer);
+
+    refresh_active = false;
+    refresh_thread.join();
+    service->stop();
+
+    return 0;
+}

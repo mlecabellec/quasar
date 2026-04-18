@@ -13,6 +13,8 @@ add_library(resoem STATIC
     src/SoEHandler.cpp
     src/EoEHandler.cpp
     src/Diagnostics.cpp
+    src/EthercatMasterService.cpp
+    src/EthercatSlave.cpp
 )
 # ...
 # Test Executable
@@ -49,13 +51,15 @@ target_include_directories(resoem PUBLIC
 )
 
 target_compile_features(resoem PUBLIC cxx_std_23)
+set_target_properties(resoem PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+target_link_libraries(resoem PUBLIC quasar_named)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(Threads REQUIRED)
     target_link_libraries(resoem PRIVATE Threads::Threads)
 endif()
 
-
-
+# Tools
+add_subdirectory(tools)
 
 # Installation rules (if needed later)
