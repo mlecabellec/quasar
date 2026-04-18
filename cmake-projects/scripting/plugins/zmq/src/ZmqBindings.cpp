@@ -65,7 +65,7 @@ extern "C" {
             "receiveTree", [](quasar::zmq::Socket& self, sol::optional<int> flags, sol::this_state L) -> sol::object {
                 std::shared_ptr<quasar::named::NamedObject> root = self.receiveTree(flags.value_or(0));
                 if (root) {
-                    quasar::scripting::ObjectTracker::getInstance().trackStrong(root);
+                    quasar::scripting::ObjectTracker::getInstance().trackStrong(quasar::scripting::getEngineId(L), root);
                     return sol::make_object(L, quasar::scripting::LuaProxy<quasar::named::NamedObject>(root));
                 }
                 return sol::make_object(L, sol::nil);

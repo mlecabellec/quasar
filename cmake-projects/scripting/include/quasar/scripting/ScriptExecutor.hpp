@@ -3,8 +3,11 @@
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/LuaFuture.hpp"
 #include <string>
+#include <memory>
 
 namespace quasar::scripting {
+
+class LuaService;
 
 /**
  * @brief Utility for executing Lua code in different modes.
@@ -17,27 +20,21 @@ public:
      * lifetime issues with the transient Lua state.
      * @param script The Lua code to execute.
      */
-    static void ExecuteOnce(const std::string& script) {
-        LuaEngine engine{std::weak_ptr<LuaService>{}};
-        engine.executeString(script);
-    }
+    static void ExecuteOnce(const std::string& script);
 
     /**
-     * @brief Executes a script string asynchronously in a background thread.
+     * @brief Executes a script string asynchronously in a service thread.
      * @param script The Lua code to execute.
-     * @return A LuaFuture to track and retrieve the result.
+     * @param service The host service.
      */
-    static LuaFuture ExecuteAsync(const std::string& script);
+    static void ExecuteAsync(const std::string& script, std::shared_ptr<LuaService> service);
 
     /**
-     * @brief Executes a script string synchronously in an existing engine.
-     * @param engine The engine to use.
+     * @brief Executes a script string synchronously in a service thread.
      * @param script The Lua code to execute.
-     * @return Result of the execution.
+     * @param service The host service.
      */
-    static sol::protected_function_result ExecuteSync(LuaEngine& engine, const std::string& script) {
-        return engine.executeString(script);
-    }
+    static void ExecuteSync(const std::string& script, std::shared_ptr<LuaService> service);
 };
 
 } // namespace quasar::scripting

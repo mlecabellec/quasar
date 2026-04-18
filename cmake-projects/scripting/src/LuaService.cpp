@@ -10,7 +10,7 @@ std::shared_ptr<LuaService> LuaService::create(const std::string& name, std::sha
     };
     std::shared_ptr<LuaService> svc = std::make_shared<Enabler>(name);
     svc->setSelf(svc);
-    svc->m_engine = std::make_shared<LuaEngine>(svc);
+    svc->m_engine = LuaEngine::create(svc);
     if (parent) {
         svc->setParent(parent);
     }
@@ -56,6 +56,21 @@ sol::protected_function_result LuaService::execute(const std::string& script) {
         throw std::runtime_error("Timeout acquiring LuaState mutex in execute");
     }
     return m_engine->executeString(script);
+}
+
+void LuaService::start() {
+    if (m_running) return;
+    m_running = true;
+    m_worker = std::thread(&LuaService::workerLoop, this);
+}
+
+void LuaService::stop() {
+    if (!m_running) return;
+    m_running = false;
+    m_cv.notify_all();
+    if (m_worker.joinable()) {
+        m_worker.join();
+    }
 }
 
 bool LuaService::onInit() {
@@ -119,6 +134,11 @@ void LuaService::onShutdown() {
             sol::error err = result;
             std::cerr << "LuaService [" << getName() << "] onShutdown error: " << err.what() << std::endl;
         }
+    }
+
+    // [CS-0010.21] RAII: Ensure the engine is explicitly shut down before pointer resets.
+    if (m_engine) {
+        m_engine->shutdown();
     }
 }
 

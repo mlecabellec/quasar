@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
     }
 
     {
-        quasar::scripting::LuaEngine engine;
-        sol::state& lua = engine.getState();
+        std::shared_ptr<quasar::scripting::LuaEngine> engine = quasar::scripting::LuaEngine::create();
+        sol::state& lua = engine->getState();
 
         // Load plugins
         for (const auto& pluginPath : plugins) {
@@ -82,16 +82,19 @@ int main(int argc, char** argv) {
 
         // Execute the main script
         try {
-            sol::protected_function_result result = engine.executeString(code);
+            sol::protected_function_result result = engine->executeString(code);
             if (!result.valid()) {
                 sol::error err = result;
                 std::cerr << "Lua Execution Error:\n" << err.what() << "\n";
+                engine->shutdown();
                 return 1;
             }
         } catch (const std::exception& e) {
             std::cerr << "Execution exception: " << e.what() << "\n";
+            engine->shutdown();
             return 1;
         }
+        engine->shutdown();
     }
 
     return 0;

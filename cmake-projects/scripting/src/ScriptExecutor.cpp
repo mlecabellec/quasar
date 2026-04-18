@@ -1,34 +1,38 @@
 #include "quasar/scripting/ScriptExecutor.hpp"
-#include <sol/sol.hpp>
-#define ASIO_STANDALONE
-#include <asio/thread_pool.hpp>
-#include <asio/post.hpp>
-#include <thread>
+#include "quasar/scripting/LuaEngine.hpp"
+#include "quasar/scripting/LuaService.hpp"
+#include <iostream>
 
 namespace quasar::scripting {
 
-// Use a static thread pool for background Lua execution.
-static asio::thread_pool g_luaThreadPool(std::thread::hardware_concurrency());
+void ScriptExecutor::ExecuteOnce(const std::string& script) {
+    try {
+        // [CS-0010.6] Use shared_ptr via factory for temporary engine.
+        std::shared_ptr<LuaEngine> engine = LuaEngine::create();
+        engine->executeString(script);
+        // Explicit shutdown to clear Lua registry.
+        engine->shutdown();
+    } catch (const std::exception& e) {
+        std::cerr << "ScriptExecutor::ExecuteOnce error: " << e.what() << std::endl;
+    }
+}
 
-LuaFuture ScriptExecutor::ExecuteAsync(const std::string& script) {
-    std::shared_ptr<LuaEngine> engine = std::make_shared<LuaEngine>(std::weak_ptr<LuaService>());
-    std::shared_ptr<std::promise<sol::protected_function_result>> promise = std::make_shared<std::promise<sol::protected_function_result>>();
-    std::future<sol::protected_function_result> future = promise->get_future();
+void ScriptExecutor::ExecuteSync(const std::string& script, std::shared_ptr<LuaService> service) {
+    if (!service) return;
+    // Post to service thread and wait.
+    service->postTaskWithResult<bool>([service, script]() {
+        service->getEngine()->executeString(script);
+        return true;
+    }).get();
+}
 
-    asio::post(g_luaThreadPool, [engine, script, promise]() {
-        try {
-            // Execution on background thread.
-            sol::protected_function_result result = engine->executeString(script);
-            // Must std::move because protected_function_result is move-only.
-            promise->set_value(std::move(result));
-        } catch (const std::exception& e) {
-            promise->set_exception(std::make_exception_ptr(e));
-        } catch (...) {
-            promise->set_exception(std::make_exception_ptr(std::runtime_error("Unknown error in Lua background execution")));
-        }
+void ScriptExecutor::ExecuteAsync(const std::string& script, std::shared_ptr<LuaService> service) {
+    if (!service) return;
+    // Capture engine by shared_ptr to ensure it stays alive for the async task.
+    std::shared_ptr<LuaEngine> engine = service->getEngine();
+    service->postTask([engine, script]() {
+        engine->executeString(script);
     });
-
-    return LuaFuture(engine, std::move(future));
 }
 
 } // namespace quasar::scripting

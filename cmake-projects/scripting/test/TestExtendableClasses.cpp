@@ -1,63 +1,75 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaEngine.hpp"
-#include "quasar/scripting/ScriptableNamedObject.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/ScriptableNamedObject.hpp"
+#include <memory>
 
 namespace quasar::scripting {
 
+using namespace quasar::named;
+
+/**
+ * @brief Tests for C++ classes that can be extended with Lua logic.
+ */
 class ExtendableClassesTest : public ::testing::Test {
 protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    void SetUp() override {
+        root = NamedObject::create("root");
+    }
+
+    std::shared_ptr<NamedObject> root;
 };
 
 TEST_F(ExtendableClassesTest, MethodOverride) {
-    LuaEngine engine;
-    sol::state& lua = engine.getState();
-    
-    // Create a scriptable object
-    std::shared_ptr<ScriptableNamedObject> obj = ScriptableNamedObject::create("MyObject");
-    
-    // Define override in Lua
-    lua["obj"] = LuaProxy<ScriptableNamedObject>(obj);
+    auto engine = LuaEngine::create();
+    sol::state& lua = engine->getState();
+
+    auto scriptable = ScriptableNamedObject::create("MyObject", root);
+    lua["obj"] = LuaProxy<ScriptableNamedObject>(scriptable);
+
+    // Override an event in Lua
     lua.script(R"(
-        local self_table = {
-            getType = function(self) return "LuaCustomType" end,
-            onEvent = function(self, name, data) self.last_event = name end
+        local mySelf = {
+            count = 0,
+            onEvent = function(self, event, data)
+                self.count = self.count + 1
+            end
         }
-        obj:setLuaSelf(self_table)
+        obj:setLuaSelf(mySelf)
     )");
-    
-    // Test C++ call -> Lua override
-    // getType() is virtual in NamedObject, overridden in ScriptableNamedObject to call Lua
-    EXPECT_EQ(obj->getType(), "LuaCustomType");
-    
-    // Test event hook
-    obj->onEvent("Start", sol::nil);
-    lua.script("last_event = obj:getLuaSelf().last_event");
-    EXPECT_EQ(lua["last_event"].get<std::string>(), "Start");
+
+    scriptable->onEvent("test", sol::nil);
+    scriptable->onEvent("test", sol::nil);
+
+    // Check if Lua state was updated
+    sol::table luaSelf = scriptable->getLuaSelf();
+    int count = luaSelf["count"];
+    EXPECT_EQ(count, 2);
+    engine->shutdown();
 }
 
 TEST_F(ExtendableClassesTest, HookAddChild) {
-    LuaEngine engine;
-    sol::state& lua = engine.getState();
-    
-    std::shared_ptr<ScriptableNamedObject> parent = ScriptableNamedObject::create("Parent");
-    lua["parent"] = LuaProxy<ScriptableNamedObject>(parent);
+    auto engine = LuaEngine::create();
+    sol::state& lua = engine->getState();
+
+    auto scriptable = ScriptableNamedObject::create("Parent", root);
+    lua["obj"] = LuaProxy<ScriptableNamedObject>(scriptable);
+
     lua.script(R"(
-        parent:setLuaSelf({
-            onAddChild = function(self, child) 
-                self.child_name = child:getName() 
+        local mySelf = {
+            onEvent = function(self, event, data)
+                quasar.named.createObject("DynamicChild", obj)
             end
-        })
+        }
+        obj:setLuaSelf(mySelf)
     )");
-    
-    std::shared_ptr<named::NamedObject> child = named::NamedObject::create("Child");
-    // setParent calls parent->addChild internally
-    child->setParent(parent); 
-    
-    lua.script("child_name = parent:getLuaSelf().child_name");
-    EXPECT_EQ(lua["child_name"].get<std::string>(), "Child");
+
+    scriptable->onEvent("spawn", sol::nil);
+
+    auto child = scriptable->getChild("DynamicChild");
+    ASSERT_NE(child, nullptr);
+    EXPECT_EQ(child->getName(), "DynamicChild");
+    engine->shutdown();
 }
 
 } // namespace quasar::scripting

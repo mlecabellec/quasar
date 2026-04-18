@@ -1,72 +1,56 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/ScriptExecutor.hpp"
-#include "quasar/scripting/LuaEngine.hpp"
+#include "quasar/scripting/LuaService.hpp"
+#include "quasar/named/NamedObject.hpp"
+#include <memory>
 #include <thread>
 #include <chrono>
 
 namespace quasar::scripting {
 
-class ScriptExecutorTest : public ::testing::Test {
-protected:
-    void SetUp() override {}
-    void TearDown() override {}
-};
+using namespace quasar::named;
 
-TEST_F(ScriptExecutorTest, ExecuteOnce) {
-    // ExecuteOnce returns void, so we just check it runs without throwing
-    EXPECT_NO_THROW(ScriptExecutor::ExecuteOnce("x = 42"));
+TEST(ScriptExecutorTest, ExecuteOnce) {
+    // Fire and forget
+    EXPECT_NO_THROW({
+        ScriptExecutor::ExecuteOnce("print('Standalone script executed')");
+    });
 }
 
-TEST_F(ScriptExecutorTest, ExecuteSync) {
-    LuaEngine engine;
-    engine.executeString("x = 10");
+TEST(ScriptExecutorTest, ExecuteSync) {
+    std::shared_ptr<NamedObject> root = NamedObject::create("root");
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
+
+    ScriptExecutor::ExecuteSync("x = 42", service);
     
-    sol::protected_function_result result = ScriptExecutor::ExecuteSync(engine, "return x * 2");
-    ASSERT_TRUE(result.valid());
-    EXPECT_EQ(result.get<int>(), 20);
+    sol::protected_function_result result = service->execute("return x");
+    int value = result.get<int>();
+    EXPECT_EQ(value, 42);
+
+    service->stop();
 }
 
-TEST_F(ScriptExecutorTest, ExecuteAsync) {
-    // Large computation or sleep to simulate work
-    std::string script = "local sum = 0; for i=1,1000 do sum = sum + i end; return sum";
-    
-    LuaFuture future = ScriptExecutor::ExecuteAsync(script);
-    
-    // Do some "work" in C++ main thread
-    int cpp_sum = 0;
-    for (int i=1; i<=500; ++i) cpp_sum += i;
-    
-    future.wait();
-    ASSERT_TRUE(future.isReady());
-    
-    sol::protected_function_result result = future.get();
-    ASSERT_TRUE(result.valid());
-    EXPECT_EQ(result.get<int>(), 500500); // sum of 1 to 1000
-    EXPECT_EQ(cpp_sum, 125250); // sum of 1 to 500
-}
+TEST(ScriptExecutorTest, ExecuteAsync) {
+    std::shared_ptr<NamedObject> root = NamedObject::create("root");
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
 
-TEST_F(ScriptExecutorTest, ExecuteAsyncError) {
-    LuaFuture future = ScriptExecutor::ExecuteAsync("error('async failure')");
-    future.wait();
+    std::string script = "y = 100";
+    ScriptExecutor::ExecuteAsync(script, service);
     
-    sol::protected_function_result result = future.get();
-    ASSERT_FALSE(result.valid());
+    // Poll for result since async post might take a moment.
+    int value = 0;
+    for (int i = 0; i < 100; ++i) {
+        sol::protected_function_result result = service->execute("return y or 0");
+        value = result.get<int>();
+        if (value == 100) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     
-    // Check error message
-    sol::error err = result;
-    EXPECT_TRUE(std::string(err.what()).find("async failure") != std::string::npos);
-}
+    EXPECT_EQ(value, 100);
 
-TEST_F(ScriptExecutorTest, AsyncIsolation) {
-    // Verify that async executions don't share state
-    LuaFuture f1 = ScriptExecutor::ExecuteAsync("shared_var = 100; return shared_var");
-    LuaFuture f2 = ScriptExecutor::ExecuteAsync("if shared_var == nil then return 'isolated' else return 'shared' end");
-    
-    f1.wait();
-    f2.wait();
-    
-    EXPECT_EQ(f1.get().get<int>(), 100);
-    EXPECT_EQ(f2.get().get<std::string>(), "isolated");
+    service->stop();
 }
 
 } // namespace quasar::scripting

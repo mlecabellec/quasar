@@ -7,12 +7,13 @@ extern "C" void registerPluginComponents(sol::state_view& lua);
 
 int main() {
     try {
-        quasar::scripting::LuaEngine engine;
-        sol::state_view view = engine.getState();
+        // [CS-0010.6] Use factory method for LuaEngine.
+        std::shared_ptr<quasar::scripting::LuaEngine> engine = quasar::scripting::LuaEngine::create();
+        sol::state& view = engine->getState();
         registerPluginComponents(view);
         
         std::cout << "Running Networking Sandbox Test..." << std::endl;
-        auto result = engine.executeString(R"LUA(
+        auto result = engine->executeString(R"LUA(
             local net = quasar.net
             print("Creating ASIO Service")
             local service = net.server.AsioService.new()
@@ -97,9 +98,12 @@ int main() {
         if (!result.valid()) {
             sol::error err = result;
             std::cerr << "Script error: " << err.what() << std::endl;
+            engine->shutdown();
             return 1;
         }
         
+        engine->shutdown();
+
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;

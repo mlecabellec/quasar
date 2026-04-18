@@ -44,6 +44,12 @@ private:
     sol::state* m_lua{nullptr};
 };
 
+/**
+ * @brief Registers logic engine usertypes to a Lua state.
+ * @param lua The target state.
+ */
+void registerLogicTypes(sol::state& lua);
+
 } // namespace quasar::logic
 
 #endif // QUASAR_LOGIC_EXPRESSION_HPP

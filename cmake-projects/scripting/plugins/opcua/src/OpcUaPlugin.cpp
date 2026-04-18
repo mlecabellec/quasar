@@ -46,9 +46,9 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         self.lock()->setAllowAnonymous(allow);
     };
 
-    opcuaTable["createServer"] = [](const std::string& name, sol::object parent) {
+    opcuaTable["createServer"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<OpcUaServerService> ptr = OpcUaServerService::create(name, extractNamedObject(parent));
-        if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+        if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<OpcUaServerService>(ptr);
     };
 
@@ -78,9 +78,9 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         self.lock()->setCredentials(u, p);
     };
 
-    opcuaTable["createClient"] = [](const std::string& name, sol::object parent) {
+    opcuaTable["createClient"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<OpcUaClientService> ptr = OpcUaClientService::create(name, extractNamedObject(parent));
-        if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+        if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<OpcUaClientService>(ptr);
     };
 }

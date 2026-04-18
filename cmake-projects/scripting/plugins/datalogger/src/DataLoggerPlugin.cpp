@@ -30,10 +30,10 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         self.lock()->logEvent(static_cast<LogLevel>(level), msg);
     };
 
-    dlTable["createService"] = [](const std::string& name, size_t capacity, sol::object parent) {
+    dlTable["createService"] = [](const std::string& name, size_t capacity, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedObject> parentPtr = extractNamedObject(parent);
         std::shared_ptr<DataLoggerService> ptr = DataLoggerService::create(name, capacity, parentPtr);
-        ObjectTracker::getInstance().trackStrong(ptr);
+        ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<DataLoggerService>(ptr);
     };
 
@@ -42,13 +42,13 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         sol::no_constructor,
         sol::base_classes, sol::bases<ILuaProxy>());
         
-    dlTable["createCsvWriter"] = [](const std::string& name, const std::string& path, sol::object parent) {
+    dlTable["createCsvWriter"] = [](const std::string& name, const std::string& path, sol::object parent, sol::this_state L) {
         std::shared_ptr<quasar::named::NamedObject> parentPtr = extractNamedObject(parent);
         std::shared_ptr<CsvFileWriter> ptr = CsvFileWriter::create(name, path);
         if (parentPtr) {
             ptr->setParent(parentPtr);
         }
-        ObjectTracker::getInstance().trackStrong(ptr);
+        ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<CsvFileWriter>(ptr);
     };
 

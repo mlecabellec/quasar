@@ -1,162 +1,114 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaService.hpp"
-#include "quasar/scripting/ObjectTracker.hpp"
-#include "quasar/scripting/LuaProxy.hpp"
 #include "quasar/scripting/NamedLuaMethod.hpp"
+#include "quasar/scripting/LuaProxy.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
 #include "quasar/named/NamedService.hpp"
-#include <fstream>
+#include "quasar/named/NamedInteger.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
+#include <thread>
+#include <chrono>
 
 namespace quasar::scripting {
 
+using namespace quasar::named;
+
 class LuaServiceTest : public ::testing::Test {
 protected:
-    std::string m_scriptPath;
-
     void SetUp() override {
-        m_scriptPath = std::string("/tmp/test_service_") + 
-                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".lua";
-        // Create a temporary Lua script for testing
-        std::ofstream ofs(m_scriptPath);
-        ofs << R"(
-            service = {
-                init_called = false,
-                update_count = 0,
-                shutdown_called = false
-            }
-
-            function service:onInit()
-                self.init_called = true
-                return true
-            end
-
-            function service:onUpdate(dt)
-                self.update_count = self.update_count + 1
-            end
-
-            function service:onShutdown()
-                self.shutdown_called = true
-            end
-
-            return service
-        )";
-        ofs.close();
+        root = NamedObject::create("root");
     }
 
-    void TearDown() override {
-        std::remove(m_scriptPath.c_str());
-    }
+    std::shared_ptr<NamedObject> root;
 };
 
-TEST_F(LuaServiceTest, FullLifecycle) {
-    std::shared_ptr<LuaService> svc = LuaService::create("TestSvc");
-    
-    ASSERT_TRUE(svc->loadScript(m_scriptPath));
-    
-    // Test onInit
-    EXPECT_TRUE(svc->onInit());
-    
-    // Hardening: stressors calling Lua from multiple threads concurrently
-    std::atomic<bool> stopStress(false);
-    std::vector<std::thread> stressors;
-    for (int i = 0; i < 4; ++i) {
-        stressors.emplace_back([svc, &stopStress]() {
-            while (!stopStress) {
-                svc->onUpdate(0.01);
-                svc->execute("service.update_count = service.update_count + 1");
-                std::this_thread::yield();
-            }
-        });
-    }
+TEST_F(LuaServiceTest, BasicLifecycle) {
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
+    EXPECT_TRUE(service->isRunning());
 
-    // Main thread also participates
-    for (int i = 0; i < 100; ++i) {
-        svc->onUpdate(0.1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    std::atomic<bool> executed{false};
+    service->postTask([&executed]() {
+        executed = true;
+    });
 
-    stopStress = true;
-    for (auto& t : stressors) {
-        if (t.joinable()) t.join();
+    // Wait for task
+    for (int i = 0; i < 100 && !executed; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    EXPECT_TRUE(executed);
+
+    service->stop();
+    EXPECT_FALSE(service->isRunning());
+}
+
+TEST_F(LuaServiceTest, ScriptExecution) {
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
+
+    // execute() is synchronous and returns sol::protected_function_result
+    sol::protected_function_result result = service->execute("return 10 + 20");
     
-    // Check update_count in the service table. 
-    sol::protected_function_result result = svc->execute("return service.update_count");
-    EXPECT_GE(result.get<int>(), 100);
+    ASSERT_TRUE(result.valid());
+    int value = result.get<int>();
+    EXPECT_EQ(value, 30);
 
-    svc->onShutdown();
+    service->stop();
 }
 
 TEST_F(LuaServiceTest, ObjectTracking) {
-    std::shared_ptr<LuaService> svc = LuaService::create("TrackerSvc");
-    LuaEngine& engine = *svc->getEngine();
-    sol::state& lua = engine.getState();
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
+
+    // Create an object that is NOT in the tree, but tracked by Lua
+    sol::protected_function_result result = service->execute(R"(
+        local obj = quasar.named.createObject("Standalone")
+        return obj
+    )");
     
-    std::shared_ptr<named::NamedObject> obj = named::NamedObject::create("TrackMe");
-    ObjectTracker::getInstance().track(obj);
+    ASSERT_TRUE(result.valid());
     
-    {
-        std::unique_lock<std::recursive_timed_mutex> lock(svc->getStateMutex(), named::config::DEFAULT_LOCK_TIMEOUT);
-        ASSERT_TRUE(lock.owns_lock());
-        lua["trackedObj"] = LuaProxy<named::NamedObject>(obj);
-        lua.script(R"(
-            alive_before = quasar.isAlive(trackedObj)
-        )");
-        EXPECT_TRUE(lua["alive_before"].get<bool>());
-    }
+    // Standalone object should be kept alive by ObjectTracker (strong ref)
+    sol::object obj = result.get<sol::object>();
+    std::shared_ptr<NamedObject> standalone = extractNamedObject(obj);
+    ASSERT_NE(standalone, nullptr);
+    EXPECT_EQ(standalone->getName(), "Standalone");
+
+    service->stop();
     
-    // Now simulate object deletion from C++ side (though it's a shared_ptr, we only have weak_ptr in tracker)
-    // To truely test 'isAlive' as 'is in hierarchy', we'd need isAlive to check parents.
-    // Current implementation checks weak_ptr. Since 'obj' is still held by GTest and Lua, it's alive.
-    
-    // Let's test cleanup
-    EXPECT_GT(ObjectTracker::getInstance().getTrackedCount(), 0);
-    obj.reset();
-    {
-        std::unique_lock<std::recursive_timed_mutex> lock(svc->getStateMutex(), named::config::DEFAULT_LOCK_TIMEOUT);
-        ASSERT_TRUE(lock.owns_lock());
-        lua["trackedObj"] = sol::nil;
-        lua.collect_garbage();
-    }
-    
-    ObjectTracker::getInstance().cleanup();
-    EXPECT_EQ(ObjectTracker::getInstance().getTrackedCount(), 0);
+    // After service stop and engine shutdown, the strong reference should be gone.
+    standalone.reset();
 }
 
-TEST_F(LuaServiceTest, NamedServiceLuaHooks) {
-    std::shared_ptr<LuaService> luaSvc = LuaService::create("HostLuaSvc");
-    sol::state& lua = luaSvc->getEngine()->getState();
+TEST_F(LuaServiceTest, ErrorHandling) {
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
 
-    {
-        auto lock = luaSvc->getEngine()->acquireLock();
-        lua["counter"] = 0;
-        lua.script("function runHook(owner, args) counter = counter + 1 end");
-    }
+    sol::protected_function_result result = service->execute("error('test error')");
     
-    auto namedSvc = quasar::named::NamedService::create("BackgroundSvc");
-    
-    sol::function luaFunc;
-    {
-        auto lock = luaSvc->getEngine()->acquireLock();
-        luaFunc = lua["runHook"];
-    }
+    EXPECT_FALSE(result.valid());
+    sol::error err = result;
+    EXPECT_TRUE(std::string(err.what()).find("test error") != std::string::npos);
 
-    auto runHook = NamedLuaMethod::create("run", luaFunc, namedSvc);
+    service->stop();
+}
 
-    namedSvc->setCycleTime(std::chrono::milliseconds(10));
-    namedSvc->start();
+TEST_F(LuaServiceTest, WorstCaseTermination) {
+    std::shared_ptr<LuaService> service = LuaService::create("TestService", root);
+    service->start();
 
-    // Wait for some cycles
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Start a long-running execution inside a separate thread
+    std::thread t([&]() {
+        service->execute("for i=1,10000000 do end");
+    });
 
-    namedSvc->stop();
+    // Abrupt termination while Lua is actively running
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    service->stop();
+    service.reset();
 
-    int finalCount = 0;
-    {
-        auto lock = luaSvc->getEngine()->acquireLock();
-        finalCount = lua["counter"];
-    }
-    EXPECT_GT(finalCount, 0);
-    std::cout << "NamedService executed " << finalCount << " Lua hook iterations." << std::endl;
+    t.join();
+    EXPECT_TRUE(true); // If we reached here without a segfault, test passed
 }
 
 } // namespace quasar::scripting

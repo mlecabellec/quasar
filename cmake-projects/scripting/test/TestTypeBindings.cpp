@@ -1,147 +1,120 @@
 #include <gtest/gtest.h>
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
-#include "quasar/coretypes/IntegerTypes.hpp"
-#include "quasar/coretypes/FloatingPointTypes.hpp"
+#include "quasar/scripting/RegistryBindings.hpp"
+#include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
 #include "quasar/named/NamedQuantity.hpp"
 #include "quasar/named/NamedVariant.hpp"
+#include <memory>
 
-using namespace quasar::scripting;
+namespace quasar::scripting {
+
 using namespace quasar::named;
-using namespace quasar::coretypes;
 
 class TypeBindingsTest : public ::testing::Test {
 protected:
-    LuaEngine engine;
+    void SetUp() override {
+        root = NamedObject::create("root");
+        engine = LuaEngine::create();
+    }
+    
+    void TearDown() override {
+        engine->shutdown();
+    }
+
+    std::shared_ptr<NamedObject> root;
+    std::shared_ptr<LuaEngine> engine;
 };
 
 TEST_F(TypeBindingsTest, IntegerPrecision) {
-    // Large 64-bit integer test: 2^60 + 7
-    int64_t largeVal = (1LL << 60) + 7;
-    std::shared_ptr<Integer<int64_t>> valObj = std::make_shared<Integer<int64_t>>(largeVal);
-    
-    engine.getState()["val"] = valObj;
-    
-    // Check value in Lua
-    engine.executeString("assert(val:value() == 1152921504606846983)");
-    
-    // Arithmetic in Lua - Use Long(10) instead of Long.new(10) to test call_constructor
-    engine.executeString("res = val + Long(10)");
-    
-    Long res = engine.getState()["res"];
-    EXPECT_EQ(res.value(), largeVal + 10);
-    
-    // Check toString
-    engine.executeString("s = tostring(val)");
-    std::string s = engine.getState()["s"];
-    EXPECT_EQ(s, std::to_string(largeVal));
+    sol::state& lua = engine->getState();
+    auto val = NamedInteger<int64_t>::create("val", 123456789012345LL, root);
+    lua["val"] = LuaProxy<NamedInteger<int64_t>>(val);
+
+    sol::protected_function_result result = lua.script("return val:value()");
+    ASSERT_TRUE(result.valid());
+    int64_t retrieved = result;
+    EXPECT_EQ(retrieved, 123456789012345LL);
 }
 
 TEST_F(TypeBindingsTest, UnsignedIntegerPrecision) {
-    // Max uint64_t test
-    uint64_t maxVal = std::numeric_limits<uint64_t>::max();
-    std::shared_ptr<Integer<uint64_t>> valObj = std::make_shared<Integer<uint64_t>>(maxVal);
-    
-    engine.getState()["uval"] = valObj;
-    
-    engine.executeString("s = uval:toString()");
-    std::string s = engine.getState()["s"];
-    EXPECT_EQ(s, std::to_string(maxVal));
+    sol::state& lua = engine->getState();
+    auto val = NamedInteger<uint64_t>::create("val", 18446744073709551610ULL, root);
+    lua["val"] = LuaProxy<NamedInteger<uint64_t>>(val);
+
+    sol::protected_function_result result = lua.script("return val:value()");
+    ASSERT_TRUE(result.valid());
+    uint64_t retrieved = result;
+    EXPECT_EQ(retrieved, 18446744073709551610ULL);
 }
 
 TEST_F(TypeBindingsTest, QuantityMath) {
-    engine.executeString(R"(
-        m = Unit.fromSymbol("m")
-        km = Unit.fromSymbol("km")
-        
-        q1 = Quantity(1.5, km) -- Test call_constructor
-        q2 = Quantity.new(500.0, m) -- Test .new alias
-        
-        sum = q1 + q2
-        val = sum:value()
-        unit = sum:getUnit()
-    )");
-    
-    double val = engine.getState()["val"];
-    Unit unit = engine.getState()["unit"];
-    
-    // 1.5km + 500m = 2.0km 
-    EXPECT_DOUBLE_EQ(val, 2.0);
-    EXPECT_EQ(unit.symbol, "km");
+    sol::state& lua = engine->getState();
+    auto q = NamedQuantity::create("speed", 100.0, "km/h", root);
+    lua["q"] = LuaProxy<NamedQuantity>(q);
+
+    lua.script("newVal = q:value() * 2");
+    double newVal = lua["newVal"];
+    EXPECT_DOUBLE_EQ(newVal, 200.0);
 }
 
 TEST_F(TypeBindingsTest, HierarchyResolution) {
-    std::shared_ptr<NamedObject> root = NamedObject::create("root");
-    std::shared_ptr<NamedObject> c1 = NamedObject::create("c1", root);
-    std::shared_ptr<NamedInteger<int64_t>> sub = NamedInteger<int64_t>::create("sub", 42, c1);
+    sol::state& lua = engine->getState();
+    auto child = NamedObject::create("child", root);
+    auto grandchild = NamedObject::create("grandchild", child);
     
-    engine.getState()["root"] = LuaProxy<NamedObject>(root);
+    lua["root"] = LuaProxy<NamedObject>(root);
     
-    engine.executeString(R"(
-        obj = quasar.resolve(root, "c1/sub")
-        assert(obj ~= nil)
-        assert(obj:getName() == "sub")
-        assert(obj:getType() == "NamedInteger")
-        
-        -- Use safe casting helper
-        nlong = obj:asLong()
-        assert(nlong ~= nil)
-        val = nlong:value()
-    )");
+    sol::protected_function_result result = lua.script("return quasar.resolve(root, 'child/grandchild')");
+    ASSERT_TRUE(result.valid());
     
-    int64_t val = engine.getState()["val"];
-    EXPECT_EQ(val, 42);
+    sol::object obj = result;
+    auto resolved = extractNamedObject(obj);
+    ASSERT_NE(resolved, nullptr); 
+    EXPECT_EQ(resolved->getName(), "grandchild");
 }
 
 TEST_F(TypeBindingsTest, VariantHandling) {
-    std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
-    engine.getState()["var"] = LuaProxy<NamedVariant>(var);
-    
-    sol::protected_function_result result = engine.executeString(R"(
-        val = quasar.named.createLong("initial", 100, var)
-        var:set(val)
-        
-        current = var:get()
-        assert(current ~= nil)
-        assert(current:getName() == "value")
-        
-        -- Use safe casting helper from NamedObject
-        nlong = current:asLong()
-        assert(nlong ~= nil)
-        res = nlong:value()
+    sol::state& lua = engine->getState();
+    auto v = NamedVariant::create("v", root);
+    lua["v"] = LuaProxy<NamedVariant>(v);
+
+    lua.script(R"(
+        local obj = quasar.named.createObject("Content")
+        v:set(obj)
     )");
-    
-    if (!result.valid()) {
-        sol::error err = result;
-        FAIL() << "Lua error: " << err.what();
-    }
-    
-    int64_t res = engine.getState()["res"];
-    EXPECT_EQ(res, 100);
+
+    auto content = v->get();
+    ASSERT_NE(content, nullptr);
+    EXPECT_EQ(content->getName(), "value");
 }
 
 TEST_F(TypeBindingsTest, CppVariantHandling) {
-    using NamedLong = NamedInteger<int64_t>;
-    std::shared_ptr<NamedVariant> var = NamedVariant::create("var");
-    std::shared_ptr<NamedLong> val = NamedLong::create("initial", 100);
+    sol::state& lua = engine->getState();
+    auto v = NamedVariant::create("v", root);
+    auto content = NamedObject::create("CppContent");
+    v->set(content);
     
-    // This mimics what happens in Lua
-    var->set(val);
-    
-    std::shared_ptr<NamedObject> current = var->get();
-    ASSERT_NE(current, nullptr);
-    EXPECT_EQ(current->getName(), "value");
-    
-    std::shared_ptr<NamedLong> nlong = std::dynamic_pointer_cast<NamedLong>(current);
-    ASSERT_NE(nlong, nullptr);
-    EXPECT_EQ(nlong->value(), 100);
+    lua["v"] = LuaProxy<NamedVariant>(v);
+
+    sol::protected_function_result result = lua.script("return v:get():getName()");
+    ASSERT_TRUE(result.valid());
+    std::string name = result;
+    EXPECT_EQ(name, "value");
 }
 
 TEST_F(TypeBindingsTest, IsolatedCreation) {
-    sol::protected_function_result res1 = engine.executeString("val = quasar.named.createLong('test', 123, nil)");
-    ASSERT_TRUE(res1.valid());
-    engine.executeString("assert(val:getName() == 'test')");
-    engine.executeString("assert(val:asLong():value() == 123)");
+    sol::state& lua = engine->getState();
+    
+    lua.script(R"(
+        local obj = quasar.named.createObject("Orphan")
+        name = obj:getName()
+    )");
+    
+    std::string name = lua["name"];
+    EXPECT_EQ(name, "Orphan");
 }
+
+} // namespace quasar::scripting

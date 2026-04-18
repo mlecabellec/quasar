@@ -23,9 +23,9 @@ void bindTCPServer(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     serverTable["TCPServer"] = lua.create_table_with(
-        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
+        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port, sol::this_state L) {
             auto ptr = std::make_shared<LuaTCPServer>(service, port);
-            ObjectTracker::getInstance().trackStrong(ptr);
+            ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaTCPServer>(ptr);
         }
     );

@@ -15,9 +15,9 @@ void bindHTTPClient(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     clientTable["HTTPClient"] = lua.create_table_with(
-        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::string& address, int port) {
+        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::string& address, int port, sol::this_state L) {
             auto ptr = std::make_shared<LuaHTTPClient>(service, address, port);
-            ObjectTracker::getInstance().trackStrong(ptr);
+            ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaHTTPClient>(ptr);
         }
     );

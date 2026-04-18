@@ -19,7 +19,7 @@ namespace quasar::logic {
  */
 class LogicProxy {
 public:
-    explicit LogicProxy(quasar::named::NamedObject* node) : m_node(node) {}
+    explicit LogicProxy(quasar::named::NamedObject* node, size_t workerId) : m_node(node), m_workerId(workerId) {}
 
     sol::object index(const std::string& name, sol::this_state s) {
         if (!m_node) return sol::nil;
@@ -27,6 +27,7 @@ public:
         quasar::named::NamedObject* child = nullptr;
         
         try {
+            // [CS-0010.44] Explicitly iterate children to find by name.
             std::list<std::shared_ptr<quasar::named::NamedObject>> children = m_node->getChildren();
             for (std::list<std::shared_ptr<quasar::named::NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
                 if (*it && (*it)->getName() == name) {
@@ -40,7 +41,7 @@ public:
         
         if (!child) return sol::nil;
 
-        // Leaf detection
+        // Leaf detection and automatic conversion to primitives for fast expressions.
         if (const quasar::named::NamedInteger<int64_t>* i64 = dynamic_cast<const quasar::named::NamedInteger<int64_t>*>(child)) return sol::make_object(s, i64->value());
         if (const quasar::named::NamedInteger<int32_t>* i32 = dynamic_cast<const quasar::named::NamedInteger<int32_t>*>(child)) return sol::make_object(s, i32->value());
         if (const quasar::named::NamedInteger<int>* i = dynamic_cast<const quasar::named::NamedInteger<int>*>(child)) return sol::make_object(s, i->value());
@@ -49,12 +50,13 @@ public:
         if (const quasar::named::NamedFloatingPoint<double>* d = dynamic_cast<const quasar::named::NamedFloatingPoint<double>*>(child)) return sol::make_object(s, d->value());
         if (const quasar::named::NamedFloatingPoint<float>* f = dynamic_cast<const quasar::named::NamedFloatingPoint<float>*>(child)) return sol::make_object(s, f->value());
 
-        // Return a proxy for the sub-branch
-        return sol::make_object(s, LogicProxy(child));
+        // Return a proxy for the sub-branch.
+        return sol::make_object(s, LogicProxy(child, m_workerId));
     }
 
 private:
     quasar::named::NamedObject* m_node;
+    size_t m_workerId;
 };
 
 Expression::Expression(sol::state& lua, const std::string& source) : m_lua(&lua) {
@@ -82,13 +84,22 @@ bool Expression::evaluate(const std::shared_ptr<quasar::named::NamedObject>& con
 void Expression::bindContext(sol::state& lua, const std::shared_ptr<quasar::named::NamedObject>& contextRoot) {
     if (!contextRoot) return;
 
-    if (lua["LogicProxy"] == sol::nil) {
-        lua.new_usertype<LogicProxy>("LogicProxy",
-            sol::meta_function::index, &LogicProxy::index
-        );
+    // Fetch worker ID from global if present (used by EvaluationPool).
+    size_t workerId = 0;
+    sol::object idObj = lua["__logic_worker_id"];
+    if (idObj.is<size_t>()) {
+        workerId = idObj.as<size_t>();
     }
 
-    lua["ctx"] = LogicProxy(contextRoot.get());
+    // [CS-0010.44] ctx is the standard entry point for expression evaluation.
+    lua["ctx"] = LogicProxy(contextRoot.get(), workerId);
+}
+
+void registerLogicTypes(sol::state& lua) {
+    // [CS-0010.5] Register once to ensure thread-safe metadata and stable metatables.
+    lua.new_usertype<LogicProxy>("LogicProxy",
+        sol::meta_function::index, &LogicProxy::index
+    );
 }
 
 } // namespace quasar::logic

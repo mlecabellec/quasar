@@ -5,6 +5,7 @@
 
 #include "quasar/logic/EvaluationPool.hpp"
 #include "quasar/logic/Expression.hpp"
+#include "quasar/scripting/ObjectTracker.hpp"
 #include <pthread.h>
 #include <signal.h>
 #include <iostream>
@@ -24,7 +25,14 @@ static void luaInstructionHook(lua_State* L, lua_Debug* /*ar*/) {
 // --- LogicWorker Implementation ---
 
 LogicWorker::LogicWorker(std::size_t id) : m_id(id) {
+    // [CS-0010.44] Open standard libraries and register once.
     m_lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::bit32);
+    
+    // Stabilize usertypes and store worker identity.
+    quasar::logic::registerLogicTypes(m_lua);
+    m_lua["__logic_worker_id"] = m_id;
+
+    // Safety watchdog hook.
     lua_sethook(m_lua.lua_state(), luaInstructionHook, LUA_MASKCOUNT, 1000);
 }
 
@@ -148,6 +156,10 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
             // Error fallback
         }
         
+        // [CS-0010.21] Cleanup contextual strong references created during evaluation.
+        // This worker ID is used to partition the ObjectTracker.
+        quasar::scripting::ObjectTracker::getInstance().untrackAll(worker.getId());
+
         if (worker.isCancelled() && finalStatus == EvaluationStatus::Error) {
             finalStatus = EvaluationStatus::Timeout;
         }

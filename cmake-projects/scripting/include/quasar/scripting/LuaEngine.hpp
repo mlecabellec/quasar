@@ -30,18 +30,20 @@ class LuaService;
 /**
  * @brief A wrapper around a sol::state, providing secure and controlled execution.
  */
-class LuaEngine {
+class LuaEngine : public std::enable_shared_from_this<LuaEngine> {
 public:
     /**
-     * @brief Constructs a new Lua Engine and initializes standard libraries.
+     * @brief Factory method to create a shared LuaEngine.
+     * @return Shared pointer to the new engine.
      */
-    LuaEngine();
+    static std::shared_ptr<LuaEngine> create();
 
     /**
-     * @brief Constructs a new Lua Engine with a service context.
+     * @brief Factory method with service context.
      * @param service Weak pointer to the host service.
+     * @return Shared pointer to the new engine.
      */
-    LuaEngine(std::weak_ptr<LuaService> service);
+    static std::shared_ptr<LuaEngine> create(std::weak_ptr<LuaService> service);
 
     /**
      * @brief Destructor cleans up the Lua state.
@@ -60,6 +62,11 @@ public:
      * Use with caution.
      */
     sol::state& getState() { return m_lua; }
+
+    /**
+     * @brief Gracefully shuts down the engine, clearing all Lua objects.
+     */
+    void shutdown();
 
     /**
      * @brief Performs a manual garbage collection step.
@@ -81,7 +88,23 @@ public:
      */
     std::recursive_mutex& getMutex() { return m_mutex; }
 
+    /**
+     * @brief Gets the unique ID of this engine instance.
+     */
+    size_t getId() const { return m_id; }
+
 protected:
+    /**
+     * @brief Constructs a new Lua Engine and initializes standard libraries.
+     */
+    LuaEngine();
+
+    /**
+     * @brief Constructs a new Lua Engine with a service context.
+     * @param service Weak pointer to the host service.
+     */
+    explicit LuaEngine(std::weak_ptr<LuaService> service);
+
     /**
      * @brief Custom panic handler for the Lua state.
      */
@@ -95,6 +118,7 @@ protected:
 private:
     sol::state m_lua;
     std::recursive_mutex m_mutex;
+    size_t m_id;
 };
 
 } // namespace scripting

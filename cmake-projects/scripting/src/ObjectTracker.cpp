@@ -1,34 +1,38 @@
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/scripting/NamedLuaMethod.hpp"
+#include "quasar/scripting/LuaEngine.hpp"
 #include <algorithm>
 #include <iostream>
 
 namespace quasar::scripting {
 
 void ObjectTracker::track(std::shared_ptr<named::NamedObject> obj) {
+    // Guard against invalid inputs.
     if (!obj) return;
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
     
+    // Register the raw pointer for existence tracking.
     m_trackedObjects[obj.get()] = obj;
     
+    // Specialized pool for method invalidation.
     if (obj->getType() == "NamedLuaMethod") {
         m_methods.push_back(obj);
     }
 }
 
 void ObjectTracker::untrack(named::NamedObject* obj) {
+    // Check if the pointer was being tracked.
     if (!obj) return;
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
     
     m_trackedObjects.erase(obj);
-    // Note: We don't easily untrack from m_anyStrongObjects as it is std::any vector.
-    // Cleanup() will handle it if we ever implement scoped strong tracking.
 }
 
 bool ObjectTracker::isAlive(std::shared_ptr<named::NamedObject> obj) const {
+    // Verify object presence in the hierarchy.
     if (!obj) return false;
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return false;
@@ -36,16 +40,12 @@ bool ObjectTracker::isAlive(std::shared_ptr<named::NamedObject> obj) const {
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>>::const_iterator it = m_trackedObjects.find(obj.get());
     if (it == m_trackedObjects.end()) return false;
     
+    // If the weak pointer is expired, the C++ object is gone.
     return !it->second.expired();
 }
 
-size_t ObjectTracker::getTrackedCount() const {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) return 0;
-    return m_trackedObjects.size() + m_anyStrongObjects.size();
-}
-
 void ObjectTracker::cleanup() {
+    // Periodically remove stale references to keep the maps lean.
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
     
@@ -58,21 +58,39 @@ void ObjectTracker::cleanup() {
         }
     }
 
+    // Clean up the global method pool.
     m_methods.erase(std::remove_if(m_methods.begin(), m_methods.end(), 
         [](const std::shared_ptr<named::NamedObject>& s) { return s.use_count() <= 1; }), m_methods.end());
 }
 
-void ObjectTracker::invalidateMethods() {
+void ObjectTracker::invalidateMethods(size_t engineId) {
+    // [CS-0010.44] Only invalidate methods belonging to the specified engine.
     std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
     if (!lock.owns_lock()) return;
 
-    for (const std::shared_ptr<named::NamedObject>& obj : m_methods) {
-        std::shared_ptr<NamedLuaMethod> method = std::dynamic_pointer_cast<NamedLuaMethod>(obj);
+    std::vector<std::shared_ptr<named::NamedObject>>::iterator it = m_methods.begin();
+    while (it != m_methods.end()) {
+        std::shared_ptr<NamedLuaMethod> method = std::dynamic_pointer_cast<NamedLuaMethod>(*it);
         if (method) {
-            method->invalidate();
+            // Check method's engine context.
+            std::shared_ptr<LuaEngine> eng = method->getEngine();
+            if (eng && eng->getId() == engineId) {
+                // Force detach from Lua state.
+                method->invalidate();
+                it = m_methods.erase(it);
+                continue;
+            }
         }
+        ++it;
     }
-    m_methods.clear();
+}
+
+void ObjectTracker::untrackAll(size_t engineId) {
+    // [CS-0010.21] Release all strong references kept alive by this engine.
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) return;
+
+    m_scopedStrongObjects.erase(engineId);
 }
 
 } // namespace quasar::scripting

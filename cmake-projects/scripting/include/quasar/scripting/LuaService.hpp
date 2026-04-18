@@ -73,6 +73,16 @@ public:
     void onShutdown() override;
 
     /**
+     * @brief Starts the service background thread.
+     */
+    void start();
+
+    /**
+     * @brief Stops the service and joins the thread.
+     */
+    void stop();
+
+    /**
      * @brief Gets the engine used by this service.
      */
     std::shared_ptr<LuaEngine> getEngine() const { return m_engine; }

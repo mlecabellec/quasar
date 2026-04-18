@@ -20,7 +20,7 @@ struct NamedLuaMethodImpl {
     sol::function func;
     std::recursive_mutex mutex;
     std::weak_ptr<LuaService> service;
-    LuaEngine* engine = nullptr;
+    std::weak_ptr<LuaEngine> engine;
     std::atomic<bool> valid{true};
 };
 
@@ -55,10 +55,23 @@ public:
     std::string getType() const override;
 
     /**
+     * @brief Executes the method.
+     * @param args Arguments for the execution.
+     * @return Execution result.
+     */
+    std::shared_ptr<quasar::named::NamedObject> execute(std::shared_ptr<quasar::named::NamedObject> args) override;
+
+    /**
      * @brief Invalidates the method by clearing the Lua function reference.
      * This is used during engine shutdown.
      */
     void invalidate();
+
+    /**
+     * @brief Gets the associated Lua engine.
+     * @return Shared pointer to the engine, or nullptr if invalidated.
+     */
+    std::shared_ptr<LuaEngine> getEngine() const { return m_impl->engine.lock(); }
 
 protected:
     /**

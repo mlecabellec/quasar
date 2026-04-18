@@ -23,4 +23,11 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service);
  */
 std::shared_ptr<quasar::named::NamedObject> extractNamedObject(sol::object obj);
 
+/**
+ * @brief Retrieves the unique engine ID from a Lua state context.
+ * @param L The current Lua state.
+ * @return The ID of the managed LuaEngine, or 0 if unmanaged.
+ */
+size_t getEngineId(sol::this_state L);
+
 } // namespace quasar::scripting

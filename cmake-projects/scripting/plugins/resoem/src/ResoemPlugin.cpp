@@ -20,10 +20,10 @@ QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lua) {
     // Bind EthercatMasterService
     sol::usertype<LuaProxy<EthercatMasterService>> utMaster = resoem_tbl.new_usertype<LuaProxy<EthercatMasterService>>("EthercatMasterService",
         sol::base_classes, sol::bases<ILuaProxy>(),
-        "create", [](const std::string& name, sol::object parent) {
+        "create", [](const std::string& name, sol::object parent, sol::this_state L) {
             std::shared_ptr<NamedObject> p = extractNamedObject(parent);
             auto ptr = EthercatMasterService::create(name, p);
-            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(ptr);
+            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<EthercatMasterService>(ptr);
         },
         "setInterface", [](LuaProxy<EthercatMasterService>& proxy, const std::string& iface) {

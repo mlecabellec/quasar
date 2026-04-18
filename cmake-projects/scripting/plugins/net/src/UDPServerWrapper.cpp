@@ -15,9 +15,9 @@ void bindUDPServer(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     serverTable["UDPServer"] = lua.create_table_with(
-        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port) {
+        "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port, sol::this_state L) {
             auto ptr = std::make_shared<LuaUDPServer>(service, port);
-            ObjectTracker::getInstance().trackStrong(ptr);
+            ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaUDPServer>(ptr);
         }
     );
