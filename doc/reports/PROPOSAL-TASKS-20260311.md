@@ -1,32 +1,34 @@
 # Task Prioritization and Development Roadmap
 
-**Date:** 2026-03-11  
+**Date:** 2026-04-19 (Updated)
 **Project:** Quasar  
 **Subject:** Analysis of Open Tasks and Proposed Implementation Strategy
 
 ## 1. Executive Summary
 
-A comprehensive review of the `doc/project/tasks` directory identified **15 formal task definitions** (including TSK-20260310-001 and TSK-20260328-001 added after the initial report). As of **2026-04-03**: **2 Completed**, **4 In Progress**, and **9 Not Started**. This report proposes a **5-Phase Roadmap** designed to resolve technical dependencies early and build momentum toward complex UI and logic systems.
+A comprehensive review of the `doc/project/tasks` directory identified **15 formal task definitions** plus specialized EtherCAT engineering initiatives. As of **2026-04-19**: **8 Completed**, **6 In Progress**, and **12 Not Started (Backlog)**. This report reflects the shift toward industrial-grade fieldbus management and the successful stabilization of the core execution layers.
 
 ## 2. Inventory of Tasks
 
-| Task ID | Goal | Estimated Complexity | Core Dependencies | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **TSK-20260311-011** | Lua Engine Validation | Medium-High | None (Core) | 🔄 In Progress |
-| **TSK-20260311-001** | Advanced Tree Transformations | Medium-High | `named` library | 🔄 In Progress |
-| **TSK-20260311-010** | Calibration Framework | Medium | `named`, `coretypes` | 🔄 In Progress |
-| **TSK-20260311-002** | Networking Server (Lua) | Medium | `asio`, `CppServer` | 🔲 Not Started |
-| **TSK-20260311-003** | Networking Client (Lua) | Medium | `asio`, `CppServer` | 🔲 Not Started |
-| **TSK-20260311-004** | ZeroMQ Plugin | Medium | `named`, `libzmq` | 🔄 In Progress |
-| **TSK-20260303-001** | Data Logging / Acquisition | High | `named`, `coretypes` | 🔲 Not Started |
-| **TSK-20260311-006** | CAN Bus (SocketCAN) | High | `datacodec`, `named` | 🔲 Not Started |
-| **TSK-20260311-005** | OPC UA Server/Client | High | `named`, `networking` | 🔲 Not Started |
-| **TSK-20260311-009** | LogicEngine (FSM/SFC) | High | `named`, `scheduler` | ✅ Completed |
-| **TSK-20260311-008** | Web UI & REST/WS API | High | `named`, `networking` | 🔲 Not Started |
-| **TSK-20260311-007** | Apache Kafka Integration | High | `named`, `librdkafka` | 🔲 Not Started |
-| **TSK-20260303-004** | Python Bindings | High | `coretypes`, `named` | 🔲 Not Started |
-| **TSK-20260310-001** | Standalone Script Runner (`sre`) | Medium | `scripting`, `named` | ✅ Completed |
-| **TSK-20260328-001** | Reflexive Execution & Service Orchestration | High | `named`, `scripting` | 🔲 Not Started |
+| Task ID | Goal | Core Dependencies | Status |
+| :--- | :--- | :--- | :--- |
+| **TSK-20260311-011** | Lua Engine Validation | None (Core) | 🔄 In Progress (Refactoring) |
+| **TSK-20260311-001** | Advanced Tree Transformations | `named` library | 🔄 In Progress |
+| **TSK-20260311-010** | Calibration Framework | `named`, `coretypes` | 🔄 In Progress |
+| **TSK-20260311-002** | Networking Server (Lua) | `asio`, `CppServer` | 🔲 Not Started |
+| **TSK-20260311-003** | Networking Client (Lua) | `asio`, `CppServer` | 🔲 Not Started |
+| **TSK-20260311-004** | ZeroMQ Plugin | `named`, `libzmq` | 🔄 In Progress |
+| **TSK-20260303-001** | Data Logging / Acquisition | `named`, `coretypes` | 🔄 In Progress |
+| **TSK-20260311-006** | CAN Bus (SocketCAN) | `datacodec`, `named` | 🔲 Not Started |
+| **TSK-20260311-005** | OPC UA Server/Client | `named`, `networking` | 🔄 In Progress |
+| **TSK-20260311-009** | LogicEngine (FSM/SFC) | `named`, `scheduler` | ✅ Completed |
+| **TSK-20260311-008** | Web UI & REST/WS API | `named`, `networking` | 🔲 Not Started |
+| **TSK-20260311-007** | Apache Kafka Integration | `named`, `librdkafka` | 🔲 Not Started |
+| **TSK-20260303-004** | Python Bindings | `coretypes`, `named` | 🔲 Not Started |
+| **TSK-20260310-001** | Standalone Script Runner (`sre`) | `scripting`, `named` | ✅ Completed |
+| **TSK-20260328-001** | Reflexive Orchestration | `named`, `scripting` | 🔲 Not Started |
+| **TSK-20260410-001** | EtherCAT Master Diag Suite | `resoem`, `named` | 🔲 Not Started |
+| **TSK-20260410-004** | `ecat-top` Interactive TUI | `ftxui`, `resoem` | 🔲 Not Started |
 
 ## 3. Implementation Roadmap
 
