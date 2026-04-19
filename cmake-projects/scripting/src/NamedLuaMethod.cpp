@@ -104,9 +104,8 @@ std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, 
     // Setup LuaEngine and Service context.
     sol::state_view lua(func.lua_state());
     sol::object engineObj = lua["__quasar_engine"];
-    if (engineObj.is<LuaEngine*>()) {
-        LuaEngine* rawEngine = engineObj.as<LuaEngine*>();
-        self->m_impl->engine = rawEngine->shared_from_this();
+    if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
+        self->m_impl->engine = engineObj.as<std::weak_ptr<LuaEngine>>();
     }
     
     std::shared_ptr<quasar::named::NamedObject> p = parent;

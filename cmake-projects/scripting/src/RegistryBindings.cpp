@@ -4,6 +4,7 @@
 #include "quasar/scripting/LuaService.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/scripting/QueuedObserver.hpp"
+#include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
@@ -32,6 +33,8 @@
 #include <list>
 #include <memory>
 #include <algorithm>
+#include <thread>
+#include <chrono>
 
 namespace quasar::scripting {
 
@@ -40,8 +43,9 @@ using namespace quasar::named;
 size_t getEngineId(sol::this_state L) {
     sol::state_view lua(L);
     sol::object engineObj = lua["__quasar_engine"];
-    if (engineObj.is<LuaEngine*>()) {
-        return engineObj.as<LuaEngine*>()->getId();
+    if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
+        std::shared_ptr<LuaEngine> engine = engineObj.as<std::weak_ptr<LuaEngine>>().lock();
+        if (engine) return engine->getId();
     }
     return 0;
 }
@@ -99,6 +103,66 @@ static void bindNamedObjectMethods(U& ut) {
         std::shared_ptr<NamedString> p = std::dynamic_pointer_cast<NamedString>(obj);
         return p ? std::make_optional(LuaProxy<NamedString>(p)) : std::nullopt;
     };
+    ut["asTimestamp"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedTimestamp>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedTimestamp> p = std::dynamic_pointer_cast<NamedTimestamp>(obj);
+        return p ? std::make_optional(LuaProxy<NamedTimestamp>(p)) : std::nullopt;
+    };
+    ut["asDuration"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedDuration>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedDuration> p = std::dynamic_pointer_cast<NamedDuration>(obj);
+        return p ? std::make_optional(LuaProxy<NamedDuration>(p)) : std::nullopt;
+    };
+    ut["asDate"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedDate>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedDate> p = std::dynamic_pointer_cast<NamedDate>(obj);
+        return p ? std::make_optional(LuaProxy<NamedDate>(p)) : std::nullopt;
+    };
+    ut["asQuantity"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedQuantity>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedQuantity> p = std::dynamic_pointer_cast<NamedQuantity>(obj);
+        return p ? std::make_optional(LuaProxy<NamedQuantity>(p)) : std::nullopt;
+    };
+    ut["asVariant"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedVariant>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedVariant> p = std::dynamic_pointer_cast<NamedVariant>(obj);
+        return p ? std::make_optional(LuaProxy<NamedVariant>(p)) : std::nullopt;
+    };
+    ut["asBuffer"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedBuffer>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedBuffer> p = std::dynamic_pointer_cast<NamedBuffer>(obj);
+        return p ? std::make_optional(LuaProxy<NamedBuffer>(p)) : std::nullopt;
+    };
+    ut["asBitBuffer"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedBitBuffer>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedBitBuffer> p = std::dynamic_pointer_cast<NamedBitBuffer>(obj);
+        return p ? std::make_optional(LuaProxy<NamedBitBuffer>(p)) : std::nullopt;
+    };
+    ut["asActive"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<ActiveEntity>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<ActiveEntity> p = std::dynamic_pointer_cast<ActiveEntity>(obj);
+        return p ? std::make_optional(LuaProxy<ActiveEntity>(p)) : std::nullopt;
+    };
+    ut["asMethod"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedMethod>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedMethod> p = std::dynamic_pointer_cast<NamedMethod>(obj);
+        return p ? std::make_optional(LuaProxy<NamedMethod>(p)) : std::nullopt;
+    };
+    ut["asService"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedService>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedService> p = std::dynamic_pointer_cast<NamedService>(obj);
+        return p ? std::make_optional(LuaProxy<NamedService>(p)) : std::nullopt;
+    };
+    ut["asMap"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedMap<NamedObject>>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedMap<NamedObject>> p = std::dynamic_pointer_cast<NamedMap<NamedObject>>(obj);
+        return p ? std::make_optional(LuaProxy<NamedMap<NamedObject>>(p)) : std::nullopt;
+    };
+    ut["asArray"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedArray<NamedObject>>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedArray<NamedObject>> p = std::dynamic_pointer_cast<NamedArray<NamedObject>>(obj);
+        return p ? std::make_optional(LuaProxy<NamedArray<NamedObject>>(p)) : std::nullopt;
+    };
 }
 
 void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
@@ -109,13 +173,44 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     sol::table namedTable = quasarTable["named"].get_or_create<sol::table>();
     sol::table serializationTable = namedTable["serialization"].get_or_create<sol::table>();
 
+    serializationTable["toJson"] = [](sol::object obj) {
+        return quasar::named::serialization::toJson(extractNamedObject(obj));
+    };
     serializationTable["fromJson"] = [](const std::string& json, sol::this_state L) {
         std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromJson(json);
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
+    serializationTable["toYaml"] = [](sol::object obj) {
+        return quasar::named::serialization::toYaml(extractNamedObject(obj));
+    };
+    serializationTable["fromYaml"] = [](const std::string& yaml, sol::this_state L) {
+        std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromYaml(yaml);
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedObject>(ptr);
+    };
+    serializationTable["toXml"] = [](sol::object obj) {
+        return quasar::named::serialization::toXml(extractNamedObject(obj));
+    };
+    serializationTable["fromXml"] = [](const std::string& xml, sol::this_state L) {
+        std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromXml(xml);
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedObject>(ptr);
+    };
+    serializationTable["toBinary"] = [](sol::object obj) {
+        return sol::as_table(quasar::named::serialization::toBinary(extractNamedObject(obj)));
+    };
+    serializationTable["fromBinary"] = [](sol::table data, sol::this_state L) {
+        std::vector<uint8_t> v;
+        v.reserve(data.size());
+        for (size_t i = 1; i <= data.size(); ++i) v.push_back(data.get<uint8_t>(i));
+        std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromBinary(v);
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedObject>(ptr);
+    };
 
     lua.new_usertype<ILuaProxy>("ILuaProxy", sol::no_constructor, "isAlive", &ILuaProxy::isAlive);
+    lua.new_usertype<IObserver>("IObserver", sol::no_constructor);
     
     // NamedObject
     sol::usertype<LuaProxy<NamedObject>> utNamedObject = lua.new_usertype<LuaProxy<NamedObject>>("NamedObject", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
@@ -132,6 +227,11 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utScriptable["onEvent"] = [](LuaProxy<ScriptableNamedObject> self, const std::string& ev, sol::object data) { self.lock()->onEvent(ev, data); };
     utScriptable["setLuaSelf"] = [](LuaProxy<ScriptableNamedObject> self, sol::table t) { self.lock()->setLuaSelf(t); };
     utScriptable["getLuaSelf"] = [](LuaProxy<ScriptableNamedObject> self) { return self.lock()->getLuaSelf(); };
+    namedTable["createScriptable"] = [](const std::string& name, sol::object parent, sol::this_state L) {
+        std::shared_ptr<ScriptableNamedObject> ptr = ScriptableNamedObject::create(name, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<ScriptableNamedObject>(ptr);
+    };
 
     // Long
     using NamedLong = NamedInteger<int64_t>;
@@ -157,6 +257,18 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         return LuaProxy<NamedULong>(ptr);
     };
 
+    // Double
+    using NamedDouble = NamedFloatingPoint<double>;
+    sol::usertype<LuaProxy<NamedDouble>> utNamedDouble = lua.new_usertype<LuaProxy<NamedDouble>>("NamedDouble", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedDouble>(utNamedDouble);
+    utNamedDouble["value"] = [](LuaProxy<NamedDouble> self) { return self.lock()->value(); };
+    utNamedDouble["setValue"] = [](LuaProxy<NamedDouble> self, double v) { self.lock()->setValue(v); };
+    namedTable["createDouble"] = [](const std::string& name, double v, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedDouble> ptr = NamedDouble::create(name, v, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedDouble>(ptr);
+    };
+
     // Boolean
     sol::usertype<LuaProxy<NamedBoolean>> utNamedBoolean = lua.new_usertype<LuaProxy<NamedBoolean>>("NamedBoolean", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedBoolean>(utNamedBoolean);
@@ -177,6 +289,36 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         std::shared_ptr<NamedString> ptr = NamedString::create(name, v, extractNamedObject(parent));
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedString>(ptr);
+    };
+
+    // Timestamp
+    sol::usertype<LuaProxy<NamedTimestamp>> utNamedTimestamp = lua.new_usertype<LuaProxy<NamedTimestamp>>("NamedTimestamp", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedTimestamp>(utNamedTimestamp);
+    utNamedTimestamp["value"] = [](LuaProxy<NamedTimestamp> self) { return self.lock()->value(); };
+    namedTable["createTimestamp"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedTimestamp> ptr = NamedTimestamp::create(name, v.value_or(0), extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedTimestamp>(ptr);
+    };
+
+    // Duration
+    sol::usertype<LuaProxy<NamedDuration>> utNamedDuration = lua.new_usertype<LuaProxy<NamedDuration>>("NamedDuration", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedDuration>(utNamedDuration);
+    utNamedDuration["value"] = [](LuaProxy<NamedDuration> self) { return self.lock()->value(); };
+    namedTable["createDuration"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedDuration> ptr = NamedDuration::create(name, v.value_or(0), extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedDuration>(ptr);
+    };
+
+    // Date
+    sol::usertype<LuaProxy<NamedDate>> utNamedDate = lua.new_usertype<LuaProxy<NamedDate>>("NamedDate", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedDate>(utNamedDate);
+    utNamedDate["value"] = [](LuaProxy<NamedDate> self) { return self.lock()->value(); };
+    namedTable["createDate"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedDate> ptr = NamedDate::create(name, v.value_or(0), extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedDate>(ptr);
     };
 
     // Quantity
@@ -206,6 +348,74 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         return LuaProxy<NamedVariant>(ptr);
     };
 
+    // Buffer
+    sol::usertype<LuaProxy<NamedBuffer>> utNamedBuffer = lua.new_usertype<LuaProxy<NamedBuffer>>("NamedBuffer", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedBuffer>(utNamedBuffer);
+    utNamedBuffer["getSize"] = [](LuaProxy<NamedBuffer> self) { return self.lock()->size(); };
+    utNamedBuffer["read"] = [](LuaProxy<NamedBuffer> self, size_t off, size_t sz) {
+        std::shared_ptr<NamedBuffer> b = self.lock();
+        if (off >= b->size()) return sol::as_table(std::vector<uint8_t>());
+        return sol::as_table(b->slice(off, std::min(sz, b->size() - off)).toVector());
+    };
+    utNamedBuffer["write"] = [](LuaProxy<NamedBuffer> self, size_t off, sol::table data) {
+        std::shared_ptr<NamedBuffer> b = self.lock();
+        for (size_t i = 1; i <= data.size() && (off + i - 1) < b->size(); ++i) {
+            b->set(off + i - 1, data.get<uint8_t>(i));
+        }
+    };
+    namedTable["createBuffer"] = [](const std::string& name, size_t sz, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedBuffer> ptr = NamedBuffer::create(name, sz, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedBuffer>(ptr);
+    };
+
+    // BitBuffer
+    sol::usertype<LuaProxy<NamedBitBuffer>> utNamedBitBuffer = lua.new_usertype<LuaProxy<NamedBitBuffer>>("NamedBitBuffer", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedBitBuffer>(utNamedBitBuffer);
+    utNamedBitBuffer["getBitCount"] = [](LuaProxy<NamedBitBuffer> self) { return self.lock()->bitSize(); };
+    utNamedBitBuffer["getBit"] = [](LuaProxy<NamedBitBuffer> self, size_t i) { return self.lock()->getBit(i); };
+    utNamedBitBuffer["setBit"] = [](LuaProxy<NamedBitBuffer> self, size_t i, bool v) { self.lock()->setBit(i, v); };
+    namedTable["createBitBuffer"] = [](const std::string& name, size_t bc, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedBitBuffer> ptr = NamedBitBuffer::create(name, bc, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedBitBuffer>(ptr);
+    };
+
+    // Array
+    using NamedObjectArray = NamedArray<NamedObject>;
+    sol::usertype<LuaProxy<NamedObjectArray>> utNamedArray = lua.new_usertype<LuaProxy<NamedObjectArray>>("NamedArray", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedObjectArray>(utNamedArray);
+    utNamedArray["size"] = [](LuaProxy<NamedObjectArray> self) { return self.lock()->size(); };
+    utNamedArray["get"] = [](LuaProxy<NamedObjectArray> self, size_t i) -> std::optional<LuaProxy<NamedObject>> {
+        try { return LuaProxy<NamedObject>(self.lock()->get(i - 1)); } catch(...) { return std::nullopt; }
+    };
+    namedTable["createArray"] = [](const std::string& name, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedObjectArray> ptr = NamedObjectArray::create(name, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedObjectArray>(ptr);
+    };
+
+    // Map
+    using NamedObjectMap = NamedMap<NamedObject>;
+    sol::usertype<LuaProxy<NamedObjectMap>> utNamedObjectMap = lua.new_usertype<LuaProxy<NamedObjectMap>>("NamedMap", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedObjectMap>(utNamedObjectMap);
+    utNamedObjectMap["size"] = [](LuaProxy<NamedObjectMap> self) { return self.lock()->size(); };
+    utNamedObjectMap["get"] = [](LuaProxy<NamedObjectMap> self, const std::string& k) -> std::optional<LuaProxy<NamedObject>> {
+        try { return LuaProxy<NamedObject>(self.lock()->get(k)); } catch(...) { return std::nullopt; }
+    };
+    namedTable["createMap"] = [](const std::string& name, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedObjectMap> ptr = NamedObjectMap::create(name, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedObjectMap>(ptr);
+    };
+
+    // ActiveEntity
+    sol::usertype<LuaProxy<ActiveEntity>> utActiveEntity = lua.new_usertype<LuaProxy<ActiveEntity>>("ActiveEntity", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<ActiveEntity>(utActiveEntity);
+    utActiveEntity["subscribe"] = [](LuaProxy<ActiveEntity> self, std::shared_ptr<IObserver> obs) { self.lock()->subscribe(obs); };
+    utActiveEntity["unsubscribe"] = [](LuaProxy<ActiveEntity> self, std::shared_ptr<IObserver> obs) { self.lock()->unsubscribe(obs); };
+    utActiveEntity["getState"] = [](LuaProxy<ActiveEntity> self) { return static_cast<int>(self.lock()->getState()); };
+
     // Methods
     sol::usertype<LuaProxy<NamedMethod>> utNamedMethod = lua.new_usertype<LuaProxy<NamedMethod>>("NamedMethod", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedMethod>(utNamedMethod);
@@ -218,10 +428,43 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     sol::usertype<LuaProxy<NamedLuaMethod>> utNamedLuaMethod = lua.new_usertype<LuaProxy<NamedLuaMethod>>("NamedLuaMethod", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedLuaMethod>(utNamedLuaMethod);
+    utNamedLuaMethod["execute"] = [](LuaProxy<NamedLuaMethod> self, sol::object args, sol::this_state L) -> std::optional<LuaProxy<NamedObject>> {
+        std::shared_ptr<NamedLuaMethod> method = self.lock();
+        std::shared_ptr<NamedObject> res = method->execute(extractNamedObject(args));
+        if (res && !res->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), res);
+        return res ? std::make_optional(LuaProxy<NamedObject>(res)) : std::nullopt;
+    };
     namedTable["createLuaMethod"] = [](const std::string& name, sol::function f, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedLuaMethod> ptr = NamedLuaMethod::create(name, f, extractNamedObject(parent));
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedLuaMethod>(ptr);
+    };
+
+    // NamedService
+    sol::usertype<LuaProxy<NamedService>> utNamedService = lua.new_usertype<LuaProxy<NamedService>>("NamedService", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedService>(utNamedService);
+    utNamedService["start"] = [](LuaProxy<NamedService> self) { self.lock()->start(); };
+    utNamedService["stop"] = [](LuaProxy<NamedService> self, sol::this_state L) { 
+        std::shared_ptr<NamedService> svc = self.lock();
+        sol::state_view lua(L);
+        sol::object engineObj = lua["__quasar_engine"];
+        if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
+            std::shared_ptr<LuaEngine> engine = engineObj.as<std::weak_ptr<LuaEngine>>().lock();
+            if (engine) {
+                engine->getMutex().unlock();
+                svc->stop();
+                engine->getMutex().lock();
+                return;
+            }
+        }
+        svc->stop();
+    };
+    utNamedService["isRunning"] = [](LuaProxy<NamedService> self) { return self.lock()->isRunning(); };
+    utNamedService["setCycleTime"] = [](LuaProxy<NamedService> self, int ms) { self.lock()->setCycleTime(std::chrono::milliseconds(ms)); };
+    namedTable["createService"] = [](const std::string& name, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedService> ptr = NamedService::create(name, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedService>(ptr);
     };
 
     // Globals
@@ -240,6 +483,23 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             if (!current) return std::nullopt;
         }
         return LuaProxy<NamedObject>(current);
+    };
+    quasarTable["createObserver"] = [weakService = std::weak_ptr<LuaService>(service)](sol::function cb, sol::optional<size_t> wm) {
+        return std::make_shared<QueuedObserver>(weakService.lock(), cb, wm.value_or(1000));
+    };
+    quasarTable["sleep"] = [](int ms, sol::this_state L) {
+        sol::state_view lua(L);
+        sol::object engineObj = lua["__quasar_engine"];
+        if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
+            std::shared_ptr<LuaEngine> engine = engineObj.as<std::weak_ptr<LuaEngine>>().lock();
+            if (engine) {
+                engine->getMutex().unlock();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                engine->getMutex().lock();
+                return;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     };
 }
 

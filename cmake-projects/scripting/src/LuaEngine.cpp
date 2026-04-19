@@ -47,9 +47,6 @@ LuaEngine::LuaEngine(std::weak_ptr<LuaService> service) : m_id(s_engineIdCounter
     // Bind Quasar core and reflexive named object types.
     bindCoreTypes(m_lua);
     bindNamedTypes(m_lua, service.lock());
-
-    // [CS-0010.30] Store raw engine pointer for internal C++ callbacks.
-    m_lua["__quasar_engine"] = this;
 }
 
 std::shared_ptr<LuaEngine> LuaEngine::create() {
@@ -57,7 +54,9 @@ std::shared_ptr<LuaEngine> LuaEngine::create() {
     struct make_shared_enabler : public LuaEngine {
         make_shared_enabler() : LuaEngine() {}
     };
-    return std::make_shared<make_shared_enabler>();
+    std::shared_ptr<LuaEngine> engine = std::make_shared<make_shared_enabler>();
+    engine->getState()["__quasar_engine"] = std::weak_ptr<LuaEngine>(engine);
+    return engine;
 }
 
 std::shared_ptr<LuaEngine> LuaEngine::create(std::weak_ptr<LuaService> service) {
@@ -65,7 +64,9 @@ std::shared_ptr<LuaEngine> LuaEngine::create(std::weak_ptr<LuaService> service) 
     struct make_shared_enabler : public LuaEngine {
         explicit make_shared_enabler(std::weak_ptr<LuaService> s) : LuaEngine(s) {}
     };
-    return std::make_shared<make_shared_enabler>(service);
+    std::shared_ptr<LuaEngine> engine = std::make_shared<make_shared_enabler>(service);
+    engine->getState()["__quasar_engine"] = std::weak_ptr<LuaEngine>(engine);
+    return engine;
 }
 
 LuaEngine::~LuaEngine() {
