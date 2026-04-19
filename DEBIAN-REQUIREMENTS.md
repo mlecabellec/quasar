@@ -43,9 +43,6 @@ Raylib is vendored but links against system libraries on Linux.
 
 ### Utilities & Security
 *   `libssl-dev`: OpenSSL development files (required for secure communication).
-*   `libcurl4-openssl-dev`: cURL development files (required by librdkafka).
-*   `libsasl2-dev`: Cyrus SASL development files (required by librdkafka).
-*   `libzstd-dev`: Zstandard compression library (required by librdkafka).
 *   `uuid-dev`: Universally Unique ID library.
 *   `zlib1g-dev`: Compression library.
 *   `binutils-dev`: Binary utilities development files (often for symbol resolution and debugging).
@@ -78,7 +75,7 @@ sudo apt-get install -y \
     linux-headers-$(uname -r) autoconf automake libtool dkms \
     libasound2-dev libx11-dev libxrandr-dev libxi-dev \
     libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-    libgmp-dev libssl-dev libcurl4-openssl-dev libsasl2-dev libzstd-dev uuid-dev zlib1g-dev binutils-dev libiberty-dev \
+    libgmp-dev libssl-dev uuid-dev zlib1g-dev binutils-dev libiberty-dev \
     libyaml-cpp-dev libtinyxml2-dev libjsoncons-dev \
     doxygen graphviz texlive-latex-base texlive-fonts-recommended texlive-latex-extra
 ```

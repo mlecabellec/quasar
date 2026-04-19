@@ -14,8 +14,11 @@ protected:
         // Reset singleton to ensure a fresh start for every test case.
         DataLoggerService::resetInstance();
         
-        // Use a dedicated test log file to avoid conflicts.
-        testFilePath = "macro_test_log.csv";
+        // Use a unique test log file to avoid conflicts during parallel execution.
+        const ::testing::TestInfo* const test_info =
+            ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string testName = test_info->name();
+        testFilePath = "log_macro_" + testName + ".csv";
         std::remove(testFilePath.c_str());
         
         // Explicitly initialize the logger for the test.

@@ -65,6 +65,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
     - Implementing `NamedMethod`, `NamedLuaMethod`, and `NamedService`.
 
 ### Recently Completed
+- **[TSK-20260311-007]**: Phased out **Apache Kafka Integration** (`librdkafka` removal).
 - **[TSK-20260310-001]**: Standalone Script Runner (`sre`) with plugin support.
 - **[TSK-20260308-001]**: Full Polymorphic Integer Dispatch.
 
