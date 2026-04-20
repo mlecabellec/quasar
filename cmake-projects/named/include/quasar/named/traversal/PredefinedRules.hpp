@@ -17,6 +17,12 @@ struct SliceDefinition {
     size_t length;
 };
 
+struct FieldMapping {
+    std::string name;
+    std::string type;
+    size_t offset;
+};
+
 class PredefinedRules {
 public:
     /**
@@ -34,6 +40,21 @@ public:
         int priority = 10);
 
     /**
+     * @brief Creates a rule that automatically expands a buffer into a tree of pseudo-primitives.
+     * 
+     * Fulfills [TSK-20260311-001.7] Explicit Cast Transformations.
+     * 
+     * @param targetBufferName Buffer to match.
+     * @param mappings List of field mappings (name, type, offset).
+     * @param priority Rule priority.
+     * @return A TransformationRule.
+     */
+    static TransformationRule castToStructure(
+        const std::string& targetBufferName,
+        const std::vector<FieldMapping>& mappings,
+        int priority = 20);
+
+    /**
      * @brief Creates a rule that extracts an integer from a buffer or slice into a new NamedInteger.
      */
     template <typename T>
@@ -49,22 +70,21 @@ public:
                    (node->as<NamedBuffer>() != nullptr || node->as<NamedBufferSlice>() != nullptr);
         };
 
-        TransformGenerator gen = [newIntName, offset](const TransformContext& ctx) -> std::vector<std::shared_ptr<NamedObject>> {
+        TransformGenerator gen = [newIntName, offset](const TransformContext& ctx, Transformer& transformer) -> std::vector<std::shared_ptr<NamedObject>> {
+            (void)transformer;
             std::shared_ptr<NamedObject> node = ctx.getNode();
-            T value = 0;
+            std::shared_ptr<NamedInteger<T>> intNode = NamedInteger<T>::create(newIntName, 0);
+
             if (std::shared_ptr<NamedBuffer> buf = node->as<NamedBuffer>()) {
-                if (offset + sizeof(T) <= buf->size()) {
-                    value = static_cast<T>(buf->readInt(offset));
-                }
+                // Bind directly to NamedBuffer.
+                intNode->bind(buf, offset);
             } else if (std::shared_ptr<NamedBufferSlice> slice = node->as<NamedBufferSlice>()) {
-                if (offset + sizeof(T) <= slice->size()) {
-                    std::shared_ptr<quasar::coretypes::Buffer> parentBuf = slice->quasar::coretypes::BufferSlice::getParent();
-                    if (parentBuf) {
-                        value = static_cast<T>(parentBuf->readInt(offset + slice->getOffset()));
-                    }
+                // Bind to the underlying buffer of the slice, adjusting offset.
+                std::shared_ptr<quasar::coretypes::Buffer> parentBuf = slice->quasar::coretypes::BufferSlice::getParent();
+                if (parentBuf) {
+                    intNode->bind(parentBuf, offset + slice->getOffset());
                 }
             }
-            std::shared_ptr<NamedInteger<T>> intNode = NamedInteger<T>::create(newIntName, value);
             return {intNode};
         };
 

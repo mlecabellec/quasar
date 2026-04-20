@@ -9,6 +9,8 @@
 
 namespace quasar::named::traversal {
 
+class Transformer;
+
 /**
  * @brief Predicate type for matching a rule against a context.
  */
@@ -16,8 +18,9 @@ using TransformPredicate = std::function<bool(const TransformContext&)>;
 
 /**
  * @brief Generator type for producing new nodes from a context.
+ * It takes the context and a reference to the transformer to allow manual recursion.
  */
-using TransformGenerator = std::function<std::vector<std::shared_ptr<NamedObject>>(const TransformContext&)>;
+using TransformGenerator = std::function<std::vector<std::shared_ptr<NamedObject>>(const TransformContext&, Transformer&)>;
 
 /**
  * @class TransformationRule
@@ -25,23 +28,44 @@ using TransformGenerator = std::function<std::vector<std::shared_ptr<NamedObject
  */
 class TransformationRule {
 public:
+    /**
+     * @brief Constructor for TransformationRule.
+     * @param predicate Condition for rule application.
+     * @param generator Function to produce transformed nodes.
+     * @param priority Execution priority (higher is better).
+     */
     TransformationRule(TransformPredicate predicate, TransformGenerator generator, int priority = 0)
         : m_predicate(std::move(predicate)), m_generator(std::move(generator)), m_priority(priority) {}
 
+    /**
+     * @brief Checks if the rule matches the given context.
+     * @param context The current transformation context.
+     * @return true if matches.
+     */
     bool matches(const TransformContext& context) const {
         return m_predicate && m_predicate(context);
     }
 
-    std::vector<std::shared_ptr<NamedObject>> apply(const TransformContext& context) const {
+    /**
+     * @brief Applies the rule to the context.
+     * @param context The current transformation context.
+     * @param transformer Reference to the active transformer engine.
+     * @return List of generated objects.
+     */
+    std::vector<std::shared_ptr<NamedObject>> apply(const TransformContext& context, Transformer& transformer) const {
         if (!m_generator) return {};
-        return m_generator(context);
+        return m_generator(context, transformer);
     }
 
+    /** @brief Returns rule priority. */
     int getPriority() const { return m_priority; }
 
 private:
+    /** @brief Matcher function. */
     TransformPredicate m_predicate;
+    /** @brief Generator function. */
     TransformGenerator m_generator;
+    /** @brief Priority value. */
     int m_priority;
 };
 

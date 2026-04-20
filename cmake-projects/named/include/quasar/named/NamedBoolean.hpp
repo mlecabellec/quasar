@@ -7,6 +7,7 @@
 #define QUASAR_NAMED_NAMEDBOOLEAN_HPP
 
 #include "quasar/coretypes/Boolean.hpp"
+#include "quasar/coretypes/Buffer.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/named/IBoundPrimitive.hpp"
 #include "quasar/named/CopyPolicy.hpp"
@@ -21,6 +22,7 @@ namespace quasar::named {
  * 
  * **Compliance**:
  * - Fulfills [FE-0020.4] Derivative class for Boolean core type.
+ * - Fulfills [CS-0010.34] Explicit type declarations.
  */
 class NamedBoolean : public NamedObject, public quasar::coretypes::Boolean, public IBoundPrimitive {
 public:
@@ -51,57 +53,82 @@ public:
    * @param policy Memory policy (DUPLICATE vs SHARE).
    * @return A new NamedBoolean with the same name and value, but no hierarchy.
    */
-  std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
-    if (policy == CopyPolicy::SHARE && m_bound) {
-        std::shared_ptr<NamedBoolean> newObj = create(getName(), booleanValue());
-        newObj->bind(m_bound_offset, m_bound_length);
-        return newObj;
-    }
-    return create(getName(), booleanValue());
-  }
-
-  // --- IBoundPrimitive implementation ---
-  bool isBound() const override { return m_bound; }
-  std::size_t getBoundOffset() const override { return m_bound_offset; }
-  std::size_t getBoundLength() const override { return m_bound_length; }
+  std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
 
   /**
-   * @brief Binds this boolean to a specific memory offset (conceptual in Phase 1).
+   * @brief Returns whether this object is currently bound to a parent buffer.
+   * @return true if bound.
+   * @feature [TSK-20260311-001.6] Buffer-to-Primitive Binding.
    */
-  void bind(std::size_t offset, std::size_t length) {
-      m_bound = true;
-      m_bound_offset = offset;
-      m_bound_length = length;
-  }
+  bool isBound() const override { return m_bound; }
 
   /**
-   * @brief Sets the boolean value and notifies observers if changed.
+   * @brief Returns the offset within the parent buffer.
+   * @return The offset in bytes.
+   */
+  std::size_t getBoundOffset() const override { return m_bound_offset; }
+
+  /**
+   * @brief Returns the length of this primitive (1 byte for boolean).
+   * @return 1
+   */
+  std::size_t getBoundLength() const override { return 1; }
+
+  /**
+   * @brief Binds this boolean to a specific memory offset in a buffer.
+   * 
+   * Fulfills [TSK-20260311-001.6] Buffer-to-Primitive Binding.
+   * 
+   * @param buffer The source buffer.
+   * @param offset The byte offset.
+   * @throws std::out_of_range If offset is invalid.
+   */
+  void bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset);
+
+  /**
+   * @brief Retrieves the boolean value, syncing from buffer if bound.
+   * @return The current value.
+   */
+  bool booleanValue() const;
+
+  /**
+   * @brief Sets the boolean value, syncing to buffer if bound.
    * @param value The new value.
    */
-  void setValue(bool value) {
-      if (quasar::coretypes::Boolean::booleanValue() != value) {
-          quasar::coretypes::Boolean::setValue(value);
-          notifyObservers(getSelf());
-      }
-  }
-
+  void setValue(bool value);
 
   /**
    * @brief Returns the type of the object.
-
    * @return "NamedBoolean"
    */
   std::string getType() const override;
 
+  /**
+   * @brief Constructor for NamedBoolean.
+   * @param name Object name.
+   * @param value Initial value.
+   */
   NamedBoolean(const std::string &name, bool value);
 
 private:
+  /** @brief Flag indicating if the value is bound to a buffer. */
   bool m_bound;
+  /** @brief Offset in the backing buffer. */
   std::size_t m_bound_offset;
-  std::size_t m_bound_length;
+  /** @brief Weak reference to the backing buffer to avoid cycles. */
+  std::weak_ptr<quasar::coretypes::Buffer> m_backingStore;
+
+  /**
+   * @brief Internal helper to sync local state from the backing buffer.
+   */
+  void syncFromBuffer();
+
+  /**
+   * @brief Internal helper to sync local state to the backing buffer.
+   */
+  void syncToBuffer();
 };
 
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDBOOLEAN_HPP
-
