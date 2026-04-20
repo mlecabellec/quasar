@@ -17,7 +17,7 @@ local ctx = zmq.Context.new()
 local pub = ctx:socket(zmq.PUB)
 local sub = ctx:socket(zmq.SUB)
 
-pub:bind("tcp://127.0.0.1:5557")
+pub:bind("tcp://*:5557")
 sub:connect("tcp://127.0.0.1:5557")
 
 -- Subscriber can filter by topic (e.g., only "ERROR" or "INFO")

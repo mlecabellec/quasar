@@ -7,7 +7,7 @@ local ctx = zmq.Context.new()
 local pub = ctx:socket(zmq.PUB)
 local sub = ctx:socket(zmq.SUB)
 
-pub:bind("tcp://127.0.0.1:5555")
+pub:bind("tcp://*:5555")
 sub:connect("tcp://127.0.0.1:5555")
 sub:subscribe("")
 

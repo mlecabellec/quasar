@@ -19,7 +19,7 @@ local pub = ctx:socket(zmq.PUB)
 local sub = ctx:socket(zmq.SUB)
 
 print("Binding Publisher to port 5556...")
-pub:bind("tcp://127.0.0.1:5556")
+pub:bind("tcp://*:5556")
 
 print("Connecting Subscriber to port 5556...")
 sub:connect("tcp://127.0.0.1:5556")

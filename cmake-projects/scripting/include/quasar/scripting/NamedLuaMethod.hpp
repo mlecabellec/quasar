@@ -17,10 +17,17 @@ class LuaEngine;
  * @brief Internal implementation for NamedLuaMethod to allow safe invalidation.
  */
 struct NamedLuaMethodImpl {
+    /** @brief The bound Lua function. */
     sol::function func;
+    /** @brief Mutex protecting the implementation state. */
     std::recursive_mutex mutex;
+    /** @brief Reference to the host service if any. */
     std::weak_ptr<LuaService> service;
+    /** @brief Weak reference to the engine to detect destruction. */
     std::weak_ptr<LuaEngine> engine;
+    /** @brief Stored ID of the engine for post-destruction tracking. */
+    size_t engineId{0};
+    /** @brief Validity flag for safe shutdown. */
     std::atomic<bool> valid{true};
 };
 
@@ -30,7 +37,7 @@ struct NamedLuaMethodImpl {
  * @brief A NamedMethod that executes a Lua function.
  * 
  * @reference [TSK-20260328-001] Reflexive Execution & Service Orchestration
- * @reference [FE-0260.2] Scriptable Methods (NamedLuaMethod)
+ * @feature [FE-0260.2] Scriptable Methods (NamedLuaMethod)
  */
 class NamedLuaMethod : public quasar::named::NamedMethod {
 public:
@@ -40,6 +47,8 @@ public:
      * @param func The Lua function to execute.
      * @param parent Optional parent.
      * @return A shared_ptr to the newly created NamedLuaMethod.
+     * @feature [FE-0260.2]
+     * @exposed
      */
     static std::shared_ptr<NamedLuaMethod> create(const std::string& name, sol::function func, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
 
@@ -51,13 +60,16 @@ public:
     /**
      * @brief Returns the type of the object.
      * @return "NamedLuaMethod".
+     * @exposed
      */
-    std::string getType() const override;
+    [[nodiscard]] std::string getType() const override;
 
     /**
      * @brief Executes the method.
      * @param args Arguments for the execution.
      * @return Execution result.
+     * @feature [FE-0260.2]
+     * @exposed
      */
     std::shared_ptr<quasar::named::NamedObject> execute(std::shared_ptr<quasar::named::NamedObject> args) override;
 
@@ -70,8 +82,16 @@ public:
     /**
      * @brief Gets the associated Lua engine.
      * @return Shared pointer to the engine, or nullptr if invalidated.
+     * @exposed
      */
-    std::shared_ptr<LuaEngine> getEngine() const { return m_impl->engine.lock(); }
+    [[nodiscard]] std::shared_ptr<LuaEngine> getEngine() const { return m_impl->engine.lock(); }
+
+    /**
+     * @brief Gets the ID of the associated Lua engine.
+     * @return The engine ID.
+     * @exposed
+     */
+    [[nodiscard]] size_t getEngineId() const { return m_impl->engineId; }
 
 protected:
     /**

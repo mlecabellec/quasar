@@ -70,12 +70,12 @@ void ObjectTracker::invalidateMethods(size_t engineId) {
 
     std::vector<std::shared_ptr<named::NamedObject>>::iterator it = m_methods.begin();
     while (it != m_methods.end()) {
+        // [CS-0010.44] Attempt to cast to Lua method and verify engine ID.
         std::shared_ptr<NamedLuaMethod> method = std::dynamic_pointer_cast<NamedLuaMethod>(*it);
         if (method) {
-            // Check method's engine context.
-            std::shared_ptr<LuaEngine> eng = method->getEngine();
-            if (eng && eng->getId() == engineId) {
-                // Force detach from Lua state.
+            // Only invalidate if the method belongs to the engine being shut down.
+            if (method->getEngineId() == engineId) {
+                // Detach from Lua and remove from tracking pool.
                 method->invalidate();
                 it = m_methods.erase(it);
                 continue;

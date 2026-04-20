@@ -86,6 +86,16 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
 }
 
 void NamedLuaMethod::invalidate() {
+    // [CS-0010.44] Safely detach the method from the Lua engine.
+    std::shared_ptr<LuaEngine> engine = m_impl->engine.lock();
+    std::unique_lock<std::recursive_mutex> engineLock;
+
+    // [CS-0010.21] RAII: Acquire engine lock before clearing the sol::function.
+    if (engine) {
+        engineLock = engine->acquireLock();
+    }
+    
+    // [CS-0010.46] Mark as invalid and clear the function reference.
     std::unique_lock<std::recursive_mutex> lock(m_impl->mutex);
     m_impl->valid = false;
     m_impl->func = sol::nil;
@@ -105,7 +115,11 @@ std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, 
     sol::state_view lua(func.lua_state());
     sol::object engineObj = lua["__quasar_engine"];
     if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
-        self->m_impl->engine = engineObj.as<std::weak_ptr<LuaEngine>>();
+        std::weak_ptr<LuaEngine> weakEngine = engineObj.as<std::weak_ptr<LuaEngine>>();
+        self->m_impl->engine = weakEngine;
+        if (std::shared_ptr<LuaEngine> engine = weakEngine.lock()) {
+            self->m_impl->engineId = engine->getId();
+        }
     }
     
     std::shared_ptr<quasar::named::NamedObject> p = parent;
@@ -125,7 +139,7 @@ std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, 
     return self;
 }
 
-std::string NamedLuaMethod::getType() const {
+[[nodiscard]] std::string NamedLuaMethod::getType() const {
     return "NamedLuaMethod";
 }
 
