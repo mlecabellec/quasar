@@ -21,6 +21,7 @@ std::shared_ptr<NamedObject> NamedBoolean::clone(CopyPolicy policy) const {
   if (policy == CopyPolicy::SHARE && m_bound) {
     std::shared_ptr<NamedBoolean> newObj = create(getName(), booleanValue());
     newObj->bind(m_backingStore.lock(), m_bound_offset);
+    newObj->setEndianness(m_endian);
     return newObj;
   }
   return create(getName(), booleanValue());
@@ -28,9 +29,11 @@ std::shared_ptr<NamedObject> NamedBoolean::clone(CopyPolicy policy) const {
 
 NamedBoolean::NamedBoolean(const std::string &name, bool value)
     : NamedObject(name), quasar::coretypes::Boolean(value),
-      m_bound(false), m_bound_offset(0), m_backingStore() {}
+      m_bound(false), m_bound_offset(0), m_backingStore(),
+      m_endian(quasar::coretypes::Endianness::BigEndian) {}
 
-void NamedBoolean::bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset) {
+void NamedBoolean::bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset,
+                        std::optional<quasar::coretypes::Endianness> endian) {
   if (!buffer) {
     return;
   }
@@ -41,8 +44,23 @@ void NamedBoolean::bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::
   m_bound = true;
   m_backingStore = buffer;
   m_bound_offset = offset;
+  if (endian.has_value()) {
+      m_endian = endian.value();
+  }
   // Sync local state from the newly bound buffer.
   syncFromBuffer();
+}
+
+void NamedBoolean::setEndianness(quasar::coretypes::Endianness endian) {
+    m_endian = endian;
+    // Endianness change triggers re-sync, though irrelevant for 1-byte.
+    if (m_bound) {
+        syncFromBuffer();
+    }
+}
+
+quasar::coretypes::Endianness NamedBoolean::getEndianness() const {
+    return m_endian;
 }
 
 bool NamedBoolean::booleanValue() const {

@@ -26,16 +26,15 @@ TEST_F(ProtocolMappingTest, CastToStructureZeroCopy) {
     // Initialize data
     rawData->writeInt(0x1234, 0, quasar::coretypes::Endianness::LittleEndian);
     double temp = 36.6;
-    uint8_t* tptr = reinterpret_cast<uint8_t*>(&temp);
-    for(size_t i=0; i<8; ++i) rawData->set(4+i, tptr[i]);
+    rawData->write<double>(temp, 4, quasar::coretypes::Endianness::LittleEndian);
     rawData->set(12, 1);
 
     Transformer transformer;
     
     std::vector<FieldMapping> mappings = {
-        {"Status", "int32", 0},
-        {"Temperature", "float64", 4},
-        {"Alarm", "bool", 12}
+        {"Status", "int32", 0, quasar::coretypes::Endianness::LittleEndian},
+        {"Temperature", "float64", 4, quasar::coretypes::Endianness::LittleEndian},
+        {"Alarm", "bool", 12, quasar::coretypes::Endianness::LittleEndian}
     };
 
     transformer.addRule(PredefinedRules::castToStructure("Packet", mappings));
@@ -65,16 +64,15 @@ TEST_F(ProtocolMappingTest, CastToStructureZeroCopy) {
     ASSERT_EQ(status->value(), 0x5678);
 
     temperature->setValue(40.0);
-    double val40 = temperature->value();
-    ASSERT_EQ(rawData->readInt(4, quasar::coretypes::Endianness::LittleEndian), *reinterpret_cast<int32_t*>(&val40)); // Assuming same layout
+    ASSERT_DOUBLE_EQ(rawData->read<double>(4, quasar::coretypes::Endianness::LittleEndian), 40.0);
 }
 
 TEST_F(ProtocolMappingTest, ExtractIntegerZeroCopy) {
     std::shared_ptr<NamedBuffer> buf = NamedBuffer::create("Data", 8);
-    buf->writeInt(42, 0);
+    buf->writeInt(42, 0, quasar::coretypes::Endianness::LittleEndian);
 
     Transformer transformer;
-    transformer.addRule(PredefinedRules::extractIntegerRule<int32_t>("Data", "Value", 0));
+    transformer.addRule(PredefinedRules::extractIntegerRule<int32_t>("Data", "Value", 0, quasar::coretypes::Endianness::LittleEndian));
 
     std::vector<std::shared_ptr<NamedObject>> result = transformer.transform(buf);
     ASSERT_EQ(result.size(), 1);
@@ -85,6 +83,6 @@ TEST_F(ProtocolMappingTest, ExtractIntegerZeroCopy) {
     ASSERT_TRUE(val->isBound());
 
     // Change buffer, check bound integer
-    buf->writeInt(100, 0);
+    buf->writeInt(100, 0, quasar::coretypes::Endianness::LittleEndian);
     ASSERT_EQ(val->value(), 100);
 }

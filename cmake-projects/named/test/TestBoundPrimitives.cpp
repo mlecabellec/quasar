@@ -17,8 +17,8 @@ TEST_F(TestBoundPrimitives, NamedIntegerBinding) {
     std::shared_ptr<NamedBuffer> buffer = NamedBuffer::create("buffer", 16);
     std::shared_ptr<NamedInteger<int32_t>> val = NamedInteger<int32_t>::create("val", 0);
     
-    // Bind at offset 4
-    val->bind(buffer, 4);
+    // Bind at offset 4 with LittleEndian to match how we will write to buffer
+    val->bind(buffer, 4, quasar::coretypes::Endianness::LittleEndian);
     ASSERT_TRUE(val->isBound());
     ASSERT_EQ(val->getBoundOffset(), 4);
     ASSERT_EQ(val->getBoundLength(), 4);
@@ -27,10 +27,6 @@ TEST_F(TestBoundPrimitives, NamedIntegerBinding) {
     int32_t testVal = 0x12345678;
     buffer->writeInt(testVal, 4, quasar::coretypes::Endianness::LittleEndian);
     
-    // value() should reflect the buffer content
-    // Note: On x86, int is little endian by default, which matches what we wrote.
-    // If testing on big endian, we'd need to be careful, but coretypes::Buffer::writeInt handles it.
-    // However, our syncFromBuffer uses reinterpret_cast, which depends on host endianness.
     ASSERT_EQ(val->value(), testVal);
 
     // Write to integer, check buffer
@@ -42,22 +38,18 @@ TEST_F(TestBoundPrimitives, NamedFloatingPointBinding) {
     std::shared_ptr<NamedBuffer> buffer = NamedBuffer::create("buffer", 16);
     std::shared_ptr<NamedFloatingPoint<double>> val = NamedFloatingPoint<double>::create("val", 0.0);
     
-    val->bind(buffer, 8);
+    // Bind with LittleEndian (assuming host is LE for the reinterpret_cast below)
+    val->bind(buffer, 8, quasar::coretypes::Endianness::LittleEndian);
     ASSERT_TRUE(val->isBound());
 
     double testVal = 3.14159;
-    // We don't have buffer->writeDouble in this version, but we can write raw bytes.
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(&testVal);
-    for(size_t i=0; i<8; ++i) buffer->set(8+i, ptr[i]);
+    // We don't have buffer->writeDouble in this version, but we can use template write
+    buffer->write<double>(testVal, 8, quasar::coretypes::Endianness::LittleEndian);
 
     ASSERT_DOUBLE_EQ(val->value(), testVal);
 
     val->setValue(2.71828);
-    double currentVal = val->value();
-    uint8_t* outPtr = reinterpret_cast<uint8_t*>(&currentVal);
-    for(size_t i=0; i<8; ++i) {
-        ASSERT_EQ(buffer->get(8+i), outPtr[i]);
-    }
+    ASSERT_DOUBLE_EQ(buffer->read<double>(8, quasar::coretypes::Endianness::LittleEndian), 2.71828);
 }
 
 TEST_F(TestBoundPrimitives, NamedBooleanBinding) {

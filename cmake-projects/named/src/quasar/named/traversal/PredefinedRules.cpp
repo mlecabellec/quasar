@@ -69,22 +69,24 @@ TransformationRule PredefinedRules::castToStructure(
         if (!parentBuf) return {node}; // Should not happen given predicate
 
         // Return a copy of the buffer itself, but we will attach children to it.
-        // Actually, we should return the buffer and its children.
-        // The Transformer::transformRecursive will attach whatever we return to the new parent.
         std::shared_ptr<NamedObject> container = node->clone(CopyPolicy::SHARE);
         
         for (const FieldMapping& mapping : mappings) {
             if (mapping.type == "int32") {
                 std::shared_ptr<NamedInteger<int32_t>> val = NamedInteger<int32_t>::create(mapping.name, 0, container);
+                val->setEndianness(mapping.endian);
                 val->bind(parentBuf, baseOffset + mapping.offset);
             } else if (mapping.type == "int64") {
                 std::shared_ptr<NamedInteger<int64_t>> val = NamedInteger<int64_t>::create(mapping.name, 0, container);
+                val->setEndianness(mapping.endian);
                 val->bind(parentBuf, baseOffset + mapping.offset);
             } else if (mapping.type == "float64" || mapping.type == "double") {
                 std::shared_ptr<NamedFloatingPoint<double>> val = NamedFloatingPoint<double>::create(mapping.name, 0.0, container);
+                val->setEndianness(mapping.endian);
                 val->bind(parentBuf, baseOffset + mapping.offset);
             } else if (mapping.type == "bool" || mapping.type == "boolean") {
                 std::shared_ptr<NamedBoolean> val = NamedBoolean::create(mapping.name, false, container);
+                val->setEndianness(mapping.endian);
                 val->bind(parentBuf, baseOffset + mapping.offset);
             }
         }

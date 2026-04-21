@@ -6,6 +6,7 @@
 #ifndef QUASAR_NAMED_NAMEDINTEGER_HPP
 #define QUASAR_NAMED_NAMEDINTEGER_HPP
 
+#include <optional>
 #include "quasar/coretypes/Integer.hpp"
 #include "quasar/coretypes/Buffer.hpp"
 #include "quasar/named/NamedObject.hpp"
@@ -36,7 +37,7 @@ public:
   virtual ~NamedInteger() = default;
 
   /**
-   * @brief Factory method to create a NamedInteger.
+   * @brief factory method to create a NamedInteger.
    * 
    * Fulfills [FE-0020.6] static method "create".
    *
@@ -74,6 +75,7 @@ public:
     if (policy == CopyPolicy::SHARE && m_bound) {
         std::shared_ptr<NamedInteger<T>> newObj = create(this->getName(), this->value());
         newObj->bind(m_backingStore.lock(), m_bound_offset);
+        newObj->setEndianness(m_endian);
         return newObj;
     }
     return create(this->getName(), this->value());
@@ -92,15 +94,36 @@ public:
   std::size_t getBoundLength() const override { return sizeof(T); }
 
   /**
+   * @brief Sets the endianness for buffer synchronization.
+   * @param endian The endianness to use.
+   */
+  void setEndianness(quasar::coretypes::Endianness endian) override {
+      m_endian = endian;
+      if (m_bound) {
+          syncFromBuffer();
+      }
+  }
+
+  /**
+   * @brief Returns the current endianness used for synchronization.
+   * @return The endianness.
+   */
+  quasar::coretypes::Endianness getEndianness() const override {
+      return m_endian;
+  }
+
+  /**
    * @brief Binds this integer to a specific memory offset in a buffer.
    * 
    * Fulfills [TSK-20260311-001.6] Buffer-to-Primitive Binding.
    * 
    * @param buffer The source buffer.
    * @param offset The byte offset.
+   * @param endian Optional endianness (defaults to current setting).
    * @throws std::out_of_range If offset is invalid.
    */
-  void bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset) {
+  void bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset,
+            std::optional<quasar::coretypes::Endianness> endian = std::nullopt) {
       if (!buffer) return;
       if (offset + sizeof(T) > buffer->size()) {
           throw std::out_of_range("Binding offset out of range for buffer size");
@@ -108,6 +131,9 @@ public:
       m_bound = true;
       m_backingStore = buffer;
       m_bound_offset = offset;
+      if (endian.has_value()) {
+          m_endian = endian.value();
+      }
       // Sync local value with buffer
       syncFromBuffer();
   }
@@ -151,7 +177,8 @@ public:
    */
   NamedInteger(const std::string &name, T value)
       : NamedObject(name), quasar::coretypes::Integer<T>(value),
-        m_bound(false), m_bound_offset(0), m_backingStore() {
+        m_bound(false), m_bound_offset(0), m_backingStore(),
+        m_endian(quasar::coretypes::Endianness::BigEndian) {
   }
 
 private:
@@ -161,6 +188,8 @@ private:
   std::size_t m_bound_offset;
   /** @brief Weak reference to backing store. */
   std::weak_ptr<quasar::coretypes::Buffer> m_backingStore;
+  /** @brief Endianness for synchronization. */
+  quasar::coretypes::Endianness m_endian;
 
   /**
    * @brief Synchronizes the local member value from the backing buffer.
@@ -168,10 +197,7 @@ private:
   void syncFromBuffer() {
       std::shared_ptr<quasar::coretypes::Buffer> buf = m_backingStore.lock();
       if (buf) {
-          T val = 0;
-          for (size_t i = 0; i < sizeof(T); ++i) {
-              reinterpret_cast<uint8_t*>(&val)[i] = buf->get(m_bound_offset + i);
-          }
+          T val = buf->read<T>(m_bound_offset, m_endian);
           quasar::coretypes::Integer<T>::setValue(val);
       }
   }
@@ -183,9 +209,7 @@ private:
       std::shared_ptr<quasar::coretypes::Buffer> buf = m_backingStore.lock();
       if (buf) {
           T val = quasar::coretypes::Integer<T>::value();
-          for (size_t i = 0; i < sizeof(T); ++i) {
-              buf->set(m_bound_offset + i, reinterpret_cast<uint8_t*>(&val)[i]);
-          }
+          buf->write<T>(val, m_bound_offset, m_endian);
       }
   }
 };

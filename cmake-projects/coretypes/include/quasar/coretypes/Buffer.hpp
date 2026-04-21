@@ -12,6 +12,8 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <bit>
 
 namespace quasar {
 namespace coretypes {
@@ -182,6 +184,28 @@ public:
   int readInt(size_t index, Endianness endian = Endianness::BigEndian) const;
 
   /**
+   * @brief Writes a value of type T to the buffer with specified endianness.
+   * @tparam T The type to write (must be integral or floating point).
+   * @param value The value to write.
+   * @param index The starting index.
+   * @param endian The endianness.
+   * @throws std::out_of_range If boundaries are exceeded.
+   */
+  template <typename T>
+  void write(T value, size_t index, Endianness endian = Endianness::BigEndian);
+
+  /**
+   * @brief Reads a value of type T from the buffer with specified endianness.
+   * @tparam T The type to read.
+   * @param index The starting index.
+   * @param endian The endianness.
+   * @return The value read.
+   * @throws std::out_of_range If boundaries are exceeded.
+   */
+  template <typename T>
+  T read(size_t index, Endianness endian = Endianness::BigEndian) const;
+
+  /**
    * @brief Creates a new Buffer containing a deep copy of a slice of this buffer.
    * 
    * Fulfills [FE-0010.3.4] Methods for slicing the buffer.
@@ -336,6 +360,69 @@ protected:
    */
   std::vector<uint8_t> data_;
 };
+
+template <typename T>
+void Buffer::write(T value, size_t index, Endianness endian) {
+    std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring buffer lock");
+    if (index + sizeof(T) > data_.size()) {
+        throw std::out_of_range("Buffer overflow for write");
+    }
+
+    uint64_t val = 0;
+    if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (sizeof(T) == 4) {
+            float f = static_cast<float>(value);
+            val = std::bit_cast<uint32_t>(f);
+        } else {
+            double d = static_cast<double>(value);
+            val = std::bit_cast<uint64_t>(d);
+        }
+    } else {
+        val = static_cast<uint64_t>(value);
+    }
+
+    if (endian == Endianness::BigEndian) {
+        for (size_t i = 0; i < sizeof(T); ++i) {
+            data_[index + sizeof(T) - 1 - i] = static_cast<uint8_t>(val >> (i * 8));
+        }
+    } else {
+        for (size_t i = 0; i < sizeof(T); ++i) {
+            data_[index + i] = static_cast<uint8_t>(val >> (i * 8));
+        }
+    }
+}
+
+template <typename T>
+T Buffer::read(size_t index, Endianness endian) const {
+    std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring buffer lock");
+    if (index + sizeof(T) > data_.size()) {
+        throw std::out_of_range("Buffer underflow for read");
+    }
+
+    uint64_t val = 0;
+    if (endian == Endianness::BigEndian) {
+        for (size_t i = 0; i < sizeof(T); ++i) {
+            val |= static_cast<uint64_t>(data_[index + sizeof(T) - 1 - i]) << (i * 8);
+        }
+    } else {
+        for (size_t i = 0; i < sizeof(T); ++i) {
+            val |= static_cast<uint64_t>(data_[index + i]) << (i * 8);
+        }
+    }
+
+    if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (sizeof(T) == 4) {
+            uint32_t v32 = static_cast<uint32_t>(val);
+            return static_cast<T>(std::bit_cast<float>(v32));
+        } else {
+            return static_cast<T>(std::bit_cast<double>(val));
+        }
+    } else {
+        return static_cast<T>(val);
+    }
+}
 
 } // namespace coretypes
 } // namespace quasar

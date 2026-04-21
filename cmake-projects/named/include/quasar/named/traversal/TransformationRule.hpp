@@ -25,6 +25,12 @@ using TransformGenerator = std::function<std::vector<std::shared_ptr<NamedObject
 /**
  * @class TransformationRule
  * @brief Defines a rule comprising a predicate (when to apply) and a generator (how to apply).
+ * 
+ * Rules are the primary building blocks of the Transformation Engine. Each rule
+ * encapsulates the logic for identifying a specific type of node and how to
+ * morph it into zero or more output nodes.
+ * 
+ * @feature [TSK-20260311-001.1.1] Rules and Matchers.
  */
 class TransformationRule {
 public:
@@ -40,7 +46,7 @@ public:
     /**
      * @brief Checks if the rule matches the given context.
      * @param context The current transformation context.
-     * @return true if matches.
+     * @return true if the predicate evaluates to true.
      */
     bool matches(const TransformContext& context) const {
         return m_predicate && m_predicate(context);

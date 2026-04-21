@@ -166,3 +166,89 @@ TEST_F(TransformerTest, ComplexTreeTransformation) {
     ASSERT_EQ(newVal1->getName(), "val1_mult");
     ASSERT_EQ(newVal1->value(), 20);
 }
+
+TEST_F(TransformerTest, RecursionLimit) {
+    std::shared_ptr<NamedObject> root = NamedObject::create("root");
+    std::shared_ptr<NamedObject> current = root;
+    // Create a very deep tree
+    for (int i = 0; i < 300; ++i) {
+        current = NamedObject::create("node", current);
+    }
+
+    Transformer transformer;
+    // Default transformation (deep copy) should hit the limit
+    EXPECT_THROW(transformer.transform(root), std::runtime_error);
+    EXPECT_THROW(transformer.transformInPlace(root), std::runtime_error);
+}
+
+TEST_F(TransformerTest, RecursiveModification) {
+    // root -> branch -> leaf
+    std::shared_ptr<NamedObject> root = NamedObject::create("root");
+    std::shared_ptr<NamedObject> branch = NamedObject::create("branch", root);
+    NamedInteger<int>::create("leaf", 42, branch);
+
+    Transformer transformer;
+
+    // Rule: if we match "branch", we transform its children, 
+    // but we ONLY keep children that are NamedIntegers, and we rename them.
+    transformer.addRule(
+        [](const TransformContext& ctx) {
+            return ctx.getNode()->getName() == "branch";
+        },
+        [](const TransformContext& ctx, Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
+            std::shared_ptr<NamedObject> newBranch = NamedObject::create("branch_mod");
+            
+            for (const std::shared_ptr<NamedObject>& child : ctx.getNode()->getChildren()) {
+                std::vector<std::shared_ptr<NamedObject>> transformed = t.transformSubtree(child, ctx.getDepth() + 1, ctx.getPath() + "/" + child->getName());
+                for (const std::shared_ptr<NamedObject>& tc : transformed) {
+                    if (tc->getType() == "NamedInteger") {
+                        tc->setName(tc->getName() + "_filtered");
+                        tc->setParent(newBranch);
+                    }
+                }
+            }
+            return {newBranch};
+        }
+    );
+
+    std::vector<std::shared_ptr<NamedObject>> result = transformer.transform(root);
+    ASSERT_EQ(result.size(), 1);
+    
+    std::shared_ptr<NamedObject> newRoot = result[0];
+    std::shared_ptr<NamedObject> newBranch = newRoot->getChild("branch_mod");
+    ASSERT_NE(newBranch, nullptr);
+    
+    std::shared_ptr<NamedObject> newLeaf = newBranch->getChild("leaf_filtered");
+    ASSERT_NE(newLeaf, nullptr);
+    ASSERT_EQ(newLeaf->getType(), "NamedInteger");
+}
+
+TEST_F(TransformerTest, RulePriority) {
+    std::shared_ptr<NamedObject> root = NamedObject::create("target");
+
+    Transformer transformer;
+
+    // Rule with low priority (0)
+    transformer.addRule(
+        [](const TransformContext& ctx) { return ctx.getNode()->getName() == "target"; },
+        [](const TransformContext& ctx, Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
+            (void)t; (void)ctx;
+            return {NamedObject::create("loser")};
+        },
+        0
+    );
+
+    // Rule with high priority (100)
+    transformer.addRule(
+        [](const TransformContext& ctx) { return ctx.getNode()->getName() == "target"; },
+        [](const TransformContext& ctx, Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
+            (void)t; (void)ctx;
+            return {NamedObject::create("winner")};
+        },
+        100
+    );
+
+    std::vector<std::shared_ptr<NamedObject>> result = transformer.transform(root);
+    ASSERT_EQ(result.size(), 1);
+    ASSERT_EQ(result[0]->getName(), "winner");
+}

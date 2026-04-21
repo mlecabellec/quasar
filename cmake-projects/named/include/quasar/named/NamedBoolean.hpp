@@ -6,6 +6,7 @@
 #ifndef QUASAR_NAMED_NAMEDBOOLEAN_HPP
 #define QUASAR_NAMED_NAMEDBOOLEAN_HPP
 
+#include <optional>
 #include "quasar/coretypes/Boolean.hpp"
 #include "quasar/coretypes/Buffer.hpp"
 #include "quasar/named/NamedObject.hpp"
@@ -75,15 +76,29 @@ public:
   std::size_t getBoundLength() const override { return 1; }
 
   /**
+   * @brief Sets the endianness for buffer synchronization.
+   * @param endian The endianness to use.
+   */
+  void setEndianness(quasar::coretypes::Endianness endian) override;
+
+  /**
+   * @brief Returns the current endianness used for synchronization.
+   * @return The endianness.
+   */
+  quasar::coretypes::Endianness getEndianness() const override;
+
+  /**
    * @brief Binds this boolean to a specific memory offset in a buffer.
    * 
    * Fulfills [TSK-20260311-001.6] Buffer-to-Primitive Binding.
    * 
    * @param buffer The source buffer.
    * @param offset The byte offset.
+   * @param endian Optional endianness (defaults to current setting).
    * @throws std::out_of_range If offset is invalid.
    */
-  void bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset);
+  void bind(std::shared_ptr<quasar::coretypes::Buffer> buffer, std::size_t offset,
+            std::optional<quasar::coretypes::Endianness> endian = std::nullopt);
 
   /**
    * @brief Retrieves the boolean value, syncing from buffer if bound.
@@ -117,6 +132,8 @@ private:
   std::size_t m_bound_offset;
   /** @brief Weak reference to the backing buffer to avoid cycles. */
   std::weak_ptr<quasar::coretypes::Buffer> m_backingStore;
+  /** @brief Endianness for synchronization (metadata only for 1-byte). */
+  quasar::coretypes::Endianness m_endian;
 
   /**
    * @brief Internal helper to sync local state from the backing buffer.

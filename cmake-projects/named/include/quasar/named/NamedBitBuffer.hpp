@@ -24,7 +24,7 @@ namespace quasar::named {
  * - Fulfills [FE-0030.6] support for a named BitBuffer.
  * - Fulfills [FE-0020.4] Derivative of NamedObject.
  */
-class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer, public IBoundPrimitive {
+class NamedBitBuffer : public NamedObject, public quasar::coretypes::BitBuffer {
 public:
     /**
      * @brief Virtual destructor.
@@ -53,11 +53,6 @@ public:
      */
     std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
 
-    // --- IBoundPrimitive implementation ---
-    bool isBound() const override { return m_bound; }
-    std::size_t getBoundOffset() const override { return m_bound_offset; }
-    std::size_t getBoundLength() const override { return m_bound_length; }
-
     /**
      * @brief Binds this bit buffer to a specific memory offset (conceptual in Phase 1).
      */
@@ -66,6 +61,11 @@ public:
         m_bound_offset = offset;
         m_bound_length = length;
     }
+
+    /**
+     * @brief Returns whether this object is currently bound.
+     */
+    bool isBound() const { return m_bound; }
 
     /**
      * @brief Returns the type of the object.

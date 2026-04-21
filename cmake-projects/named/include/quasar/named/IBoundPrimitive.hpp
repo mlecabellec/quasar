@@ -2,6 +2,7 @@
 #define QUASAR_NAMED_IBOUNDPRIMITIVE_HPP
 
 #include <cstddef>
+#include "quasar/coretypes/Buffer.hpp"
 
 namespace quasar {
 namespace named {
@@ -33,6 +34,18 @@ public:
      * @return The length in bytes.
      */
     virtual std::size_t getBoundLength() const = 0;
+
+    /**
+     * @brief Sets the endianness for buffer synchronization.
+     * @param endian The endianness to use.
+     */
+    virtual void setEndianness(quasar::coretypes::Endianness endian) = 0;
+
+    /**
+     * @brief Returns the current endianness used for synchronization.
+     * @return The endianness.
+     */
+    virtual quasar::coretypes::Endianness getEndianness() const = 0;
 };
 
 } // namespace named

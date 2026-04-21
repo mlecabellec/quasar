@@ -8,6 +8,7 @@
 
 #include "quasar/coretypes/BufferSlice.hpp"
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/named/IBoundPrimitive.hpp"
 #include "quasar/named/CopyPolicy.hpp"
 
 namespace quasar::named {
@@ -26,7 +27,8 @@ class NamedBuffer;
  * Buffer.
  */
 class NamedBufferSlice : public NamedObject,
-                         public quasar::coretypes::BufferSlice {
+                         public quasar::coretypes::BufferSlice,
+                         public IBoundPrimitive {
 public:
   /**
    * @brief Factory method to create a new NamedBufferSlice.
@@ -114,6 +116,18 @@ public:
    * same name, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
+
+  // --- IBoundPrimitive implementation ---
+  /** @brief Slices are by definition bound to a buffer. */
+  bool isBound() const override { return true; }
+  /** @brief Returns the start offset. */
+  std::size_t getBoundOffset() const override { return getOffset(); }
+  /** @brief Returns the slice length. */
+  std::size_t getBoundLength() const override { return size(); }
+  /** @brief Endianness is handled by higher-level primitives. */
+  void setEndianness(quasar::coretypes::Endianness endian) override { (void)endian; }
+  /** @brief Returns default BigEndian. */
+  quasar::coretypes::Endianness getEndianness() const override { return quasar::coretypes::Endianness::BigEndian; }
 
   /**
    * @brief Returns the type of the object.

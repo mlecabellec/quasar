@@ -63,9 +63,6 @@ std::shared_ptr<NamedObject> NamedBufferSlice::clone(CopyPolicy policy) const {
   // For DUPLICATE, we should actually copy the underlying buffer data
   // but since BufferSlice is just a view, a true "duplicate" of a slice 
   // might just be a new buffer containing the sliced data. 
-  // For backward compatibility for a slice itself, we often just duplicate the view.
-  // We'll duplicate the view here as well per common slice semantics unless
-  // a full detach is needed, but usually users clone the parent buffer.
   return NamedBufferSlice::create(getName(),
                                   quasar::coretypes::BufferSlice::getParent(),
                                   getOffset(), size());
@@ -148,4 +145,3 @@ NamedBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
 std::string NamedBufferSlice::getType() const { return "NamedBufferSlice"; }
 
 } // namespace quasar::named
-

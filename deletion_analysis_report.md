@@ -6,3 +6,4 @@ The following method signatures were deleted in recent commits and appear to be 
 | ------ | ----------------- |
 | `83656cb8` | `size_t getTrackedCount()` |
 | `83656cb8` | `size_t ObjectTracker::getTrackedCount()` |
+
