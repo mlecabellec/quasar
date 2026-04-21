@@ -18,6 +18,7 @@ include_directories(
 # Source files
 set(SOURCES
     src/LuaEngine.cpp
+    src/Environment.cpp
     src/TypeBindings.cpp
     src/RegistryBindings.cpp
     src/ScriptExecutor.cpp
@@ -34,6 +35,7 @@ set(SOURCES
 # Header files (for IDEs)
 set(HEADERS
     include/quasar/scripting/LuaEngine.hpp
+    include/quasar/scripting/Environment.hpp
     include/quasar/scripting/TypeBindings.hpp
     include/quasar/scripting/RegistryBindings.hpp
     include/quasar/scripting/LuaFuture.hpp
@@ -68,6 +70,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 add_subdirectory(test)
 add_subdirectory(runner)
+add_subdirectory(qlsh)
 add_subdirectory(test_plugin)
 add_subdirectory(plugins/net)
 add_subdirectory(plugins/zmq)

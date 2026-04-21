@@ -76,7 +76,9 @@ static void bindNamedObjectMethods(U& ut) {
         std::list<std::shared_ptr<NamedObject>> children = self.lock()->getChildren();
         std::vector<LuaProxy<NamedObject>> proxies;
         proxies.reserve(children.size());
-        for (std::shared_ptr<NamedObject> const& c : children) proxies.emplace_back(c);
+        for (std::shared_ptr<NamedObject> const& c : children) {
+            proxies.emplace_back(c);
+        }
         return proxies;
     };
     

@@ -86,15 +86,16 @@ void LuaEngine::setupSandbox() {
 
 void LuaEngine::shutdown() {
     std::unique_lock<std::recursive_mutex> lock = acquireLock();
-    // [CS-0010.44] Clear the global registry to force destruction of held Lua objects.
-    // This must happen while the engine and bound C++ classes are still valid.
-    m_lua["__quasar_engine"] = sol::nil;
     
     // [CS-0010.21] Invalidate all methods tied to THIS specific state.
     ObjectTracker::getInstance().invalidateMethods(m_id);
 
     // Release all strong references held by this specific engine.
     ObjectTracker::getInstance().untrackAll(m_id);
+
+    // [CS-0010.44] Clear the global state to force destruction of held Lua objects.
+    // This must happen while the engine and bound C++ classes are still valid.
+    m_lua["__quasar_engine"] = sol::nil;
 
     // Trigger full garbage collection to run __gc metamethods.
     lua_gc(m_lua.lua_state(), LUA_GCCOLLECT, 0);

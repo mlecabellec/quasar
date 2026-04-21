@@ -1,20 +1,17 @@
-#include "quasar/scripting/LuaEngine.hpp"
-#include "quasar/scripting/PluginLoader.hpp"
-#include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/scripting/Environment.hpp"
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <vector>
-#include <thread>
-#include <chrono>
+#include <string>
 
 /**
  * @brief Main execution entry point for the standalone runner.
  * @details Implements the CLI script execution and dynamic plugin loading.
- *          Enhanced to support background services and graceful shutdown.
+ *          Refactored to use the shared Environment class.
  * 
  * @reference [TSK-20260310-001.1] Standalone Executable
  * @reference [FE-0140] Standalone Script Runner and Plug-in System
+ * @contribution [TSK-20260421-001.1] Interactive Shell Executable
  */
 
 void printUsage() {
@@ -22,6 +19,7 @@ void printUsage() {
               << "Options:\n"
               << "  --plugin <path>   Load a dynamic plugin shared library before executing.\n"
               << "                    This option can be specified multiple times.\n"
+              << "  --help, -h        Display this help message.\n"
               << "\nIf script_file is not provided, reads from stdin.\n";
 }
 
@@ -29,6 +27,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> plugins;
     std::string scriptFile;
 
+    // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--plugin") {
@@ -53,49 +52,39 @@ int main(int argc, char** argv) {
         }
     }
 
-    std::string code;
-    if (!scriptFile.empty()) {
-        std::ifstream file(scriptFile);
-        if (!file.is_open()) {
-            std::cerr << "Error: Could not open script file " << scriptFile << "\n";
-            return 1;
+    // Initialize the shared execution environment
+    std::shared_ptr<quasar::scripting::Environment> env = quasar::scripting::Environment::create();
+
+    // Load plugins
+    for (const std::string& pluginPath : plugins) {
+        if (!env->loadPlugin(pluginPath)) {
+            std::cerr << "Warning: Failed to load plugin " << pluginPath << "\n";
         }
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        code = buffer.str();
-    } else {
-        std::stringstream buffer;
-        buffer << std::cin.rdbuf();
-        code = buffer.str();
     }
 
-    {
-        std::shared_ptr<quasar::scripting::LuaEngine> engine = quasar::scripting::LuaEngine::create();
-        sol::state& lua = engine->getState();
-
-        // Load plugins
-        for (const auto& pluginPath : plugins) {
-            if (!quasar::scripting::PluginLoader::loadPlugin(pluginPath, lua)) {
-                std::cerr << "Warning: Failed to load plugin " << pluginPath << "\n";
-            }
+    // Execute the script
+    try {
+        sol::protected_function_result result;
+        if (!scriptFile.empty()) {
+            // Execute from file
+            result = env->executeFile(scriptFile);
+        } else {
+            // Execute from stdin
+            std::stringstream buffer;
+            buffer << std::cin.rdbuf();
+            result = env->executeString(buffer.str());
         }
 
-        // Execute the main script
-        try {
-            sol::protected_function_result result = engine->executeString(code);
-            if (!result.valid()) {
-                sol::error err = result;
-                std::cerr << "Lua Execution Error:\n" << err.what() << "\n";
-                engine->shutdown();
-                return 1;
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Execution exception: " << e.what() << "\n";
-            engine->shutdown();
+        if (!result.valid()) {
+            sol::error err = result;
+            std::cerr << "Lua Execution Error:\n" << err.what() << "\n";
             return 1;
         }
-        engine->shutdown();
+    } catch (const std::exception& e) {
+        std::cerr << "Execution exception: " << e.what() << "\n";
+        return 1;
     }
 
+    // Environment destructor automatically handles engine shutdown
     return 0;
 }

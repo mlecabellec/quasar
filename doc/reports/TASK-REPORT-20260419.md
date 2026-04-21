@@ -13,7 +13,7 @@ The Quasar framework is transitioning from a verified foundational state to high
 ### ✅ Completed
 | Task ID | Goal | Status |
 | :--- | :--- | :--- |
-| **TSK-20260301-001** | Deep Copy mechanism for `NamedObject` | **Completed** |
+| **TSK-20260301-001** | Complete Deep Copy mechanism for `NamedObject` | **Completed** |
 | **TSK-20260303-002** | Core Type System expansion | **Completed** |
 | **TSK-20260303-003** | Core Lua 5.4 scripting support | **Completed** |
 | **TSK-20260308-001** | Full Polymorphic Integer Dispatch | **Completed** |
@@ -21,6 +21,7 @@ The Quasar framework is transitioning from a verified foundational state to high
 | **TSK-20260310-001** | Standalone Script Runner (`sre`) | **Completed** |
 | **TSK-20260311-009** | LogicEngine (HSM, SFC, Matrix) | **Completed** |
 | **TSK-20260409-001** | Global Logging Singleton & Macros | **Completed** |
+| **TSK-20260421-001** | Interactive Lua Shell (`qlsh`) | **Completed** |
 
 ### 🔄 In Progress
 | Task ID | Goal | Current Status / Notes |

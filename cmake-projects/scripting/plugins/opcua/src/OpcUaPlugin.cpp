@@ -34,9 +34,10 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
     utServer["loadTrustList"] = [](LuaProxy<OpcUaServerService> self, sol::table paths) {
         std::vector<std::string> v;
-        for (std::pair<sol::object, sol::object> const& kv : paths) {
-            v.push_back(kv.second.as<std::string>());
-        }
+        v.reserve(paths.size());
+        std::transform(paths.begin(), paths.end(), std::back_inserter(v), [](std::pair<sol::object, sol::object> const& kv) {
+            return kv.second.as<std::string>();
+        });
         self.lock()->loadTrustList(v);
     };
     utServer["addUser"] = [](LuaProxy<OpcUaServerService> self, const std::string& u, const std::string& p) {
@@ -69,9 +70,10 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     };
     utClient["loadTrustList"] = [](LuaProxy<OpcUaClientService> self, sol::table paths) {
         std::vector<std::string> v;
-        for (std::pair<sol::object, sol::object> const& kv : paths) {
-            v.push_back(kv.second.as<std::string>());
-        }
+        v.reserve(paths.size());
+        std::transform(paths.begin(), paths.end(), std::back_inserter(v), [](std::pair<sol::object, sol::object> const& kv) {
+            return kv.second.as<std::string>();
+        });
         self.lock()->loadTrustList(v);
     };
     utClient["setCredentials"] = [](LuaProxy<OpcUaClientService> self, const std::string& u, const std::string& p) {
