@@ -80,6 +80,10 @@ TransformationRule PredefinedRules::castToStructure(
                 std::shared_ptr<NamedInteger<int64_t>> val = NamedInteger<int64_t>::create(mapping.name, 0, container);
                 val->setEndianness(mapping.endian);
                 val->bind(parentBuf, baseOffset + mapping.offset);
+            } else if (mapping.type == "float32" || mapping.type == "float") {
+                std::shared_ptr<NamedFloatingPoint<float>> val = NamedFloatingPoint<float>::create(mapping.name, 0.0f, container);
+                val->setEndianness(mapping.endian);
+                val->bind(parentBuf, baseOffset + mapping.offset);
             } else if (mapping.type == "float64" || mapping.type == "double") {
                 std::shared_ptr<NamedFloatingPoint<double>> val = NamedFloatingPoint<double>::create(mapping.name, 0.0, container);
                 val->setEndianness(mapping.endian);

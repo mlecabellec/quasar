@@ -23,6 +23,8 @@
 #include "quasar/named/NamedMethod.hpp"
 #include "quasar/named/NamedService.hpp"
 #include "quasar/named/Serialization.hpp"
+#include "quasar/named/traversal/Transformer.hpp"
+#include "quasar/named/traversal/PredefinedRules.hpp"
 #include "quasar/scripting/NamedLuaMethod.hpp"
 #include <sstream>
 #include <iostream>
@@ -92,6 +94,11 @@ static void bindNamedObjectMethods(U& ut) {
         std::shared_ptr<NamedObject> obj = self.lock();
         std::shared_ptr<NamedFloatingPoint<double>> p = std::dynamic_pointer_cast<NamedFloatingPoint<double>>(obj);
         return p ? std::make_optional(LuaProxy<NamedFloatingPoint<double>>(p)) : std::nullopt;
+    };
+    ut["asFloat"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedFloatingPoint<float>>> {
+        std::shared_ptr<NamedObject> obj = self.lock();
+        std::shared_ptr<NamedFloatingPoint<float>> p = std::dynamic_pointer_cast<NamedFloatingPoint<float>>(obj);
+        return p ? std::make_optional(LuaProxy<NamedFloatingPoint<float>>(p)) : std::nullopt;
     };
     ut["asBoolean"] = [](LuaProxy<T> self) -> std::optional<LuaProxy<NamedBoolean>> {
         std::shared_ptr<NamedObject> obj = self.lock();
@@ -170,6 +177,15 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     lua.new_usertype<std::vector<uint8_t>>("VectorUInt8", sol::no_constructor);
 
     sol::table quasarTable = lua["quasar"].get_or_create<sol::table>();
+    quasarTable["CopyPolicy"] = lua.create_table_with(
+        "DUPLICATE", CopyPolicy::DUPLICATE,
+        "SHARE", CopyPolicy::SHARE
+    );
+    quasarTable["Endianness"] = lua.create_table_with(
+        "BigEndian", quasar::coretypes::Endianness::BigEndian,
+        "LittleEndian", quasar::coretypes::Endianness::LittleEndian
+    );
+
     sol::table namedTable = quasarTable["named"].get_or_create<sol::table>();
     sol::table serializationTable = namedTable["serialization"].get_or_create<sol::table>();
 
@@ -211,6 +227,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     lua.new_usertype<ILuaProxy>("ILuaProxy", sol::no_constructor, "isAlive", &ILuaProxy::isAlive);
     lua.new_usertype<IObserver>("IObserver", sol::no_constructor);
+    lua.new_usertype<quasar::named::traversal::TransformationRule>("TransformationRule", sol::no_constructor);
     
     // NamedObject
     sol::usertype<LuaProxy<NamedObject>> utNamedObject = lua.new_usertype<LuaProxy<NamedObject>>("NamedObject", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
@@ -267,6 +284,18 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         std::shared_ptr<NamedDouble> ptr = NamedDouble::create(name, v, extractNamedObject(parent));
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedDouble>(ptr);
+    };
+
+    // Float
+    using NamedFloat = NamedFloatingPoint<float>;
+    sol::usertype<LuaProxy<NamedFloat>> utNamedFloat = lua.new_usertype<LuaProxy<NamedFloat>>("NamedFloat", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
+    bindNamedObjectMethods<NamedFloat>(utNamedFloat);
+    utNamedFloat["value"] = [](LuaProxy<NamedFloat> self) { return self.lock()->value(); };
+    utNamedFloat["setValue"] = [](LuaProxy<NamedFloat> self, float v) { self.lock()->setValue(v); };
+    namedTable["createFloat"] = [](const std::string& name, float v, sol::object parent, sol::this_state L) {
+        std::shared_ptr<NamedFloat> ptr = NamedFloat::create(name, v, extractNamedObject(parent));
+        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        return LuaProxy<NamedFloat>(ptr);
     };
 
     // Boolean
@@ -465,6 +494,102 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         std::shared_ptr<NamedService> ptr = NamedService::create(name, extractNamedObject(parent));
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedService>(ptr);
+    };
+
+    // Traversal
+    sol::table traversalTable = namedTable["traversal"].get_or_create<sol::table>();
+
+    traversalTable["TransformContext"] = lua.new_usertype<quasar::named::traversal::TransformContext>("TransformContext", sol::no_constructor,
+        "getNode", [](const quasar::named::traversal::TransformContext& ctx) { return LuaProxy<NamedObject>(ctx.getNode()); },
+        "getDepth", &quasar::named::traversal::TransformContext::getDepth,
+        "getPath", &quasar::named::traversal::TransformContext::getPath
+    );
+
+    traversalTable["Transformer"] = lua.new_usertype<quasar::named::traversal::Transformer>("Transformer",
+        sol::constructors<quasar::named::traversal::Transformer()>(),
+        "addRule", [](sol::this_state L, quasar::named::traversal::Transformer& self, sol::object arg1, sol::optional<sol::function> arg2, sol::optional<int> arg3) {
+            if (arg2.has_value()) {
+                // Case: pred, gen, priority
+                sol::function pred = arg1.as<sol::function>();
+                sol::function gen = arg2.value();
+                int priority = arg3.value_or(0);
+                size_t id = getEngineId(L);
+                
+                auto p = [pred](const quasar::named::traversal::TransformContext& ctx) -> bool {
+                    sol::protected_function_result res = pred(ctx);
+                    return res.valid() && res.get<bool>();
+                };
+                auto g = [gen, id](const quasar::named::traversal::TransformContext& ctx, quasar::named::traversal::Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
+                    sol::protected_function_result res = gen(ctx, t);
+                    if (!res.valid()) return {};
+                    std::vector<std::shared_ptr<NamedObject>> out;
+                    if (res.get_type() == sol::type::table) {
+                        sol::table tbl = res.get<sol::table>();
+                        for (size_t i = 1; i <= tbl.size(); ++i) {
+                            std::shared_ptr<NamedObject> ptr = extractNamedObject(tbl[i]);
+                            if (ptr) {
+                                if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                                out.push_back(ptr);
+                            }
+                        }
+                    } else {
+                        std::shared_ptr<NamedObject> ptr = extractNamedObject(res.get<sol::object>());
+                        if (ptr) {
+                            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                            out.push_back(ptr);
+                        }
+                    }
+                    return out;
+                };
+                self.addRule(quasar::named::traversal::TransformationRule(p, g, priority));
+            } else {
+                // Case: TransformationRule object
+                self.addRule(arg1.as<quasar::named::traversal::TransformationRule>());
+            }
+        },
+        "transform", [](quasar::named::traversal::Transformer& self, sol::object root, sol::this_state L) {
+            std::vector<std::shared_ptr<NamedObject>> res = self.transform(extractNamedObject(root));
+            std::vector<LuaProxy<NamedObject>> out;
+            size_t id = getEngineId(L);
+            for (auto const& ptr : res) {
+                if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                out.emplace_back(ptr);
+            }
+            return out;
+        },
+        "transformInPlace", [](quasar::named::traversal::Transformer& self, sol::object root) {
+            self.transformInPlace(extractNamedObject(root));
+        },
+        "transformSubtree", [](quasar::named::traversal::Transformer& self, sol::object node, int depth, const std::string& path, sol::this_state L) {
+            std::vector<std::shared_ptr<NamedObject>> res = self.transformSubtree(extractNamedObject(node), depth, path);
+            std::vector<LuaProxy<NamedObject>> out;
+            size_t id = getEngineId(L);
+            for (auto const& ptr : res) {
+                if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                out.emplace_back(ptr);
+            }
+            return out;
+        }
+    );
+
+    // Predefined Rules
+    sol::table predefinedTable = traversalTable["rules"].get_or_create<sol::table>();
+    predefinedTable["sliceBuffer"] = [](const std::string& name, sol::table slices, CopyPolicy policy, int priority) {
+        std::vector<quasar::named::traversal::SliceDefinition> v;
+        for (size_t i = 1; i <= slices.size(); ++i) {
+            sol::table s = slices[i];
+            v.push_back({s.get<std::string>("name"), s.get<size_t>("offset"), s.get<size_t>("length")});
+        }
+        return quasar::named::traversal::PredefinedRules::sliceBuffer(name, v, policy, priority);
+    };
+
+    predefinedTable["castToStructure"] = [](const std::string& name, sol::table mappings, int priority) {
+        std::vector<quasar::named::traversal::FieldMapping> v;
+        for (size_t i = 1; i <= mappings.size(); ++i) {
+            sol::table m = mappings[i];
+            v.push_back({m.get<std::string>("name"), m.get<std::string>("type"), m.get<size_t>("offset"), m.get_or("endian", quasar::coretypes::Endianness::BigEndian)});
+        }
+        return quasar::named::traversal::PredefinedRules::castToStructure(name, v, priority);
     };
 
     // Globals

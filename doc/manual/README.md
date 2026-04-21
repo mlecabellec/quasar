@@ -50,6 +50,7 @@ If the script requires plugins (like ZMQ or OPC UA), use the `--plugin` flag:
 | `28_performance_stress.lua` | Pushing the limits. | Stress testing object creation |
 | `29_concurrency_demo.lua` | Multiple threads, one tree. | Mutexes, Thread safety |
 | `30_the_ultimate_answer.lua` | The grand finale. | ZMQ, Logic, NamedTree, Calibration |
+| `33_tree_transformers.lua` | Multi-form trees. | `TreeTransformer`, Rules, Zero-Copy |
 
 ---
 "Don't Panic." - *The Hitchhiker's Guide to the Galaxy*
