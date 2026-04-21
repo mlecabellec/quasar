@@ -8,9 +8,9 @@ The Quasar project has expanded its scope to include **professional-grade EtherC
 
 | Category | Status | Count | Key Modules |
 | :--- | :--- | :--- | :--- |
-| ✅ **Completed** | Production-Ready | 8 | `logicengine`, `sre`, Core Types, Deep Copy, `ActiveEntity`, Global Logging. |
-| 🔄 **In Progress** | Active Dev | 6 | **OPC UA**, **Tree Transformations**, **Data Logging**, **ZeroMQ**, **Calibration**, **Lua Stability**. |
-| 🔲 **Not Started** | Backlog/New | 12 | Web UI, CAN Bus, Kafka, Python Bindings, **Reflexive EtherCAT**, **ENI Engineering**, **ecat-top TUI**, **Passive Master**. |
+| ✅ **Completed** | Production-Ready | 10 | `logicengine`, `TreeTransformer`, `qlsh` (REPL), `sre` Runner, Core Types, `ActiveEntity`, Global Logging. |
+| 🔄 **In Progress** | Active Dev | 5 | **OPC UA**, **Data Logging**, **ZeroMQ**, **Calibration**, **Lua Stability**. |
+| 🔲 **Not Started** | Backlog/New | 11 | Web UI, CAN Bus, Kafka, Python Bindings, **Reflexive EtherCAT**, **ENI Engineering**, **ecat-top TUI**, **Passive Master**. |
 
 ---
 
@@ -18,18 +18,19 @@ The Quasar project has expanded its scope to include **professional-grade EtherC
 
 ### 2.1 Lua Execution Environment
 - **Status:** ✅ **Verified Stable**.
-- **Focus:** Maintaining strict `ObjectTracker` patterns as we introduce complex EtherCAT and ZMQ bindings.
+- **Hardening**: Implemented destruction ordering fixes and contextual upvalue synchronization for interactive spec-compliance.
 
 ### 2.2 EtherCAT Master (`resoem`)
 - **Status:** 🔄 **Strategic Enhancement Phase**.
-- **New Direction:** Decoupling diagnostic sweeps from cyclic exchange, implementing identity-based topology matching, and providing a modern TUI (`ecat-top`).
+- **New Direction**: Decoupling diagnostic sweeps from cyclic exchange, implementing identity-based topology matching, and providing a modern TUI (`ecat-top`).
 
 ---
 
 ## 3. Short-Term Roadmap (Q2 - Q3 2026)
 
 ### Phase A: Industrial Data Pipelines (April - May)
-*   **Tree Transformation Engine (TSK-20260311-001):** Finalize zero-copy reinterpretation.
+*   **Tree Transformation Engine (TSK-20260311-001):** ✅ Completed. Deliver zero-copy reinterpretation.
+*   **Interactive Shell (TSK-20260421-001):** ✅ Completed. Deliver `qlsh` for real-time debugging.
 *   **Calibration Framework (TSK-20260311-010):** Deliver engineering unit conversion.
 *   **Data Acquisition (TSK-20260303-001):** Validate 50kHz logging.
 
