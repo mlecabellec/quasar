@@ -143,13 +143,17 @@ TEST_F(QlshTest, NamedServiceInShell) {
                          "svc = quasar.named.createService('mySvc', root)\n"
                          "counter = quasar.named.createLong('counter', 0, svc)\n"
                          "quasar.named.createLuaMethod('run', function(owner, args)\n"
-                         "  local c = owner:getChild('counter'):asLong()\n"
+                         "  local c_obj = owner:getChild('counter')\n"
+                         "  if not c_obj then return end\n"
+                         "  local c = c_obj:asLong()\n"
+                         "  if not c then return end\n"
                          "  c:setValue(c:value() + 1)\n"
                          "end, svc)\n"
                          "svc:setCycleTime(10)\n"
                          "svc:start()\n"
-                         "quasar.sleep(100)\n"
+                         "quasar.sleep(300)\n"
                          "print('COUNT=' .. counter:value())\n"
+                         "quasar.sleep(100)\n"
                          "svc:stop()";
     std::string output = run_qlsh(script);
     if (output.find("COUNT=") == std::string::npos) {

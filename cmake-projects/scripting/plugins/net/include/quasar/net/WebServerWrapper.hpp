@@ -9,159 +9,117 @@
 #include <string>
 #include <mutex>
 #include <map>
+#include <expected>
 
 namespace quasar::net {
 
 class LuaWSServer;
 
+/**
+ * @class LuaWSSession
+ * @brief WebSocket Session wrapper.
+ */
 class LuaWSSession : public CppServer::WS::WSSession {
 public:
-    explicit LuaWSSession(const std::shared_ptr<CppServer::WS::WSServer>& server) : CppServer::WS::WSSession(server) {}
+    explicit LuaWSSession(const std::shared_ptr<CppServer::WS::WSServer>& server);
 
-    sol::function* onConnectedCb = nullptr;
-    sol::function* onDisconnectedCb = nullptr;
-    sol::function* onReceivedRequestCb = nullptr;
-    sol::function* onWSConnectedCb = nullptr;
-    sol::function* onWSDisconnectedCb = nullptr;
-    sol::function* onWSReceivedCb = nullptr;
-    sol::function* onErrorCb = nullptr;
-    LuaWSServer* m_serverOwner = nullptr; 
+    LuaWSServer* m_serverOwner = nullptr;
 
 protected:
-    void onConnected() override;
-    void onDisconnected() override;
-    void onReceivedRequest(const CppServer::HTTP::HTTPRequest& request) override;
     void onWSConnected(const CppServer::HTTP::HTTPRequest& request) override;
     void onWSDisconnected() override;
     void onWSReceived(const void* buffer, size_t size) override;
-    void onError(int error, const std::string& category, const std::string& message) override;
 };
 
-class LuaWSServer : public CppServer::WS::WSServer {
+/**
+ * @class LuaWSServer
+ */
+class LuaWSServer : public std::enable_shared_from_this<LuaWSServer> {
 public:
-    sol::function onConnectedCb;
-    sol::function onDisconnectedCb;
-    sol::function onReceivedRequestCb;
-    sol::function onWSConnectedCb;
-    sol::function onWSDisconnectedCb;
-    sol::function onWSReceivedCb;
-    sol::function onErrorCb;
+    sol::function onWSConnected;
+    sol::function onWSReceived;
+    sol::function onDisconnected;
 
-    LuaWSServer(const std::shared_ptr<CppServer::Asio::Service>& service, int port)
-        : CppServer::WS::WSServer(service, port) {}
+    LuaWSServer(const std::shared_ptr<CppServer::Asio::Service>& service, int port);
 
-    std::shared_ptr<LuaWSSession> getLuaSession(const std::string& id) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        std::map<std::string, std::shared_ptr<LuaWSSession>>::iterator it = m_sessions.find(id);
-        if (it != m_sessions.end()) return it->second;
-        return nullptr;
-    }
+    [[nodiscard]] std::expected<void, std::string> startAsync();
+    [[nodiscard]] std::expected<void, std::string> stopAsync();
+    [[nodiscard]] bool broadcastText(const std::string& text);
+    [[nodiscard]] bool sendText(const std::string& id, const std::string& text);
 
-    void registerSession(const std::string& id, std::shared_ptr<LuaWSSession> session) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        m_sessions[id] = session;
-    }
-
-    void unregisterSession(const std::string& id) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        m_sessions.erase(id);
-    }
-
-protected:
-    std::shared_ptr<CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<CppServer::Asio::TCPServer>& server) override {
-        std::shared_ptr<LuaWSSession> session = std::make_shared<LuaWSSession>(std::static_pointer_cast<CppServer::WS::WSServer>(server));
-        session->onConnectedCb = &onConnectedCb;
-        session->onDisconnectedCb = &onDisconnectedCb;
-        session->onReceivedRequestCb = &onReceivedRequestCb;
-        session->onWSConnectedCb = &onWSConnectedCb;
-        session->onWSDisconnectedCb = &onWSDisconnectedCb;
-        session->onWSReceivedCb = &onWSReceivedCb;
-        session->onErrorCb = &onErrorCb;
-        session->m_serverOwner = this;
-        return session;
-    }
+    void registerSession(const std::string& id, std::shared_ptr<LuaWSSession> session);
+    void unregisterSession(const std::string& id);
+    void notifyConnected(const std::string& id);
+    void notifyDisconnected(const std::string& id);
+    void notifyReceived(const std::string& id, const std::string& data);
 
 private:
+    class InternalServer : public CppServer::WS::WSServer {
+    public:
+        using CppServer::WS::WSServer::WSServer;
+        std::weak_ptr<LuaWSServer> owner;
+    protected:
+        std::shared_ptr<CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<CppServer::Asio::TCPServer>& server) override;
+    };
+
+    std::shared_ptr<InternalServer> m_server;
     std::mutex m_sessionMutex;
     std::map<std::string, std::shared_ptr<LuaWSSession>> m_sessions;
 };
 
 class LuaSecureWSServer;
 
+/**
+ * @class LuaSecureWSSession
+ */
 class LuaSecureWSSession : public CppServer::WS::WSSSession {
 public:
-    explicit LuaSecureWSSession(const std::shared_ptr<CppServer::WS::WSSServer>& server) : CppServer::WS::WSSSession(server) {}
+    explicit LuaSecureWSSession(const std::shared_ptr<CppServer::WS::WSSServer>& server);
 
-    sol::function* onConnectedCb = nullptr;
-    sol::function* onDisconnectedCb = nullptr;
-    sol::function* onReceivedRequestCb = nullptr;
-    sol::function* onWSConnectedCb = nullptr;
-    sol::function* onWSDisconnectedCb = nullptr;
-    sol::function* onWSReceivedCb = nullptr;
-    sol::function* onErrorCb = nullptr;
     LuaSecureWSServer* m_serverOwner = nullptr;
 
 protected:
-    void onConnected() override;
-    void onDisconnected() override;
-    void onReceivedRequest(const CppServer::HTTP::HTTPRequest& request) override;
     void onWSConnected(const CppServer::HTTP::HTTPRequest& request) override;
     void onWSDisconnected() override;
     void onWSReceived(const void* buffer, size_t size) override;
-    void onError(int error, const std::string& category, const std::string& message) override;
 };
 
-class LuaSecureWSServer : public CppServer::WS::WSSServer {
+/**
+ * @class LuaSecureWSServer
+ */
+class LuaSecureWSServer : public std::enable_shared_from_this<LuaSecureWSServer> {
 public:
-    sol::function onConnectedCb;
-    sol::function onDisconnectedCb;
-    sol::function onReceivedRequestCb;
-    sol::function onWSConnectedCb;
-    sol::function onWSDisconnectedCb;
-    sol::function onWSReceivedCb;
-    sol::function onErrorCb;
+    sol::function onWSConnected;
+    sol::function onWSReceived;
+    sol::function onDisconnected;
 
-    LuaSecureWSServer(const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, int port)
-        : CppServer::WS::WSSServer(service, context, port) {}
+    LuaSecureWSServer(const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, int port);
 
-    std::shared_ptr<LuaSecureWSSession> getLuaSession(const std::string& id) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        std::map<std::string, std::shared_ptr<LuaSecureWSSession>>::iterator it = m_sessions.find(id);
-        if (it != m_sessions.end()) return it->second;
-        return nullptr;
-    }
+    [[nodiscard]] std::expected<void, std::string> startAsync();
+    [[nodiscard]] std::expected<void, std::string> stopAsync();
+    [[nodiscard]] bool broadcastText(const std::string& text);
+    [[nodiscard]] bool sendText(const std::string& id, const std::string& text);
 
-    void registerSession(const std::string& id, std::shared_ptr<LuaSecureWSSession> session) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        m_sessions[id] = session;
-    }
-
-    void unregisterSession(const std::string& id) {
-        std::lock_guard<std::mutex> lock(m_sessionMutex);
-        m_sessions.erase(id);
-    }
-
-protected:
-    std::shared_ptr<CppServer::Asio::SSLSession> CreateSession(const std::shared_ptr<CppServer::Asio::SSLServer>& server) override {
-        std::shared_ptr<LuaSecureWSSession> session = std::make_shared<LuaSecureWSSession>(std::static_pointer_cast<CppServer::WS::WSSServer>(server));
-        session->onConnectedCb = &onConnectedCb;
-        session->onDisconnectedCb = &onDisconnectedCb;
-        session->onReceivedRequestCb = &onReceivedRequestCb;
-        session->onWSConnectedCb = &onWSConnectedCb;
-        session->onWSDisconnectedCb = &onWSDisconnectedCb;
-        session->onWSReceivedCb = &onWSReceivedCb;
-        session->onErrorCb = &onErrorCb;
-        session->m_serverOwner = this;
-        return session;
-    }
+    void registerSession(const std::string& id, std::shared_ptr<LuaSecureWSSession> session);
+    void unregisterSession(const std::string& id);
+    void notifyConnected(const std::string& id);
+    void notifyDisconnected(const std::string& id);
+    void notifyReceived(const std::string& id, const std::string& data);
 
 private:
+    class InternalServer : public CppServer::WS::WSSServer { 
+    public:
+        InternalServer(const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, int port)
+            : CppServer::WS::WSSServer(service, context, port) {}
+        std::weak_ptr<LuaSecureWSServer> owner;
+    protected:
+        std::shared_ptr<CppServer::Asio::SSLSession> CreateSession(const std::shared_ptr<CppServer::Asio::SSLServer>& server) override;
+    };
+
+    std::shared_ptr<InternalServer> m_server;
     std::mutex m_sessionMutex;
     std::map<std::string, std::shared_ptr<LuaSecureWSSession>> m_sessions;
 };
-
-// Aliases for Lua clarity
-using LuaWebServer = LuaWSServer;
 
 void bindWebServer(sol::state_view& lua);
 

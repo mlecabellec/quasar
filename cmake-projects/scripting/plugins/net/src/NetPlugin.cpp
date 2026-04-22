@@ -6,6 +6,7 @@
 #include "quasar/net/WebServerWrapper.hpp"
 #include "quasar/net/TCPClientWrapper.hpp"
 #include "quasar/net/HTTPClientWrapper.hpp"
+#include "quasar/net/WSClientWrapper.hpp"
 #include "quasar/net/SSLContextWrapper.hpp"
 
 namespace quasar::net {
@@ -26,6 +27,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     netTable["client"].get_or_create<sol::table>();
     bindTCPClient(lua);
     bindHTTPClient(lua);
+    bindWSClient(lua);
 
     // TSK-20260311-002: Security namespace
     bindSSLContext(lua);

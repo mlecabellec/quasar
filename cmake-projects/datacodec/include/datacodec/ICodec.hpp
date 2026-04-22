@@ -49,6 +49,11 @@ public:
   decode(const quasar::coretypes::BitBufferSlice &buffer) const = 0;
 
   /**
+   * @brief Returns the type of value this codec handles (e.g., "Integer", "String").
+   */
+  virtual std::string getCodecType() const = 0;
+
+  /**
    * @brief Encodes a value into the buffer.
    *
    * Writes the value from the provided NamedObject into the buffer slice.

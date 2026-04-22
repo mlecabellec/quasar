@@ -16,11 +16,10 @@ void bindSSLContext(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     securityTable["SSLContext"] = lua.create_table_with(
-        "new", [](asio::ssl::context_base::method m) {
-            auto ptr = std::make_shared<CppServer::Asio::SSLContext>(m);
-            // SSLContext doesn't inherit NamedObject, but we still track it for lifetime
-            // Actually ObjectTracker is specialized for NamedObject.
-            // For non-NamedObjects we rely on shared_ptr in the proxy if we want them to stay alive.
+        "new", [](asio::ssl::context_base::method m, sol::this_state L) {
+            std::shared_ptr<CppServer::Asio::SSLContext> ptr = std::make_shared<CppServer::Asio::SSLContext>(m);
+            // SSLContext doesn't inherit NamedObject, but we use trackStrong to bind its lifecycle to the engine.
+            ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<CppServer::Asio::SSLContext>(ptr);
         }
     );
@@ -33,7 +32,9 @@ void bindSSLContext(sol::state_view& lua) {
     ut["usePrivateKeyFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->use_private_key_file(filename, asio::ssl::context::pem); };
     ut["useTmpDhFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->use_tmp_dh_file(filename); };
     ut["loadVerifyFile"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& filename) { self.lock()->load_verify_file(filename); };
+    ut["addVerifyPath"] = [](LuaProxy<CppServer::Asio::SSLContext> self, const std::string& path) { self.lock()->add_verify_path(path); };
     ut["setVerifyMode"] = [](LuaProxy<CppServer::Asio::SSLContext> self, int mode) { self.lock()->set_verify_mode(mode); };
+    ut["setDefaultVerifyPaths"] = [](LuaProxy<CppServer::Asio::SSLContext> self) { self.lock()->set_default_verify_paths(); };
 
     // Context methods enum
     securityTable["method"] = lua.create_table_with(
