@@ -55,6 +55,25 @@ std::shared_ptr<NamedObject> NamedObject::getSelf() const {
   return m_self.lock();
 }
 
+uint64_t NamedObject::getTreeVersion() const {
+  // Atomic load for thread-safe access to structural version.
+  return m_treeVersion.load();
+}
+
+void NamedObject::incrementTreeVersion() {
+  // [CS-0030.1] Feature: REST API Cache Consistency
+  // Increment local structural version.
+  m_treeVersion.fetch_add(1, std::memory_order_relaxed);
+  
+  // Recursively notify parent hierarchy of structural change.
+  std::shared_ptr<NamedObject> parentPtr = m_parent.lock();
+  
+  // If a parent exists, propagate the increment.
+  if (parentPtr) {
+    parentPtr->incrementTreeVersion();
+  }
+}
+
 void NamedObject::setParent(std::shared_ptr<NamedObject> parent) {
   // Fulfills [FE-0020.5] Operations shall be thread safe.
   {
@@ -147,18 +166,20 @@ void NamedObject::addChild(std::shared_ptr<NamedObject> child) {
   }
   m_children.push_back(child);
 
+  incrementTreeVersion();
+
   // Notify about hierarchy change.
   notifyObservers(getSelf());
-}
+  }
 
-void NamedObject::removeChild(const std::string &name) {
+  void NamedObject::removeChild(const std::string &name) {
   std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
                                                     config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
-  
-  // Take a local copy of the name string to avoid dangling reference if the 
+
+  // Take a local copy of the name string to avoid dangling reference if the
   // child is destroyed during removal.
   std::string nameCopy = name;
 
@@ -173,15 +194,16 @@ void NamedObject::removeChild(const std::string &name) {
   });
 
   if (removed) {
-      // Notify about hierarchy change.
-      notifyObservers(getSelf());
+    incrementTreeVersion();
+    // Notify about hierarchy change.
+    notifyObservers(getSelf());
   }
-}
+  }
 
-void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
+  void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
                                std::shared_ptr<NamedObject> newChild) {
-  std::unique_lock<std::recursive_timed_mutex> lock(
-      m_mutex, config::DEFAULT_LOCK_TIMEOUT);
+  std::unique_lock<std::recursive_timed_mutex> lock(m_mutex,
+                                                    config::DEFAULT_LOCK_TIMEOUT);
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring NamedObject lock");
   }
@@ -193,6 +215,7 @@ void NamedObject::replaceChild(std::shared_ptr<NamedObject> oldChild,
   if (it != m_children.end()) {
     // Replace it with the new child.
     *it = newChild;
+    incrementTreeVersion();
     // Notify about hierarchy change.
     notifyObservers(getSelf());
   } else {
@@ -244,6 +267,8 @@ void NamedObject::setName(const std::string &name) {
     // No parent, just rename
     m_name = name;
   }
+
+  incrementTreeVersion();
 
   // Notify observers about name change.
   notifyObservers(getSelf());

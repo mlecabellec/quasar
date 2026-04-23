@@ -7,12 +7,14 @@ set(SOURCES
     src/EventTrampoline.cpp
     src/TCPServerWrapper.cpp
     src/UDPServerWrapper.cpp
-    src/WebServerWrapper.cpp
+    src/WS_Server.cpp
+    src/WSS_Server.cpp
     src/TCPClientWrapper.cpp
     src/UDPClientWrapper.cpp
     src/HTTPClientWrapper.cpp
     src/WSClientWrapper.cpp
     src/SSLContextWrapper.cpp
+    src/WebNamedMethod.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})

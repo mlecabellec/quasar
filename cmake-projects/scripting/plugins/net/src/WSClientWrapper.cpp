@@ -2,6 +2,7 @@
 #include "quasar/scripting/LuaProxy.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/scripting/RegistryBindings.hpp"
+#include "string/encoding.h"
 #include <thread>
 
 namespace quasar::net {
@@ -51,6 +52,7 @@ void LuaWSClient::setReconnectionPolicy(const ReconnectionPolicy& policy) {
 }
 
 void LuaWSClient::InternalClient::onConnected() {
+    std::cout << "[CPP Debug] InternalClient::onConnected triggered" << std::endl;
     CppServer::WS::WSClient::onConnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
     if (o) {
@@ -62,6 +64,7 @@ void LuaWSClient::InternalClient::onConnected() {
 }
 
 void LuaWSClient::InternalClient::onDisconnected() {
+    std::cout << "[CPP Debug] InternalClient::onDisconnected triggered" << std::endl;
     CppServer::WS::WSClient::onDisconnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
     if (o) {
@@ -80,7 +83,19 @@ void LuaWSClient::InternalClient::onDisconnected() {
     }
 }
 
+void LuaWSClient::InternalClient::onWSConnecting(CppServer::HTTP::HTTPRequest& request) {
+    std::cout << "[CPP Debug] InternalClient::onWSConnecting triggered" << std::endl;
+    request.SetBegin("GET", "/");
+    request.SetHeader("Host", address());
+    request.SetHeader("Upgrade", "websocket");
+    request.SetHeader("Connection", "Upgrade");
+    request.SetHeader("Sec-WebSocket-Key", CppCommon::Encoding::Base64Encode(ws_nonce()));
+    request.SetHeader("Sec-WebSocket-Version", "13");
+    CppServer::WS::WSClient::onWSConnecting(request);
+}
+
 void LuaWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {
+    std::cout << "[CPP Debug] InternalClient::onWSConnected triggered for session " << id().string() << ", status: " << response.status() << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
     if (o) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
@@ -92,6 +107,7 @@ void LuaWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPRespo
 }
 
 void LuaWSClient::InternalClient::onWSDisconnected() {
+    std::cout << "[CPP Debug] InternalClient::onWSDisconnected triggered" << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
     if (o) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
@@ -102,6 +118,7 @@ void LuaWSClient::InternalClient::onWSDisconnected() {
 }
 
 void LuaWSClient::InternalClient::onWSReceived(const void* buffer, size_t size) {
+    std::cout << "[CPP Debug] InternalClient::onWSReceived triggered, size: " << size << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
     if (o) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
@@ -182,6 +199,17 @@ void LuaSecureWSClient::InternalClient::onDisconnected() {
             }).detach();
         }
     }
+}
+
+void LuaSecureWSClient::InternalClient::onWSConnecting(CppServer::HTTP::HTTPRequest& request) {
+    std::cout << "[CPP Debug] Secure InternalClient::onWSConnecting triggered" << std::endl;
+    request.SetBegin("GET", "/");
+    request.SetHeader("Host", address());
+    request.SetHeader("Upgrade", "websocket");
+    request.SetHeader("Connection", "Upgrade");
+    request.SetHeader("Sec-WebSocket-Key", CppCommon::Encoding::Base64Encode(ws_nonce()));
+    request.SetHeader("Sec-WebSocket-Version", "13");
+    CppServer::WS::WSSClient::onWSConnecting(request);
 }
 
 void LuaSecureWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {

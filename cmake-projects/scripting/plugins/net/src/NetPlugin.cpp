@@ -9,6 +9,7 @@
 #include "quasar/net/HTTPClientWrapper.hpp"
 #include "quasar/net/WSClientWrapper.hpp"
 #include "quasar/net/SSLContextWrapper.hpp"
+#include "quasar/net/WebNamedMethod.hpp"
 
 namespace quasar::net {
 
@@ -33,6 +34,9 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
 
     // TSK-20260311-002: Security namespace
     bindSSLContext(lua);
+    
+    // TSK-20260311-008: Web API Routing
+    bindWebNamedMethod(lua);
 
     // Register poll LAST so sub-table construction cannot overwrite it.
     netTable = quasarTable["net"].get_or_create<sol::table>();

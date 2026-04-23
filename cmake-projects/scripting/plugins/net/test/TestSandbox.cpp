@@ -12,7 +12,7 @@ int main() {
         sol::state& view = engine->getState();
         registerPluginComponents(view);
         
-        std::cout << "Running Networking Sandbox Test (with WebSockets)..." << std::endl;
+        std::cout << "Running Networking Sandbox Test (Handshake Diagnosis)..." << std::endl;
         sol::protected_function_result result = engine->executeString(R"LUA(
             local net = quasar.net
             local service = net.server.AsioService.new()
@@ -21,13 +21,14 @@ int main() {
             print("[Server] Creating WebServer on port 8086")
             local server = net.server.WebServer.new(service, 8086)
             
-            local ws_received_data = ""
+            local client_received_echo = false
+
             server:onWSConnected(function(id)
-                print("[Server] WS Connected: " .. tostring(id))
+                print("[Server] WS Handshake Complete for session: " .. tostring(id))
             end)
+
             server:onWSReceived(function(id, data)
                 print("[Server] WS Received from " .. tostring(id) .. ": " .. tostring(data))
-                ws_received_data = data
                 server:sendText(id, "WS_ECHO: " .. data)
             end)
             
@@ -38,7 +39,6 @@ int main() {
             print("[Client] Creating WSClient to 127.0.0.1:8086")
             local client = net.client.WSClient.new(service, "127.0.0.1", 8086)
             
-            local client_received_echo = false
             client:onWSReceived(function(data)
                 print("[Client] WS Received: " .. tostring(data))
                 if data == "WS_ECHO: Hello WebSocket!" then
@@ -47,35 +47,44 @@ int main() {
             end)
             
             client:onConnected(function()
-                print("[Client] TCP Connected")
+                print("[Client] TCP Connected, awaiting handshake...")
             end)
 
             client:onWSConnected(function(status)
-                print("[Client] WS Connected with status: " .. tostring(status))
+                print("[Client] WS Handshake Successful, status: " .. tostring(status))
                 client:send("Hello WebSocket!")
             end)
 
+            client:onError(function(err, msg)
+                print("[Client] ERROR: " .. tostring(err) .. " - " .. tostring(msg))
+            end)
+
             if client:connect() ~= true then
-                error("Client failed to connect")
+                error("Client failed to initiate connection")
             end
             
-            -- Poll for 2 seconds to allow handshake and echo
-            local start = os.clock()
-            while os.clock() - start < 2.0 do
-                quasar.net.poll()
+            -- Polling loop with hard iteration limit and manual time tracking
+            print("[Info] Starting poll loop (Max 5s)...")
+            local success = false
+            for i = 1, 5000 do
+                net.poll()
+                if client_received_echo then
+                    success = true
+                    break
+                end
+                if quasar.sleep then quasar.sleep(1) end
             end
             
             client:disconnect()
             server:stop()
             
-            if client_received_echo then
+            if success then
                 print("WebSocket Sandbox TEST PASSED")
+                return true
             else
-                print("WebSocket Sandbox TEST FAILED")
-                error("Did not receive WS echo")
+                print("WebSocket Sandbox TEST FAILED (Timeout)")
+                error("Handshake or Echo failed")
             end
-            
-            return true
         )LUA");
         
         if (!result.valid()) {

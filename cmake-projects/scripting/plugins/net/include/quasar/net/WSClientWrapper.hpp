@@ -40,6 +40,7 @@ public:
     protected:
         void onConnected() override;
         void onDisconnected() override;
+        void onWSConnecting(CppServer::HTTP::HTTPRequest& request) override;
         void onWSConnected(const CppServer::HTTP::HTTPResponse& response) override;
         void onWSDisconnected() override;
         void onWSReceived(const void* buffer, size_t size) override;
@@ -79,6 +80,7 @@ public:
     protected:
         void onConnected() override;
         void onDisconnected() override;
+        void onWSConnecting(CppServer::HTTP::HTTPRequest& request) override;
         void onWSConnected(const CppServer::HTTP::HTTPResponse& response) override;
         void onWSDisconnected() override;
         void onWSReceived(const void* buffer, size_t size) override;

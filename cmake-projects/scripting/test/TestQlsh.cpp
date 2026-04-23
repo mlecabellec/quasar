@@ -32,8 +32,10 @@ protected:
      * @return Standard output and error from the qlsh process.
      */
     std::string run_qlsh(const std::string& lua_input, const std::vector<std::string>& plugins = {}) {
-        // Write input to a temporary file to ensure reliable delivery to qlsh stdin
-        std::string inputPath = "qlsh_input.tmp";
+        // [CS-0010.44] Use a unique temporary filename per test to avoid race conditions in parallel execution.
+        const testing::TestInfo* const test_info = testing::UnitTest::GetInstance()->current_test_info();
+        std::string inputPath = "qlsh_input_" + std::string(test_info->name()) + ".tmp";
+        
         std::ofstream tmp_input(inputPath);
         tmp_input << lua_input << "\n";
         tmp_input.close();

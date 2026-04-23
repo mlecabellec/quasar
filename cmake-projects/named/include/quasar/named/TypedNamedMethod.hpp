@@ -92,7 +92,6 @@ protected:
         std::shared_ptr<datacodec::ContainerDef> outputSchema
     );
 
-private:
     std::shared_ptr<datacodec::ContainerDef> m_inputSchema;
     std::shared_ptr<datacodec::ContainerDef> m_outputSchema;
 };

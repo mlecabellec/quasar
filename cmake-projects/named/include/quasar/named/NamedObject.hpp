@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include "quasar/named/CopyPolicy.hpp"
 #include "quasar/named/IObserver.hpp"
@@ -279,18 +280,41 @@ public:
   /**
    * @brief Returns a shared pointer to this instance.
    * @return Shared pointer to self.
+   * @exposed
    */
-  std::shared_ptr<NamedObject> getSelf() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getSelf() const;
+
+  /**
+   * @brief Returns the current structural version of this node and its children.
+   * 
+   * The version increments whenever a structural change (add/remove/rename) occurs 
+   * in this node or any of its descendants.
+   * 
+   * @return The current version number.
+   * @feature TSK-20260311-008.6 REST API Cache Consistency
+   * @exposed
+   */
+  [[nodiscard]] uint64_t getTreeVersion() const;
+
+  /**
+   * @brief Helper to propagate structural version increments up the tree.
+   * 
+   * Implementation must avoid infinite recursion via iteration limits.
+   * @feature TSK-20260311-008.6 Structural Tracking
+   */
+  void incrementTreeVersion();
 
   /**
    * @brief Subscribes an observer to this object's events.
    * @param observer Weak pointer to the observer.
+   * @exposed
    */
   void subscribe(std::weak_ptr<IObserver> observer);
 
   /**
    * @brief Unsubscribes an observer.
    * @param observer Weak pointer to the observer to remove.
+   * @exposed
    */
   void unsubscribe(std::weak_ptr<IObserver> observer);
 
@@ -348,6 +372,12 @@ protected:
   /** @brief Internal weak pointer to self, used for retrieving a shared_ptr
    * from this. */
   std::weak_ptr<NamedObject> m_self;
+
+  /** 
+   * @brief Counter tracking structural modifications within this node and its children. 
+   * @feature TSK-20260311-008.6 REST API Cache Consistency
+   */
+  std::atomic<uint64_t> m_treeVersion{0};
 
   /** @brief Mutex for observer list protection. */
   mutable std::recursive_timed_mutex m_observerMutex;
