@@ -5,6 +5,7 @@
 #include "quasar/net/UDPServerWrapper.hpp"
 #include "quasar/net/WebServerWrapper.hpp"
 #include "quasar/net/TCPClientWrapper.hpp"
+#include "quasar/net/UDPClientWrapper.hpp"
 #include "quasar/net/HTTPClientWrapper.hpp"
 #include "quasar/net/WSClientWrapper.hpp"
 #include "quasar/net/SSLContextWrapper.hpp"
@@ -26,6 +27,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     // TSK-20260311-003: Client namespace
     netTable["client"].get_or_create<sol::table>();
     bindTCPClient(lua);
+    bindUDPClient(lua);
     bindHTTPClient(lua);
     bindWSClient(lua);
 
@@ -35,6 +37,7 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     // Register poll LAST so sub-table construction cannot overwrite it.
     netTable = quasarTable["net"].get_or_create<sol::table>();
     netTable.set_function("poll", []() {
+        std::cout << "[CPP Debug] net.poll() called" << std::endl;
         EventTrampoline::getInstance().poll();
     });
 }

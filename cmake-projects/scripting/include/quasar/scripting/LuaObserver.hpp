@@ -40,7 +40,7 @@ public:
      */
     void invalidate();
 
-private:
+protected:
     sol::function m_func;
     LuaEngine* m_engine;
     std::weak_ptr<LuaService> m_service;

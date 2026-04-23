@@ -332,7 +332,7 @@ protected:
    */
   void setSelf(std::shared_ptr<NamedObject> self) { m_self = self; }
 
-private:
+protected:
   /** @brief The object name. Unique within parent scope. */
   std::string m_name;
   /** @brief Weak pointer to parent to avoid circular shared_ptr dependencies.

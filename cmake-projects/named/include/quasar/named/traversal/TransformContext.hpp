@@ -35,7 +35,7 @@ public:
     /** @brief Returns the full logical path to the node. */
     std::string getPath() const { return m_path; }
 
-private:
+protected:
     std::shared_ptr<NamedObject> m_node;
     int m_depth;
     std::string m_path;

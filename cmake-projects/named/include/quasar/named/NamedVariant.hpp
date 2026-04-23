@@ -166,7 +166,7 @@ public:
    */
   explicit NamedVariant(const std::string &name) : NamedObject(name) {}
 
-private:
+protected:
   /** @brief Currently held object. */
   std::shared_ptr<NamedObject> m_currentObject;
   /** @brief Mutex for protection. */

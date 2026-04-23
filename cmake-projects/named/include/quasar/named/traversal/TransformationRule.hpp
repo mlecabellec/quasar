@@ -66,7 +66,7 @@ public:
     /** @brief Returns rule priority. */
     int getPriority() const { return m_priority; }
 
-private:
+protected:
     /** @brief Matcher function. */
     TransformPredicate m_predicate;
     /** @brief Generator function. */

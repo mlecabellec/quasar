@@ -115,7 +115,7 @@ protected:
      */
     void setupSandbox();
 
-private:
+protected:
     sol::state m_lua;
     std::recursive_mutex m_mutex;
     size_t m_id;

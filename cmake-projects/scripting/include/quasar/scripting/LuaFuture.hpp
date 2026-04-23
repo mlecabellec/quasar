@@ -56,7 +56,7 @@ public:
      */
     std::shared_ptr<LuaEngine> getEngine() const { return m_engine; }
 
-private:
+protected:
     std::shared_ptr<LuaEngine> m_engine;
     std::future<Result> m_future;
 };

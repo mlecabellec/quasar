@@ -65,7 +65,7 @@ protected:
      */
     NamedMethod(const std::string& name, MethodType method);
 
-private:
+protected:
     /** @brief The actual logic to execute. */
     MethodType m_method;
 };

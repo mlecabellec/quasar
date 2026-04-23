@@ -17,7 +17,7 @@ public:
      */
     static void run(const std::string& prompt, std::function<void(const std::string&)> executor);
 
-private:
+protected:
     ScriptConsole() = default;
 };
 

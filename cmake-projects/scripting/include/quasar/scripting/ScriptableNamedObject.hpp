@@ -65,7 +65,7 @@ protected:
 
     void addChild(std::shared_ptr<named::NamedObject> child) override;
 
-private:
+protected:
     sol::table m_luaSelf;
 };
 

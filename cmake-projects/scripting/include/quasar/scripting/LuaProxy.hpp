@@ -100,7 +100,7 @@ public:
         }
     }
 
-private:
+protected:
     std::weak_ptr<T> m_weak;
 };
 

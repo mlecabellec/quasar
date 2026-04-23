@@ -87,7 +87,7 @@ protected:
      */
     std::shared_ptr<NamedObject> callHook(const std::string& methodName, std::shared_ptr<NamedObject> args = nullptr);
 
-private:
+protected:
     /** @brief Atomic flag to control the thread loop. */
     std::atomic<bool> m_running{false};
     /** @brief Atomic flag indicating if the thread is active. */

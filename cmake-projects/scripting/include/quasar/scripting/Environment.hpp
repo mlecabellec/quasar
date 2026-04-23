@@ -64,7 +64,7 @@ public:
      */
     std::shared_ptr<LuaEngine> getEngine() const { return m_engine; }
 
-private:
+protected:
     /**
      * @brief Private constructor to enforce factory usage.
      */

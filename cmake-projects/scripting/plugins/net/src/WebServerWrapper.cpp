@@ -28,8 +28,6 @@ LuaWSSession::LuaWSSession(const std::shared_ptr<CppServer::WS::WSServer>& serve
 void LuaWSSession::onWSConnected(const CppServer::HTTP::HTTPRequest& request) {
     (void)request;
     if (m_serverOwner) {
-        // Can't use shared_from_this() in constructor or immediately after without careful casting, 
-        // but here we are in a callback, so it's already managed by a shared_ptr.
         m_serverOwner->registerSession(id().string(), std::static_pointer_cast<LuaWSSession>(shared_from_this()));
         m_serverOwner->notifyConnected(id().string());
     }
@@ -55,6 +53,7 @@ LuaWSServer::LuaWSServer(const std::shared_ptr<CppServer::Asio::Service>& servic
 }
 
 std::expected<void, std::string> LuaWSServer::startAsync() {
+    m_server->owner = shared_from_this();
     if (m_server->Start()) {
         return {};
     }
@@ -92,18 +91,21 @@ void LuaWSServer::unregisterSession(const std::string& id) {
 }
 
 void LuaWSServer::notifyConnected(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onWSConnected) {
         EventTrampoline::getInstance().defer([cb = onWSConnected, i = id]() { cb(i); });
     }
 }
 
 void LuaWSServer::notifyDisconnected(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onDisconnected) {
         EventTrampoline::getInstance().defer([cb = onDisconnected, i = id]() { cb(i); });
     }
 }
 
 void LuaWSServer::notifyReceived(const std::string& id, const std::string& data) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onWSReceived) {
         EventTrampoline::getInstance().defer([cb = onWSReceived, i = id, d = data]() { cb(i, d); });
     }
@@ -149,17 +151,18 @@ LuaSecureWSServer::LuaSecureWSServer(const std::shared_ptr<CppServer::Asio::Serv
 }
 
 std::expected<void, std::string> LuaSecureWSServer::startAsync() {
+    m_server->owner = shared_from_this();
     if (m_server->Start()) {
         return {};
     }
-    return std::unexpected("Failed to start SecureWebServer");
+    return std::unexpected("Failed to start Secure WebServer");
 }
 
 std::expected<void, std::string> LuaSecureWSServer::stopAsync() {
     if (m_server->Stop()) {
         return {};
     }
-    return std::unexpected("Failed to stop SecureWebServer");
+    return std::unexpected("Failed to stop Secure WebServer");
 }
 
 bool LuaSecureWSServer::broadcastText(const std::string& text) {
@@ -186,18 +189,21 @@ void LuaSecureWSServer::unregisterSession(const std::string& id) {
 }
 
 void LuaSecureWSServer::notifyConnected(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onWSConnected) {
         EventTrampoline::getInstance().defer([cb = onWSConnected, i = id]() { cb(i); });
     }
 }
 
 void LuaSecureWSServer::notifyDisconnected(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onDisconnected) {
         EventTrampoline::getInstance().defer([cb = onDisconnected, i = id]() { cb(i); });
     }
 }
 
 void LuaSecureWSServer::notifyReceived(const std::string& id, const std::string& data) {
+    std::lock_guard<std::recursive_mutex> lock(m_callbackMutex);
     if (onWSReceived) {
         EventTrampoline::getInstance().defer([cb = onWSReceived, i = id, d = data]() { cb(i, d); });
     }
@@ -215,7 +221,7 @@ std::shared_ptr<CppServer::Asio::SSLSession> LuaSecureWSServer::InternalServer::
 void bindWebServer(sol::state_view& lua) {
     sol::table serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
 
-    // WebServer (Non-secure)
+    // WebServer Usertype
     sol::usertype<LuaProxy<LuaWSServer>> utWs = lua.new_usertype<LuaProxy<LuaWSServer>>("WebServer",
         sol::no_constructor,
         sol::base_classes, sol::bases<ILuaProxy>());
@@ -226,16 +232,23 @@ void bindWebServer(sol::state_view& lua) {
     utWs["stop"] = [](LuaProxy<LuaWSServer> self, sol::this_state L) { 
         return to_sol_object(self.lock()->stopAsync(), sol::state_view(L)); 
     };
-    utWs["broadcastText"] = [](LuaProxy<LuaWSServer> self, const std::string& text) { 
-        return self.lock()->broadcastText(text); 
-    };
-    utWs["sendText"] = [](LuaProxy<LuaWSServer> self, const std::string& id, const std::string& text) {
-        return self.lock()->sendText(id, text);
+    utWs["broadcastText"] = [](LuaProxy<LuaWSServer> self, const std::string& text) { return self.lock()->broadcastText(text); };
+    utWs["sendText"] = [](LuaProxy<LuaWSServer> self, const std::string& id, const std::string& text) { 
+        return self.lock()->sendText(id, text); 
     };
 
-    utWs["onWSReceived"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { self.lock()->onWSReceived = cb; };
-    utWs["onWSConnected"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { self.lock()->onWSConnected = cb; };
-    utWs["onDisconnected"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { self.lock()->onDisconnected = cb; };
+    utWs["onWSReceived"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSReceived = cb; 
+    };
+    utWs["onWSConnected"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSConnected = cb; 
+    };
+    utWs["onDisconnected"] = [](LuaProxy<LuaWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onDisconnected = cb; 
+    };
 
     serverTable["WebServer"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port, sol::this_state L) {
@@ -245,29 +258,36 @@ void bindWebServer(sol::state_view& lua) {
         }
     );
 
-    // SecureWebServer
-    sol::usertype<LuaProxy<LuaSecureWSServer>> utWss = lua.new_usertype<LuaProxy<LuaSecureWSServer>>("SecureWebServer",
+    // SecureWSServer Usertype
+    sol::usertype<LuaProxy<LuaSecureWSServer>> utSw = lua.new_usertype<LuaProxy<LuaSecureWSServer>>("SecureWSServer",
         sol::no_constructor,
         sol::base_classes, sol::bases<ILuaProxy>());
 
-    utWss["start"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
+    utSw["start"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
         return to_sol_object(self.lock()->startAsync(), sol::state_view(L)); 
     };
-    utWss["stop"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
+    utSw["stop"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
         return to_sol_object(self.lock()->stopAsync(), sol::state_view(L)); 
     };
-    utWss["broadcastText"] = [](LuaProxy<LuaSecureWSServer> self, const std::string& text) { 
-        return self.lock()->broadcastText(text); 
-    };
-    utWss["sendText"] = [](LuaProxy<LuaSecureWSServer> self, const std::string& id, const std::string& text) {
-        return self.lock()->sendText(id, text);
+    utSw["broadcastText"] = [](LuaProxy<LuaSecureWSServer> self, const std::string& text) { return self.lock()->broadcastText(text); };
+    utSw["sendText"] = [](LuaProxy<LuaSecureWSServer> self, const std::string& id, const std::string& text) { 
+        return self.lock()->sendText(id, text); 
     };
 
-    utWss["onWSReceived"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { self.lock()->onWSReceived = cb; };
-    utWss["onWSConnected"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { self.lock()->onWSConnected = cb; };
-    utWss["onDisconnected"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { self.lock()->onDisconnected = cb; };
+    utSw["onWSReceived"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSReceived = cb; 
+    };
+    utSw["onWSConnected"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSConnected = cb; 
+    };
+    utSw["onDisconnected"] = [](LuaProxy<LuaSecureWSServer> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onDisconnected = cb; 
+    };
 
-    serverTable["SecureWebServer"] = lua.create_table_with(
+    serverTable["SecureWSServer"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, int port, sol::this_state L) {
             std::shared_ptr<LuaSecureWSServer> ptr = std::make_shared<LuaSecureWSServer>(service, context, port);
             ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);

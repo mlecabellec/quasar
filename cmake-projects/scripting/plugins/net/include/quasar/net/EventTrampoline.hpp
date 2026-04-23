@@ -13,10 +13,7 @@ namespace quasar::net {
  */
 class EventTrampoline {
 public:
-    static EventTrampoline& getInstance() {
-        static EventTrampoline instance;
-        return instance;
-    }
+    static EventTrampoline& getInstance();
 
     void defer(std::function<void()> func) {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -27,6 +24,7 @@ public:
         std::vector<std::function<void()>> current;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_queue.empty()) return;
             current.swap(m_queue);
         }
         for (auto& func : current) {

@@ -51,56 +51,79 @@ void LuaWSClient::setReconnectionPolicy(const ReconnectionPolicy& policy) {
 }
 
 void LuaWSClient::InternalClient::onConnected() {
+    CppServer::WS::WSClient::onConnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onConnected) {
-        EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onConnected) {
+            EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
+        }
     }
 }
 
 void LuaWSClient::InternalClient::onDisconnected() {
+    CppServer::WS::WSClient::onDisconnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onDisconnected) {
-        EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
-    }
-
-    if (o && o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
-        std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
-        std::thread([o, delay]() {
-            std::this_thread::sleep_for(delay);
-            o->m_client->ConnectAsync();
-        }).detach();
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onDisconnected) {
+            EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
+        }
+        
+        if (o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
+            std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
+            std::thread([o, delay]() {
+                std::this_thread::sleep_for(delay);
+                o->m_client->ConnectAsync();
+            }).detach();
+        }
     }
 }
 
 void LuaWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onWSConnected) {
-        // Expose response status as a string (or URL if needed, but response may not have URL)
-        std::string status = std::to_string(response.status());
-        EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSConnected) {
+            std::string status = std::to_string(response.status());
+            EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
+        }
     }
 }
 
 void LuaWSClient::InternalClient::onWSDisconnected() {
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onWSDisconnected) {
-        EventTrampoline::getInstance().defer([cb = o->onWSDisconnected]() { cb(); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSDisconnected) {
+            EventTrampoline::getInstance().defer([cb = o->onWSDisconnected]() { cb(); });
+        }
     }
 }
 
 void LuaWSClient::InternalClient::onWSReceived(const void* buffer, size_t size) {
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onWSReceived) {
-        std::string data(static_cast<const char*>(buffer), size);
-        EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSReceived) {
+            std::string data(static_cast<const char*>(buffer), size);
+            EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
+        }
     }
+}
+
+void LuaWSClient::InternalClient::onReceived(const void* buffer, size_t size) {
+    CppServer::WS::WSClient::onReceived(buffer, size);
 }
 
 void LuaWSClient::InternalClient::onError(int error, const std::string& category, const std::string& message) {
     (void)category;
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o && o->onError) {
-        EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onError) {
+            EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
+        }
     }
 }
 
@@ -132,55 +155,79 @@ void LuaSecureWSClient::setReconnectionPolicy(const ReconnectionPolicy& policy) 
 }
 
 void LuaSecureWSClient::InternalClient::onConnected() {
+    CppServer::WS::WSSClient::onConnected();
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onConnected) {
-        EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onConnected) {
+            EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
+        }
     }
 }
 
 void LuaSecureWSClient::InternalClient::onDisconnected() {
+    CppServer::WS::WSSClient::onDisconnected();
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onDisconnected) {
-        EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
-    }
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onDisconnected) {
+            EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
+        }
 
-    if (o && o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
-        std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
-        std::thread([o, delay]() {
-            std::this_thread::sleep_for(delay);
-            o->m_client->ConnectAsync();
-        }).detach();
+        if (o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
+            std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
+            std::thread([o, delay]() {
+                std::this_thread::sleep_for(delay);
+                o->m_client->ConnectAsync();
+            }).detach();
+        }
     }
 }
 
 void LuaSecureWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onWSConnected) {
-        std::string status = std::to_string(response.status());
-        EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSConnected) {
+            std::string status = std::to_string(response.status());
+            EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
+        }
     }
 }
 
 void LuaSecureWSClient::InternalClient::onWSDisconnected() {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onDisconnected) {
-        EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSDisconnected) {
+            EventTrampoline::getInstance().defer([cb = o->onWSDisconnected]() { cb(); });
+        }
     }
 }
 
 void LuaSecureWSClient::InternalClient::onWSReceived(const void* buffer, size_t size) {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onWSReceived) {
-        std::string data(static_cast<const char*>(buffer), size);
-        EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onWSReceived) {
+            std::string data(static_cast<const char*>(buffer), size);
+            EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
+        }
     }
+}
+
+void LuaSecureWSClient::InternalClient::onReceived(const void* buffer, size_t size) {
+    CppServer::WS::WSSClient::onReceived(buffer, size);
 }
 
 void LuaSecureWSClient::InternalClient::onError(int error, const std::string& category, const std::string& message) {
     (void)category;
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o && o->onError) {
-        EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
+    if (o) {
+        std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
+        if (o->onError) {
+            EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
+        }
     }
 }
 
@@ -200,12 +247,30 @@ void bindWSClient(sol::state_view& lua) {
     ut["setReconnectionPolicy"] = [](LuaProxy<LuaWSClient> self, const ReconnectionPolicy& p) { self.lock()->setReconnectionPolicy(p); };
 
     // Callbacks
-    ut["onConnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onConnected = cb; };
-    ut["onDisconnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onDisconnected = cb; };
-    ut["onWSConnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onWSConnected = cb; };
-    ut["onWSDisconnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onWSDisconnected = cb; };
-    ut["onWSReceived"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onWSReceived = cb; };
-    ut["onError"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { self.lock()->onError = cb; };
+    ut["onConnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onConnected = cb; 
+    };
+    ut["onDisconnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onDisconnected = cb; 
+    };
+    ut["onWSConnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSConnected = cb; 
+    };
+    ut["onWSDisconnected"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSDisconnected = cb; 
+    };
+    ut["onWSReceived"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSReceived = cb; 
+    };
+    ut["onError"] = [](LuaProxy<LuaWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onError = cb; 
+    };
 
     clientTable["WSClient"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::string& address, int port, sol::this_state L) {
@@ -228,12 +293,30 @@ void bindWSClient(sol::state_view& lua) {
     uts["setReconnectionPolicy"] = [](LuaProxy<LuaSecureWSClient> self, const ReconnectionPolicy& p) { self.lock()->setReconnectionPolicy(p); };
 
     // Callbacks
-    uts["onConnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onConnected = cb; };
-    uts["onDisconnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onDisconnected = cb; };
-    uts["onWSConnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onWSConnected = cb; };
-    uts["onWSDisconnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onWSDisconnected = cb; };
-    uts["onWSReceived"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onWSReceived = cb; };
-    uts["onError"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { self.lock()->onError = cb; };
+    uts["onConnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onConnected = cb; 
+    };
+    uts["onDisconnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onDisconnected = cb; 
+    };
+    uts["onWSConnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSConnected = cb; 
+    };
+    uts["onWSDisconnected"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSDisconnected = cb; 
+    };
+    uts["onWSReceived"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onWSReceived = cb; 
+    };
+    uts["onError"] = [](LuaProxy<LuaSecureWSClient> self, sol::function cb) { 
+        std::lock_guard<std::recursive_mutex> lock(self.lock()->m_callbackMutex);
+        self.lock()->onError = cb; 
+    };
 
     clientTable["SecureWSClient"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, const std::string& address, int port, sol::this_state L) {

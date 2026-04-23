@@ -81,7 +81,7 @@ public:
      */
     void untrackAll(size_t engineId);
 
-private:
+protected:
     ObjectTracker() = default;
     
     mutable std::timed_mutex m_mutex;

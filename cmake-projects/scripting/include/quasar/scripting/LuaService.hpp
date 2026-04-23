@@ -126,7 +126,7 @@ public:
 protected:
     LuaService(const std::string& name);
 
-private:
+protected:
     std::shared_ptr<LuaEngine> m_engine;
     sol::table m_luaSelf;
     std::recursive_timed_mutex m_stateMutex;

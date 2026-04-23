@@ -104,7 +104,7 @@ protected:
     /** @brief Internal constructor for sharing Impl. */
     NamedLuaMethod(const std::string& name, std::shared_ptr<NamedLuaMethodImpl> impl);
 
-private:
+protected:
     std::shared_ptr<NamedLuaMethodImpl> m_impl;
 };
 

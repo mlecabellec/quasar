@@ -80,7 +80,7 @@ public:
      */
     NamedBitBuffer(const std::string& name, size_t bitCount);
 
-private:
+protected:
     bool m_bound;
     std::size_t m_bound_offset;
     std::size_t m_bound_length;

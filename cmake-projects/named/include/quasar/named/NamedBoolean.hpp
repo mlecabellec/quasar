@@ -125,7 +125,7 @@ public:
    */
   NamedBoolean(const std::string &name, bool value);
 
-private:
+protected:
   /** @brief Flag indicating if the value is bound to a buffer. */
   bool m_bound;
   /** @brief Offset in the backing buffer. */

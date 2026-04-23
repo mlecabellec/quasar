@@ -1,7 +1,8 @@
 #include "quasar/scripting/LuaEngine.hpp"
+#include <sol/sol.hpp>
 #include <iostream>
-#include <thread>
 #include <chrono>
+#include <thread>
 
 extern "C" void registerPluginComponents(sol::state_view& lua);
 
@@ -21,14 +22,14 @@ int main() {
             local server = net.server.WebServer.new(service, 8086)
             
             local ws_received_data = ""
-            server.onWSConnected = function(id, url)
-                print("[Server] WS Connected: " .. id .. " at " .. url)
-            end
-            server.onWSReceived = function(id, data)
-                print("[Server] WS Received from " .. id .. ": " .. data)
+            server:onWSConnected(function(id)
+                print("[Server] WS Connected: " .. tostring(id))
+            end)
+            server:onWSReceived(function(id, data)
+                print("[Server] WS Received from " .. tostring(id) .. ": " .. tostring(data))
                 ws_received_data = data
                 server:sendText(id, "WS_ECHO: " .. data)
-            end
+            end)
             
             if server:start() ~= true then
                 error("Server failed to start")
@@ -39,7 +40,7 @@ int main() {
             
             local client_received_echo = false
             client:onWSReceived(function(data)
-                print("[Client] WS Received: " .. data)
+                print("[Client] WS Received: " .. tostring(data))
                 if data == "WS_ECHO: Hello WebSocket!" then
                     client_received_echo = true
                 end
@@ -49,8 +50,8 @@ int main() {
                 print("[Client] TCP Connected")
             end)
 
-            client:onWSConnected(function(url)
-                print("[Client] WS Connected to: " .. url)
+            client:onWSConnected(function(status)
+                print("[Client] WS Connected with status: " .. tostring(status))
                 client:send("Hello WebSocket!")
             end)
 
@@ -58,9 +59,9 @@ int main() {
                 error("Client failed to connect")
             end
             
-            -- Poll for 1 second
+            -- Poll for 2 seconds to allow handshake and echo
             local start = os.clock()
-            while os.clock() - start < 1.0 do
+            while os.clock() - start < 2.0 do
                 quasar.net.poll()
             end
             

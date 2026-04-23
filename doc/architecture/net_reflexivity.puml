@@ -1,0 +1,39 @@
+@startuml
+package "CppServer (Third Party)" {
+    class WSClient
+    class WSServer
+}
+
+package "quasar::net" {
+    class LuaWSClient {
+        + onWSReceived: sol::function
+        + m_callbackMutex: recursive_mutex
+    }
+    
+    class InternalClient {
+        # onWSReceived()
+    }
+    
+    class EventTrampoline {
+        + defer(callback)
+        + poll()
+    }
+    
+    WSClient <|-- InternalClient
+    LuaWSClient *-- InternalClient
+    InternalClient ..> EventTrampoline : defers events
+}
+
+package "Lua Environment" {
+    class "Lua Script" as Script
+    Script ..> LuaWSClient : calls methods
+    EventTrampoline ..> Script : executes callbacks
+}
+
+note right of EventTrampoline
+  Bottleneck: Single-threaded 
+  polling (poll()) required 
+  for determinism.
+end note
+
+@enduml

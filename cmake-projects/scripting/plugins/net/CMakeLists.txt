@@ -4,10 +4,12 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(SOURCES
     src/NetPlugin.cpp
+    src/EventTrampoline.cpp
     src/TCPServerWrapper.cpp
     src/UDPServerWrapper.cpp
     src/WebServerWrapper.cpp
     src/TCPClientWrapper.cpp
+    src/UDPClientWrapper.cpp
     src/HTTPClientWrapper.cpp
     src/WSClientWrapper.cpp
     src/SSLContextWrapper.cpp

@@ -152,7 +152,7 @@ protected:
      */
     void registerMethod(const std::string& name, std::shared_ptr<ICommand> command);
 
-private:
+protected:
     /** @brief Internal state machine. */
     std::atomic<EntityState> m_state{EntityState::Uninitialized};
 
@@ -197,7 +197,7 @@ public:
     std::shared_ptr<NamedObject> execute(std::shared_ptr<NamedObject> args) override {
         return m_func(args);
     }
-private:
+protected:
     /** @brief The wrapped function. */
     FuncType m_func;
 };

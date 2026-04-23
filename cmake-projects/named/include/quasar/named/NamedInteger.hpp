@@ -181,7 +181,7 @@ public:
         m_endian(quasar::coretypes::Endianness::BigEndian) {
   }
 
-private:
+protected:
   /** @brief Flag indicating if the value is bound. */
   bool m_bound;
   /** @brief Byte offset in backing buffer. */

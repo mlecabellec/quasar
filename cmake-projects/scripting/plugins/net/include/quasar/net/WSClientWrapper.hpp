@@ -6,6 +6,7 @@
 #include "quasar/net/EventTrampoline.hpp"
 #include "quasar/net/ReconnectionPolicy.hpp"
 #include <sol/sol.hpp>
+#include <mutex>
 #include <memory>
 #include <string>
 #include <expected>
@@ -32,7 +33,6 @@ public:
     [[nodiscard]] bool sendTextAsync(const std::string& text);
     void setReconnectionPolicy(const ReconnectionPolicy& policy);
 
-private:
     class InternalClient : public CppServer::WS::WSClient {
     public:
         using CppServer::WS::WSClient::WSClient;
@@ -43,12 +43,14 @@ private:
         void onWSConnected(const CppServer::HTTP::HTTPResponse& response) override;
         void onWSDisconnected() override;
         void onWSReceived(const void* buffer, size_t size) override;
+        void onReceived(const void* buffer, size_t size) override;
         void onError(int error, const std::string& category, const std::string& message) override;
     };
 
     std::shared_ptr<InternalClient> m_client;
     ReconnectionPolicy m_policy;
     int m_attempt;
+    std::recursive_mutex m_callbackMutex;
 };
 
 /**
@@ -70,7 +72,6 @@ public:
     [[nodiscard]] bool sendTextAsync(const std::string& text);
     void setReconnectionPolicy(const ReconnectionPolicy& policy);
 
-private:
     class InternalClient : public CppServer::WS::WSSClient {
     public:
         using CppServer::WS::WSSClient::WSSClient;
@@ -81,12 +82,14 @@ private:
         void onWSConnected(const CppServer::HTTP::HTTPResponse& response) override;
         void onWSDisconnected() override;
         void onWSReceived(const void* buffer, size_t size) override;
+        void onReceived(const void* buffer, size_t size) override;
         void onError(int error, const std::string& category, const std::string& message) override;
     };
 
     std::shared_ptr<InternalClient> m_client;
     ReconnectionPolicy m_policy;
     int m_attempt;
+    std::recursive_mutex m_callbackMutex;
 };
 
 void bindWSClient(sol::state_view& lua);

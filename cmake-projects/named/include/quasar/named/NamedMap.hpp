@@ -218,7 +218,7 @@ public:
    */
   explicit NamedMap(const std::string &name) : NamedObject(name) {}
 
-private:
+protected:
   /** @brief Internal elements storage. */
   std::map<std::string, std::shared_ptr<V>> m_elements;
   /** @brief Mutex for protection. */

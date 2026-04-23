@@ -26,7 +26,7 @@ public:
      */
     static bool loadPlugin(const std::string& libraryPath, sol::state_view lua);
 
-private:
+protected:
     // Internal generic library load routine
     static void* loadLibrary(const std::string& libraryPath);
     // Internal symbol resolution

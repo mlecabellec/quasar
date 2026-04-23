@@ -204,7 +204,7 @@ public:
    */
   explicit NamedArray(const std::string &name) : NamedObject(name) {}
 
-private:
+protected:
   /** @brief Internal elements storage. */
   std::vector<std::shared_ptr<T>> m_elements;
   /** @brief Mutex for protection. */

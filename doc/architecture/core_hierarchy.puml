@@ -1,0 +1,61 @@
+@startuml
+package "quasar::named" {
+    class NamedObject {
+        # m_name: string
+        # m_children: list<shared_ptr<NamedObject>>
+        # m_mutex: recursive_mutex
+        + getName(): string
+        + getChildren(): list
+    }
+
+    class ActiveEntity {
+        # m_state: State
+        + processEvent()
+    }
+
+    class NamedPrimitive<T> {
+        # m_value: T
+    }
+
+    class NamedMethod {
+        + execute()
+    }
+
+    class NamedService {
+        + onStart()
+        + onStop()
+    }
+
+    NamedObject <|-- ActiveEntity
+    NamedObject <|-- NamedPrimitive
+    NamedObject <|-- NamedMethod
+    NamedObject <|-- NamedService
+    
+    ActiveEntity <|-- NamedService
+}
+
+package "quasar::scripting" {
+    class LuaProxy<T> {
+        - m_weak: weak_ptr<T>
+        + lock(): shared_ptr<T>
+    }
+    
+    class LuaEngine {
+        # m_lua: sol::state
+        + executeString()
+    }
+    
+    class NamedLuaMethod {
+        # m_script: string
+    }
+    
+    NamedMethod <|-- NamedLuaMethod
+    LuaProxy ..> NamedObject : wraps
+}
+
+note bottom of NamedObject
+  Reflexivity Core:
+  Allows tree-based discovery
+  and dynamic interaction.
+end note
+@enduml

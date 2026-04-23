@@ -30,6 +30,7 @@ add_subdirectory(opcua)
 add_subdirectory(sample-models)
 add_subdirectory(sim-test)
 add_subdirectory(datalogger)
+add_subdirectory(webui)
 add_subdirectory(manual-tests)
 
 # CPack Configuration

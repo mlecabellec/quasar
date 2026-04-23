@@ -46,7 +46,7 @@ public:
      */
     static sol::environment createSandbox(sol::state_view lua);
 
-private:
+protected:
     ScriptManager();
     
     std::timed_mutex m_mutex;

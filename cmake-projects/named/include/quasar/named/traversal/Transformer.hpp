@@ -89,7 +89,7 @@ public:
     std::vector<std::shared_ptr<NamedObject>> transformSubtree(
         std::shared_ptr<NamedObject> node, int depth, const std::string& path);
 
-private:
+protected:
     /** @brief Collection of rules, sorted by priority. */
     std::vector<TransformationRule> m_rules;
 

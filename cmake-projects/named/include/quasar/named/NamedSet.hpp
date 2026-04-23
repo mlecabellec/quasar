@@ -214,7 +214,7 @@ public:
    */
   explicit NamedSet(const std::string &name) : NamedObject(name) {}
 
-private:
+protected:
   /** @brief Internal elements storage. */
   std::map<std::string, std::shared_ptr<T>> m_elements;
   /** @brief Mutex for protection. */

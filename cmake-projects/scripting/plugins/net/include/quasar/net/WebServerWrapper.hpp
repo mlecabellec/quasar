@@ -53,7 +53,8 @@ public:
     void notifyDisconnected(const std::string& id);
     void notifyReceived(const std::string& id, const std::string& data);
 
-private:
+    std::recursive_mutex m_callbackMutex;
+
     class InternalServer : public CppServer::WS::WSServer {
     public:
         using CppServer::WS::WSServer::WSServer;
@@ -106,7 +107,8 @@ public:
     void notifyDisconnected(const std::string& id);
     void notifyReceived(const std::string& id, const std::string& data);
 
-private:
+    std::recursive_mutex m_callbackMutex;
+
     class InternalServer : public CppServer::WS::WSSServer { 
     public:
         InternalServer(const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, int port)

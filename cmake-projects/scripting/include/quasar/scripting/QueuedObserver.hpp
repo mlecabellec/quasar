@@ -70,7 +70,7 @@ public:
         });
     }
 
-private:
+protected:
     std::weak_ptr<LuaService> m_service;
     sol::function m_callback;
     size_t m_watermark;
