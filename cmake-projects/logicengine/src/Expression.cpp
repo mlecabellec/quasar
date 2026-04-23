@@ -9,6 +9,7 @@
 #include "quasar/named/NamedBoolean.hpp"
 #include "quasar/named/NamedString.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
+#include <iostream>
 #include <stdexcept>
 
 namespace quasar::logic {

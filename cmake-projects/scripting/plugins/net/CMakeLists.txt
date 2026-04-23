@@ -14,7 +14,7 @@ set(SOURCES
     src/HTTPClientWrapper.cpp
     src/WSClientWrapper.cpp
     src/SSLContextWrapper.cpp
-    src/WebNamedMethod.cpp
+    src/WebNamedMethodBindings.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})

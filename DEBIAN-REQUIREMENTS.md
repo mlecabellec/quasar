@@ -12,6 +12,8 @@ These tools are required for the basic compilation and configuration of the proj
 *   `pkg-config`: Helper tool used when compiling applications and libraries.
 *   `python3`: Required for various scripts and build helpers.
 *   `file`: Utility to determine file types, used in CI.
+*   `nodejs`: JavaScript runtime for frontend builds (Vite/React).
+*   `npm`: Package manager for frontend dependencies.
 
 ## 2. Kernel Module Development
 
@@ -72,6 +74,7 @@ You can install all the requirements using the following command:
 sudo apt-get update
 sudo apt-get install -y \
     build-essential cmake git pkg-config python3 file \
+    nodejs npm \
     linux-headers-$(uname -r) autoconf automake libtool dkms \
     libasound2-dev libx11-dev libxrandr-dev libxi-dev \
     libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \

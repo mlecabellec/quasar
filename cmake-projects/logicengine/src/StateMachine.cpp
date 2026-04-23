@@ -4,6 +4,7 @@
  */
 
 #include "quasar/logic/StateMachine.hpp"
+#include <iostream>
 #include <algorithm>
 
 namespace quasar::logic {
@@ -41,6 +42,25 @@ void State::addTransition(const std::shared_ptr<Transition>& transition) {
 }
 
 const std::vector<std::shared_ptr<Transition>>& State::getTransitions() const { return m_transitions; }
+
+void State::enter(std::shared_ptr<quasar::named::NamedObject> ctx) {
+    if (m_onEntry) m_onEntry->execute(ctx);
+}
+
+void State::exit(std::shared_ptr<quasar::named::NamedObject> ctx) {
+    if (m_onExit) m_onExit->execute(ctx);
+}
+
+void State::addChild(std::shared_ptr<quasar::named::NamedObject> child) {
+    // [CS-0010.44] Call base class implementation for tree structure.
+    quasar::named::NamedObject::addChild(child);
+
+    // [CS-0010.44] Auto-register if child is a transition.
+    std::shared_ptr<Transition> transition = std::dynamic_pointer_cast<Transition>(child);
+    if (transition) {
+        addTransition(transition);
+    }
+}
 
 bool State::isChildOf(const std::shared_ptr<State>& other) const {
     std::shared_ptr<quasar::named::NamedObject> p = getParent();
@@ -142,11 +162,15 @@ void StateMachine::processCycle() {
 
                 if (postOk && targetInvOk) {
                     // Success
+                    if (m_currentState) m_currentState->exit(m_contextRoot);
                     m_currentState = target;
+                    m_currentState->enter(m_contextRoot);
                 } else {
                     // Fail to commit, move to target's failure state or ground
                     std::shared_ptr<State> failState = target->getFailureState();
+                    if (m_currentState) m_currentState->exit(m_contextRoot);
                     m_currentState = failState ? failState : m_groundState;
+                    if (m_currentState) m_currentState->enter(m_contextRoot);
                 }
                 return; // One transition per cycle for StateMachine
             }

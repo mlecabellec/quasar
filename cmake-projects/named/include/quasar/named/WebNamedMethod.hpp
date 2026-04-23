@@ -1,5 +1,5 @@
-#ifndef QUASAR_NET_WEBNAMEDMETHOD_HPP
-#define QUASAR_NET_WEBNAMEDMETHOD_HPP
+#ifndef QUASAR_NAMED_WEBNAMEDMETHOD_HPP
+#define QUASAR_NAMED_WEBNAMEDMETHOD_HPP
 
 #include "quasar/named/TypedNamedMethod.hpp"
 #include <string>
@@ -8,7 +8,7 @@ namespace sol {
     class state_view;
 }
 
-namespace quasar::net {
+namespace quasar::named {
 
 /**
  * @class WebNamedMethod
@@ -117,14 +117,6 @@ private:
     std::string m_oasSummary;
 };
 
-/**
- * @brief Registers WebNamedMethod usertype and factory in Lua.
- * @param lua The Lua state.
- * @feature TSK-20260311-008 Scripted Web Methods
- * @exposed
- */
-void bindWebNamedMethod(sol::state_view& lua);
+} // namespace quasar::named
 
-} // namespace quasar::net
-
-#endif // QUASAR_NET_WEBNAMEDMETHOD_HPP
+#endif // QUASAR_NAMED_WEBNAMEDMETHOD_HPP

@@ -32,6 +32,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
+                             nodejs npm \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                              libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb
           # Attempt to install headers for the running kernel if possible, 

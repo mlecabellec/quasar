@@ -46,6 +46,11 @@ public:
     /** @brief Gets all outgoing transitions. */
     const std::vector<std::shared_ptr<Transition>>& getTransitions() const;
 
+    /** @brief Executes entry action. */
+    void enter(std::shared_ptr<quasar::named::NamedObject> ctx = nullptr);
+    /** @brief Executes exit action. */
+    void exit(std::shared_ptr<quasar::named::NamedObject> ctx = nullptr);
+
     /** @brief Checks if this state is a child of another. */
     bool isChildOf(const std::shared_ptr<State>& other) const;
 
@@ -54,6 +59,9 @@ public:
 
 protected:
     explicit State(const std::string& name);
+
+    /** @brief Overridden to auto-register transitions. */
+    void addChild(std::shared_ptr<quasar::named::NamedObject> child) override;
 
 private:
     Expression m_invariant;

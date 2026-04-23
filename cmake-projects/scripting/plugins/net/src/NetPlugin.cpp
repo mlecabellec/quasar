@@ -9,7 +9,7 @@
 #include "quasar/net/HTTPClientWrapper.hpp"
 #include "quasar/net/WSClientWrapper.hpp"
 #include "quasar/net/SSLContextWrapper.hpp"
-#include "quasar/net/WebNamedMethod.hpp"
+#include "quasar/named/WebNamedMethod.hpp"
 
 namespace quasar::net {
 
