@@ -27,6 +27,11 @@ This session successfully delivered a fully functional, bi-directional web ecosy
 - **Real-time Telemetry**: Developed a high-performance charting grid using Recharts/SVG to visualize live data streams.
 - **Bi-directional Control**: Enabled "SET" commands for primitive nodes (`Integer`, `Boolean`, `Float`) with acknowledgment feedback.
 
+### 🌌 Integration Reference: `sampleweb001`
+- **End-to-End Orchestration**: Delivered a unified reference target that combines the `NamedObject` hierarchy, `LogicEngine` (FSM), `OpcUaServerService`, and `WebUIService`.
+- **Logic Verification**: Confirmed that state transitions can be driven from the Web UI via REST/WebSocket and monitored via OPC UA.
+- **Verification Script**: Created `VerifySampleWeb001.sh` for automated full-stack validation.
+
 ---
 
 ## 3. Implementation Plan Status
