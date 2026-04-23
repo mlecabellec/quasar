@@ -268,13 +268,40 @@ std::expected<void, std::string> WebUIService::setNodeValue(std::shared_ptr<Name
 }
 
 void WebUIService::handleRequest(std::shared_ptr<InternalHTTPSession> session, const CppServer::HTTP::HTTPRequest& request) {
-    std::string url(request.url());
-    if (url.starts_with("/api/v1/walk")) { handleWalkApi(session, request); }
-    else if (url.starts_with("/api/v1/meta")) { handleMetaApi(session, request); }
-    else if (url.starts_with("/api/v1/set")) { handleSetApi(session, request); }
-    else if (url.starts_with("/api/v1/induced")) { handleInducedApi(session, request); }
-    else if (url == "/openapi.json" || url == "/api/v1/openapi.json") { handleOpenApi(session, request); }
-    else { handleStaticFile(session, request); }
+    // [CS-0010.20] Global resilience boundary.
+    try {
+        std::string url(request.url());
+        
+        // Log incoming request for diagnostics.
+        // std::cout << "[WebUI] Request: " << request.method() << " " << url << std::endl;
+
+        // [CS-0010.44] Route requests based on URI prefixes.
+        if (url.starts_with("/api/v1/walk")) {
+            handleWalkApi(session, request);
+        } else if (url.starts_with("/api/v1/meta")) {
+            handleMetaApi(session, request);
+        } else if (url.starts_with("/api/v1/set")) {
+            handleSetApi(session, request);
+        } else if (url.starts_with("/api/v1/induced")) {
+            handleInducedApi(session, request);
+        } else if (url == "/openapi.json" || url == "/api/v1/openapi.json") {
+            handleOpenApi(session, request);
+        } else {
+            handleStaticFile(session, request);
+        }
+    } catch (const std::exception& e) {
+        // [CS-0010.20] Catch all to prevent service crash.
+        std::cerr << "[WebUI] CRITICAL FAULT during request handling: " << e.what() << std::endl;
+        
+        // Return 500 error to client.
+        CppServer::HTTP::HTTPResponse response;
+        response.SetBegin(500);
+        response.SetHeader("Content-Type", "application/json");
+        response.SetBody("{\"status\":\"error\",\"message\":\"Internal Server Error: check logs\"}");
+        session->SendResponseAsync(response);
+    } catch (...) {
+        std::cerr << "[WebUI] UNKNOWN CRITICAL FAULT during request handling." << std::endl;
+    }
 }
 
 void WebUIService::handleWalkApi(std::shared_ptr<InternalHTTPSession> session, const CppServer::HTTP::HTTPRequest& request) {

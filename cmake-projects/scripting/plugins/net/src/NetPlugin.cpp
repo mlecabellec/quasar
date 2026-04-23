@@ -13,6 +13,9 @@
 
 namespace quasar::net {
 
+// [CS-0010.44] Forward declarations for Lua bindings.
+void bindWebNamedMethod(sol::state_view& lua);
+
 extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lua) {
     // Ensure intermediate tables exist before creating sub-tables.
     // sol2 does NOT auto-create intermediate tables via [] — get_or_create is needed at each level.
