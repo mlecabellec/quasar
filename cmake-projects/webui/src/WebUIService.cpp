@@ -183,8 +183,14 @@ void WebUIService::notify(std::shared_ptr<NamedObject> obj) {
 void WebUIService::deltaWorkerLoop(std::stop_token stopToken) {
     uint64_t iterationCount = 0;
     while (!stopToken.stop_requested() && ++iterationCount < 10000000000ULL) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        flushDeltas();
+        try {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            flushDeltas();
+        } catch (const std::exception& e) {
+            std::cerr << "[WebUI] EXCEPTION in Delta Worker loop: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "[WebUI] UNKNOWN EXCEPTION in Delta Worker loop." << std::endl;
+        }
     }
 }
 

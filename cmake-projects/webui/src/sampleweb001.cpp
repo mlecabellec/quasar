@@ -144,8 +144,8 @@ int main(int argc, char** argv) {
         auto startTime = std::chrono::steady_clock::now();
         auto lastCycle = startTime;
         
-        // Capped run: 60 seconds
-        while (std::chrono::steady_clock::now() - startTime < std::chrono::seconds(60)) {
+        // Capped run: 3600 seconds (1 hour)
+        while (std::chrono::steady_clock::now() - startTime < std::chrono::seconds(3600)) {
             auto now = std::chrono::steady_clock::now();
             auto dt = now - lastCycle;
             lastCycle = now;

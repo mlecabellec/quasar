@@ -319,6 +319,12 @@ public:
   void unsubscribe(std::weak_ptr<IObserver> observer);
 
 protected:
+  /** @brief Recursion depth limit for tree updates. */
+  static constexpr int MAX_TREE_UPDATE_DEPTH = 1024;
+
+  /** @brief Depth-limited internal version incrementer. [CS-0010.37] */
+  void incrementTreeVersionInternal(int depth);
+
   /**
    * @brief Protected constructor to enforce use of create() factory.
    * @param name The name of the object.

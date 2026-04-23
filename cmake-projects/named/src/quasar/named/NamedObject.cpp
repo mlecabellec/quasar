@@ -61,6 +61,15 @@ uint64_t NamedObject::getTreeVersion() const {
 }
 
 void NamedObject::incrementTreeVersion() {
+  incrementTreeVersionInternal(0);
+}
+
+void NamedObject::incrementTreeVersionInternal(int depth) {
+  // [CS-0010.37] Hard limit on recursion depth.
+  if (depth > MAX_TREE_UPDATE_DEPTH) {
+    throw std::runtime_error("Tree version propagation depth limit exceeded");
+  }
+
   // [CS-0030.1] Feature: REST API Cache Consistency
   // Increment local structural version.
   m_treeVersion.fetch_add(1, std::memory_order_relaxed);
@@ -68,9 +77,9 @@ void NamedObject::incrementTreeVersion() {
   // Recursively notify parent hierarchy of structural change.
   std::shared_ptr<NamedObject> parentPtr = m_parent.lock();
   
-  // If a parent exists, propagate the increment.
+  // If a parent exists, propagate the increment with incremented depth.
   if (parentPtr) {
-    parentPtr->incrementTreeVersion();
+    parentPtr->incrementTreeVersionInternal(depth + 1);
   }
 }
 

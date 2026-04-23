@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 export interface QuasarNode {
   name: string;
@@ -12,10 +12,12 @@ export interface QuasarNode {
 /**
  * @hook useTree
  * @brief Manages the state and real-time discovery of the Quasar hierarchy.
+ * Now supports fuzzy filtering for high-speed navigation.
  */
 export function useTree(lastWsMessage: any) {
   const [tree, setTree] = useState<QuasarNode[]>([]);
   const [selectedNode, setSelectedNode] = useState<QuasarNode | null>(null);
+  const [filter, setFilter] = useState("");
 
   const fetchNodes = useCallback(async (path: string = "/") => {
     try {
@@ -48,6 +50,26 @@ export function useTree(lastWsMessage: any) {
     });
   }, [fetchNodes]);
 
+  // --- Filter Logic ---
+  const filteredTree = useMemo(() => {
+    if (!filter) return tree;
+    const lowerFilter = filter.toLowerCase();
+    
+    const filterNodes = (list: QuasarNode[]): QuasarNode[] => {
+      return list.reduce((acc: QuasarNode[], node) => {
+        const matches = node.name.toLowerCase().includes(lowerFilter) || node.type.toLowerCase().includes(lowerFilter);
+        const filteredChildren = node.children ? filterNodes(node.children) : [];
+        
+        if (matches || filteredChildren.length > 0) {
+          acc.push({ ...node, children: filteredChildren, isExpanded: matches ? node.isExpanded : true });
+        }
+        return acc;
+      }, []);
+    };
+    
+    return filterNodes(tree);
+  }, [tree, filter]);
+
   // --- Real-time Sync Logic ---
   useEffect(() => {
     if (lastWsMessage?.action === "batch_update") {
@@ -55,7 +77,7 @@ export function useTree(lastWsMessage: any) {
       setTree(prev => {
         const applyUpdates = (list: QuasarNode[]): QuasarNode[] => {
           return list.map(node => {
-            const update = updates.find((u: any) => u.name === node.name); // Simplified name-based match
+            const update = updates.find((u: any) => u.name === node.name);
             let newNode = update ? { ...node, value: update.value } : node;
             if (newNode.children) newNode.children = applyUpdates(newNode.children);
             return newNode;
@@ -70,5 +92,5 @@ export function useTree(lastWsMessage: any) {
     fetchNodes("/").then(setTree);
   }, [fetchNodes]);
 
-  return { tree, selectedNode, setSelectedNode, expandNode };
+  return { tree: filteredTree, selectedNode, setSelectedNode, expandNode, filter, setFilter };
 }

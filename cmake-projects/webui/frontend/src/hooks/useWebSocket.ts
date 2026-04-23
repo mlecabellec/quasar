@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 /**
  * @hook useWebSocket
  * @brief Manages a persistent WebSocket connection to the Quasar backend.
+ * Supports dev mode redirection to the industrial backend port.
  */
 export function useWebSocket() {
   const [connected, setConnected] = useState(false);
@@ -10,24 +11,38 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
 
   const connect = useCallback(() => {
-    // Port logic matching C++ WebUIService (m_port + 1)
-    const port = parseInt(window.location.port) + 1;
+    // Port logic: 
+    // If running on Vite (5173), connect to default Quasar WS port (8087)
+    // Otherwise, use relative port logic (m_port + 1)
+    let port = parseInt(window.location.port) + 1;
+    if (window.location.port === "5173") {
+      port = 8087;
+    }
+    
     const ws = new WebSocket(`ws://${window.location.hostname}:${port}`);
 
     ws.onopen = () => {
       setConnected(true);
-      console.log("[Quasar] Link established.");
+      console.log(`[Quasar] Link established on port ${port}.`);
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setLastMessage(data);
+      try {
+        const data = JSON.parse(event.data);
+        setLastMessage(data);
+      } catch (e) {
+        console.error("[Quasar] WS Parse Error:", e);
+      }
     };
 
     ws.onclose = () => {
       setConnected(false);
       console.warn("[Quasar] Link lost. Retrying in 2s...");
       setTimeout(connect, 2000);
+    };
+
+    ws.onerror = (err) => {
+      console.error("[Quasar] WS Error:", err);
     };
 
     wsRef.current = ws;
