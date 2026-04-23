@@ -49,7 +49,7 @@ This review is a preliminary review of the quasar::named namespace.
 - [REVIEW-00002.16] [FE-0020.11] NamedObject shall provide methods for hashing. Not implemented. Not compliant.
 - [REVIEW-00002.17] [FE-0020.12] Utilities shall be provided for traversing the tree. Implemented and tested. Compliant.
 - [REVIEW-00002.18] [FE-0020.13] Utilities shall be provided for searching the tree. Implemented and tested. Compliant.
-- [REVIEW-00002.19] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallw copy or deep copy found. Not compliant.
+- [REVIEW-00002.19] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallow copy or deep copy found. Not compliant.
 
 ### Issues found
 
@@ -60,7 +60,7 @@ This review is a preliminary review of the quasar::named namespace.
 - [ISSUE-00002.5] [FE-0020.7] The NamedObject class shall support a "related" property. Implemented and tests with a single object instead expected collection of object. Probably badly specified but still not compliant. Implementation shall support multiple related named objects.
 - [ISSUE-00002.6] [FE-0020.9] Capabilities shall be provided to convert NamedObject to/from JSON, BSON, YAML, and XML. JSON serialization seems to be implemented but not tested. BSON serialization not implemented. Not compliant.
 - [ISSUE-00002.7] [FE-0020.11] NamedObject shall provide methods for hashing. Not implemented. Not compliant.
-- [ISSUE-00002.8] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallw copy or deep copy found. Not compliant.
+- [ISSUE-00002.8] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallow copy or deep copy found. Not compliant.
 
 ### Issues resolved
 
@@ -75,7 +75,7 @@ This review is a preliminary review of the quasar::named namespace.
 - [ISSUE-00002.5] [FE-0020.7] The NamedObject class shall support a "related" property. Implemented and tests with a single object instead expected collection of object. Probably badly specified but still not compliant. Implementation shall support multiple related named objects.
 - [ISSUE-00002.6] [FE-0020.9] Capabilities shall be provided to convert NamedObject to/from JSON, BSON, YAML, and XML. JSON serialization seems to be implemented but not tested. BSON serialization not implemented. Not compliant.
 - [ISSUE-00002.7] [FE-0020.11] NamedObject shall provide methods for hashing. Not implemented. Not compliant.
-- [ISSUE-00002.8] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallw copy or deep copy found. Not compliant.
+- [ISSUE-00002.8] [FE-0020.14] Utilities shall be provided for copying, moving, and removing parts of the tree. Implemented cloning of one object. No shallow copy or deep copy found. Not compliant.
 
 ## Conclusion
 
