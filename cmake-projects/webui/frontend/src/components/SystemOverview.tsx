@@ -1,4 +1,4 @@
-import { Zap, Activity, Shield, CheckCircle2 } from 'lucide-react';
+import { Activity, CheckCircle2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
