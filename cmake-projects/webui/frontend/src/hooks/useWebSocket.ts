@@ -11,11 +11,12 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
 
   const connect = useCallback(() => {
-    // Port logic: 
-    // If running on Vite (5173), connect to default Quasar WS port (8087)
+    // Port logic:
+    // If running on a Vite dev server (5173+), connect to default Quasar WS port (8087)
     // Otherwise, use relative port logic (m_port + 1)
-    let port = parseInt(window.location.port) + 1;
-    if (window.location.port === "5173") {
+    const currentPort = parseInt(window.location.port);
+    let port = currentPort + 1;
+    if (currentPort >= 5173 && currentPort < 5200) {
       port = 8087;
     }
     
