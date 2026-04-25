@@ -26,7 +26,7 @@ public:
      */
     static bool loadPlugin(const std::string& libraryPath, sol::state_view lua);
 
-protected:
+public:
     // Internal generic library load routine
     static void* loadLibrary(const std::string& libraryPath);
     // Internal symbol resolution
@@ -34,8 +34,7 @@ protected:
     // Unloading library, note: usually plugins stay loaded
     static void unloadLibrary(void* handle);
 
-    // Keep handles open to prevent unloading code that we are bound to.
-    static std::vector<void*> s_loadedHandles;
+protected:
 };
 
 } // namespace quasar::scripting

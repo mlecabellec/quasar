@@ -1,4 +1,5 @@
 #include "DelayedModels.hpp"
+#include <memory>
 #include <Smp/IFactory.h>
 #include <Smp/ISimulator.h>
 
@@ -13,9 +14,13 @@ public:
   Smp::Uuid GetUuid() const override { return {0xAAA22222, 0x2222, 0x2222, 0x2222, 0x222222222222}; }
   Smp::String8 GetTypeName() const override { return "DelayedArrayModel"; }
   Smp::IComponent *CreateInstance(Smp::String8 name, Smp::String8 description, Smp::IComposite *parent) override {
-    return new DelayedArrayModel(name, description, parent);
+    return std::make_unique<DelayedArrayModel>(name, description, parent).release();
   }
-  void DeleteInstance(Smp::IComponent *instance) override { if (instance) delete instance; }
+  void DeleteInstance(Smp::IComponent *instance) override { 
+    if (instance) {
+        std::unique_ptr<Smp::IComponent> ptr(instance);
+    }
+  }
 };
 
 static DelayedArrayFactory factory;

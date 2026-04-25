@@ -18,24 +18,24 @@ protected:
 };
 
 TEST_F(NamedMethodAndServiceTest, NamedMethodBasic) {
-    auto method = NamedMethod::create("testMethod", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
-        auto val = std::dynamic_pointer_cast<NamedInteger<int>>(args);
+    std::shared_ptr<NamedMethod> method = NamedMethod::create("testMethod", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
+        std::shared_ptr<NamedInteger<int>> val = std::dynamic_pointer_cast<NamedInteger<int>>(args);
         int input = val ? val->value() : 0;
         return NamedInteger<int>::create("result", input * 2);
     }, root);
 
-    auto args = NamedInteger<int>::create("args", 21);
-    auto result = method->execute(args);
-    auto resultInt = std::dynamic_pointer_cast<NamedInteger<int>>(result);
+    std::shared_ptr<NamedInteger<int>> args = NamedInteger<int>::create("args", 21);
+    std::shared_ptr<NamedObject> result = method->execute(args);
+    std::shared_ptr<NamedInteger<int>> resultInt = std::dynamic_pointer_cast<NamedInteger<int>>(result);
 
     ASSERT_NE(resultInt, nullptr);
     EXPECT_EQ(resultInt->value(), 42);
 }
 
 TEST_F(NamedMethodAndServiceTest, NamedMethodOwnerAccess) {
-    auto data = NamedInteger<int>::create("data", 10, root);
-    auto method = NamedMethod::create("increment", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
-        auto ownerData = std::dynamic_pointer_cast<NamedInteger<int>>(owner->getChild("data"));
+    std::shared_ptr<NamedInteger<int>> data = NamedInteger<int>::create("data", 10, root);
+    std::shared_ptr<NamedMethod> method = NamedMethod::create("increment", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
+        std::shared_ptr<NamedInteger<int>> ownerData = std::dynamic_pointer_cast<NamedInteger<int>>(owner->getChild("data"));
         if (ownerData) {
             ownerData->setValue(ownerData->value() + 1);
         }
@@ -47,7 +47,7 @@ TEST_F(NamedMethodAndServiceTest, NamedMethodOwnerAccess) {
 }
 
 TEST_F(NamedMethodAndServiceTest, NamedServiceLifecycle) {
-    auto service = NamedService::create("testService", root);
+    std::shared_ptr<NamedService> service = NamedService::create("testService", root);
     std::atomic<int> counter{0};
 
     NamedMethod::create("run", [&](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
@@ -69,7 +69,7 @@ TEST_F(NamedMethodAndServiceTest, NamedServiceLifecycle) {
 }
 
 TEST_F(NamedMethodAndServiceTest, NamedServiceHooks) {
-    auto service = NamedService::create("hookService", root);
+    std::shared_ptr<NamedService> service = NamedService::create("hookService", root);
     bool configured = false;
     bool started = false;
     bool stopped = false;
@@ -104,7 +104,7 @@ TEST_F(NamedMethodAndServiceTest, MultiThreadStress) {
     std::atomic<int> totalRuns{0};
 
     for (int i = 0; i < NUM_SERVICES; ++i) {
-        auto service = NamedService::create("service_" + std::to_string(i), root);
+        std::shared_ptr<NamedService> service = NamedService::create("service_" + std::to_string(i), root);
         NamedMethod::create("run", [&](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
             totalRuns++;
             return nullptr;
@@ -114,12 +114,12 @@ TEST_F(NamedMethodAndServiceTest, MultiThreadStress) {
     }
 
     // Start all
-    for (auto& s : services) s->start();
+    for (std::shared_ptr<NamedService>& s : services) s->start();
     
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Stop all
-    for (auto& s : services) s->stop();
+    for (std::shared_ptr<NamedService>& s : services) s->stop();
 
     EXPECT_GT(totalRuns.load(), NUM_SERVICES * 10);
 }

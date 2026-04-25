@@ -47,10 +47,10 @@ TEST_F(OpcUaServerTest, BasicStartupAndMapping) {
 }
 
 TEST_F(OpcUaServerTest, MethodMappingAndExecution) {
-    auto multiplyMethod = NamedMethod::create("Multiply", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+    std::shared_ptr<NamedMethod> multiplyMethod = NamedMethod::create("Multiply", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
         (void)owner;
         if (!args || args->getType() != "NamedInteger") return nullptr;
-        auto input = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args);
+        std::shared_ptr<NamedInteger<int64_t>> input = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args);
         if (!input) return nullptr;
         return NamedInteger<int64_t>::create("result", input->value() * 2);
     }, data);

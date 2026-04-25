@@ -5,41 +5,28 @@
 #include <vector>
 #include "quasar/scripting/LuaEngine.hpp"
 #include "quasar/scripting/PluginLoader.hpp"
+#include <cstdlib>
 
 namespace quasar::scripting {
 
 class ManualScriptTest : public ::testing::TestWithParam<std::filesystem::path> {
 protected:
     void SetUp() override {
+        // [CS-0010.44] No global setup needed for manual scripts.
     }
 };
 
 TEST_P(ManualScriptTest, Execute) {
     std::filesystem::path scriptPath = GetParam();
-    std::cout << "[ManualTest] Running: " << scriptPath.filename().string() << std::endl;
-
-    std::ifstream file(scriptPath);
-    ASSERT_TRUE(file.is_open()) << "Could not open script: " << scriptPath;
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string code = buffer.str();
-
     std::shared_ptr<LuaEngine> engine = LuaEngine::create();
     sol::state& lua = engine->getState();
+    
+    std::cout << "[ManualTest] Running: " << scriptPath.filename().string() << std::endl;
 
-    // Override os.exit to catch plugin-related exits or intentional stops
-    lua["os"]["exit"] = [](int code) {
-        if (code != 0) {
-            throw std::runtime_error("LUA_EXIT_ERROR_" + std::to_string(code));
-        }
-        throw std::runtime_error("LUA_EXIT_ZERO");
-    };
-
-    // Load available plugins from QUASAR_PLUGIN_DIR
+    // Load available plugins.
     std::filesystem::path pluginDir(QUASAR_PLUGIN_DIR);
     if (std::filesystem::exists(pluginDir)) {
-        for (const auto& entry : std::filesystem::directory_iterator(pluginDir)) {
+        for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(pluginDir)) {
             if (entry.path().extension() == ".so" || entry.path().extension() == ".dll") {
                 std::string name = entry.path().filename().string();
                 if (name.find("quasar_") != std::string::npos && name.find("test") == std::string::npos) {
@@ -50,18 +37,15 @@ TEST_P(ManualScriptTest, Execute) {
     }
 
     try {
-        sol::protected_function_result result = engine->executeString(code);
-        if (!result.valid()) {
-            sol::error err = result;
-            std::string errMsg = err.what();
-            
-            // Check for common failure patterns if plugins are still missing despite loading attempts
-            if (errMsg.find("attempt to index a nil value (field '") != std::string::npos ||
-                errMsg.find("attempt to index a nil value (local '") != std::string::npos) {
-                GTEST_SKIP() << "Skipping " << scriptPath.filename() << " due to missing plugin requirements: " << errMsg;
-            }
-            
-            FAIL() << "Script " << scriptPath.filename() << " failed:\n" << errMsg;
+        lua.script_file(scriptPath.string());
+    } catch (const sol::error& e) {
+        std::string msg = e.what();
+        if (msg.find("LUA_EXIT_ERROR") != std::string::npos) {
+             FAIL() << "Script " << scriptPath.filename() << " called os.exit with error: " << msg;
+        } else if (msg == "LUA_EXIT_ZERO") {
+            // Success exit
+        } else {
+            FAIL() << "Script " << scriptPath.filename() << " failed:\n" << msg;
         }
     } catch (const std::exception& e) {
         std::string msg = e.what();
@@ -74,28 +58,43 @@ TEST_P(ManualScriptTest, Execute) {
         }
     }
     
+    try {
+        engine->executeString("if quasar and quasar.net and quasar.net.clear_trampoline then quasar.net.clear_trampoline() end");
+    } catch (...) {}
+
     engine->shutdown();
+
+    // Flush any pending ASIO events that were generated during shutdown.
+    std::filesystem::path pluginPath = pluginDir / "libquasar_net_plugin.so";
+    void* handle = PluginLoader::loadLibrary(pluginPath.string());
+    
+    if (!handle) {
+        pluginPath = pluginDir / "quasar_net_plugin.dll";
+        handle = PluginLoader::loadLibrary(pluginPath.string());
+    }
+    
+    if (handle) {
+        void* sym = PluginLoader::getSymbolAddress(handle, "quasar_net_clear_trampoline");
+        if (sym) {
+            auto func = reinterpret_cast<void(*)()>(sym);
+            func();
+        }
+    }
+
+    engine.reset(); // Explicitly release the shared_ptr before ending the scope.
 }
 
 std::vector<std::filesystem::path> GetManualScripts() {
     std::vector<std::filesystem::path> scripts;
     std::string pathStr = QUASAR_MANUAL_DIR;
-    std::filesystem::path path(pathStr);
-    
-    if (std::filesystem::exists(path) && std::filesystem::is_directory(path)) {
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-            std::string filename = entry.path().filename().string();
-            // Exclude EtherCAT related scripts and non-lua files
-            // Also exclude scripts with hard external dependencies (Script_19) or known mirroring proxy bugs (opcua_test)
-            if (entry.path().extension() == ".lua" && 
-                filename.find("ethercat") == std::string::npos &&
-                filename.find("19_opcua_client") == std::string::npos &&
-                filename.find("opcua_test") == std::string::npos) {
-                scripts.push_back(entry.path());
-            }
+    std::filesystem::path manualDir(pathStr);
+    if (!std::filesystem::exists(manualDir)) return scripts;
+
+    for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(manualDir)) {
+        if (entry.path().extension() == ".lua") {
+            scripts.push_back(entry.path());
         }
     }
-    
     std::sort(scripts.begin(), scripts.end());
     return scripts;
 }
@@ -104,7 +103,7 @@ INSTANTIATE_TEST_SUITE_P(
     DocManual,
     ManualScriptTest,
     ::testing::ValuesIn(GetManualScripts()),
-    [](const ::testing::TestParamInfo<ManualScriptTest::ParamType>& info) {
+    [](const testing::TestParamInfo<ManualScriptTest::ParamType>& info) {
         std::string name = info.param.stem().string();
         if (std::isdigit(name[0])) {
             name = "Script_" + name;
@@ -115,3 +114,12 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 } // namespace quasar::scripting
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+    // Use quick_exit to bypass static destructors and avoid double free corruption 
+    // caused by dlopen/sol2/RTTI interactions on process exit.
+    std::quick_exit(result);
+    return result;
+}

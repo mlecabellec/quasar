@@ -90,9 +90,13 @@ public:
      */
     template<typename T>
     std::future<T> enqueueTask(std::function<T(UA_Client*)> task) {
-        auto promise = std::make_shared<std::promise<T>>();
+        std::shared_ptr<std::promise<T>> promise = std::make_shared<std::promise<T>>();
         {
-            std::lock_guard<std::mutex> lock(m_queueMutex);
+            std::unique_lock<std::timed_mutex> lock(m_queueMutex, std::chrono::milliseconds(5000));
+            if (!lock.owns_lock()) {
+                promise->set_exception(std::make_exception_ptr(std::runtime_error("Timeout acquiring queue mutex")));
+                return promise->get_future();
+            }
             m_tasks.push([task, promise](UA_Client* client) {
                 try {
                     promise->set_value(task(client));
@@ -106,9 +110,13 @@ public:
 
     /** @brief Specialization for void tasks. */
     std::future<void> enqueueTask(std::function<void(UA_Client*)> task) {
-        auto promise = std::make_shared<std::promise<void>>();
+        std::shared_ptr<std::promise<void>> promise = std::make_shared<std::promise<void>>();
         {
-            std::lock_guard<std::mutex> lock(m_queueMutex);
+            std::unique_lock<std::timed_mutex> lock(m_queueMutex, std::chrono::milliseconds(5000));
+            if (!lock.owns_lock()) {
+                promise->set_exception(std::make_exception_ptr(std::runtime_error("Timeout acquiring queue mutex")));
+                return promise->get_future();
+            }
             m_tasks.push([task, promise](UA_Client* client) {
                 try {
                     task(client);
@@ -160,7 +168,7 @@ private:
     std::map<std::string, std::shared_ptr<named::NamedObject>> m_nodeToLocalMap;
 
     /** @brief Mutex for the task queue. */
-    std::mutex m_queueMutex;
+    std::timed_mutex m_queueMutex;
     /** @brief Task queue for cross-thread client calls. */
     std::queue<std::function<void(UA_Client*)>> m_tasks;
 

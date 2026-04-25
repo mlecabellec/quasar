@@ -149,7 +149,7 @@ public:
    */
   std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
-           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE) const override;
+           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE, int maxDepth = 256) const override;
 
   /**
    * @brief Creates a sub-slice view of this bit slice.

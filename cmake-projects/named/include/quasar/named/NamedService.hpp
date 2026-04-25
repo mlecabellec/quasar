@@ -97,9 +97,9 @@ protected:
     /** @brief The cycle time for the loop. */
     std::chrono::milliseconds m_cycleTime{100};
     /** @brief Condition variable for interruptible sleep. */
-    std::condition_variable m_cv;
+    std::condition_variable_any m_cv;
     /** @brief Mutex for the condition variable. */
-    mutable std::mutex m_cvMutex;
+    mutable std::timed_mutex m_cvMutex;
 };
 
 } // namespace quasar::named

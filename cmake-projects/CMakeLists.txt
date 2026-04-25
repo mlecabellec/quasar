@@ -27,6 +27,9 @@ endif()
 
 add_subdirectory(third-party)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(QuasarWeb)
+
 # Treat warnings as errors for all Quasar projects (non-third-party)
 add_compile_options(-Werror)
 add_subdirectory(utils)

@@ -47,6 +47,13 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
         std::cout << "[CPP Debug] net.poll() called" << std::endl;
         EventTrampoline::getInstance().poll();
     });
+    netTable.set_function("clear_trampoline", []() {
+        EventTrampoline::getInstance().clear();
+    });
+}
+
+extern "C" QUASAR_PLUGIN_EXPORT void quasar_net_clear_trampoline() {
+    EventTrampoline::getInstance().clear();
 }
 
 } // namespace quasar::net

@@ -6,13 +6,14 @@
 #include "quasar/logic/EvaluationPool.hpp"
 #include "quasar/logic/Expression.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include <pthread.h>
 #include <signal.h>
 #include <iostream>
 
 namespace quasar::logic {
 
-static std::mutex s_workersMutex;
+static std::timed_mutex s_workersMutex;
 static thread_local LogicWorker* s_currentWorker = nullptr;
 
 // Lua hook function
@@ -54,7 +55,8 @@ void LogicWorker::cancel() {
 }
 
 void LogicWorker::setTask(std::shared_ptr<EvaluationTask> task) {
-    std::lock_guard<std::mutex> lock(m_workerMutex);
+    std::unique_lock<std::timed_mutex> lock(m_workerMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) return;
     m_currentTask = std::move(task);
     m_cancelRequested = false;
     m_lastTaskStart = std::chrono::steady_clock::now();
@@ -62,7 +64,8 @@ void LogicWorker::setTask(std::shared_ptr<EvaluationTask> task) {
 }
 
 void LogicWorker::clearTask() {
-    std::lock_guard<std::mutex> lock(m_workerMutex);
+    std::unique_lock<std::timed_mutex> lock(m_workerMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) return;
     m_currentTask.reset();
     m_busy = false;
     m_cancelRequested = false;
@@ -93,7 +96,8 @@ EvaluationPool::~EvaluationPool() {
 }
 
 void EvaluationPool::respawnWorker(std::size_t id) {
-    std::lock_guard<std::mutex> lock(s_workersMutex);
+    std::unique_lock<std::timed_mutex> lock(s_workersMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) return;
     std::unique_ptr<LogicWorker> worker = std::make_unique<LogicWorker>(id);
     LogicWorker* rawPtr = worker.get();
     worker->start([this, rawPtr](LogicWorker& /*w*/) { workerLoop(*rawPtr); });
@@ -111,12 +115,14 @@ EvaluationStatus EvaluationPool::evaluate(const std::vector<std::byte>& bytecode
     task->contextRoot = std::move(context);
     
     {
-        std::lock_guard<std::mutex> lock(m_queueMutex);
+        std::unique_lock<std::timed_mutex> lock(m_queueMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) return EvaluationStatus::Error;
         m_tasks.push(task);
     }
     m_cv.notify_one();
 
-    std::unique_lock<std::mutex> taskLock(task->mutex);
+    std::unique_lock<std::timed_mutex> taskLock(task->mutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!taskLock.owns_lock()) return EvaluationStatus::Error;
     task->cv.wait(taskLock, [&task] { return task->completed; });
     return task->status;
 }
@@ -125,7 +131,8 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
     while (m_running) {
         std::shared_ptr<EvaluationTask> task;
         {
-            std::unique_lock<std::mutex> lock(m_queueMutex);
+            std::unique_lock<std::timed_mutex> lock(m_queueMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+            if (!lock.owns_lock()) break; // Exit loop on timeout to avoid starvation
             m_cv.wait(lock, [this] { return !m_tasks.empty() || !m_running; });
             if (!m_running && m_tasks.empty()) break;
             task = m_tasks.front();
@@ -165,8 +172,8 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
         }
 
         {
-            std::lock_guard<std::mutex> taskLock(task->mutex);
-            if (!task->completed) {
+            std::unique_lock<std::timed_mutex> taskLock(task->mutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+            if (taskLock.owns_lock() && !task->completed) {
                 task->status = finalStatus;
                 task->completed = true;
                 task->cv.notify_all();
@@ -180,10 +187,12 @@ void EvaluationPool::workerLoop(LogicWorker& worker) {
 void EvaluationPool::watchdogLoop() {
     while (m_running) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        std::lock_guard<std::mutex> lock(s_workersMutex);
-        for (std::size_t i = 0; i < m_workers.size(); ++i) {
-            if (m_workers[i] && m_workers[i]->getElapsed() > m_hardTimeout) {
-                m_workers[i]->cancel();
+        std::unique_lock<std::timed_mutex> lock(s_workersMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+        if (lock.owns_lock()) {
+            for (std::size_t i = 0; i < m_workers.size(); ++i) {
+                if (m_workers[i] && m_workers[i]->getElapsed() > m_hardTimeout) {
+                    m_workers[i]->cancel();
+                }
             }
         }
     }
@@ -195,8 +204,10 @@ void EvaluationPool::shutdown() {
     if (m_watchdogThread.joinable()) {
         m_watchdogThread.join();
     }
-    std::lock_guard<std::mutex> lock(s_workersMutex);
-    m_workers.clear();
+    std::unique_lock<std::timed_mutex> lock(s_workersMutex, quasar::named::config::DEFAULT_LOCK_TIMEOUT);
+    if (lock.owns_lock()) {
+        m_workers.clear();
+    }
 }
 
 } // namespace quasar::logic

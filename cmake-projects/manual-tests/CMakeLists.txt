@@ -12,7 +12,7 @@ add_executable(manual_tests TestManualScripts.cpp)
 
 target_link_libraries(manual_tests PRIVATE 
     quasar_scripting 
-    GTest::gtest_main
+    GTest::gtest
 )
 
 # Ensure all plugins are built before the tests

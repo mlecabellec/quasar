@@ -17,6 +17,11 @@ namespace quasar::scripting {
 NamedLuaMethod::NamedLuaMethod(const std::string& name, std::shared_ptr<NamedLuaMethodImpl> impl)
     : NamedMethod(name, nullptr), m_impl(impl) {}
 
+NamedLuaMethod::NamedLuaMethod(const std::string& name, sol::protected_function func)
+    : NamedMethod(name, nullptr), m_impl(std::make_shared<NamedLuaMethodImpl>()) {
+    m_impl->func = func;
+}
+
 NamedLuaMethod::~NamedLuaMethod() {
     invalidate();
 }
@@ -27,14 +32,13 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
     if (!owner) owner = getSelf();
 
     // Context-aware execution closure.
-    std::function<std::shared_ptr<quasar::named::NamedObject>()> executeInternal = [impl, owner, args]() -> std::shared_ptr<quasar::named::NamedObject> {
+    auto executeInternal = [impl, owner, args]() -> std::shared_ptr<quasar::named::NamedObject> {
         if (!impl->valid) return nullptr;
         
-        // [CS-0010.6] Lock the engine to ensure it hasn't been destroyed.
         std::shared_ptr<LuaEngine> engine = impl->engine.lock();
         if (!engine) return nullptr;
 
-        // [CS-0010.46] Always acquire engine lock before touching the state from any thread.
+        // [CS-0010.46] Always acquire engine lock before touching the state.
         std::unique_lock<std::recursive_mutex> lock = engine->acquireLock();
 
         std::unique_lock<std::recursive_mutex> implLock(impl->mutex);
@@ -51,15 +55,11 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
             return nullptr;
         }
 
-        // --- Handle diverse return types ---
         sol::object resObj = result;
-        
-        // 1. Existing NamedObject Proxy
         if (std::shared_ptr<quasar::named::NamedObject> p = extractNamedObject(resObj)) {
             return p;
         }
         
-        // 2. Primitive Returns (Automatic wrapping)
         if (resObj.is<int64_t>()) return quasar::named::NamedInteger<int64_t>::create("result", resObj.as<int64_t>());
         if (resObj.is<double>()) return quasar::named::NamedFloatingPoint<double>::create("result", resObj.as<double>());
         if (resObj.is<bool>()) return quasar::named::NamedBoolean::create("result", resObj.as<bool>());
@@ -68,11 +68,9 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
         return nullptr;
     };
 
-    // Routing execution to the service thread if available.
     std::shared_ptr<LuaService> svc = impl->service.lock();
     if (svc && svc->isRunning()) {
         std::future<std::shared_ptr<quasar::named::NamedObject>> future = svc->postTaskWithResult<std::shared_ptr<quasar::named::NamedObject>>(executeInternal);
-        // Industrial timeout to prevent hanging on stalled scripts.
         if (future.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
             return future.get();
         } else {
@@ -81,27 +79,22 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
         }
     }
 
-    // Direct synchronous fallback (unsafe if called from multiple threads without service).
     return executeInternal();
 }
 
 void NamedLuaMethod::invalidate() {
-    // [CS-0010.44] Safely detach the method from the Lua engine.
     std::shared_ptr<LuaEngine> engine = m_impl->engine.lock();
     std::unique_lock<std::recursive_mutex> engineLock;
-
-    // [CS-0010.21] RAII: Acquire engine lock before clearing the sol::function.
     if (engine) {
         engineLock = engine->acquireLock();
     }
     
-    // [CS-0010.46] Mark as invalid and clear the function reference.
     std::unique_lock<std::recursive_mutex> lock(m_impl->mutex);
     m_impl->valid = false;
     m_impl->func = sol::nil;
 }
 
-std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, sol::function func, std::shared_ptr<quasar::named::NamedObject> parent) {
+std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, sol::protected_function func, std::shared_ptr<quasar::named::NamedObject> parent) {
     std::shared_ptr<NamedLuaMethodImpl> impl = std::make_shared<NamedLuaMethodImpl>();
     impl->func = func;
     
@@ -111,7 +104,6 @@ std::shared_ptr<NamedLuaMethod> NamedLuaMethod::create(const std::string& name, 
     std::shared_ptr<Enabler> self = std::make_shared<Enabler>(name, impl);
     self->setSelf(self);
 
-    // Setup LuaEngine and Service context.
     sol::state_view lua(func.lua_state());
     sol::object engineObj = lua["__quasar_engine"];
     if (engineObj.is<std::weak_ptr<LuaEngine>>()) {

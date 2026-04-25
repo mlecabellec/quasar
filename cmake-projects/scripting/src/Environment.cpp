@@ -8,11 +8,17 @@ namespace quasar {
 namespace scripting {
 
 /**
+ * @brief Enabler struct to allow std::make_shared to call protected constructor.
+ */
+struct EnvironmentEnabler : public Environment {};
+
+/**
  * @brief Factory method for creating an Environment.
  * @return std::shared_ptr<Environment> instance.
  */
 std::shared_ptr<Environment> Environment::create() {
-    return std::shared_ptr<Environment>(new Environment());
+    // [CS-0010.10] Use make_shared instead of raw new.
+    return std::make_shared<EnvironmentEnabler>();
 }
 
 /**

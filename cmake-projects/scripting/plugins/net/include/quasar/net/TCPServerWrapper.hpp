@@ -28,8 +28,8 @@ protected:
 
     void onConnected() override {
         if (onConnectedCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str)]() {
                 try {
                     if (self && self->onConnectedCb) self->onConnectedCb(id);
@@ -42,14 +42,14 @@ protected:
 
     void onDisconnected() override {
         if (onDisconnectedCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str)]() {
                 if (self && self->onDisconnectedCb) self->onDisconnectedCb(id);
                 if (self) self->clearCallbacks();
             });
         } else {
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self]() {
                 if (self) self->clearCallbacks();
             });
@@ -58,9 +58,9 @@ protected:
 
     void onReceived(const void* buffer, size_t size) override {
         if (onReceivedCb) {
-            auto id_str = this->id().string();
+            std::string id_str = this->id().string();
             std::string data(static_cast<const char*>(buffer), size);
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str), data = std::move(data)]() {
                 try {
                     if (self && self->onReceivedCb) self->onReceivedCb(id, data);
@@ -73,8 +73,8 @@ protected:
 
     void onError(int error, const std::string& category, const std::string& message) override {
         if (onErrorCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str), error, message]() {
                 try {
                     if (self && self->onErrorCb) self->onErrorCb(id, error, message);
@@ -98,7 +98,7 @@ public:
 
 protected:
     std::shared_ptr<CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<CppServer::Asio::TCPServer>& server) override {
-        auto session = std::make_shared<LuaTCPSession>(server);
+        std::shared_ptr<LuaTCPSession> session = std::make_shared<LuaTCPSession>(server);
         session->onConnectedCb = onConnectedCb;
         session->onDisconnectedCb = onDisconnectedCb;
         session->onReceivedCb = onReceivedCb;
@@ -108,7 +108,7 @@ protected:
 
     void onError(int error, const std::string& category, const std::string& message) override {
         if (onErrorCb) {
-            auto self = std::dynamic_pointer_cast<LuaTCPServer>(shared_from_this());
+            std::shared_ptr<LuaTCPServer> self = std::dynamic_pointer_cast<LuaTCPServer>(shared_from_this());
             EventTrampoline::getInstance().defer([self, error, message]() {
                 if (self && self->onErrorCb) self->onErrorCb("server", error, message);
             });

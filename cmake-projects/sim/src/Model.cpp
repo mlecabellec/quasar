@@ -129,9 +129,9 @@ Model::IsChildInCollection(Smp::String8 child,
 }
 
 Smp::IObject *Model::GetChild(Smp::String8 name) const {
-  if (auto *c = _containers.at(name))
+  if (Smp::IContainer *c = _containers.at(name))
     return c;
-  if (auto *f = _fields.at(name))
+  if (Smp::IField *f = _fields.at(name))
     return f;
   return nullptr;
 }

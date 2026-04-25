@@ -141,7 +141,9 @@ void OpcUaServerService::initializeOpcUa() {
         // Use stack/vector instead of manual malloc to follow CS-0010.11.
         std::vector<UA_UsernamePasswordLogin> logins(userCount);
         size_t i = 0;
-        for (auto const& [u, p] : m_users) {
+        for (const std::pair<const std::string, std::string>& entry : m_users) {
+            const std::string& u = entry.first;
+            const std::string& p = entry.second;
             logins[i].username = UA_String_fromStdString(u);
             logins[i].password = UA_ByteString_fromStdString(p);
             i++;
@@ -321,7 +323,7 @@ void OpcUaServerService::handleObjectChanged(std::shared_ptr<named::NamedObject>
     if (!m_server || !obj) return;
     
     // Find the corresponding node in the OPC UA address space.
-    auto it = m_objectToNodeMap.find(obj);
+    std::map<std::shared_ptr<named::NamedObject>, UA_NodeId>::iterator it = m_objectToNodeMap.find(obj);
     if (it != m_objectToNodeMap.end()) {
         // Fetch the new value and write it to the server.
         UA_Variant value = toUaVariant(obj);

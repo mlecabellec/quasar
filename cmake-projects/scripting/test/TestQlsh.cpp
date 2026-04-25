@@ -158,7 +158,7 @@ TEST_F(QlshTest, NamedServiceInShell) {
                          "quasar.sleep(100)\n"
                          "svc:stop()";
     std::string output = run_qlsh(script);
-    if (output.find("COUNT=") == std::string::npos) {
+    if (output.find("COUNT=") == std::string::npos || output.find("COUNT=0") != std::string::npos) {
         std::cerr << "--- SERVICE TEST OUTPUT START ---\n" << output << "\n--- SERVICE TEST OUTPUT END ---\n";
     }
     EXPECT_NE(output.find("COUNT="), std::string::npos);

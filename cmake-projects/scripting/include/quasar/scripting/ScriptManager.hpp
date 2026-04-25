@@ -49,7 +49,7 @@ public:
 protected:
     ScriptManager();
     
-    std::timed_mutex m_mutex;
+    std::recursive_timed_mutex m_mutex;
     std::map<std::string, std::shared_ptr<LuaService>> m_services;
 };
 

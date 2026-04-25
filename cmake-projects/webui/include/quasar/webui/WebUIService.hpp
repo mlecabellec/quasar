@@ -10,6 +10,10 @@
 #include <jsoncons/json.hpp>
 #include <memory>
 #include <string>
+#include "quasar/webui/IResourceProvider.hpp"
+#include <vector>
+#include <memory>
+#include <expected>
 #include <mutex>
 #include <map>
 #include <set>
@@ -154,6 +158,13 @@ public:
      */
     void setWebRoot(const std::string& path);
 
+    /**
+     * @brief Adds a resource provider for static files.
+     * @param provider The provider to add.
+     * @feature TSK-20260424-002.3 Dynamic Resource Discovery
+     */
+    void addResourceProvider(std::unique_ptr<IResourceProvider> provider);
+
     // Session Management
     void registerWSSession(std::shared_ptr<InternalWSSession> session);
     void unregisterWSSession(std::shared_ptr<InternalWSSession> session);
@@ -209,6 +220,11 @@ private:
     mutable std::recursive_timed_mutex m_deltaMutex;
     /** @brief Set of objects that have changed since the last flush. */
     std::set<std::shared_ptr<quasar::named::NamedObject>> m_pendingDeltas;
+
+    /** @brief Mutex for resource providers. */
+    mutable std::recursive_timed_mutex m_resourceMutex;
+    /** @brief Registered resource providers. [CS-0010.7] unique_ptr for ownership. */
+    std::vector<std::unique_ptr<IResourceProvider>> m_resourceProviders;
 
     /** @brief Background thread for flushing. */
     std::unique_ptr<std::jthread> m_deltaWorker;

@@ -60,7 +60,7 @@ TEST_F(TransformerStressTest, ConcurrentInPlaceTransformation) {
         });
     }
 
-    for (auto& t : threads) {
+    for (std::thread& t : threads) {
         t.join();
     }
 
@@ -90,10 +90,10 @@ TEST_F(TransformerStressTest, PerformanceBenchmark) {
         }
     );
 
-    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> start = std::chrono::high_resolution_clock::now();
     transformer.transformInPlace(root);
-    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> end = std::chrono::high_resolution_clock::now();
     
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "[INFO] Transformed 100k nodes in-place in " << duration.count() << "ms" << std::endl;
 }

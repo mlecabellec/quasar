@@ -94,7 +94,7 @@ void LinkRegistry::AddLink(Smp::IComponent *source,
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
   }
 
-  auto &targetCounts = _counts[target];
+  std::map<Smp::IComponent *, Smp::UInt32> &targetCounts = _counts[target];
   if (targetCounts[source] == 0) {
     _collections[target].Add(source);
   }
@@ -109,9 +109,9 @@ Smp::UInt32 LinkRegistry::GetLinkCount(const Smp::IComponent *source,
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
   }
 
-  auto itTarget = _counts.find(target);
+  std::map<const Smp::IComponent *, std::map<Smp::IComponent *, Smp::UInt32>>::const_iterator itTarget = _counts.find(target);
   if (itTarget != _counts.end()) {
-    auto itSource =
+    std::map<Smp::IComponent *, Smp::UInt32>::const_iterator itSource =
         itTarget->second.find(const_cast<Smp::IComponent *>(source));
     if (itSource != itTarget->second.end()) {
       return itSource->second;
@@ -128,10 +128,10 @@ Smp::Bool LinkRegistry::RemoveLink(Smp::IComponent *source,
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
   }
 
-  auto itTarget = _counts.find(target);
+  std::map<const Smp::IComponent *, std::map<Smp::IComponent *, Smp::UInt32>>::iterator itTarget = _counts.find(target);
   if (itTarget != _counts.end()) {
-    auto &targetCounts = itTarget->second;
-    auto itSource = targetCounts.find(source);
+    std::map<Smp::IComponent *, Smp::UInt32> &targetCounts = itTarget->second;
+    std::map<Smp::IComponent *, Smp::UInt32>::iterator itSource = targetCounts.find(source);
     if (itSource != targetCounts.end() && itSource->second > 0) {
       itSource->second--;
       if (itSource->second == 0) {
@@ -156,7 +156,7 @@ LinkRegistry::GetLinkSources(const Smp::IComponent *target) const {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
   }
 
-  auto it = _collections.find(target);
+  std::map<const Smp::IComponent *, core::SimpleCollection<Smp::IComponent>>::const_iterator it = _collections.find(target);
   if (it != _collections.end()) {
     return &it->second;
   }
@@ -175,12 +175,12 @@ Smp::Bool LinkRegistry::CanRemove(const Smp::IComponent *target) {
     throw std::runtime_error("Timeout acquiring LinkRegistry lock");
   }
 
-  auto itCollection = _collections.find(target);
+  std::map<const Smp::IComponent *, core::SimpleCollection<Smp::IComponent>>::iterator itCollection = _collections.find(target);
   if (itCollection == _collections.end()) {
     return true; // No links means it can be removed.
   }
 
-  for (auto *source : itCollection->second) {
+  for (Smp::IComponent *source : itCollection->second) {
     if (!dynamic_cast<Smp::ILinkingComponent *>(source)) {
       return false; // Cannot remove if any source is not a ILinkingComponent.
     }
@@ -199,10 +199,10 @@ void LinkRegistry::RemoveLinks(const Smp::IComponent *target) {
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring LinkRegistry lock");
     }
-    auto itCollection = _collections.find(target);
+    std::map<const Smp::IComponent *, core::SimpleCollection<Smp::IComponent>>::iterator itCollection = _collections.find(target);
     if (itCollection != _collections.end()) {
-      for (auto *source : itCollection->second) {
-        if (auto *linking = dynamic_cast<Smp::ILinkingComponent *>(source)) {
+      for (Smp::IComponent *source : itCollection->second) {
+        if (Smp::ILinkingComponent *linking = dynamic_cast<Smp::ILinkingComponent *>(source)) {
           sourcesToRemove.push_back(linking);
         }
       }
@@ -210,7 +210,7 @@ void LinkRegistry::RemoveLinks(const Smp::IComponent *target) {
   }
 
   // Perform removal outside lock to avoid deadlocks and allow re-entrancy.
-  for (auto *linking : sourcesToRemove) {
+  for (Smp::ILinkingComponent *linking : sourcesToRemove) {
     linking->RemoveLinks(target);
   }
 }

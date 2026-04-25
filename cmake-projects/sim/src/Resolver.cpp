@@ -104,12 +104,12 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
     return nullptr;
   }
 
-  auto parts = SplitPath(relativePath);
+  std::vector<std::string> parts = SplitPath(relativePath);
   Smp::IObject *current = startingObject;
   if (!current)
     current = _simulator;
 
-  for (const auto &part : parts) {
+  for (const std::string &part : parts) {
     if (!current)
       return nullptr;
 
@@ -133,14 +133,14 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
       // "Valid simple names for objects...".
 
       // We iterate over containers of current (if it's a composite).
-      auto *composite = dynamic_cast<Smp::IComposite *>(current);
+      Smp::IComposite *composite = dynamic_cast<Smp::IComposite *>(current);
       Smp::IObject *next = nullptr;
 
       if (composite) {
         // Check containers
-        auto *containers = composite->GetContainers();
+        const Smp::ContainerCollection *containers = composite->GetContainers();
         if (containers) {
-          for (auto *container : *containers) {
+          for (Smp::IContainer *container : *containers) {
             // Check if container has component named part?
             // Container has GetComponent(name).
             if (container) {
@@ -159,13 +159,13 @@ Smp::IObject *Resolver::ResolveRelative(Smp::String8 relativePath,
       // are Objects). Fields in SMP 1.1 are IField, inheriting IObject. So we
       // should check fields too? IComponent has GetFields().
       if (!next) {
-        auto *component = dynamic_cast<Smp::IComponent *>(current);
+        Smp::IComponent *component = dynamic_cast<Smp::IComponent *>(current);
         if (component) {
           // [FE-0050.3.4] Supports delimiters "/" or ".". The current logic primarily
           // uses "/" via SplitPath, and then looks up components/fields.
           // Explicitly handling "." is done earlier. Implicitly handling traversal
           // to fields might align with '.' delimiter usage in some contexts.
-          auto *field = component->GetField(part.c_str());
+          Smp::IField *field = component->GetField(part.c_str());
           if (field)
             next = field;
         }

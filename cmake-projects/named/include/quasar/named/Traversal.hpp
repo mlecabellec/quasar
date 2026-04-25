@@ -101,7 +101,7 @@ findByType(const std::shared_ptr<NamedObject> &root) {
  */
 std::shared_ptr<NamedObject>
 deepCopy(const std::shared_ptr<NamedObject> &root,
-         std::shared_ptr<NamedObject> newParent = nullptr);
+         std::shared_ptr<NamedObject> newParent = nullptr, int maxDepth = 256);
 
 } // namespace quasar::named::traversal
 

@@ -89,8 +89,10 @@ void OpcUaClientService::setCredentials(const std::string& username, const std::
 void OpcUaClientService::processTasks() {
     std::queue<std::function<void(UA_Client*)>> currentTasks;
     {
-        std::lock_guard<std::mutex> lock(m_queueMutex);
-        std::swap(currentTasks, m_tasks);
+        std::unique_lock<std::timed_mutex> lock(m_queueMutex, std::chrono::milliseconds(5000));
+        if (lock.owns_lock()) {
+            std::swap(currentTasks, m_tasks);
+        }
     }
     
     while (!currentTasks.empty()) {

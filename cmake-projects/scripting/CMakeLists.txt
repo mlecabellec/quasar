@@ -77,3 +77,9 @@ add_subdirectory(plugins/zmq)
 add_subdirectory(plugins/opcua)
 add_subdirectory(plugins/datalogger)
 add_subdirectory(plugins/resoem)
+
+if(ENABLE_ASAN)
+    # Disable ASan for this specific target as it causes compiler crashes during heavy template expansion
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-sanitize=address)
+    target_link_options(${PROJECT_NAME} PRIVATE -fno-sanitize=address)
+endif()
