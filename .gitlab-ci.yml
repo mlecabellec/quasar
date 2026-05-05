@@ -5,7 +5,11 @@ stages:
   stage: build_and_test
   before_script:
     - apt-get update
-    - apt-get install -y cmake g++ make git pkg-config python3 file autoconf automake libtool linux-headers-amd64 libcurl4-openssl-dev
+    - apt-get install -y cmake g++ make git pkg-config python3 file autoconf automake libtool linux-headers-amd64 libcurl4-openssl-dev nodejs npm
+    - npm install -g n
+    - n latest
+    - hash -r
+    - npm install -g npm@latest
   script:
     - echo "Building cmake-projects..."
     - cmake -S cmake-projects -B build-projects

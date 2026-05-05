@@ -14,8 +14,22 @@ These tools are required for the basic compilation and configuration of the proj
 *   `file`: Utility to determine file types, used in CI.
 *   `nodejs`: JavaScript runtime for frontend builds (Vite/React).
 *   `npm`: Package manager for frontend dependencies.
+*   `n`: (Optional) Node.js version management tool (can be installed via `npm`).
 
-## 2. Kernel Module Development
+## 2. Upgrading Node.js and npm
+
+For frontend development, the version of Node.js provided by Debian stable might be outdated. We use the `n` package to deploy the latest stable version.
+
+```bash
+sudo npm install -g n
+sudo n latest
+# Refresh shell path or restart terminal
+hash -r
+# Update npm itself to the latest version
+sudo npm install -g npm@latest
+```
+
+## 3. Kernel Module Development
 
 Required for building the `linux-modules` (EtherCAT, SOEM, SOES).
 
@@ -25,7 +39,7 @@ Required for building the `linux-modules` (EtherCAT, SOEM, SOES).
 *   `libtool`: Generic library support script (required for EtherCAT bootstrap).
 *   `dkms`: (Optional but recommended) Dynamic Kernel Module Support.
 
-## 3. Third-Party Library Dependencies
+## 4. Third-Party Library Dependencies
 
 These packages provide the necessary system libraries for the third-party components used in Quasar.
 
@@ -56,7 +70,7 @@ The build system can use system versions of these libraries if found, speeding u
 *   `libtinyxml2-dev`: XML parser.
 *   `libjsoncons-dev`: JSON construction library.
 
-## 4. Documentation Tools
+## 5. Documentation Tools
 
 Required if you intend to generate the project documentation (HTML or PDF).
 
@@ -66,7 +80,7 @@ Required if you intend to generate the project documentation (HTML or PDF).
 *   `texlive-fonts-recommended`: Recommended fonts for LaTeX.
 *   `texlive-latex-extra`: Additional LaTeX packages often used by Doxygen.
 
-## 5. Quick Install Command
+## 6. Quick Install Command
 
 You can install all the requirements using the following command:
 
