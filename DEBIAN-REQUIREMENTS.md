@@ -12,6 +12,7 @@ These tools are required for the basic compilation and configuration of the proj
 *   `pkg-config`: Helper tool used when compiling applications and libraries.
 *   `python3`: Required for various scripts and build helpers.
 *   `file`: Utility to determine file types, used in CI.
+*   `curl`: Required for downloading Node.js versions via `n`.
 *   `nodejs`: JavaScript runtime for frontend builds (Vite/React).
 *   `npm`: Package manager for frontend dependencies.
 *   `n`: (Optional) Node.js version management tool (can be installed via `npm`).
@@ -87,7 +88,7 @@ You can install all the requirements using the following command:
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
-    build-essential cmake git pkg-config python3 file \
+    build-essential cmake git pkg-config python3 file curl ca-certificates \
     nodejs npm \
     linux-headers-$(uname -r) autoconf automake libtool dkms \
     libasound2-dev libx11-dev libxrandr-dev libxi-dev \

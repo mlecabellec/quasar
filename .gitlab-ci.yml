@@ -5,7 +5,7 @@ stages:
   stage: build_and_test
   before_script:
     - apt-get update
-    - apt-get install -y cmake g++ make git pkg-config python3 file autoconf automake libtool linux-headers-amd64 libcurl4-openssl-dev nodejs npm
+    - apt-get install -y cmake g++ make git pkg-config python3 file autoconf automake libtool linux-headers-amd64 libcurl4-openssl-dev nodejs npm curl ca-certificates
     - npm install -g n
     - n latest
     - hash -r
