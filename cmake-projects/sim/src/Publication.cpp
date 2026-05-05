@@ -19,7 +19,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
   /// Fulfills [FE-0070.9.17] (IPublication::PublishField).
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Char8);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -33,7 +33,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Bool);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -47,7 +47,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int8);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -61,7 +61,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int16);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -75,7 +75,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int32);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -89,7 +89,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Int64);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -103,7 +103,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt8);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -117,7 +117,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt16);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -131,7 +131,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt32);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -145,7 +145,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_UInt64);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -159,7 +159,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool input, Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Float32);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -173,7 +173,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool input, Smp::Bool output) {
   const Smp::Publication::IType *type =
       _typeRegistry->GetType(Smp::PrimitiveTypeKind::PTK_Float64);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -186,7 +186,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
                                        Smp::Bool state, Smp::Bool input,
                                        Smp::Bool output) {
   const Smp::Publication::IType *type = _typeRegistry->GetType(typeUuid);
-  auto field = std::make_unique<SimpleField>(
+  std::unique_ptr<SimpleField> field = std::make_unique<SimpleField>(
       name, description, nullptr, type, address, view, state, input, output);
   _fieldCollection.Add(field.get());
   _fields.push_back(std::move(field));
@@ -195,7 +195,7 @@ Smp::IField *Publication::PublishField(Smp::String8 name,
 
 void Publication::PublishField(Smp::IField *field) {
   if (field) {
-    auto internalField = dynamic_cast<sim::Field *>(field);
+    sim::Field *internalField = dynamic_cast<sim::Field *>(field);
     if (internalField)
       _fields.push_back(std::unique_ptr<Smp::IField>(std::move(internalField)));
   }
@@ -214,7 +214,7 @@ Publication::PublishArray(Smp::String8 name, Smp::String8 description,
                           Smp::PrimitiveTypeKind typeKind, Smp::ViewKind view,
                           Smp::Bool state, Smp::Bool input, Smp::Bool output) {
   const Smp::Publication::IType *type = _typeRegistry->GetType(typeKind);
-  auto field = std::make_unique<SimpleArrayField>(
+  std::unique_ptr<SimpleArrayField> field = std::make_unique<SimpleArrayField>(
       name, description, nullptr, type, address, static_cast<Smp::UInt64>(count),
       typeKind, view, state, input, output);
   _fieldCollection.Add(field.get());
@@ -234,7 +234,7 @@ Smp::Publication::IPublishOperation *
 Publication::PublishOperation(Smp::String8 name, Smp::String8 description,
                               Smp::ViewKind view) {
   /// Fulfills [FE-0070.9.3] (IPublication::PublishOperation).
-  auto op =
+  std::unique_ptr<sim::PublishOperation> op =
       std::make_unique<sim::PublishOperation>(name, description, _typeRegistry);
   Smp::Publication::IPublishOperation *opPtr = op.get();
   _operations.push_back(std::move(op));

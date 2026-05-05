@@ -4,6 +4,7 @@
 #include <functional>
 #include <mutex>
 #include <vector>
+#include <iostream>
 
 namespace quasar::net {
 
@@ -16,14 +17,19 @@ public:
     static EventTrampoline& getInstance();
 
     void defer(std::function<void()> func) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_queue.emplace_back(std::move(func));
+        std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(100));
+        if (lock.owns_lock()) {
+            m_queue.emplace_back(std::move(func));
+        } else {
+            std::cerr << "EventTrampoline defer timeout" << std::endl;
+        }
     }
 
     void poll() {
         std::vector<std::function<void()>> current;
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
+            std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(100));
+            if (!lock.owns_lock()) return;
             if (m_queue.empty()) return;
             current.swap(m_queue);
         }
@@ -36,12 +42,19 @@ public:
         }
     }
 
+    void clear() {
+        std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(100));
+        if (lock.owns_lock()) {
+            m_queue.clear();
+        }
+    }
+
 private:
     EventTrampoline() = default;
     EventTrampoline(const EventTrampoline&) = delete;
     EventTrampoline& operator=(const EventTrampoline&) = delete;
 
-    std::mutex m_mutex;
+    std::timed_mutex m_mutex;
     std::vector<std::function<void()>> m_queue;
 };
 

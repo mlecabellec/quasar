@@ -1,4 +1,5 @@
 #include "quasar/webui/WebUIService.hpp"
+#include "quasar/named/NamedConfig.hpp"
 #include "quasar/named/WebNamedMethod.hpp"
 #include "quasar/named/NamedMethod.hpp"
 #include "quasar/named/NamedInteger.hpp"
@@ -590,8 +591,36 @@ void WebUIService::setWebRoot(const std::string& path) {
     m_webRoot = path;
 }
 
+void WebUIService::addResourceProvider(std::unique_ptr<IResourceProvider> provider) {
+    // [CS-0010.46] Guarded by timed mutex.
+    std::lock_guard<std::recursive_timed_mutex> lock(m_resourceMutex);
+    m_resourceProviders.push_back(std::move(provider));
+}
+
+    /**
+     * @brief Simple MIME detection based on common web features and standards.
+     * @feature TSK-20260311-008.1.2 Web Standards Compliance
+     */
+    [[nodiscard]] static std::string detectMimeType(const std::filesystem::path& path) {
+        std::string ext = path.extension().string();
+        if (ext == ".html" || ext == ".htm") return "text/html";
+        if (ext == ".js" || ext == ".mjs") return "application/javascript";
+        if (ext == ".css") return "text/css";
+        if (ext == ".json") return "application/json";
+        if (ext == ".svg") return "image/svg+xml";
+        if (ext == ".png") return "image/png";
+        if (ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
+        if (ext == ".gif") return "image/gif";
+        if (ext == ".ico") return "image/x-icon";
+        if (ext == ".wasm") return "application/wasm";
+        if (ext == ".woff") return "font/woff";
+        if (ext == ".woff2") return "font/woff2";
+        if (ext == ".ttf") return "font/ttf";
+        return "application/octet-stream";
+    }
+
 void WebUIService::handleStaticFile(std::shared_ptr<InternalHTTPSession> session, const CppServer::HTTP::HTTPRequest& request) {
-    // [CS-0010.44] Resolve physical path on disk.
+    // [CS-0010.44] Resolve physical path on disk or providers.
     std::string urlPath(request.url());
     // Strip query parameters.
     size_t qPos = urlPath.find('?');
@@ -600,45 +629,83 @@ void WebUIService::handleStaticFile(std::shared_ptr<InternalHTTPSession> session
     // Default to index.html for root.
     if (urlPath == "/" || urlPath.empty()) { urlPath = "/index.html"; }
 
-    std::filesystem::path fullPath = std::filesystem::path(m_webRoot) / urlPath.substr(1);
-    
-    if (std::filesystem::exists(fullPath) && std::filesystem::is_regular_file(fullPath)) {
-        // [CS-0010.22] RAII for file handle.
-        std::ifstream file(fullPath, std::ios::binary);
-        if (file) {
-            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            
-            CppServer::HTTP::HTTPResponse response;
-            response.SetBegin(200);
-            
-            // Simple MIME detection based on extension.
-            std::string ext = fullPath.extension().string();
-            if (ext == ".html") response.SetHeader("Content-Type", "text/html");
-            else if (ext == ".js") response.SetHeader("Content-Type", "application/javascript");
-            else if (ext == ".css") response.SetHeader("Content-Type", "text/css");
-            else if (ext == ".json") response.SetHeader("Content-Type", "application/json");
-            else if (ext == ".svg") response.SetHeader("Content-Type", "image/svg+xml");
-            else if (ext == ".png") response.SetHeader("Content-Type", "image/png");
-            
-            response.SetBody(content);
-            session->SendResponseAsync(response);
-            return;
+    // 1. Check local filesystem first.
+    if (!m_webRoot.empty()) {
+        std::filesystem::path fullPath = std::filesystem::path(m_webRoot) / urlPath.substr(1);
+        if (std::filesystem::exists(fullPath) && std::filesystem::is_regular_file(fullPath)) {
+            // [CS-0010.22] RAII for file handle.
+            std::ifstream file(fullPath, std::ios::binary);
+            if (file) {
+                std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                CppServer::HTTP::HTTPResponse response;
+                response.SetBegin(200);
+                response.SetHeader("Content-Type", detectMimeType(fullPath));
+                response.SetBody(content);
+                session->SendResponseAsync(response);
+                return;
+            }
         }
     }
 
-    // Fallback for SPA routing: serve index.html for non-file paths.
-    std::filesystem::path indexPath = std::filesystem::path(m_webRoot) / "index.html";
-    if (urlPath != "/index.html" && std::filesystem::exists(indexPath)) {
-         std::ifstream file(indexPath, std::ios::binary);
-         if (file) {
-             std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-             CppServer::HTTP::HTTPResponse response;
-             response.SetBegin(200);
-             response.SetHeader("Content-Type", "text/html");
-             response.SetBody(content);
-             session->SendResponseAsync(response);
-             return;
-         }
+    // 2. Check registered resource providers.
+    {
+        // [CS-0010.46] Guarded by timed mutex.
+        std::unique_lock<std::recursive_timed_mutex> lock(m_resourceMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (lock.owns_lock()) {
+            for (const std::unique_ptr<IResourceProvider>& provider : m_resourceProviders) {
+                if (provider->hasResource(urlPath)) {
+                    std::expected<Resource, std::string> res = provider->getResource(urlPath);
+                    if (res) {
+                        CppServer::HTTP::HTTPResponse response;
+                        response.SetBegin(200);
+                        response.SetHeader("Content-Type", res->mimeType);
+                        std::string body(reinterpret_cast<const char*>(res->data.data()), res->data.size());
+                        response.SetBody(body);
+                        session->SendResponseAsync(response);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Fallback for SPA routing: serve index.html for non-file paths.
+    // Try filesystem first.
+    if (!m_webRoot.empty()) {
+        std::filesystem::path indexPath = std::filesystem::path(m_webRoot) / "index.html";
+        if (urlPath != "/index.html" && std::filesystem::exists(indexPath)) {
+             std::ifstream file(indexPath, std::ios::binary);
+             if (file) {
+                 std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                 CppServer::HTTP::HTTPResponse response;
+                 response.SetBegin(200);
+                 response.SetHeader("Content-Type", "text/html");
+                 response.SetBody(content);
+                 session->SendResponseAsync(response);
+                 return;
+             }
+        }
+    }
+
+    // Try providers for SPA fallback.
+    {
+        std::unique_lock<std::recursive_timed_mutex> lock(m_resourceMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (lock.owns_lock()) {
+            for (const std::unique_ptr<IResourceProvider>& provider : m_resourceProviders) {
+                if (urlPath != "/index.html" && provider->hasResource("/index.html")) {
+                    std::expected<Resource, std::string> res = provider->getResource("/index.html");
+                    if (res) {
+                        CppServer::HTTP::HTTPResponse response;
+                        response.SetBegin(200);
+                        response.SetHeader("Content-Type", "text/html");
+                        std::string body(reinterpret_cast<const char*>(res->data.data()), res->data.size());
+                        response.SetBody(body);
+                        session->SendResponseAsync(response);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     CppServer::HTTP::HTTPResponse response;

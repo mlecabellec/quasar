@@ -33,8 +33,8 @@ struct EvaluationTask {
     std::string bytecode;
     std::shared_ptr<quasar::named::NamedObject> contextRoot;
     
-    std::mutex mutex;
-    std::condition_variable cv;
+    std::timed_mutex mutex;
+    std::condition_variable_any cv;
     EvaluationStatus status{EvaluationStatus::Pending};
     bool completed{false};
 };
@@ -71,7 +71,7 @@ private:
     std::atomic<bool> m_cancelRequested{false};
     std::atomic<std::chrono::steady_clock::time_point> m_lastTaskStart;
     std::shared_ptr<EvaluationTask> m_currentTask;
-    mutable std::mutex m_workerMutex;
+    mutable std::timed_mutex m_workerMutex;
 };
 
 /**
@@ -100,8 +100,8 @@ private:
     std::vector<std::unique_ptr<LogicWorker>> m_workers;
     std::queue<std::shared_ptr<EvaluationTask>> m_tasks;
     
-    std::mutex m_queueMutex;
-    std::condition_variable m_cv;
+    std::timed_mutex m_queueMutex;
+    std::condition_variable_any m_cv;
     std::atomic<bool> m_running{true};
     
     std::chrono::milliseconds m_hardTimeout{50};

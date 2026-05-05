@@ -8,7 +8,7 @@ namespace quasar::net {
 using namespace quasar::scripting;
 
 void bindTCPServer(sol::state_view& lua) {
-    auto serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
+    sol::table serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
 
     // Since TCPServer needs an ASIO Service running, we expose a simple Service manager
     serverTable.new_usertype<CppServer::Asio::Service>("AsioService",
@@ -24,7 +24,7 @@ void bindTCPServer(sol::state_view& lua) {
 
     serverTable["TCPServer"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port, sol::this_state L) {
-            auto ptr = std::make_shared<LuaTCPServer>(service, port);
+            std::shared_ptr<LuaTCPServer> ptr = std::make_shared<LuaTCPServer>(service, port);
             ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaTCPServer>(ptr);
         }
@@ -37,7 +37,7 @@ void bindTCPServer(sol::state_view& lua) {
     ut["disconnect"] = [](LuaProxy<LuaTCPServer> self, const std::string& id_str) {
         try {
             CppCommon::UUID id(id_str);
-            auto session = self.lock()->FindSession(id);
+            std::shared_ptr<CppServer::Asio::TCPSession> session = self.lock()->FindSession(id);
             if (session) {
                 return session->Disconnect();
             }
@@ -47,7 +47,7 @@ void bindTCPServer(sol::state_view& lua) {
     ut["sendAsync"] = [](LuaProxy<LuaTCPServer> self, const std::string& id_str, const std::string& data) {
         try {
             CppCommon::UUID id(id_str);
-            auto session = self.lock()->FindSession(id);
+            std::shared_ptr<CppServer::Asio::TCPSession> session = self.lock()->FindSession(id);
             if (session) {
                 return session->SendAsync(data.data(), data.size());
             }

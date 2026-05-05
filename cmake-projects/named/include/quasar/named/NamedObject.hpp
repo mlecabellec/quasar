@@ -262,20 +262,22 @@ public:
    * @compliance [FE-0020.14] Utilities for copying parts of the tree.
    * @compliance [FE-0020.14.1] deep copy mechanism.
    */
-  virtual std::shared_ptr<NamedObject> deepCopy(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
+  virtual std::shared_ptr<NamedObject> deepCopy(CopyPolicy policy = CopyPolicy::DUPLICATE, int maxDepth = 256) const;
 
   /**
    * @brief Internal recursive helper for deep copying a subtree.
    *
    * @param originalParent The parent in the original tree.
    * @param newParent The new parent in the cloned tree.
+   * @param policy Memory policy.
+   * @param maxDepth Maximum recursion depth to prevent stack overflow.
    * @return A deep clone of this object, appropriately re-parented and rebased
    * if needed.
    * @compliance [FE-0020.14.1] deep copy mechanism.
    */
   virtual std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
-           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE) const;
+           std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE, int maxDepth = 256) const;
 
   /**
    * @brief Returns a shared pointer to this instance.

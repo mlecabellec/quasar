@@ -3,7 +3,7 @@
  * @brief Integration sample demonstrating NamedObject tree, OPC UA, LogicEngine, and WebUI.
  * 
  * **Compliance**:
- * - Fulfills [TSK-20260423-xxx] Sample Web Integration.
+ * - Fulfills [TSK-20260311-008.6] Sample Web Integration.
  * - Adheres to [CS-0010] and [CS-0020] standards.
  */
 
@@ -19,6 +19,10 @@
 #include "quasar/logic/Expression.hpp"
 #include "quasar/opcua/OpcUaServerService.hpp"
 #include "quasar/webui/WebUIService.hpp"
+#include "quasar/webui/CmrcResourceProvider.hpp"
+#include <cmrc/cmrc.hpp>
+
+CMRC_DECLARE(quasar_web);
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -126,6 +130,7 @@ int main(int argc, char** argv) {
 
         // Web UI Service
         std::shared_ptr<WebUIService> webui = WebUIService::create("WebUI", 8086, universe);
+        webui->addResourceProvider(std::make_unique<CmrcResourceProvider>(cmrc::quasar_web::get_filesystem()));
         webui->setWebRoot("./cmake-projects/webui/frontend/dist");
         // WebUIService has a public initialize() from its manual definition.
         webui->initialize();
@@ -141,13 +146,13 @@ int main(int argc, char** argv) {
         std::cout << "[Sample] Mission Control active at http://localhost:8086" << std::endl;
         std::cout << "[Sample] OPC UA Endpoint at opc.tcp://localhost:4840" << std::endl;
 
-        auto startTime = std::chrono::steady_clock::now();
-        auto lastCycle = startTime;
+        std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point lastCycle = startTime;
         
         // Capped run: 3600 seconds (1 hour)
         while (std::chrono::steady_clock::now() - startTime < std::chrono::seconds(3600)) {
-            auto now = std::chrono::steady_clock::now();
-            auto dt = now - lastCycle;
+            std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+            std::chrono::steady_clock::duration dt = now - lastCycle;
             lastCycle = now;
 
             // Drive Logic Engine

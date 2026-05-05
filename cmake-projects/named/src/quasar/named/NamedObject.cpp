@@ -472,15 +472,17 @@ std::shared_ptr<NamedObject> NamedObject::clone([[maybe_unused]] CopyPolicy poli
   return NamedObject::create(m_name);
 }
 
-std::shared_ptr<NamedObject> NamedObject::deepCopy(CopyPolicy policy) const {
+std::shared_ptr<NamedObject> NamedObject::deepCopy(CopyPolicy policy, int maxDepth) const {
   // Fulfills [FE-0020.14.1] deep copy mechanism.
   // Initiates a deep copy down the hierarchy starting with no parent context.
-  return deepCopy(nullptr, nullptr, policy);
+  return deepCopy(nullptr, nullptr, policy, maxDepth);
 }
 
 std::shared_ptr<NamedObject> NamedObject::deepCopy(
     [[maybe_unused]] std::shared_ptr<NamedObject> originalParent,
-    std::shared_ptr<NamedObject> newParent, CopyPolicy policy) const {
+    std::shared_ptr<NamedObject> newParent, CopyPolicy policy, int maxDepth) const {
+
+  if (maxDepth <= 0) throw std::runtime_error("Maximum recursion depth exceeded in deepCopy");
 
   // Clone the current node (shallow copy, unattached).
   std::shared_ptr<NamedObject> clonedObj = clone(policy);
@@ -507,7 +509,7 @@ std::shared_ptr<NamedObject> NamedObject::deepCopy(
   // [CS-0010.34] auto forbidden.
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
     const std::shared_ptr<NamedObject> &child = *it;
-    child->deepCopy(getSelf(), clonedObj, policy);
+    child->deepCopy(getSelf(), clonedObj, policy, maxDepth - 1);
   }
 
   return clonedObj;

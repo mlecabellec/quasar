@@ -70,8 +70,9 @@ public:
 
     /**
      * @brief Helper to get the underlying pointer (use with caution).
+     * Renamed to getPtr to prevent sol2 from incorrectly treating LuaProxy as a smart pointer.
      */
-    T* get() const {
+    T* getPtr() const {
         return lock().get();
     }
 

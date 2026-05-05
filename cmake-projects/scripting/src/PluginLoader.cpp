@@ -1,5 +1,6 @@
 #include "quasar/scripting/PluginLoader.hpp"
 #include <iostream>
+#include <map>
 
 #if defined(_WIN32) || defined(__WIN32__)
 #include <windows.h>
@@ -13,13 +14,19 @@ namespace quasar::scripting {
  * @details Implements the logic to interface with the OS dynamic linker.
  *          Contributes to [FE-0140].
  */
-std::vector<void*> PluginLoader::s_loadedHandles;
+static std::map<std::string, void*> s_loadedLibraries;
 
 bool PluginLoader::loadPlugin(const std::string& libraryPath, sol::state_view lua) {
-    void* handle = loadLibrary(libraryPath);
-    if (!handle) {
-        std::cerr << "Failed to load plugin library: " << libraryPath << std::endl;
-        return false;
+    void* handle = nullptr;
+    std::map<std::string, void*>::iterator it = s_loadedLibraries.find(libraryPath);
+    if (it != s_loadedLibraries.end()) {
+        handle = it->second;
+    } else {
+        handle = loadLibrary(libraryPath);
+        if (!handle) {
+            return false;
+        }
+        s_loadedLibraries[libraryPath] = handle;
     }
 
     void* symbol = getSymbolAddress(handle, "registerPluginComponents");
@@ -32,13 +39,13 @@ bool PluginLoader::loadPlugin(const std::string& libraryPath, sol::state_view lu
     RegisterFunc registerFunc = reinterpret_cast<RegisterFunc>(symbol);
 
     try {
+        // [CS-0010.44] Register components into the provided Lua state.
         registerFunc(lua);
     } catch (const std::exception& e) {
         std::cerr << "Exception during plugin registration: " << e.what() << std::endl;
         return false;
     }
 
-    s_loadedHandles.push_back(handle);
     return true;
 }
 

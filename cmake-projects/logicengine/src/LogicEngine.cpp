@@ -32,13 +32,16 @@ std::shared_ptr<LogicEngine> LogicEngine::create(const std::string& name, std::s
 
 void LogicEngine::addComponent(std::shared_ptr<LogicComponent> component) {
     // [CS-0010.46] Member field modification protected by timed recursive mutex.
-    std::lock_guard<std::recursive_timed_mutex> lock(m_engineMutex);
-    m_components.push_back(std::move(component));
+    std::unique_lock<std::recursive_timed_mutex> lock(m_engineMutex, std::chrono::milliseconds(5000));
+    if (lock.owns_lock()) {
+        m_components.push_back(std::move(component));
+    }
 }
 
 void LogicEngine::runCycle(duration dt) {
     // [CS-0010.46] Access protected by mutex.
-    std::lock_guard<std::recursive_timed_mutex> lock(m_engineMutex);
+    std::unique_lock<std::recursive_timed_mutex> lock(m_engineMutex, std::chrono::milliseconds(5000));
+    if (!lock.owns_lock()) return;
     
     // [CS-0010.34] Use of "auto" is forbidden. Explicit types only.
     for (std::vector<std::shared_ptr<LogicComponent>>::iterator it = m_components.begin(); it != m_components.end(); ++it) {

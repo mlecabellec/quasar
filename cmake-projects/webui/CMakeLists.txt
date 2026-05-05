@@ -23,6 +23,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 # --- Frontend Build Integration ---
 
+quasar_add_svelte_project(
+    TARGET_NAME quasar-web-resources
+    PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/frontend-svelte"
+    NAMESPACE quasar_web
+)
+
 find_program(NPM_EXECUTABLE npm)
 
 if(NPM_EXECUTABLE)
@@ -52,6 +58,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     cppserver
     cppcommon
     fmt
+    quasar::quasar-web-resources
 )
 
 install(TARGETS ${PROJECT_NAME}
@@ -79,6 +86,7 @@ target_link_libraries(sampleweb001 PRIVATE
     quasar_opcua
     quasar_named
     quasar_coretypes
+    quasar::quasar-web-resources
 )
 
 add_executable(webui_test test/TestWebUI.cpp)

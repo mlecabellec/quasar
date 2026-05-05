@@ -16,7 +16,7 @@ protected:
 
 TEST_F(PredefinedRulesTest, SliceBufferRuleShare) {
     std::vector<uint8_t> data = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
-    auto root = NamedBuffer::create("Payload", data);
+    std::shared_ptr<NamedBuffer> root = NamedBuffer::create("Payload", data);
 
     Transformer transformer;
     transformer.addRule(PredefinedRules::sliceBuffer("Payload", {
@@ -24,17 +24,17 @@ TEST_F(PredefinedRulesTest, SliceBufferRuleShare) {
         {"Body", 2, 4}
     }, CopyPolicy::SHARE));
 
-    auto resultVec = transformer.transform(root);
+    std::vector<std::shared_ptr<NamedObject>> resultVec = transformer.transform(root);
     ASSERT_EQ(resultVec.size(), 2);
 
-    auto header = resultVec[0]->as<NamedBufferSlice>();
+    std::shared_ptr<NamedBufferSlice> header = resultVec[0]->as<NamedBufferSlice>();
     ASSERT_NE(header, nullptr);
     EXPECT_EQ(header->getName(), "Header");
     EXPECT_EQ(header->size(), 2);
     EXPECT_EQ(header->get(0), 0x11);
     EXPECT_EQ(header->get(1), 0x22);
 
-    auto body = resultVec[1]->as<NamedBufferSlice>();
+    std::shared_ptr<NamedBufferSlice> body = resultVec[1]->as<NamedBufferSlice>();
     ASSERT_NE(body, nullptr);
     EXPECT_EQ(body->getName(), "Body");
     EXPECT_EQ(body->size(), 4);
@@ -47,15 +47,15 @@ TEST_F(PredefinedRulesTest, SliceBufferRuleShare) {
 
 TEST_F(PredefinedRulesTest, ExtractIntegerRule) {
     std::vector<uint8_t> data = {0x00, 0x00, 0x01, 0x2C}; // 300 in BigEndian 32-bit
-    auto root = NamedBuffer::create("Payload", data);
+    std::shared_ptr<NamedBuffer> root = NamedBuffer::create("Payload", data);
 
     Transformer transformer;
     transformer.addRule(PredefinedRules::extractIntegerRule<int>("Payload", "ExtractedInt", 0));
 
-    auto resultVec = transformer.transform(root);
+    std::vector<std::shared_ptr<NamedObject>> resultVec = transformer.transform(root);
     ASSERT_EQ(resultVec.size(), 1);
 
-    auto intObj = resultVec[0]->as<NamedInteger<int>>();
+    std::shared_ptr<NamedInteger<int>> intObj = resultVec[0]->as<NamedInteger<int>>();
     ASSERT_NE(intObj, nullptr);
     EXPECT_EQ(intObj->getName(), "ExtractedInt");
     EXPECT_EQ(intObj->value(), 300);

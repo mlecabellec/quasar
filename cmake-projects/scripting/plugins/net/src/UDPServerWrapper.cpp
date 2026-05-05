@@ -8,7 +8,7 @@ namespace quasar::net {
 using namespace quasar::scripting;
 
 void bindUDPServer(sol::state_view& lua) {
-    auto serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
+    sol::table serverTable = lua["quasar"]["net"]["server"].get_or_create<sol::table>();
 
     sol::usertype<LuaProxy<LuaUDPServer>> ut = lua.new_usertype<LuaProxy<LuaUDPServer>>("UDPServer",
         sol::no_constructor,
@@ -16,7 +16,7 @@ void bindUDPServer(sol::state_view& lua) {
 
     serverTable["UDPServer"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, int port, sol::this_state L) {
-            auto ptr = std::make_shared<LuaUDPServer>(service, port);
+            std::shared_ptr<LuaUDPServer> ptr = std::make_shared<LuaUDPServer>(service, port);
             ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaUDPServer>(ptr);
         }
@@ -29,7 +29,7 @@ void bindUDPServer(sol::state_view& lua) {
          return self.lock()->Multicast(data.data(), data.size());
     };
     ut["send"] = [](LuaProxy<LuaUDPServer> self, const std::string& endpoint, int port, const std::string& data) {
-         auto ep = asio::ip::udp::endpoint(asio::ip::make_address(endpoint), port);
+         asio::ip::udp::endpoint ep = asio::ip::udp::endpoint(asio::ip::make_address(endpoint), port);
          return self.lock()->SendAsync(ep, data.data(), data.size());
     };
     

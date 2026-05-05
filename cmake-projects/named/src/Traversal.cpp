@@ -111,10 +111,11 @@ findByName(const std::shared_ptr<NamedObject> &root, const std::string &name) {
 }
 
 std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
-                                      std::shared_ptr<NamedObject> newParent) {
+                                      std::shared_ptr<NamedObject> newParent, int maxDepth) {
   // Fulfills [FE-0020.14] Copying parts of the tree.
   if (!root)
     return nullptr;
+  if (maxDepth <= 0) throw std::runtime_error("Maximum recursion depth exceeded in deepCopy");
 
   // Clone the current node (state only, no children/parent yet).
   std::shared_ptr<NamedObject> newRoot = root->clone();
@@ -128,7 +129,7 @@ std::shared_ptr<NamedObject> deepCopy(const std::shared_ptr<NamedObject> &root,
   std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
     const std::shared_ptr<NamedObject> &child = *it;
-    deepCopy(child, newRoot);
+    deepCopy(child, newRoot, maxDepth - 1);
   }
 
   return newRoot;

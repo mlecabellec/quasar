@@ -18,7 +18,7 @@ class LuaEngine;
  */
 struct NamedLuaMethodImpl {
     /** @brief The bound Lua function. */
-    sol::function func;
+    sol::protected_function func;
     /** @brief Mutex protecting the implementation state. */
     std::recursive_mutex mutex;
     /** @brief Reference to the host service if any. */
@@ -50,7 +50,7 @@ public:
      * @feature [FE-0260.2]
      * @exposed
      */
-    static std::shared_ptr<NamedLuaMethod> create(const std::string& name, sol::function func, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
+    static std::shared_ptr<NamedLuaMethod> create(const std::string& name, sol::protected_function func, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
 
     /**
      * @brief Destructor.
@@ -99,7 +99,7 @@ protected:
      * @param name The name of the method.
      * @param func The Lua function.
      */
-    NamedLuaMethod(const std::string& name, sol::function func);
+    NamedLuaMethod(const std::string& name, sol::protected_function func);
 
     /** @brief Internal constructor for sharing Impl. */
     NamedLuaMethod(const std::string& name, std::shared_ptr<NamedLuaMethodImpl> impl);

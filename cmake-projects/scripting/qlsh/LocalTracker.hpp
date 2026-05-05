@@ -34,7 +34,8 @@ public:
         }
 
         std::string preamble = "-- Contextual Injection\n";
-        for (auto const& [name, _] : m_locals) {
+        for (const std::pair<const std::string, bool>& kv : m_locals) {
+            const std::string& name = kv.first;
             // We use a unique global table '__qlsh_locals' to store the values
             preamble += "local " + name + " = __qlsh_locals['" + name + "']\n";
         }

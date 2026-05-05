@@ -82,7 +82,9 @@ NamedBitBufferSlice::sliceView(size_t startBit, size_t bitLength) const {
 
 std::shared_ptr<NamedObject>
 NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
-                              std::shared_ptr<NamedObject> newParent, CopyPolicy policy) const {
+                              std::shared_ptr<NamedObject> newParent, CopyPolicy policy, int maxDepth) const {
+
+  if (maxDepth <= 0) throw std::runtime_error("Maximum recursion depth exceeded in deepCopy");
 
   std::shared_ptr<NamedBitBufferSlice> clonedSlice = nullptr;
 
@@ -135,7 +137,7 @@ NamedBitBufferSlice::deepCopy(std::shared_ptr<NamedObject> originalParent,
   // [CS-0010.34] auto forbidden.
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = childList.begin(); it != childList.end(); ++it) {
     const std::shared_ptr<NamedObject> &child = *it;
-    child->deepCopy(getSelf(), clonedSlice, policy);
+    child->deepCopy(getSelf(), clonedSlice, policy, maxDepth - 1);
   }
 
   return clonedSlice;

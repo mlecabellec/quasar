@@ -148,7 +148,7 @@ TypeRegistry::TypeRegistry()
       {Smp::PrimitiveTypeKind::PTK_Duration, "Duration"},
       {Smp::PrimitiveTypeKind::PTK_DateTime, "DateTime"}};
 
-  for (const auto &info : primitives) {
+  for (const PrimInfo &info : primitives) {
     Smp::Uuid uuid = {0, 0, 0, 0, (Smp::UInt64)info.kind};
     _typesByUuid[uuid] = std::make_unique<Type>(info.name, "", uuid, info.kind);
     _typesByKind[info.kind] = _typesByUuid[uuid].get();
@@ -163,7 +163,7 @@ Smp::IObject *TypeRegistry::GetParent() const { return nullptr; }
 
 Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
   /// Fulfills [FE-0070.10.2] (ITypeRegistry::GetType by UUID).
-  auto it = _typesByUuid.find(typeUuid);
+  std::map<Smp::Uuid, std::unique_ptr<Smp::Publication::IType>>::const_iterator it = _typesByUuid.find(typeUuid);
   if (it != _typesByUuid.end())
     return it->second.get();
   return nullptr;
@@ -172,7 +172,7 @@ Smp::Publication::IType *TypeRegistry::GetType(Smp::Uuid typeUuid) const {
 Smp::Publication::IType *
 TypeRegistry::GetType(Smp::PrimitiveTypeKind typeKind) const {
   /// Fulfills [FE-0070.10.3] (ITypeRegistry::GetType by Kind).
-  auto it = _typesByKind.find(typeKind);
+  std::map<Smp::PrimitiveTypeKind, Smp::Publication::IType *>::const_iterator it = _typesByKind.find(typeKind);
   if (it != _typesByKind.end())
     return it->second;
   return nullptr;

@@ -280,7 +280,7 @@ void Simulator::RecursivelyPublish(Smp::IComponent *component) {
     return;
   // Ensures component is in a state to be published.
   if (component->GetState() == Smp::ComponentStateKind::CSK_Created) {
-    auto publication = std::make_unique<Publication>(GetTypeRegistry());
+    std::unique_ptr<Publication> publication = std::make_unique<Publication>(GetTypeRegistry());
     Smp::IPublication* pubPtr = publication.get();
     _publications[component] = std::move(publication);
     component->Publish(pubPtr);

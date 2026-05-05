@@ -1,4 +1,6 @@
 #include "quasar/named/NamedService.hpp"
+#include "quasar/named/NamedConfig.hpp"
+#include "quasar/named/NamedMethod.hpp"
 #include <iostream>
 
 namespace quasar::named {
@@ -60,8 +62,8 @@ void NamedService::stop() {
 
     m_running = false;
     {
-        std::lock_guard<std::mutex> lock(m_cvMutex);
-        m_cv.notify_all();
+        std::unique_lock<std::timed_mutex> lock(m_cvMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (lock.owns_lock()) m_cv.notify_all();
     }
 
     if (m_thread.joinable()) {
@@ -93,8 +95,8 @@ void NamedService::serviceLoop() {
         callHook("run");
 
         // Wait for next cycle or stop signal.
-        std::unique_lock<std::mutex> lock(m_cvMutex);
-        m_cv.wait_for(lock, m_cycleTime, [this] { return !m_running; });
+        std::unique_lock<std::timed_mutex> lock(m_cvMutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (lock.owns_lock()) m_cv.wait_for(lock, m_cycleTime, [this] { return !m_running; });
     }
 
     // Call "onStop" hook if it exists.
