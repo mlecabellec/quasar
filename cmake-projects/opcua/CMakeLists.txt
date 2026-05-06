@@ -25,6 +25,7 @@ target_link_libraries(quasar_opcua PUBLIC
     quasar_named
     quasar_coretypes
     open62541
+    utils
 )
 
 # Installation

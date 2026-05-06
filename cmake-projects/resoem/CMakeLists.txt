@@ -53,7 +53,7 @@ target_include_directories(resoem PUBLIC
 target_compile_features(resoem PUBLIC cxx_std_23)
 set_target_properties(resoem PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(resoem PUBLIC quasar_named)
+target_link_libraries(resoem PUBLIC quasar_named utils)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(Threads REQUIRED)
     target_link_libraries(resoem PRIVATE Threads::Threads)

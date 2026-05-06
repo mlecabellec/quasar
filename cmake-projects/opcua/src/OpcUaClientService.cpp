@@ -2,6 +2,7 @@
 #include "quasar/opcua/UA_Common.hpp"
 #include "quasar/named/NamedMethod.hpp"
 #include "quasar/named/Serialization.hpp"
+#include "utils/Constants.hpp"
 #include <open62541/client_config_default.h>
 #include <open62541/client_subscriptions.h>
 #include <open62541/client_highlevel.h>
@@ -233,7 +234,7 @@ void OpcUaClientService::browseAndMirror(UA_NodeId remoteNodeId, std::shared_ptr
 
                     try {
                         std::future<std::shared_ptr<NamedObject>> future = s->enqueueTask<std::shared_ptr<NamedObject>>(task);
-                        if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
+                        if (future.wait_for(quasar::utils::DEFAULT_OPCUA_METHOD_TIMEOUT) == std::future_status::ready) {
                             std::shared_ptr<NamedObject> r = future.get();
                             return r ? r : NamedObject::create("void");
                         } else {
