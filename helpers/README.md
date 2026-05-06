@@ -58,6 +58,36 @@ Analyzes Git history to prevent unjustified deletions.
 
 ---
 
+## 🐳 Docker Environments
+
+Consistent build and runner environments located in `helpers/docker/`.
+
+### Build Environments (`helpers/docker/build/`)
+Provide all necessary dependencies to build, test, and document Quasar.
+- **Debian Bookworm**: `debian-bookworm.Dockerfile`
+- **Debian Trixie**: `debian-trixie.Dockerfile`
+- **Fedora (Latest)**: `fedora-latest.Dockerfile`
+- **Arch Linux (Latest)**: `archlinux-latest.Dockerfile`
+
+**Usage**:
+```bash
+docker build -t quasar-build:debian-trixie -f helpers/docker/build/debian-trixie.Dockerfile .
+```
+
+### Gitea Runners (`helpers/docker/runner/`)
+Build environments extended with `act_runner` for self-hosted Gitea CI.
+- **Debian Bookworm**: `debian-bookworm-runner.Dockerfile`
+- **Debian Trixie**: `debian-trixie-runner.Dockerfile`
+- **Fedora (Latest)**: `fedora-latest-runner.Dockerfile`
+- **Arch Linux (Latest)**: `archlinux-latest-runner.Dockerfile`
+
+**Usage**:
+```bash
+docker build -t quasar-runner:fedora -f helpers/docker/runner/fedora-latest-runner.Dockerfile .
+```
+
+---
+
 ## 🛠️ Maintenance Scripts
 
 ### `checkConstraintsCompliance.sh`
