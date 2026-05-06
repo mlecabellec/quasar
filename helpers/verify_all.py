@@ -18,7 +18,8 @@ def main():
     tools = [
         ["python3", os.path.join(script_dir, "compliance_suite.py"), "--dirs", "cmake-projects", "--exclude", "cmake-projects/third-party", "--root", project_root],
         ["python3", os.path.join(script_dir, "check_annotations.py"), cmake_projects, "--exclude", third_party],
-        ["python3", os.path.join(script_dir, "check_metrics.py"), cmake_projects, "--exclude", third_party]
+        ["python3", os.path.join(script_dir, "check_metrics.py"), cmake_projects, "--exclude", third_party],
+        ["python3", os.path.join(script_dir, "ast_nodiscard_checker.py"), cmake_projects, "--exclude", third_party]
     ]
 
     for tool in tools:

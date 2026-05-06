@@ -14,6 +14,7 @@ add_library(utils
     src/TimeKeeper.cpp
     src/EventManager.cpp
 )
+quasar_apply_standards(utils)
 
 # This CMakeLists.txt defines the 'utils' library, contributing to the mapping of packages to libraries as per [FE-0080.7.1].
 

@@ -84,7 +84,7 @@ public:
    * @return true if the bit is set (1), false otherwise (0).
    * @throws std::out_of_range If the bit index is out of bounds.
    */
-  bool getBit(size_t bitIndex) const;
+  [[nodiscard]] bool getBit(size_t bitIndex) const;
 
   /**
    * @brief Sets the value of the bit at the specified index.
@@ -113,7 +113,7 @@ public:
    * @return A new BitBuffer instance containing the copied bit data.
    * @throws std::out_of_range If the requested slice range exceeds the buffer's bit size.
    */
-  BitBuffer sliceBits(size_t startBit, size_t bitLength) const;
+  [[nodiscard]] BitBuffer sliceBits(size_t startBit, size_t bitLength) const;
 
   /**
    * @brief Creates a view slice at the bit level.
@@ -145,7 +145,7 @@ public:
    * @param other The BitBuffer to append.
    * @return A new BitBuffer containing the combined bits.
    */
-  BitBuffer concatBits(const BitBuffer &other) const;
+  [[nodiscard]] BitBuffer concatBits(const BitBuffer &other) const;
 
   /**
    * @brief Checks if two BitBuffers are equal at the bit level.
@@ -158,7 +158,7 @@ public:
    * @param other The BitBuffer to compare with.
    * @return true if both have the same bit size and identical bit values.
    */
-  bool equals(const BitBuffer &other) const;
+  [[nodiscard]] bool equals(const BitBuffer &other) const;
 
   /**
    * @brief Reverses the order of all bits in the buffer.
@@ -192,7 +192,7 @@ public:
    *
    * @return A new BitBuffer instance with the same data and bit size.
    */
-  BitBuffer clone() const;
+  [[nodiscard]] BitBuffer clone() const;
 
   /**
    * @brief Returns the number of valid bits in the buffer.
@@ -202,7 +202,7 @@ public:
    *
    * @return The total bit count.
    */
-  size_t bitSize() const;
+  [[nodiscard]] size_t bitSize() const;
 
 private:
   /**

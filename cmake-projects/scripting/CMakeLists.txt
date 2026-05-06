@@ -53,6 +53,7 @@ set(HEADERS
 
 # Create the library
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+quasar_apply_standards(${PROJECT_NAME})
 
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC 

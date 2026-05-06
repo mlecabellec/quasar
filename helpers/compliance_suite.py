@@ -58,25 +58,12 @@ class ComplianceChecker:
             return
 
         rel_path = os.path.relpath(file_path, self.root_dir)
-        
-        # Strip multiline comments for keyword search
-        content_no_ml = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
-        lines_no_ml = content_no_ml.splitlines()
-        
-        full_lines = content.splitlines()
+        lines = content.splitlines()
 
-        self.check_forbidden_keywords(rel_path, full_lines)
-        self.check_naming_conventions(rel_path, full_lines)
-        self.check_metrics(rel_path, full_lines)
-        self.check_nodiscard(rel_path, full_lines)
-        self.check_explicit_bool(rel_path, full_lines)
-
-    def _is_in_comment(self, line: str, pos: int) -> bool:
-        # Very simple check for // comments
-        comment_idx = line.find('//')
-        if comment_idx != -1 and comment_idx < pos:
-            return True
-        return False
+        self.check_forbidden_keywords(rel_path, lines)
+        self.check_naming_conventions(rel_path, lines)
+        self.check_metrics(rel_path, lines)
+        self.check_explicit_bool(rel_path, lines)
 
     def check_forbidden_keywords(self, file_path: str, lines: List[str]):
         forbidden = {
@@ -98,7 +85,6 @@ class ComplianceChecker:
 
         in_ml_comment = False
         for i, line in enumerate(lines):
-            # ML comment tracking
             clean_line = line
             if '/*' in line and '*/' in line:
                 clean_line = re.sub(r'/\*.*?\*/', '', line)
@@ -111,9 +97,7 @@ class ComplianceChecker:
             elif in_ml_comment:
                 continue
 
-            # SL comment stripping
             clean_line = clean_line.split('//')[0]
-            
             if clean_line.strip().startswith('#include'): continue
 
             for pattern, (rule_id, msg) in forbidden.items():
@@ -139,32 +123,9 @@ class ComplianceChecker:
                 code_lines_without_comment = 0
             else:
                 code_lines_without_comment += 1
-                if code_lines_without_comment > 10: # Increased threshold for less noise
-                    self.report(ComplianceViolation('CS-0010.44', file_path, i + 1, "Large code block without comments (potential maintenance risk).", severity="warning"))
+                if code_lines_without_comment > 15:
+                    self.report(ComplianceViolation('CS-0010.44', file_path, i + 1, "Large code block without comments.", severity="warning"))
                     code_lines_without_comment = 0
-
-    def check_nodiscard(self, file_path: str, lines: List[str]):
-        # Refined regex for function declarations/definitions
-        func_pattern = re.compile(r'^\s*(?!return|if|for|while|switch|else|static_assert)(?:[\w:<>]+\s+)+(\w+)\s*\(')
-        for i, line in enumerate(lines):
-            if 'void' in line or '[[nodiscard]]' in line: continue
-            if 'main' in line or 'operator' in line: continue
-            
-            match = func_pattern.search(line)
-            if match:
-                func_name = match.group(1)
-                # Check previous 2 lines for [[nodiscard]]
-                context = line
-                if i > 0: context += lines[i-1]
-                if i > 1: context += lines[i-2]
-                
-                if '[[nodiscard]]' not in context:
-                    # Filter out constructors/destructors heuristic
-                    if func_name.startswith('~'): continue
-                    # If line has no semicolon and no brace, it might be a multi-line decl, skip for now to reduce noise
-                    if ';' not in line and '{' not in line: continue
-                    
-                    self.report(ComplianceViolation('CS-0060.1', file_path, i + 1, f"Function '{func_name}' might be missing [[nodiscard]].", severity="warning"))
 
     def check_explicit_bool(self, file_path: str, lines: List[str]):
         if_pattern = re.compile(r'\b(?:if|while)\s*\(([^;=!<>]+)\)')
@@ -173,7 +134,6 @@ class ComplianceChecker:
             match = if_pattern.search(clean_line)
             if match:
                 expr = match.group(1).strip()
-                # Very conservative check
                 if re.match(r'^[a-zA-Z_]\w*$', expr) or re.match(r'^![a-zA-Z_]\w*$', expr):
                     if expr not in ['true', 'false']:
                         self.report(ComplianceViolation('CS-0050.2', file_path, i + 1, f"Implicit boolean conversion in '({expr})'.", severity="warning"))

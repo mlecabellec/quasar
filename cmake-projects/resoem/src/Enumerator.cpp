@@ -511,7 +511,7 @@ Result<uint32_t> Enumerator::configure_fmmu(ProcessImage &image) {
 
 Result<uint16_t>
 Enumerator::exchange_process_data(ProcessImage &image,
-                                  std::chrono::microseconds timeout) {
+                                  std::chrono::microseconds /*timeout*/) {
   if (image.size() == 0)
     return 0;
 
@@ -1546,7 +1546,7 @@ void Enumerator::load_eni(const ec_enit *eni) {
 
 // Helper to find the previous active port in the processing order 0 -> 3 -> 1
 // -> 2
-static uint8_t get_prev_port(uint8_t current_port,
+[[maybe_unused]] [[maybe_unused]] static uint8_t get_prev_port(uint8_t current_port,
                              const std::array<SlaveInfo::PortInfo, 4> &ports) {
   // Order: 0 -> 3 -> 1 -> 2 -> 0
   // Reverse: 2 <- 1 <- 3 <- 0
@@ -1593,7 +1593,6 @@ void Enumerator::measure_propagation_delays() {
 
   // [FE-0040.6.1] Implement propagation delay measurement between slaves with nanosecond resolution.
   // 1. Latch receive times (BWR to 0x0900)
-  uint32_t val = 0;
   write_register_broadcast<uint32_t>(regs::DC_RECEIVE_TIME_PORT0, 0);
 
   // Retrieve receive times for all slaves

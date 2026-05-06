@@ -16,6 +16,7 @@ add_library(resoem STATIC
     src/EthercatMasterService.cpp
     src/EthercatSlave.cpp
 )
+quasar_apply_standards(resoem)
 # ...
 # Test Executable
 add_executable(test_broadcast_read test/test_broadcast_read.cpp)

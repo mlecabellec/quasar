@@ -64,7 +64,18 @@ Required if you intend to generate the project documentation (HTML or PDF).
 *   `texlive-fonts-recommended`: Recommended fonts for LaTeX.
 *   `texlive-latex-extra`: Additional LaTeX packages often used by Doxygen.
 
-## 5. Quick Install Command
+## 5. Verification & Quality Tools
+Mandatory for compliance with Quasar Technical Standards (CS-0010 to CS-0060).
+
+*   `clang-tidy`: Linter and static analyzer.
+*   `cppcheck`: Static analysis for C++.
+*   `valgrind`: Dynamic memory and concurrency analysis.
+*   `lcov` / `gcovr`: Code coverage analysis.
+*   `lizard`: Code complexity analysis (Python: `pip install lizard`).
+*   `tig`: Terminal-based repository browser / visualization.
+*   `nodejs` / `npm`: For `commitlint` (Conventional Commits).
+
+## 6. Quick Install Command
 
 You can install all the requirements using the following command:
 
@@ -77,7 +88,8 @@ sudo apt-get install -y \
     libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
     libgmp-dev libssl-dev uuid-dev zlib1g-dev binutils-dev libiberty-dev \
     libyaml-cpp-dev libtinyxml2-dev libjsoncons-dev \
-    doxygen graphviz texlive-latex-base texlive-fonts-recommended texlive-latex-extra
+    doxygen graphviz texlive-latex-base texlive-fonts-recommended texlive-latex-extra \
+    clang-tidy cppcheck valgrind lcov gcovr tig nodejs npm python3-clang
 ```
 
 *Note: If you are setting up a CI environment (e.g., Docker), replace `linux-headers-$(uname -r)` with the specific header package for your target kernel (e.g., `linux-headers-amd64` on Debian).*

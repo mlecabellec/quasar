@@ -62,7 +62,7 @@ public:
    * @brief Returns the value of this Boolean object as a boolean primitive.
    * @return the primitive boolean value of this object.
    */
-  bool booleanValue() const;
+  [[nodiscard]] bool booleanValue() const;
 
   /**
    * @brief Sets the primitive boolean value.
@@ -79,7 +79,7 @@ public:
    *
    * @return a string representation of this object.
    */
-  std::string toString() const;
+  [[nodiscard]] std::string toString() const;
 
   /**
    * @brief Parses the string argument as a boolean.
@@ -113,7 +113,7 @@ public:
    * @param other The primitive boolean to compare with.
    * @return true if both values are the same.
    */
-  bool equals(bool other) const { 
+  [[nodiscard]] bool equals(bool other) const { 
     // Direct comparison with the internal primitive value.
     return value_ == other; 
   }
@@ -124,7 +124,7 @@ public:
    * @param other The primitive boolean to compare with.
    * @return 0 if equal, 1 if this is true and other is false, -1 if this is false and other is true.
    */
-  int compareTo(bool other) const { 
+  [[nodiscard]] int compareTo(bool other) const { 
       // Return 0 if the values are identical.
       if (value_ == other) return 0;
       // If not equal, 'true' is considered greater than 'false'.
@@ -136,14 +136,14 @@ public:
    * @param other The primitive boolean to compare with.
    * @return true if equal.
    */
-  bool operator==(bool other) const { return value_ == other; }
+  [[nodiscard]] bool operator==(bool other) const { return value_ == other; }
 
   /**
    * @brief Inequality operator comparison with a primitive boolean.
    * @param other The primitive boolean to compare with.
    * @return true if not equal.
    */
-  bool operator!=(bool other) const { return value_ != other; }
+  [[nodiscard]] bool operator!=(bool other) const { return value_ != other; }
 
 private:
   /**

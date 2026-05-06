@@ -23,11 +23,11 @@ std::shared_ptr<EthercatMasterService> EthercatMasterService::create(const std::
     
     std::weak_ptr<NamedService> weakSelf = svc;
     NamedMethod::create("start", [weakSelf](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
-        if (auto s = weakSelf.lock()) s->start();
+        if (std::shared_ptr<NamedService> s = weakSelf.lock()) s->start();
         return nullptr;
     }, svc);
     NamedMethod::create("stop", [weakSelf](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) {
-        if (auto s = weakSelf.lock()) s->stop();
+        if (std::shared_ptr<NamedService> s = weakSelf.lock()) s->stop();
         return nullptr;
     }, svc);
 
@@ -71,9 +71,9 @@ void EthercatMasterService::initialize(std::shared_ptr<EthercatMasterService> se
 
 void EthercatMasterService::setInterface(const std::string& iface) {
     m_interfaceName = iface;
-    auto child = getChild("interface");
+    std::shared_ptr<NamedObject> child = getChild("interface");
     if (child) {
-        if (auto ns = std::dynamic_pointer_cast<NamedString>(child)) {
+        if (std::shared_ptr<NamedString> ns = std::dynamic_pointer_cast<NamedString>(child)) {
             // Note: NamedString is immutable wrapper of String, so we might need to handle this carefully
             // In quasar, NamedString value can't be easily mutated if it's immutable. We might replace it.
             // For now, let's keep it simple.
@@ -111,15 +111,15 @@ void EthercatMasterService::performDiagnosticSweep() {
     if (!m_enumerator || !m_slavesRoot) return;
 
     int i = 0;
-    const auto& slaves = m_enumerator->slaves();
+    const std::vector<SlaveInfo>& slaves = m_enumerator->slaves();
     if (m_slaveStates.size() != slaves.size()) {
         m_slaveStates.resize(slaves.size(), 0);
     }
 
-    for (const auto& slaveInfo : slaves) {
-        auto slaveNode = m_slavesRoot->getChild("slave_" + std::to_string(i));
+    for (const SlaveInfo& slaveInfo : slaves) {
+        std::shared_ptr<NamedObject> slaveNode = m_slavesRoot->getChild("slave_" + std::to_string(i));
         if (slaveNode) {
-            auto diagNode = slaveNode->getChild("diagnostics");
+            std::shared_ptr<NamedObject> diagNode = slaveNode->getChild("diagnostics");
             if (!diagNode) {
                 diagNode = NamedObject::create("diagnostics", slaveNode);
                 NamedInteger<uint16_t>::create("al_status", 0, diagNode);
@@ -134,7 +134,7 @@ void EthercatMasterService::performDiagnosticSweep() {
                 // Check for state change
                 uint16_t currentState = statusCode & 0x0F; // Lower 4 bits are the state
                 if (m_slaveStates[i] != currentState) {
-                    auto event = NamedObject::create("SlaveStateChanged");
+                    std::shared_ptr<NamedObject> event = NamedObject::create("SlaveStateChanged");
                     NamedInteger<int>::create("slaveIndex", i, event);
                     NamedInteger<uint16_t>::create("oldState", m_slaveStates[i], event);
                     NamedInteger<uint16_t>::create("newState", currentState, event);
@@ -148,11 +148,11 @@ void EthercatMasterService::performDiagnosticSweep() {
                     m_slaveStates[i] = currentState;
                 }
 
-                if (auto statusField = std::dynamic_pointer_cast<NamedInteger<uint16_t>>(diagNode->getChild("al_status"))) {
+                if (std::shared_ptr<NamedInteger<uint16_t>> statusField = std::dynamic_pointer_cast<NamedInteger<uint16_t>>(diagNode->getChild("al_status"))) {
                     statusField->setValue(statusCode);
                 }
-                if (auto descField = std::dynamic_pointer_cast<NamedString>(diagNode->getChild("al_status_desc"))) {
-                    auto newDesc = NamedString::create("al_status_desc", std::string(al_status_code_to_string(statusCode)));
+                if (std::shared_ptr<NamedString> descField = std::dynamic_pointer_cast<NamedString>(diagNode->getChild("al_status_desc"))) {
+                    std::shared_ptr<NamedString> newDesc = NamedString::create("al_status_desc", std::string(al_status_code_to_string(statusCode)));
                     descField->replaceInTree(newDesc);
                 }
             }
@@ -160,7 +160,7 @@ void EthercatMasterService::performDiagnosticSweep() {
             // RX Error Counter Port 0 (0x0300)
             uint8_t rxErr = m_enumerator->read_register_fprd<uint8_t>(slaveInfo.configured_address, 0x0300, wkc);
             if (wkc > 0) {
-                if (auto errField = std::dynamic_pointer_cast<NamedInteger<uint8_t>>(diagNode->getChild("rx_err_port0"))) {
+                if (std::shared_ptr<NamedInteger<uint8_t>> errField = std::dynamic_pointer_cast<NamedInteger<uint8_t>>(diagNode->getChild("rx_err_port0"))) {
                     errField->setValue(rxErr);
                 }
             }
@@ -174,25 +174,25 @@ std::shared_ptr<NamedObject> EthercatMasterService::reconfigureSlave(std::shared
     
     int slaveIdx = 0;
     if (args) {
-        if (auto idxObj = std::dynamic_pointer_cast<NamedInteger<int>>(args->getChild("slaveIndex"))) {
+        if (std::shared_ptr<NamedInteger<int>> idxObj = std::dynamic_pointer_cast<NamedInteger<int>>(args->getChild("slaveIndex"))) {
             slaveIdx = idxObj->value();
         }
     }
 
     if (!m_enumerator || !m_coe) {
-         auto result = NamedObject::create("result");
+         std::shared_ptr<NamedObject> result = NamedObject::create("result");
          NamedBoolean::create("success", false, result);
          return result;
     }
 
-    const auto& slaves = m_enumerator->slaves();
+    const std::vector<SlaveInfo>& slaves = m_enumerator->slaves();
     if (slaveIdx < 0 || slaveIdx >= static_cast<int>(slaves.size())) {
-         auto result = NamedObject::create("result");
+         std::shared_ptr<NamedObject> result = NamedObject::create("result");
          NamedBoolean::create("success", false, result);
          return result;
     }
 
-    auto& slaveInfo = const_cast<SlaveInfo&>(slaves[slaveIdx]);
+    SlaveInfo& slaveInfo = const_cast<SlaveInfo&>(slaves[slaveIdx]);
 
     try {
         // 1. Transition to PRE-OP
@@ -209,12 +209,12 @@ std::shared_ptr<NamedObject> EthercatMasterService::reconfigureSlave(std::shared
         discoverSlaves();
     } catch (const std::exception& e) {
         std::cerr << "[EthercatMasterService] Reconfiguration failed: " << e.what() << std::endl;
-        auto result = NamedObject::create("result");
+        std::shared_ptr<NamedObject> result = NamedObject::create("result");
         NamedBoolean::create("success", false, result);
         return result;
     }
 
-    auto result = NamedObject::create("result");
+    std::shared_ptr<NamedObject> result = NamedObject::create("result");
     NamedBoolean::create("success", true, result);
     return result;
 }
@@ -222,7 +222,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::reconfigureSlave(std::shared
 void EthercatMasterService::discoverSlaves() {
     if (!m_enumerator) return;
     
-    auto result = m_enumerator->enumerate();
+    Result<size_t> result = m_enumerator->enumerate();
     if (!result) {
         std::cerr << "[EthercatMasterService] Failed to discover slaves." << std::endl;
         return;
@@ -232,10 +232,10 @@ void EthercatMasterService::discoverSlaves() {
 
     // Clear existing slaves from tree
     // NamedObject API: remove children? We can just create a new root and replace it.
-    auto newSlavesRoot = NamedObject::create("slaves");
+    std::shared_ptr<NamedObject> newSlavesRoot = NamedObject::create("slaves");
     
     int i = 0;
-    for (const auto& slaveInfo : m_enumerator->slaves()) {
+    for (const SlaveInfo& slaveInfo : m_enumerator->slaves()) {
         EthercatSlave::create("slave_" + std::to_string(i), slaveInfo, newSlavesRoot);
         i++;
     }
@@ -250,7 +250,7 @@ void EthercatMasterService::discoverSlaves() {
 std::shared_ptr<NamedObject> EthercatMasterService::refreshStatus(std::shared_ptr<NamedObject> args) {
     std::cout << "[EthercatMasterService] refreshing status..." << std::endl;
     discoverSlaves(); // For now, discovering again serves as a full refresh
-    auto result = NamedObject::create("result");
+    std::shared_ptr<NamedObject> result = NamedObject::create("result");
     NamedBoolean::create("success", true, result);
     return result;
 }
@@ -260,7 +260,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::forceInit(std::shared_ptr<Na
     if (m_enumerator) {
         m_enumerator->reset_to_init();
     }
-    auto result = NamedObject::create("result");
+    std::shared_ptr<NamedObject> result = NamedObject::create("result");
     NamedBoolean::create("success", true, result);
     return result;
 }
