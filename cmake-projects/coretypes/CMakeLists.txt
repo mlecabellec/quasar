@@ -18,7 +18,7 @@ target_include_directories(quasar_coretypes PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(quasar_coretypes PUBLIC utils)
+target_link_libraries(quasar_coretypes PUBLIC)
 
 # Installation
 install(TARGETS quasar_coretypes

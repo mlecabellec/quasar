@@ -4,7 +4,7 @@
 #include "resoem/EtherCATFrame.hpp"
 #include "resoem/MailboxHandler.hpp"
 #include "resoem/ProcessImage.hpp"
-#include "utils/Constants.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstring>

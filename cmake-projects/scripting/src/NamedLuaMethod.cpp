@@ -8,7 +8,7 @@
 #include "quasar/named/NamedBoolean.hpp"
 #include "quasar/named/NamedString.hpp"
 #include "quasar/scripting/ObjectTracker.hpp"
-#include "utils/Constants.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <future>
@@ -74,7 +74,7 @@ std::shared_ptr<quasar::named::NamedObject> NamedLuaMethod::execute(std::shared_
     if (svc && svc->isRunning()) {
         std::future<std::shared_ptr<quasar::named::NamedObject>> future = svc->postTaskWithResult<std::shared_ptr<quasar::named::NamedObject>>(executeInternal);
         // Industrial timeout to prevent hanging on stalled scripts.
-        if (future.wait_for(quasar::utils::DEFAULT_LUA_METHOD_TIMEOUT) == std::future_status::ready) {
+        if (future.wait_for(quasar::coretypes::DEFAULT_LUA_METHOD_TIMEOUT) == std::future_status::ready) {
             return future.get();
         } else {
             std::cerr << "NamedLuaMethod execution TIMEOUT" << std::endl;

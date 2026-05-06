@@ -1,6 +1,6 @@
 #include "quasar/coretypes/BitBuffer.hpp"
 #include "quasar/coretypes/BitBufferSlice.hpp"
-#include "utils/Constants.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <algorithm>
 
 #include <chrono>
@@ -302,7 +302,7 @@ void BitBuffer::reverseBits(size_t groupSize) {
     throw std::invalid_argument("Size not multiple of group size");
 
   size_t groups = size / groupSize;
-  const size_t limitOuter = utils::BIT_BUFFER_MAX_SAFE_SIZE;
+  const size_t limitOuter = BIT_BUFFER_MAX_SAFE_SIZE;
   size_t countOuter = 0;
   // Iterate through pairs of groups and swap their entire bit contents.
   for (size_t i = 0; i < groups / 2; ++i) {
@@ -311,7 +311,7 @@ void BitBuffer::reverseBits(size_t groupSize) {
     size_t startB = (groups - 1 - i) * groupSize;
 
     // Inner loop swaps individual bits within the two chosen groups.
-    const size_t limitInner = utils::BIT_BUFFER_MAX_SAFE_SIZE;
+    const size_t limitInner = BIT_BUFFER_MAX_SAFE_SIZE;
 
     size_t countInner = 0;
     for (size_t k = 0; k < groupSize; ++k) {

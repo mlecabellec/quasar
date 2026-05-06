@@ -1,7 +1,7 @@
 #include "quasar/datalogger/DataLoggerService.hpp"
 #include "quasar/datalogger/CsvFileWriter.hpp"
 #include "quasar/named/NamedMethod.hpp"
-#include "utils/Constants.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <mutex>
 
 namespace quasar::datalogger {
@@ -97,14 +97,14 @@ std::string DataLoggerService::getType() const {
 
 void DataLoggerService::addRecorder(std::shared_ptr<IRecorder> recorder) {
     std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-    if (lock.try_lock_for(quasar::utils::DEFAULT_MUTEX_TIMEOUT)) {
+    if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
         m_recorders.push_back(std::move(recorder));
     }
 }
 
 void DataLoggerService::addFilter(std::shared_ptr<IFilter> filter) {
     std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-    if (lock.try_lock_for(quasar::utils::DEFAULT_MUTEX_TIMEOUT)) {
+    if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
         m_filters.push_back(std::move(filter));
     }
 }
@@ -153,7 +153,7 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
         LogEntry entry = std::move(optEntry.value());
         
         std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-        if (lock.try_lock_for(quasar::utils::DEFAULT_MUTEX_TIMEOUT)) {
+        if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
             bool drop = false;
             const size_t limitFilters = 1000;
             size_t countFilters = 0;

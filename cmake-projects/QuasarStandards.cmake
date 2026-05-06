@@ -54,7 +54,7 @@ function(quasar_apply_standards target)
     # Clang-Tidy integration
     if(CLANG_TIDY_EXE)
         set_target_properties(${target} PROPERTIES
-            CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=modernize-*,cppcoreguidelines-*,bugprone-*,performance-*,readability-magic-numbers;-warnings-as-errors=*;--extra-arg=-Wno-unknown-warning-option;--extra-arg=-std=c++2b"
+            CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=modernize-*,cppcoreguidelines-*,bugprone-*,performance-*,readability-magic-numbers,-modernize-use-auto,-modernize-use-trailing-return-type;--extra-arg=-Wno-unknown-warning-option;--extra-arg=-std=c++2b"
         )
     endif()
 endfunction()

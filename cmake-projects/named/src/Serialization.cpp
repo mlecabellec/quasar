@@ -41,7 +41,8 @@ using jsoncons::json;
 std::shared_ptr<NamedObject>
 createFromTypeAndValue(const std::string &name, const std::string &type,
                        const std::string &valueStr,
-                       std::shared_ptr<NamedObject> parent) {
+                       std::shared_ptr<NamedObject> parent,
+                       int variantTypeHint = -1) {
   // [CS-0010.44] Block comments for dispatch logic.
   if (type == "NamedBoolean" || type == "Boolean") {
     return NamedBoolean::create(name, valueStr == "true", parent);
@@ -86,7 +87,20 @@ createFromTypeAndValue(const std::string &name, const std::string &type,
   } else if (type == "NamedSet") {
     return NamedSet<NamedObject>::create(name, parent);
   } else if (type == "NamedVariant") {
-    return NamedVariant::create(name, parent);
+    quasar::coretypes::VariantType vt = (variantTypeHint != -1) ? 
+        static_cast<quasar::coretypes::VariantType>(variantTypeHint) : 
+        quasar::coretypes::VariantType::Empty;
+
+    if (vt == quasar::coretypes::VariantType::Boolean) {
+        return NamedVariant::create(name, quasar::coretypes::Variant(valueStr == "true"), parent);
+    } else if (vt == quasar::coretypes::VariantType::Integer) {
+        return NamedVariant::create(name, quasar::coretypes::Variant(static_cast<int64_t>(std::stoll(valueStr))), parent);
+    } else if (vt == quasar::coretypes::VariantType::Double) {
+        return NamedVariant::create(name, quasar::coretypes::Variant(std::stod(valueStr)), parent);
+    } else if (vt == quasar::coretypes::VariantType::String) {
+        return NamedVariant::create(name, quasar::coretypes::Variant(valueStr), parent);
+    }
+    return NamedVariant::create(name, quasar::coretypes::Variant(), parent);
   }
   return NamedObject::create(name, parent);
 }
@@ -114,6 +128,9 @@ std::string getValueAsString(const std::shared_ptr<NamedObject>& obj) {
     const quasar::coretypes::String* s = dynamic_cast<const quasar::coretypes::String*>(obj.get());
     if (s) return s->toString();
     
+    const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get());
+    if (v) return v->toString();
+    
     return "";
 }
 
@@ -125,13 +142,18 @@ void serializeToXml(XMLElement *element, const std::shared_ptr<NamedObject> &obj
   
   element->SetAttribute("name", obj->getName().c_str());
   element->SetAttribute("type", obj->getType().c_str());
+  
+  if (const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get())) {
+      element->SetAttribute("variantType", static_cast<int>(v->getVariantType()));
+  }
+
   std::string val = getValueAsString(obj);
   if (!val.empty()) element->SetText(val.c_str());
 
   // [CS-0010.34] auto forbidden.
   std::list<std::shared_ptr<NamedObject>> children = obj->getChildren();
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
-    const std::shared_ptr<NamedObject> &child = *it;
+    const std::shared_ptr<NamedObject>& child = *it;
     XMLElement *childElem = element->GetDocument()->NewElement("NamedObject");
     serializeToXml(childElem, child);
     element->InsertEndChild(childElem);
@@ -155,8 +177,9 @@ void deserializeFromXml(XMLElement *element, std::shared_ptr<NamedObject> parent
   
   const char *name = element->Attribute("name");
   const char *type = element->Attribute("type");
+  const char *vType = element->Attribute("variantType");
   const char *text = element->GetText();
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name ? name : "unnamed", type ? type : "Object", text ? text : "", parent);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name ? name : "unnamed", type ? type : "Object", text ? text : "", parent, vType ? std::stoi(vType) : -1);
   
   XMLElement *child = element->FirstChildElement("NamedObject");
   // [CS-0010.37] Loop hard limit.
@@ -177,8 +200,9 @@ std::shared_ptr<NamedObject> fromXml(const std::string &xml) {
   if (!root) throw std::runtime_error("Invalid XML: missing root NamedObject");
   const char *name = root->Attribute("name");
   const char *type = root->Attribute("type");
+  const char *vType = root->Attribute("variantType");
   const char *text = root->GetText();
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name ? name : "unnamed", type ? type : "Object", text ? text : "", nullptr);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name ? name : "unnamed", type ? type : "Object", text ? text : "", nullptr, vType ? std::stoi(vType) : -1);
   XMLElement *child = root->FirstChildElement("NamedObject");
   
   // [CS-0010.37] Loop hard limit.
@@ -199,9 +223,14 @@ YAML::Node serializeToYaml(const std::shared_ptr<NamedObject> &obj) {
   YAML::Node node;
   node["name"] = obj->getName();
   node["type"] = obj->getType();
+
+  if (const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get())) {
+      node["variantType"] = static_cast<int>(v->getVariantType());
+  }
+
   std::string val = getValueAsString(obj);
   if (!val.empty()) node["value"] = val;
-  
+
   // [CS-0010.34] auto forbidden.
   std::list<std::shared_ptr<NamedObject>> children = obj->getChildren();
   for (std::list<std::shared_ptr<NamedObject>>::iterator it = children.begin(); it != children.end(); ++it) {
@@ -222,8 +251,9 @@ std::string toYaml(const std::shared_ptr<NamedObject> &obj) {
 void deserializeFromYaml(const YAML::Node &node, std::shared_ptr<NamedObject> parent) {
   std::string name = node["name"].as<std::string>();
   std::string type = node["type"].as<std::string>();
+  int vType = node["variantType"] ? node["variantType"].as<int>() : -1;
   std::string value = node["value"] ? node["value"].as<std::string>() : "";
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, parent);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, parent, vType);
   if (node["children"]) {
     // [CS-0010.34] auto forbidden.
     for (YAML::const_iterator it = node["children"].begin(); it != node["children"].end(); ++it) {
@@ -237,8 +267,9 @@ std::shared_ptr<NamedObject> fromYaml(const std::string &yaml) {
   if (!root.IsDefined()) throw std::runtime_error("Invalid YAML");
   std::string name = root["name"].as<std::string>();
   std::string type = root["type"].as<std::string>();
+  int vType = root["variantType"] ? root["variantType"].as<int>() : -1;
   std::string value = root["value"] ? root["value"].as<std::string>() : "";
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, nullptr);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, nullptr, vType);
   if (root["children"]) {
     // [CS-0010.34] auto forbidden.
     for (YAML::const_iterator it = root["children"].begin(); it != root["children"].end(); ++it) {
@@ -254,8 +285,14 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
   json j;
   j["name"] = obj->getName();
   j["type"] = obj->getType();
-  std::string val = getValueAsString(obj);
-  if (!val.empty()) j["value"] = val;
+  
+  if (const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get())) {
+      j["variantType"] = static_cast<int>(v->getVariantType());
+      j["value"] = v->toString();
+  } else {
+      std::string val = getValueAsString(obj);
+      if (!val.empty()) j["value"] = val;
+  }
   
   std::list<std::shared_ptr<NamedObject>> children = obj->getChildren();
   if (!children.empty()) {
@@ -277,8 +314,9 @@ std::string toJson(const std::shared_ptr<NamedObject> &obj) {
 void deserializeFromJson(const json &j, std::shared_ptr<NamedObject> parent) {
   std::string name = j["name"].as<std::string>();
   std::string type = j["type"].as<std::string>();
+  int vType = j.contains("variantType") ? j["variantType"].as<int>() : -1;
   std::string value = j.contains("value") ? j["value"].as<std::string>() : "";
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, parent);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, parent, vType);
   if (j.contains("children")) {
     // [CS-0010.34] auto forbidden.
     for (const json& child : j["children"].array_range()) {
@@ -291,8 +329,9 @@ std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
   json j = json::parse(jsonStr);
   std::string name = j["name"].as<std::string>();
   std::string type = j["type"].as<std::string>();
+  int vType = j.contains("variantType") ? j["variantType"].as<int>() : -1;
   std::string value = j.contains("value") ? j["value"].as<std::string>() : "";
-  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, nullptr);
+  std::shared_ptr<NamedObject> obj = createFromTypeAndValue(name, type, value, nullptr, vType);
   if (j.contains("children")) {
     // [CS-0010.34] auto forbidden.
     for (const json& child : j["children"].array_range()) {
@@ -320,6 +359,14 @@ json serializeToBinaryJson(const std::shared_ptr<NamedObject> &obj) {
       std::vector<uint8_t> vec = bb->toVector();
       j["value"] = jsoncons::byte_string(vec.data(), vec.size());
       j["bitSize"] = static_cast<uint64_t>(bb->bitSize());
+  } else if (const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get())) {
+      j["variantType"] = static_cast<int>(v->getVariantType());
+      if (v->getVariantType() == quasar::coretypes::VariantType::Buffer) {
+          std::vector<uint8_t> vec = v->getAs<std::vector<uint8_t>>();
+          j["value"] = jsoncons::byte_string(vec.data(), vec.size());
+      } else {
+          j["value"] = v->toString();
+      }
   } else {
       const quasar::coretypes::Buffer* buf = dynamic_cast<const quasar::coretypes::Buffer*>(obj.get());
       if (buf) {
@@ -367,6 +414,26 @@ std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr
       jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
       std::vector<uint8_t> data(bytes.begin(), bytes.end());
       obj = NamedBuffer::create(name, data, parent);
+  } else if (type == "NamedVariant") {
+      quasar::coretypes::VariantType vt = j.contains("variantType") ? 
+          static_cast<quasar::coretypes::VariantType>(j["variantType"].as<int>()) : 
+          quasar::coretypes::VariantType::Empty;
+      
+      if (vt == quasar::coretypes::VariantType::Buffer) {
+          jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
+          std::vector<uint8_t> vec(bytes.begin(), bytes.end());
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(vec), parent);
+      } else if (vt == quasar::coretypes::VariantType::Boolean) {
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(j["value"].as<std::string>() == "true"), parent);
+      } else if (vt == quasar::coretypes::VariantType::Integer) {
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(static_cast<int64_t>(std::stoll(j["value"].as<std::string>()))), parent);
+      } else if (vt == quasar::coretypes::VariantType::Double) {
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(std::stod(j["value"].as<std::string>())), parent);
+      } else if (vt == quasar::coretypes::VariantType::String) {
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(j["value"].as<std::string>()), parent);
+      } else {
+          obj = NamedVariant::create(name, quasar::coretypes::Variant(), parent);
+      }
   } else {
       std::string value = j.contains("value") ? (j["value"].is_string() ? j["value"].as<std::string>() : "") : "";
       obj = createFromTypeAndValue(name, type, value, parent);

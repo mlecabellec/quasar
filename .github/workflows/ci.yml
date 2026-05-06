@@ -52,7 +52,12 @@ jobs:
           apt-get update
           apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb
+                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
+                             curl ca-certificates nodejs npm
+          npm install -g n
+          n stable
+          # Refresh path for the next steps
+          hash -r
 
       - name: Install dependencies (Fedora)
         if: "startsWith(matrix.container, 'fedora')"
@@ -62,7 +67,11 @@ jobs:
                          alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
                          mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
                          gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
-                         yaml-cpp-devel tinyxml2-devel ccache gdb
+                         yaml-cpp-devel tinyxml2-devel ccache gdb \
+                         curl nodejs npm
+          npm install -g n
+          n stable
+          hash -r
 
       - name: Install dependencies (Arch)
         if: "startsWith(matrix.container, 'archlinux')"
@@ -71,7 +80,11 @@ jobs:
                          base-devel cmake git python file \
                          linux-headers autoconf automake libtool dkms \
                          alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
-                         gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb
+                         gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
+                         curl nodejs npm
+          npm install -g n
+          n stable
+          hash -r
 
       - name: ccache cache
         uses: actions/cache@v4

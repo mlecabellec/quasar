@@ -27,7 +27,7 @@ struct EtherCATHeader {
  * 
  * Each datagram within a frame starts with this header.
  */
-struct alignas(1) DatagramHeader {
+struct __attribute__((packed)) DatagramHeader {
   uint8_t command;      ///< Command type (APRD, BWR, etc.)
   uint8_t index;        ///< Working counter index
   uint16_t address;     ///< Slave address (Station or Auto-increment)

@@ -1,10 +1,10 @@
-#ifndef QUASAR_UTILS_CONSTANTS_HPP
-#define QUASAR_UTILS_CONSTANTS_HPP
+#ifndef QUASAR_CORETYPES_CONSTANTS_HPP
+#define QUASAR_CORETYPES_CONSTANTS_HPP
 
 #include <chrono>
 #include <cstdint>
 
-namespace quasar::utils {
+namespace quasar::coretypes {
 
 /**
  * @brief Global and module-specific constants for the Quasar project.
@@ -30,6 +30,6 @@ static constexpr uint16_t EC_SII_PDO_ENTRY_MAX_ITERATIONS{256};
 // --- Buffer & Resource Limits ---
 static constexpr size_t BIT_BUFFER_MAX_SAFE_SIZE{1000000};
 
-} // namespace quasar::utils
+} // namespace quasar::coretypes
 
-#endif // QUASAR_UTILS_CONSTANTS_HPP
+#endif // QUASAR_CORETYPES_CONSTANTS_HPP

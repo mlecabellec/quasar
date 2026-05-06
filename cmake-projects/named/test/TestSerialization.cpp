@@ -50,8 +50,7 @@ protected:
     std::shared_ptr<NamedMap<NamedObject>> map = NamedMap<NamedObject>::create("mapVal", root);
     map->put("key1", NamedString::create("item1", "mapped"));
     
-    std::shared_ptr<NamedVariant> variant = NamedVariant::create("varVal", root);
-    variant->set(NamedBoolean::create("inner", false));
+    std::shared_ptr<NamedVariant> variant = NamedVariant::create("varVal", quasar::coretypes::Variant(false), root);
 
     return root;
   }
@@ -176,9 +175,7 @@ protected:
       } else if (child->getName() == "varVal") {
         std::shared_ptr<NamedVariant> v = std::dynamic_pointer_cast<NamedVariant>(child);
         ASSERT_TRUE(v != nullptr);
-        ASSERT_TRUE(v->get() != nullptr);
-        EXPECT_TRUE((v->template holds<NamedBoolean>()));
-
+        EXPECT_EQ(v->getVariant().getAs<bool>(), false);
       }
     }
 

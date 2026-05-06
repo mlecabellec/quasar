@@ -366,15 +366,30 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     // Variant
     sol::usertype<LuaProxy<NamedVariant>> utNamedVariant = lua.new_usertype<LuaProxy<NamedVariant>>("NamedVariant", sol::no_constructor, sol::base_classes, sol::bases<ILuaProxy>());
     bindNamedObjectMethods<NamedVariant>(utNamedVariant);
-    utNamedVariant["get"] = [](LuaProxy<NamedVariant> self) -> std::optional<LuaProxy<NamedObject>> {
-        std::shared_ptr<NamedObject> ptr = self.lock()->get();
-        return ptr ? std::make_optional(LuaProxy<NamedObject>(ptr)) : std::nullopt;
+    utNamedVariant["getValue"] = [](LuaProxy<NamedVariant> self, sol::this_state L) -> sol::object {
+        coretypes::Variant v = self.lock()->getVariant();
+        if (v.getVariantType() == coretypes::VariantType::Boolean) return sol::make_object(L, v.getAs<bool>());
+        if (v.getVariantType() == coretypes::VariantType::Integer) return sol::make_object(L, v.getAs<int64_t>());
+        if (v.getVariantType() == coretypes::VariantType::Double) return sol::make_object(L, v.getAs<double>());
+        if (v.getVariantType() == coretypes::VariantType::String) return sol::make_object(L, v.getAs<std::string>());
+        if (v.getVariantType() == coretypes::VariantType::Buffer) return sol::make_object(L, sol::as_table(v.getAs<std::vector<uint8_t>>()));
+        return sol::make_object(L, sol::nil);
     };
-    utNamedVariant["set"] = [](LuaProxy<NamedVariant> self, sol::object obj) {
-        self.lock()->set(extractNamedObject(obj));
+    utNamedVariant["setValue"] = [](LuaProxy<NamedVariant> self, sol::object obj) {
+        if (obj.is<bool>()) self.lock()->setVariant(coretypes::Variant(obj.as<bool>()));
+        else if (obj.is<int64_t>()) self.lock()->setVariant(coretypes::Variant(obj.as<int64_t>()));
+        else if (obj.is<double>()) self.lock()->setVariant(coretypes::Variant(obj.as<double>()));
+        else if (obj.is<std::string>()) self.lock()->setVariant(coretypes::Variant(obj.as<std::string>()));
+        else if (obj.is<sol::table>()) {
+            std::vector<uint8_t> v;
+            sol::table t = obj.as<sol::table>();
+            v.reserve(t.size());
+            for (size_t i = 1; i <= t.size(); ++i) v.push_back(t.get<uint8_t>(i));
+            self.lock()->setVariant(coretypes::Variant(v));
+        }
     };
     namedTable["createVariant"] = [](const std::string& name, sol::object parent, sol::this_state L) {
-        std::shared_ptr<NamedVariant> ptr = NamedVariant::create(name, extractNamedObject(parent));
+        std::shared_ptr<NamedVariant> ptr = NamedVariant::create(name, coretypes::Variant(), extractNamedObject(parent));
         if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedVariant>(ptr);
     };
@@ -517,11 +532,11 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
                 int priority = arg3.value_or(0);
                 size_t id = getEngineId(L);
                 
-                auto p = [pred](const quasar::named::traversal::TransformContext& ctx) -> bool {
+                const std::function<bool(const quasar::named::traversal::TransformContext&)> p = [pred](const quasar::named::traversal::TransformContext& ctx) -> bool {
                     sol::protected_function_result res = pred(ctx);
                     return res.valid() && res.get<bool>();
                 };
-                auto g = [gen, id](const quasar::named::traversal::TransformContext& ctx, quasar::named::traversal::Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
+                const std::function<std::vector<std::shared_ptr<NamedObject>>(const quasar::named::traversal::TransformContext&, quasar::named::traversal::Transformer&)> g = [gen, id](const quasar::named::traversal::TransformContext& ctx, quasar::named::traversal::Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {
                     sol::protected_function_result res = gen(ctx, t);
                     if (!res.valid()) return {};
                     std::vector<std::shared_ptr<NamedObject>> out;
@@ -553,7 +568,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             std::vector<std::shared_ptr<NamedObject>> res = self.transform(extractNamedObject(root));
             std::vector<LuaProxy<NamedObject>> out;
             size_t id = getEngineId(L);
-            for (auto const& ptr : res) {
+            for (const std::shared_ptr<NamedObject>& ptr : res) {
                 if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
                 out.emplace_back(ptr);
             }
@@ -566,7 +581,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             std::vector<std::shared_ptr<NamedObject>> res = self.transformSubtree(extractNamedObject(node), depth, path);
             std::vector<LuaProxy<NamedObject>> out;
             size_t id = getEngineId(L);
-            for (auto const& ptr : res) {
+            for (const std::shared_ptr<NamedObject>& ptr : res) {
                 if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
                 out.emplace_back(ptr);
             }
