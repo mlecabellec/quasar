@@ -7,3 +7,4 @@ tmp/
 build_output.txt
 build_log.txt
 sensor_data.csv
+.cache/
