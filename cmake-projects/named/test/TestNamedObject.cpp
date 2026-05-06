@@ -30,16 +30,16 @@ TEST(NamedObjectTest, InvalidName) {
   // Proof of compliance: [FE-0020.1.1.3] Regex match.
   // Assertion: Check if empty name throws
   std::cout << "Assertion: Check if empty name throws" << std::endl;
-  EXPECT_THROW(NamedObject::create(""), std::runtime_error);
+  EXPECT_THROW((void)NamedObject::create(""), std::runtime_error);
 
   // Assertion: Check if numeric start throws
   std::cout << "Assertion: Check if numeric start throws" << std::endl;
-  EXPECT_THROW(NamedObject::create("123"),
+  EXPECT_THROW((void)NamedObject::create("123"),
                std::runtime_error); // Must start with letter/_
 
   // Assertion: Check if invalid char throws
   std::cout << "Assertion: Check if invalid char throws" << std::endl;
-  EXPECT_THROW(NamedObject::create("invalid-name"), std::runtime_error);
+  EXPECT_THROW((void)NamedObject::create("invalid-name"), std::runtime_error);
 }
 
 TEST(NamedObjectTest, Hierarchy) {
@@ -105,7 +105,7 @@ TEST(NamedObjectTest, Uniqueness) {
   std::cout
       << "Assertion: Check if creating another child with same name throws"
       << std::endl;
-  EXPECT_THROW(NamedObject::create("child", root), std::runtime_error);
+  EXPECT_THROW((void)NamedObject::create("child", root), std::runtime_error);
 
   // Step: Create standalone child2 with name "child"
   std::cout << "Step: Create standalone child2 with name \"child\""
@@ -276,7 +276,7 @@ TEST(NamedObjectTest, RTTI) {
   EXPECT_TRUE(i->is<NamedObject>());
   EXPECT_TRUE(i->is<NamedInteger<int>>());
 
-  EXPECT_NO_THROW(i->as<NamedInteger<int>>());
+  EXPECT_NO_THROW((void)i->as<NamedInteger<int>>());
 }
 
 TEST(NamedObjectTest, ReplaceInTree) {

@@ -5,6 +5,10 @@ if(QUASAR_STANDARDS_INCLUDED)
 endif()
 set(QUASAR_STANDARDS_INCLUDED ON)
 
+# Enforce Position Independent Code (PIC) for all targets
+# Mandatory when linking shared objects against static libraries on modern toolchains.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 
 function(quasar_apply_standards target)
