@@ -44,7 +44,6 @@ Required for building the `linux-modules` (EtherCAT, SOEM, SOES).
 *   `libuuid-devel`: Universally Unique ID library development files.
 *   `zlib-devel`: Compression library development files.
 *   `binutils-devel`: Binary utilities development files.
-*   `libiberty-devel`: Library of GNU utility functions development files.
 
 ### Optional / Optimization
 *   `yaml-cpp-devel`: YAML parser and emitter development files.
@@ -79,7 +78,7 @@ sudo dnf install -y \
     kernel-devel-$(uname -r) autoconf automake libtool dkms \
     alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
     mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
-    gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel libiberty-devel \
+    gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
     yaml-cpp-devel tinyxml2-devel \
     doxygen graphviz texlive-latex texlive-collection-fontsrecommended texlive-collection-latexextra \
     clang-tools-extra cppcheck valgrind lcov gcovr tig nodejs npm python3-clang

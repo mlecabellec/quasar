@@ -61,7 +61,7 @@ jobs:
                          kernel-devel autoconf automake libtool dkms \
                          alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
                          mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
-                         gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel libiberty-devel \
+                         gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
                          yaml-cpp-devel tinyxml2-devel ccache gdb
 
       - name: Install dependencies (Arch)
@@ -86,7 +86,8 @@ jobs:
           mkdir -p .ccache
           cmake -S cmake-projects -B build-projects \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
