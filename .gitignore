@@ -1,4 +1,4 @@
-build/
+/build/
 build_test/
 build-projects/
 build-modules/
