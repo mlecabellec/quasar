@@ -8,6 +8,7 @@
 
 #include "quasar/coretypes/Number.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>

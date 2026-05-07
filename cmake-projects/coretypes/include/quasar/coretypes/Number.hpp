@@ -6,6 +6,8 @@
 #ifndef QUASAR_CORETYPES_NUMBER_HPP
 #define QUASAR_CORETYPES_NUMBER_HPP
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 

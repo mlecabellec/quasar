@@ -69,11 +69,11 @@ Simulator::~Simulator() noexcept {
 
   // Finalise loaded libraries
   for (void *handle : _loadedLibraries) {
-    if (handle) {
+    if (handle != nullptr) {
       typedef bool (*FinaliseFunctionPtr)();
       FinaliseFunctionPtr finalise = reinterpret_cast<FinaliseFunctionPtr>(
           LibraryLoader::GetInstance().GetSymbolAddress(handle, "Finalise"));
-      if (finalise) {
+      if (finalise != nullptr) {
         finalise();
       }
       LibraryLoader::GetInstance().UnloadLibrary(handle);
@@ -175,10 +175,10 @@ void Simulator::Run() {
 
   // Safety limit for loop iterations
   Smp::UInt64 iterations = 0;
-  constexpr Smp::UInt64 maxIterations = std::numeric_limits<Smp::UInt64>::max();
+  constexpr Smp::UInt64 MAX_ITERATIONS = std::numeric_limits<Smp::UInt64>::max();
 
   while (_simState == Smp::SimulatorStateKind::SSK_Executing) {
-    if (iterations >= maxIterations) {
+    if (iterations >= MAX_ITERATIONS) {
        // Hard limit reached
        break;
     }

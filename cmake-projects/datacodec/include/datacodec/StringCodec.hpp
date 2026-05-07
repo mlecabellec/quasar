@@ -45,19 +45,19 @@ public:
     (void)buffer;
   }
 
-  size_t getBitSize() const override {
-    return m_isFixedLength ? m_maxBitSize : 0;
-  }
+  [[nodiscard]] size_t getBitSize() const override {
+      return (m_isFixedLength == true) ? m_maxBitSize : 0;
+    }
 
-  size_t getEncodedBitSize(
-      const std::shared_ptr<quasar::named::NamedObject> &value) const override {
-    if (m_isFixedLength)
-      return m_maxBitSize;
+    size_t getEncodedBitSize(
+        const std::shared_ptr<quasar::named::NamedObject> &value) const override {
+      if (m_isFixedLength == true)
+        return m_maxBitSize;
 
-    std::shared_ptr<quasar::named::NamedString> namedStr =
-        std::dynamic_pointer_cast<quasar::named::NamedString>(value);
-    return namedStr ? (namedStr->toString().length() + 1) * 8 : 0;
-  }
+      std::shared_ptr<quasar::named::NamedString> namedStr =
+          std::dynamic_pointer_cast<quasar::named::NamedString>(value);
+      return (namedStr != nullptr) ? (namedStr->toString().length() + 1) * 8 : 0;
+    }
 
 private:
   size_t m_maxBitSize;

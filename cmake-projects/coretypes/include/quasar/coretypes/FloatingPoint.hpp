@@ -9,6 +9,7 @@
 #include "quasar/coretypes/Number.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <iomanip>
 #include <limits>
 #include <sstream>

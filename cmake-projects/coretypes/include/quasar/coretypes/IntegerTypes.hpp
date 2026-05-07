@@ -7,6 +7,7 @@
 #define QUASAR_CORETYPES_INTEGERTYPES_HPP
 
 #include "quasar/coretypes/Integer.hpp"
+#include <cstddef>
 #include <cstdint>
 
 namespace quasar {
