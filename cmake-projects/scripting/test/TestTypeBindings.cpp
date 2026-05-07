@@ -82,27 +82,25 @@ TEST_F(TypeBindingsTest, VariantHandling) {
     lua["v"] = LuaProxy<NamedVariant>(v);
 
     lua.script(R"(
-        local obj = quasar.named.createObject("Content")
-        v:set(obj)
+        v:setValue("hello")
     )");
 
-    auto content = v->get();
-    ASSERT_NE(content, nullptr);
-    EXPECT_EQ(content->getName(), "value");
+    coretypes::Variant content = v->getVariant();
+    ASSERT_EQ(content.getVariantType(), coretypes::VariantType::String);
+    EXPECT_EQ(content.getAs<std::string>(), "hello");
 }
 
 TEST_F(TypeBindingsTest, CppVariantHandling) {
     sol::state& lua = engine->getState();
     auto v = NamedVariant::create("v", coretypes::Variant(), root);
-    auto content = NamedObject::create("CppContent");
-    v->set(content);
-    
+    v->setVariant(coretypes::Variant(std::string("CppContent")));
+
     lua["v"] = LuaProxy<NamedVariant>(v);
 
-    sol::protected_function_result result = lua.script("return v:get():getName()");
+    sol::protected_function_result result = lua.script("return v:getValue()");
     ASSERT_TRUE(result.valid());
     std::string name = result;
-    EXPECT_EQ(name, "value");
+    EXPECT_EQ(name, "CppContent");
 }
 
 TEST_F(TypeBindingsTest, IsolatedCreation) {
