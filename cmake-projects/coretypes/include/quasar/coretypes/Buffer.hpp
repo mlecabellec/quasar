@@ -108,7 +108,7 @@ public:
    * @brief Returns the current size of the buffer.
    * @return The number of bytes in the buffer.
    */
-  size_t size() const;
+  [[nodiscard]] size_t size() const;
 
   /**
    * @brief Retrieves a single byte at the specified index.
@@ -116,7 +116,7 @@ public:
    * @return The byte value at the specified index.
    * @throws std::out_of_range If @p index is greater than or equal to the buffer size.
    */
-  uint8_t get(size_t index) const;
+  [[nodiscard]] uint8_t get(size_t index) const;
 
   /**
    * @brief Sets a single byte at the specified index.
@@ -134,7 +134,7 @@ public:
    * 
    * @return A string containing the hex representation (e.g., "0a1b2c").
    */
-  std::string toString() const;
+  [[nodiscard]] std::string toString() const;
 
   /**
    * @brief Returns a copy of the internal data as a byte vector.
@@ -143,7 +143,7 @@ public:
    * 
    * @return A std::vector<uint8_t> containing a copy of the buffer data.
    */
-  std::vector<uint8_t> toVector() const;
+  [[nodiscard]] std::vector<uint8_t> toVector() const;
 
   /**
    * @brief Creates a new Buffer from a hexadecimal string.
@@ -181,7 +181,7 @@ public:
    * @return The 32-bit integer read from the buffer.
    * @throws std::out_of_range If the read would exceed the buffer's boundaries.
    */
-  int readInt(size_t index, Endianness endian = Endianness::BigEndian) const;
+  [[nodiscard]] int readInt(size_t index, Endianness endian = Endianness::BigEndian) const;
 
   /**
    * @brief Writes a value of type T to the buffer with specified endianness.
@@ -215,7 +215,7 @@ public:
    * @return A new Buffer instance containing the sliced data.
    * @throws std::out_of_range If start + length exceeds the buffer size.
    */
-  Buffer slice(size_t start, size_t length) const;
+  [[nodiscard]] Buffer slice(size_t start, size_t length) const;
 
   /**
    * @brief Concatenates this buffer with another into a new Buffer instance.
@@ -225,7 +225,7 @@ public:
    * @param other The buffer to append to this one.
    * @return A new Buffer containing the concatenated data.
    */
-  Buffer concat(const Buffer &other) const;
+  [[nodiscard]] Buffer concat(const Buffer &other) const;
 
   /**
    * @brief Checks if this buffer is identical to another buffer.
@@ -237,7 +237,7 @@ public:
    * @param other The buffer to compare with.
    * @return true if both buffers are equal.
    */
-  bool equals(const Buffer &other) const;
+  [[nodiscard]] bool equals(const Buffer &other) const;
 
   /**
    * @brief Reverses the order of all bytes in the buffer in-place.
@@ -268,7 +268,7 @@ public:
    * 
    * @return A new Buffer instance with the same data.
    */
-  Buffer clone() const;
+  [[nodiscard]] Buffer clone() const;
 
   /**
    * @brief Creates a lightweight view slice of the buffer.
@@ -296,7 +296,7 @@ public:
    * @return A new Buffer containing the result of (this & other).
    * @throws std::invalid_argument If the buffers have different sizes.
    */
-  Buffer bitwiseAnd(const Buffer &other) const;
+  [[nodiscard]] Buffer bitwiseAnd(const Buffer &other) const;
 
   /**
    * @brief Performs an element-wise bitwise OR with another buffer.
@@ -307,7 +307,7 @@ public:
    * @return A new Buffer containing the result of (this | other).
    * @throws std::invalid_argument If the buffers have different sizes.
    */
-  Buffer bitwiseOr(const Buffer &other) const;
+  [[nodiscard]] Buffer bitwiseOr(const Buffer &other) const;
 
   /**
    * @brief Performs an element-wise bitwise XOR with another buffer.
@@ -318,7 +318,7 @@ public:
    * @return A new Buffer containing the result of (this ^ other).
    * @throws std::invalid_argument If the buffers have different sizes.
    */
-  Buffer bitwiseXor(const Buffer &other) const;
+  [[nodiscard]] Buffer bitwiseXor(const Buffer &other) const;
 
   /**
    * @brief Performs a bitwise NOT operation on the buffer content.
@@ -327,7 +327,7 @@ public:
    *
    * @return A new Buffer containing the bitwise complement of this buffer's data.
    */
-  Buffer bitwiseNot() const;
+  [[nodiscard]] Buffer bitwiseNot() const;
 
   /**
    * @brief Compares this buffer lexicographically with another.
@@ -338,7 +338,7 @@ public:
    * @return A negative value if this < other, a positive value if this > other, 
    *         or zero if they are equal.
    */
-  int compareTo(const Buffer &other) const;
+  [[nodiscard]] int compareTo(const Buffer &other) const;
 
   /**
    * @brief Checks equality with a raw byte vector.
@@ -346,7 +346,7 @@ public:
    * @param other The byte vector to compare with.
    * @return true if the buffer's content matches the vector.
    */
-  bool equals(const std::vector<uint8_t> &other) const;
+  [[nodiscard]] bool equals(const std::vector<uint8_t> &other) const;
 
 protected:
   /**

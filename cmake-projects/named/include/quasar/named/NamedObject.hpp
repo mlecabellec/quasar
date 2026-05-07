@@ -68,7 +68,7 @@ public:
    * @throws std::runtime_error if name is empty, invalid, or already exists in
    * the parent.
    */
-  static std::shared_ptr<NamedObject>
+  [[nodiscard]] static std::shared_ptr<NamedObject>
   create(const std::string &name,
          std::shared_ptr<NamedObject> parent = nullptr);
 
@@ -96,7 +96,7 @@ public:
    * @return The object name as a string.
    * @compliance [FE-0020.3.2] Getter for the name property.
    */
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
 
   /**
    * @brief Sets the object's name.
@@ -112,7 +112,7 @@ public:
    * @return Shared pointer to the parent, or nullptr if it's a root object.
    * @compliance [FE-0020.3.1] Getter for the parent property.
    */
-  std::shared_ptr<NamedObject> getParent() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getParent() const;
 
   /**
    * @brief Retrieves all child objects.
@@ -120,7 +120,7 @@ public:
    * @return A list containing shared pointers to all direct children.
    * @compliance [FE-0020.3.3] Getter for the children property.
    */
-  std::list<std::shared_ptr<NamedObject>> getChildren() const;
+  [[nodiscard]] std::list<std::shared_ptr<NamedObject>> getChildren() const;
 
   /**
    * @brief Retrieves a specific child by name.
@@ -128,7 +128,7 @@ public:
    * @param name The name of the child to find.
    * @return Shared pointer to the child, or nullptr if not found.
    */
-  std::shared_ptr<NamedObject> getChild(const std::string &name) const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getChild(const std::string &name) const;
 
 
   /**
@@ -138,7 +138,7 @@ public:
    * @return Shared pointer to the previous sibling, or nullptr if none.
    * @compliance [FE-0020.3.5] Getter for the previous sibling property.
    */
-  std::shared_ptr<NamedObject> getPreviousSibling() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getPreviousSibling() const;
 
   /**
    * @brief Finds the sibling immediately following this object in the parent's
@@ -147,7 +147,7 @@ public:
    * @return Shared pointer to the next sibling, or nullptr if none.
    * @compliance [FE-0020.3.6] Getter for the next sibling property.
    */
-  std::shared_ptr<NamedObject> getNextSibling() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getNextSibling() const;
 
   /**
    * @brief Retrieves the first child in the hierarchy.
@@ -155,7 +155,7 @@ public:
    * @return Shared pointer to the first child, or nullptr if no children.
    * @compliance [FE-0020.3.7] Getter for the first child property.
    */
-  std::shared_ptr<NamedObject> getFirstChild() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getFirstChild() const;
 
   /**
    * @brief Retrieves the last child in the hierarchy.
@@ -163,7 +163,7 @@ public:
    * @return Shared pointer to the last child, or nullptr if no children.
    * @compliance [FE-0020.3.8] Getter for the last child property.
    */
-  std::shared_ptr<NamedObject> getLastChild() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getLastChild() const;
 
   /**
    * @brief Sets a weak relationship to another NamedObject.
@@ -181,7 +181,7 @@ public:
    * @return Shared pointer to the related object, or nullptr if it has been
    * destroyed or was never set.
    */
-  std::shared_ptr<NamedObject> getRelated() const;
+  [[nodiscard]] std::shared_ptr<NamedObject> getRelated() const;
 
   /**
    * @brief Equality operator.
@@ -191,7 +191,7 @@ public:
    * @return true if names match.
    * @compliance [FE-0020.2] Methods for comparison based on the name.
    */
-  bool operator==(const NamedObject &other) const;
+  [[nodiscard]] bool operator==(const NamedObject &other) const;
 
   /**
    * @brief Less-than operator for sorting.
@@ -201,21 +201,21 @@ public:
    * @return true if this name is lexicographically smaller than the other.
    * @compliance [FE-0020.2.3] Comparison shall be lexicographical.
    */
-  bool operator<(const NamedObject &other) const;
+  [[nodiscard]] bool operator<(const NamedObject &other) const;
 
   /**
    * @brief Returns the type of the object as a string.
    *
    * @return The class name as a string. Default is "NamedObject".
    */
-  virtual std::string getType() const;
+  [[nodiscard]] virtual std::string getType() const;
 
   /**
    * @brief Checks if the object is of a specific type.
    * @tparam T The type to check for.
    * @return true if the object is of type T or derived from T.
    */
-  template <typename T> bool is() const {
+  template <typename T> [[nodiscard]] bool is() const {
     return dynamic_cast<const T *>(this) != nullptr;
   }
 
@@ -224,7 +224,7 @@ public:
    * @tparam T The type to cast to.
    * @return Shared pointer to the object as type T, or nullptr if cast fails.
    */
-  template <typename T> std::shared_ptr<T> as() {
+  template <typename T> [[nodiscard]] std::shared_ptr<T> as() {
     return std::dynamic_pointer_cast<T>(getSelf());
   }
 
@@ -253,7 +253,7 @@ public:
    */
   void notifyObservers(std::shared_ptr<NamedObject> eventData);
 
-  virtual std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
+  [[nodiscard]] virtual std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
    * @brief Performs a deep copy of this object and its entire subtree.
@@ -262,7 +262,7 @@ public:
    * @compliance [FE-0020.14] Utilities for copying parts of the tree.
    * @compliance [FE-0020.14.1] deep copy mechanism.
    */
-  virtual std::shared_ptr<NamedObject> deepCopy(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
+  [[nodiscard]] virtual std::shared_ptr<NamedObject> deepCopy(CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
   /**
    * @brief Internal recursive helper for deep copying a subtree.
@@ -273,7 +273,7 @@ public:
    * if needed.
    * @compliance [FE-0020.14.1] deep copy mechanism.
    */
-  virtual std::shared_ptr<NamedObject>
+  [[nodiscard]] virtual std::shared_ptr<NamedObject>
   deepCopy(std::shared_ptr<NamedObject> originalParent,
            std::shared_ptr<NamedObject> newParent, CopyPolicy policy = CopyPolicy::DUPLICATE) const;
 
@@ -283,7 +283,6 @@ public:
    * @exposed
    */
   [[nodiscard]] std::shared_ptr<NamedObject> getSelf() const;
-
   /**
    * @brief Returns the current structural version of this node and its children.
    * 

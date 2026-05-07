@@ -19,7 +19,7 @@ struct IntegerPolymorphicTest {
 
         // add
         {
-            auto res = n1->add(*n2);
+            std::shared_ptr<Number> res = n1->add(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 + (CommonT)v2));
@@ -30,7 +30,7 @@ struct IntegerPolymorphicTest {
 
         // subtract
         {
-            auto res = n1->subtract(*n2);
+            std::shared_ptr<Number> res = n1->subtract(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 - (CommonT)v2));
@@ -41,7 +41,7 @@ struct IntegerPolymorphicTest {
 
         // multiply
         {
-            auto res = n1->multiply(*n2);
+            std::shared_ptr<Number> res = n1->multiply(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 * (CommonT)v2));
@@ -52,7 +52,7 @@ struct IntegerPolymorphicTest {
 
         // divide
         {
-            auto res = n1->divide(*n2);
+            std::shared_ptr<Number> res = n1->divide(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 / (CommonT)v2));
@@ -63,7 +63,7 @@ struct IntegerPolymorphicTest {
 
         // bitwiseAnd
         {
-            auto res = n1->bitwiseAnd(*n2);
+            std::shared_ptr<Number> res = n1->bitwiseAnd(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 & (CommonT)v2));
@@ -74,7 +74,7 @@ struct IntegerPolymorphicTest {
 
         // bitwiseOr
         {
-            auto res = n1->bitwiseOr(*n2);
+            std::shared_ptr<Number> res = n1->bitwiseOr(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 | (CommonT)v2));
@@ -85,7 +85,7 @@ struct IntegerPolymorphicTest {
 
         // bitwiseXor
         {
-            auto res = n1->bitwiseXor(*n2);
+            std::shared_ptr<Number> res = n1->bitwiseXor(*n2);
             EXPECT_EQ(res->getType(), "Integer");
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)(CommonT)((CommonT)v1 ^ (CommonT)v2));
@@ -98,7 +98,7 @@ struct IntegerPolymorphicTest {
         {
             // Use a small shift amount to avoid UB
             std::shared_ptr<Number> shift_amt = std::make_shared<Integer<uint8_t>>(2);
-            auto res = n1->bitwiseLeftShift(*shift_amt);
+            std::shared_ptr<Number> res = n1->bitwiseLeftShift(*shift_amt);
             EXPECT_EQ(res->getType(), "Integer");
             EXPECT_EQ(res->toInt64(), (int64_t)(T)((T)v1 << 2));
         }
@@ -106,7 +106,7 @@ struct IntegerPolymorphicTest {
         // bitwiseRightShift
         {
             std::shared_ptr<Number> shift_amt = std::make_shared<Integer<uint8_t>>(1);
-            auto res = n1->bitwiseRightShift(*shift_amt);
+            std::shared_ptr<Number> res = n1->bitwiseRightShift(*shift_amt);
             EXPECT_EQ(res->getType(), "Integer");
             EXPECT_EQ(res->toInt64(), (int64_t)(T)((T)v1 >> 1));
         }
@@ -128,7 +128,7 @@ struct IntegerPolymorphicTest {
 
         // safeAdd
         {
-            auto res = n1->safeAdd(*n2);
+            std::shared_ptr<Number> res = n1->safeAdd(*n2);
             if constexpr (std::is_signed_v<CommonT>) {
                 EXPECT_EQ(res->toInt64(), (int64_t)v1 + (int64_t)v2);
             } else {
@@ -144,14 +144,14 @@ struct IntegerPolymorphicTest {
             uint64_t v2 = 0;
             std::shared_ptr<Number> n1 = std::make_shared<Integer<T>>(v1);
             std::shared_ptr<Number> n2 = std::make_shared<Integer<U>>(v2);
-            auto res = n1->add(*n2);
+            std::shared_ptr<Number> res = n1->add(*n2);
             EXPECT_EQ(res->toUInt64(), v1);
             
             // Adding 1 to a large number to ensure no precision loss (like with double)
             uint64_t large = 1ULL << 60;
             std::shared_ptr<Number> n_large = std::make_shared<Integer<uint64_t>>(large);
             std::shared_ptr<Number> n_one = std::make_shared<Integer<uint64_t>>(1);
-            auto res_plus_one = n_large->add(*n_one);
+            std::shared_ptr<Number> res_plus_one = n_large->add(*n_one);
             EXPECT_EQ(res_plus_one->toUInt64(), large + 1);
         }
 
@@ -192,32 +192,32 @@ TEST(IntegerPolymorphicTest, MatrixTests) {
 }
 
 TEST(IntegerPolymorphicTest, MixedWithFloatingPoint) {
-    auto i = std::make_shared<Integer<int64_t>>(100);
-    auto f = std::make_shared<FloatingPoint<double>>(1.5);
+    std::shared_ptr<Integer<int64_t>> i = std::make_shared<Integer<int64_t>>(100);
+    std::shared_ptr<FloatingPoint<double>> f = std::make_shared<FloatingPoint<double>>(1.5);
     
-    auto res = i->add(*f);
+    std::shared_ptr<Number> res = i->add(*f);
     EXPECT_EQ(res->getType(), "FloatingPoint");
     EXPECT_DOUBLE_EQ(res->toDouble(), 101.5);
     
-    auto res2 = f->add(*i);
+    std::shared_ptr<Number> res2 = f->add(*i);
     EXPECT_EQ(res2->getType(), "FloatingPoint");
     EXPECT_DOUBLE_EQ(res2->toDouble(), 101.5);
 }
 
 TEST(IntegerPolymorphicTest, OverflowChecks) {
-    auto max_u64 = std::make_shared<Integer<uint64_t>>(std::numeric_limits<uint64_t>::max());
-    auto one = std::make_shared<Integer<uint64_t>>(1);
+    std::shared_ptr<Integer<uint64_t>> max_u64 = std::make_shared<Integer<uint64_t>>(std::numeric_limits<uint64_t>::max());
+    std::shared_ptr<Integer<uint64_t>> one = std::make_shared<Integer<uint64_t>>(1);
     EXPECT_THROW(max_u64->safeAdd(*one), std::overflow_error);
     
-    auto min_i64 = std::make_shared<Integer<int64_t>>(std::numeric_limits<int64_t>::min());
-    auto neg_one = std::make_shared<Integer<int64_t>>(-1);
+    std::shared_ptr<Integer<int64_t>> min_i64 = std::make_shared<Integer<int64_t>>(std::numeric_limits<int64_t>::min());
+    std::shared_ptr<Integer<int64_t>> neg_one = std::make_shared<Integer<int64_t>>(-1);
     EXPECT_THROW(min_i64->safeDivide(*neg_one), std::overflow_error);
 }
 
 TEST(IntegerPolymorphicTest, BitwiseNotAndShifts) {
-    auto i = std::make_shared<Integer<uint8_t>>(0x0F);
-    auto shift4 = std::make_shared<Integer<int>>(4);
-    auto shift2 = std::make_shared<Integer<int>>(2);
+    std::shared_ptr<Integer<uint8_t>> i = std::make_shared<Integer<uint8_t>>(0x0F);
+    std::shared_ptr<Integer<int>> shift4 = std::make_shared<Integer<int>>(4);
+    std::shared_ptr<Integer<int>> shift2 = std::make_shared<Integer<int>>(2);
     EXPECT_EQ(i->bitwiseNot()->toUInt8(), 0xF0);
     EXPECT_EQ(i->bitwiseLeftShift(*shift4)->toUInt8(), 0xF0);
     EXPECT_EQ(i->bitwiseRightShift(*shift2)->toUInt8(), 0x03);

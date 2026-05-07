@@ -10,39 +10,81 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.optional }}
     strategy:
       fail-fast: false
       matrix:
-        container: ["debian:bookworm", "debian:trixie"]
+        include:
+          - container: "debian:bookworm"
+            optional: false
+          - container: "debian:trixie"
+            optional: false
+          - container: "fedora:latest"
+            optional: true
+          - container: "archlinux:latest"
+            optional: true
 
     container:
       image: ${{ matrix.container }}
 
     steps:
-      - name: Pre-install git for checkout
+      - name: Pre-install git for checkout (Debian/Fedora)
+        if: "!contains(matrix.container, 'archlinux')"
         run: |
-          apt-get update
-          apt-get install -y git
+          if command -v apt-get > /dev/null; then
+            apt-get update && apt-get install -y git
+          elif command -v dnf > /dev/null; then
+            dnf install -y git
+          fi
+
+      - name: Pre-install git for checkout (Arch)
+        if: "contains(matrix.container, 'archlinux')"
+        run: |
+          pacman -Sy --noconfirm git
 
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
+      - name: Install dependencies (Debian)
+        if: "startsWith(matrix.container, 'debian')"
         run: |
           apt-get update
           apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb
-          # Attempt to install headers for the running kernel if possible, 
-          # but in a container on GHA this is usually not matching the distro repo.
-          # We install the default headers for the distro to allow compilation 
-          # if the build system allows specifying the KERNELDIR.
+                             libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
+                             curl ca-certificates nodejs npm
+          npm install -g n
+          n stable
+          # Refresh path for the next steps
+          hash -r
+
+      - name: Install dependencies (Fedora)
+        if: "startsWith(matrix.container, 'fedora')"
+        run: |
+          dnf install -y gcc-c++ make cmake git pkgconf-pkg-config python3 file \
+                         kernel-devel autoconf automake libtool dkms \
+                         alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
+                         mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
+                         gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
+                         yaml-cpp-devel tinyxml2-devel ccache gdb \
+                         curl nodejs npm
+          npm install -g n
+          n stable
+          hash -r
+
+      - name: Install dependencies (Arch)
+        if: "startsWith(matrix.container, 'archlinux')"
+        run: |
+          pacman -S --needed --noconfirm \
+                         base-devel cmake git python file \
+                         linux-headers autoconf automake libtool dkms \
+                         alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
+                         gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
+                         curl nodejs npm
+          npm install -g n
+          n stable
+          hash -r
 
       - name: ccache cache
         uses: actions/cache@v4
@@ -57,7 +99,8 @@ jobs:
           mkdir -p .ccache
           cmake -S cmake-projects -B build-projects \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
@@ -78,10 +121,16 @@ jobs:
           # We use -batch to run non-interactively and -ex to pass commands
           gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
-      - name: Package (Debian)
+      - name: Package (Debian/RPM)
         run: |
           cd build-projects
-          cpack -G DEB
+          if command -v dpkg > /dev/null; then
+            cpack -G DEB
+          elif command -v rpmbuild > /dev/null; then
+            cpack -G RPM
+          else
+            cpack -G TGZ
+          fi
 
       - name: Generate Safe Artifact Name
         id: artifact-name
@@ -89,26 +138,22 @@ jobs:
           SAFE_NAME=$(echo "${{ matrix.container }}" | tr ':' '-')
           echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
 
-      - name: Upload Debian Package
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: quasar-deb-${{ steps.artifact-name.outputs.safe_name }}
-          path: build-projects/*.deb
+          name: quasar-pkg-${{ steps.artifact-name.outputs.safe_name }}
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
 
       - name: Prepare Linux Modules (EtherCAT)
         # This step might fail if the kernel headers don't match uname -r
-        # We will try to configure it.
         continue-on-error: true
         run: |
-          # Install autotools for ethercat bootstrap
-          apt-get install -y autoconf automake libtool
-
-          # Configure the top level linux-modules
-          # Note: linux-modules/CMakeLists.txt adds subdirectories.
-          # ethercat/CMakeLists.txt runs ./bootstrap and ./configure
+          # Install autotools if missing (Debian)
+          if command -v apt-get > /dev/null; then
+            apt-get install -y autoconf automake libtool
+          fi
 
           cmake -S linux-modules -B build-modules
-
-          # We don't run build here because it will invoke 'make modules' 
-          # which will likely fail due to kernel version mismatch in container.
-          # But we can try to see if cmake configuration passes.

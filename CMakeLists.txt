@@ -10,6 +10,14 @@ else()
     message(STATUS "ccache not found - local build speedups disabled")
 endif()
 
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+include(cmake-projects/QuasarStandards.cmake)
+
+# Options
+option(QUASAR_ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(QUASAR_ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+
 enable_testing()
 
 add_subdirectory(cmake-projects)

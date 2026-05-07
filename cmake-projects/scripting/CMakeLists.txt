@@ -53,6 +53,7 @@ set(HEADERS
 
 # Create the library
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+quasar_apply_standards(${PROJECT_NAME})
 
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC 
@@ -60,6 +61,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     sol2 
     quasar_coretypes 
     quasar_named
+    utils
 )
 
 # Export include directories for targets that link against this

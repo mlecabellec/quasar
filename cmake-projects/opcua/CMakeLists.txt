@@ -11,8 +11,9 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 add_library(quasar_opcua SHARED ${SOURCES} ${HEADERS})
+quasar_apply_standards(quasar_opcua)
 
-target_compile_options(quasar_opcua PRIVATE -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-error=unused-parameter)
+target_compile_options(quasar_opcua PRIVATE -Wno-unused-parameter -Wno-error=unused-parameter)
 
 target_include_directories(quasar_opcua PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -25,6 +26,7 @@ target_link_libraries(quasar_opcua PUBLIC
     quasar_named
     quasar_coretypes
     open62541
+    utils
 )
 
 # Installation

@@ -1,6 +1,8 @@
 #include "quasar/coretypes/BitBuffer.hpp"
 #include "quasar/coretypes/BitBufferSlice.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <algorithm>
+
 #include <chrono>
 #include <cmath>
 #include <cstring>
@@ -130,7 +132,10 @@ BitBuffer BitBuffer::sliceBits(size_t startBit, size_t bitLength) const {
   // individually, as the slice might not start on a byte boundary.
   BitBuffer result(bitLength);
 
+  const size_t limit = 1000000;
+  size_t count = 0;
   for (size_t i = 0; i < bitLength; ++i) {
+    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::sliceBits");
     size_t srcIndex = startBit + i;
     size_t byteIndex = srcIndex / 8;
     size_t bitOffset = srcIndex % 8;
@@ -160,12 +165,16 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
   // Create a new BitBuffer large enough to hold the sum of bits.
   BitBuffer result(mySize + otherSize);
 
+  const size_t limit = 1000000;
+  size_t count = 0;
+
   if (this == &other) {
     std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
     if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock");
     
     size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
     for (size_t i = 0; i < effectiveSize; ++i) {
+      if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::concatBits (self)");
       bool bit = (data_[i / 8] >> (7 - (i % 8))) & 1;
       if (bit) {
         result.setBit(i, true);
@@ -187,6 +196,7 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
   // Copy bits from 'this' buffer.
   size_t effectiveMySize = (bitSize_ ? bitSize_ : data_.size() * 8);
   for (size_t i = 0; i < effectiveMySize; ++i) {
+    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::concatBits (this)");
     if ((data_[i / 8] >> (7 - (i % 8))) & 1) {
       result.data_[i / 8] |= (1 << (7 - (i % 8)));
     }
@@ -195,6 +205,7 @@ BitBuffer BitBuffer::concatBits(const BitBuffer &other) const {
   // Copy bits from the 'other' buffer.
   size_t oSize = (other.bitSize_ ? other.bitSize_ : other.data_.size() * 8);
   for (size_t i = 0; i < oSize; ++i) {
+    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::concatBits (other)");
     if ((other.data_[i / 8] >> (7 - (i % 8))) & 1) {
       size_t target = effectiveMySize + i;
       result.data_[target / 8] |= (1 << (7 - (target % 8)));
@@ -226,8 +237,11 @@ bool BitBuffer::equals(const BitBuffer &other) const {
   if (!lock2.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (2)");
 
   size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
+  const size_t limit = 1000000;
+  size_t count = 0;
 
   for (size_t i = 0; i < effectiveSize; ++i) {
+    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::equals");
     bool v1 = (data_[i / 8] >> (7 - (i % 8))) & 1;
     bool v2 = (other.data_[i / 8] >> (7 - (i % 8))) & 1;
     if (v1 != v2) return false;
@@ -242,7 +256,10 @@ void BitBuffer::reverseBits() {
   size_t size = (bitSize_ ? bitSize_ : data_.size() * 8);
   // Swap bits from outer edges moving towards the center.
   // Efficiency: we only need to iterate half-way.
+  const size_t limit = 1000000;
+  size_t count = 0;
   for (size_t i = 0; i < size / 2; ++i) {
+    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::reverseBits");
     size_t j = size - 1 - i;
 
     size_t b1 = i / 8;
@@ -285,13 +302,20 @@ void BitBuffer::reverseBits(size_t groupSize) {
     throw std::invalid_argument("Size not multiple of group size");
 
   size_t groups = size / groupSize;
+  const size_t limitOuter = BIT_BUFFER_MAX_SAFE_SIZE;
+  size_t countOuter = 0;
   // Iterate through pairs of groups and swap their entire bit contents.
   for (size_t i = 0; i < groups / 2; ++i) {
+    if (++countOuter > limitOuter) throw std::runtime_error("Outer loop limit exceeded in BitBuffer::reverseBits(groupSize)");
     size_t startA = i * groupSize;
     size_t startB = (groups - 1 - i) * groupSize;
 
     // Inner loop swaps individual bits within the two chosen groups.
+    const size_t limitInner = BIT_BUFFER_MAX_SAFE_SIZE;
+
+    size_t countInner = 0;
     for (size_t k = 0; k < groupSize; ++k) {
+      if (++countInner > limitInner) throw std::runtime_error("Inner loop limit exceeded in BitBuffer::reverseBits(groupSize)");
       size_t idxA = startA + k;
       size_t idxB = startB + k;
 

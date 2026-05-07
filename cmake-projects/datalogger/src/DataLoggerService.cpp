@@ -1,6 +1,7 @@
 #include "quasar/datalogger/DataLoggerService.hpp"
 #include "quasar/datalogger/CsvFileWriter.hpp"
 #include "quasar/named/NamedMethod.hpp"
+#include "quasar/coretypes/Constants.hpp"
 #include <mutex>
 
 namespace quasar::datalogger {
@@ -81,7 +82,7 @@ std::shared_ptr<DataLoggerService> DataLoggerService::create(const std::string& 
     std::weak_ptr<DataLoggerService> weakSvc = service;
     quasar::named::NamedMethod::create("run",
         [weakSvc](std::shared_ptr<quasar::named::NamedObject> owner, std::shared_ptr<quasar::named::NamedObject> args) {
-            if (auto svc = weakSvc.lock()) {
+            if (std::shared_ptr<DataLoggerService> svc = weakSvc.lock()) {
                 return svc->processRingBuffer(owner, args);
             }
             return std::shared_ptr<quasar::named::NamedObject>(nullptr);
@@ -96,14 +97,14 @@ std::string DataLoggerService::getType() const {
 
 void DataLoggerService::addRecorder(std::shared_ptr<IRecorder> recorder) {
     std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-    if (lock.try_lock_for(std::chrono::milliseconds(100))) {
+    if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
         m_recorders.push_back(std::move(recorder));
     }
 }
 
 void DataLoggerService::addFilter(std::shared_ptr<IFilter> filter) {
     std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-    if (lock.try_lock_for(std::chrono::milliseconds(100))) {
+    if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
         m_filters.push_back(std::move(filter));
     }
 }
@@ -127,7 +128,11 @@ void DataLoggerService::flush() {
     std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
     if (lock.try_lock_for(std::chrono::seconds(1))) {
         // Iterate through all recorders and signal them to flush.
-        for (std::shared_ptr<IRecorder>& recorder : m_recorders) {
+        const size_t limit = 10000;
+        size_t count = 0;
+        for (std::vector<std::shared_ptr<IRecorder>>::iterator it = m_recorders.begin(); it != m_recorders.end(); ++it) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in DataLoggerService::flush");
+            std::shared_ptr<IRecorder>& recorder = *it;
             recorder->flush();
         }
     }
@@ -141,13 +146,20 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
     (void)args;
     
     // Process all currently available items in the ring buffer
+    const size_t limitPop = 1000000;
+    size_t countPop = 0;
     while (std::optional<LogEntry> optEntry = m_ringBuffer->pop()) {
+        if (++countPop > limitPop) throw std::runtime_error("Pop loop limit exceeded in processRingBuffer");
         LogEntry entry = std::move(optEntry.value());
         
         std::unique_lock<std::timed_mutex> lock(m_pipelineMutex, std::defer_lock);
-        if (lock.try_lock_for(std::chrono::milliseconds(100))) {
+        if (lock.try_lock_for(quasar::coretypes::DEFAULT_MUTEX_TIMEOUT)) {
             bool drop = false;
-            for (std::shared_ptr<IFilter>& filter : m_filters) {
+            const size_t limitFilters = 1000;
+            size_t countFilters = 0;
+            for (std::vector<std::shared_ptr<IFilter>>::iterator it = m_filters.begin(); it != m_filters.end(); ++it) {
+                if (++countFilters > limitFilters) throw std::runtime_error("Filter loop limit exceeded in processRingBuffer");
+                std::shared_ptr<IFilter>& filter = *it;
                 std::optional<LogEntry> filtered = filter->process(std::move(entry));
                 if (!filtered) {
                     drop = true;
@@ -157,7 +169,11 @@ std::shared_ptr<quasar::named::NamedObject> DataLoggerService::processRingBuffer
             }
             
             if (!drop) {
-                for (std::shared_ptr<IRecorder>& recorder : m_recorders) {
+                const size_t limitRecorders = 1000;
+                size_t countRecorders = 0;
+                for (std::vector<std::shared_ptr<IRecorder>>::iterator it = m_recorders.begin(); it != m_recorders.end(); ++it) {
+                    if (++countRecorders > limitRecorders) throw std::runtime_error("Recorder loop limit exceeded in processRingBuffer");
+                    std::shared_ptr<IRecorder>& recorder = *it;
                     recorder->record(entry);
                 }
             }

@@ -1,12 +1,13 @@
 /**
  * @file NamedVariant.hpp
- * @brief Class for holding a dynamically typed NamedObject.
+ * @brief Class for holding a named dynamically typed value.
  */
 
 #ifndef QUASAR_NAMED_NAMEDVARIANT_HPP
 #define QUASAR_NAMED_NAMEDVARIANT_HPP
 
 #include "quasar/named/NamedObject.hpp"
+#include "quasar/coretypes/Variant.hpp"
 #include "quasar/named/NamedConfig.hpp"
 #include <stdexcept>
 #include <string>
@@ -17,15 +18,19 @@ namespace quasar::named {
 
 /**
  * @class NamedVariant
- * @brief A NamedObject that dynamically wraps exactly one child NamedObject.
+ * @brief A NamedObject that encapsulates a type-safe Variant value.
  *
- * Provides a dynamic type holder within the NamedObject hierarchy.
+ * This class combines the hierarchical capabilities of NamedObject with 
+ * the dynamic value management of coretypes::Variant. It replaces the previous 
+ * implementation that wrapped a child NamedObject, adhering to the 
+ * primitive-inheritance model used by NamedInteger and NamedBoolean.
  *
  * **Compliance**:
  * - Fulfills [FE-0110.2.2] Named Variants.
  * - Fulfills [CS-0010.34] auto forbidden.
+ * - Fulfills [CS-0010.45] Doxygen documentation.
  */
-class NamedVariant : public NamedObject {
+class NamedVariant : public NamedObject, public coretypes::Variant {
 public:
   /**
    * @brief Virtual destructor.
@@ -34,12 +39,16 @@ public:
 
   /**
    * @brief Factory method.
-   * @param name The name.
-   * @param parent Optional parent.
-   * @return Shared pointer to the new variant.
+   * @param name The name of the object.
+   * @param variant Initial variant value.
+   * @param parent Optional parent in the hierarchy.
+   * @return Shared pointer to the new variant instance.
    */
-  static std::shared_ptr<NamedVariant> create(const std::string &name, std::shared_ptr<NamedObject> parent = nullptr) {
-    std::shared_ptr<NamedVariant> obj = std::make_shared<NamedVariant>(name);
+  static std::shared_ptr<NamedVariant> create(const std::string &name, 
+                                            const coretypes::Variant& variant = coretypes::Variant(),
+                                            std::shared_ptr<NamedObject> parent = nullptr) {
+    // [CS-0010.44] Explicit construction and initialization.
+    std::shared_ptr<NamedVariant> obj = std::make_shared<NamedVariant>(name, variant);
     obj->setSelf(obj);
     if (parent) {
       obj->setParent(parent);
@@ -48,132 +57,67 @@ public:
   }
 
   /**
-   * @brief Returns the type of the object.
+   * @brief Returns the type name of the object.
    * @return "NamedVariant"
    */
   std::string getType() const override { return "NamedVariant"; }
 
   /**
-   * @brief Sets the active variant object.
-   * Replaces any existing child. The new child will be renamed to "value".
-   * @param obj The object to set.
+   * @brief Sets the variant value and notifies observers.
+   * @param v The new Variant value.
+   * @throws std::runtime_error if mutex acquisition times out.
    */
-  void set(std::shared_ptr<NamedObject> obj) {
-    if (!obj) throw std::invalid_argument("Cannot set null variant object");
-
-    std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring NamedVariant lock");
-
-    obj->setName("value");
-
-    if (m_currentObject) {
-       replaceChild(m_currentObject, obj);
-    } else {
-       addChild(obj);
-    }
+  void setVariant(const coretypes::Variant& v) {
+      // [CS-0010.21] RAII for mutex.
+      std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
+      if (!lock.owns_lock()) {
+           throw std::runtime_error("Timeout acquiring NamedVariant lock");
+      }
+      
+      // [CS-0010.44] Updating the underlying Variant value.
+      coretypes::Variant::operator=(v);
+      
+      // [CS-0010.44] Notifying observers of the state change.
+      notifyObservers(getSelf());
   }
 
   /**
-   * @brief Returns the currently held object.
-   * @return The object.
+   * @brief Returns a copy of the currently held variant value.
+   * @return The held coretypes::Variant.
+   * @throws std::runtime_error if mutex acquisition times out.
    */
-  std::shared_ptr<NamedObject> get() const {
-    std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring NamedVariant lock");
-    return m_currentObject;
+  coretypes::Variant getVariant() const {
+      // [CS-0010.21] RAII for mutex.
+      std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
+      if (!lock.owns_lock()) {
+           throw std::runtime_error("Timeout acquiring NamedVariant lock");
+      }
+      return static_cast<const coretypes::Variant&>(*this);
   }
 
   /**
-   * @brief Type check against the held object.
-   * @tparam T The type to check for.
-   * @return true if matches.
-   */
-  template <typename T>
-  bool holds() const {
-    std::shared_ptr<NamedObject> obj = get();
-    if (!obj) return false;
-    return obj->is<T>();
-  }
-
-  /**
-   * @brief Casts the held object.
-   * @tparam T The type to cast to.
-   * @return Shared pointer to the object.
-   */
-  template <typename T>
-  std::shared_ptr<T> getAs() const {
-    std::shared_ptr<NamedObject> obj = get();
-    if (!obj) throw std::runtime_error("Variant is empty");
-    return obj->as<T>();
-  }
-
-  /**
-   * @brief Clones the variant.
-   * @return Cloned object.
+   * @brief Creates a standalone copy of the variant object.
+   * @param policy Copy policy (DUPLICATE vs SHARE).
+   * @return Shared pointer to the cloned object.
    */
   std::shared_ptr<NamedObject> clone([[maybe_unused]] CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
-    std::shared_ptr<NamedVariant> cloned = NamedVariant::create(getName());
-    std::shared_ptr<NamedObject> current = get();
-    if (current) {
-        cloned->set(current->clone());
-    }
-    return cloned;
+    // [CS-0010.44] Creating a new NamedVariant with identical name and value.
+    return create(getName(), getVariant());
   }
 
   /**
-   * @brief Internal helper to add a child.
-   * @param child The child.
+   * @brief Protected constructor to enforce factory usage.
+   * @param name The name of the object.
+   * @param variant Initial variant value.
    */
-  void addChild(std::shared_ptr<NamedObject> child) override {
-    std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring NamedVariant lock");
-    
-    NamedObject::addChild(child);
-    m_currentObject = child;
-  }
+  NamedVariant(const std::string &name, const coretypes::Variant& variant) 
+      : NamedObject(name), coretypes::Variant(variant) {}
 
-  /**
-   * @brief Internal helper to remove a child by name.
-   * @param name The name.
-   */
-  void removeChild(const std::string &name) override {
-    std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring NamedVariant lock");
-    
-    std::string nameCopy = name;
-    if (m_currentObject && m_currentObject->getName() == nameCopy) {
-        NamedObject::removeChild(nameCopy);
-        m_currentObject = nullptr;
-    }
-  }
-
-  /**
-   * @brief Internal helper to replace a child.
-   * @param oldChild The old child.
-   * @param newChild The new child.
-   */
-  void replaceChild(std::shared_ptr<NamedObject> oldChild, std::shared_ptr<NamedObject> newChild) override {
-    std::unique_lock<std::recursive_timed_mutex> lock(m_varMutex, config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) throw std::runtime_error("Timeout acquiring NamedVariant lock");
-    
-    NamedObject::replaceChild(oldChild, newChild);
-    m_currentObject = newChild;
-  }
-
-  /**
-   * @brief Constructor.
-   * @param name The name.
-   */
-  explicit NamedVariant(const std::string &name) : NamedObject(name) {}
-
-protected:
-  /** @brief Currently held object. */
-  std::shared_ptr<NamedObject> m_currentObject;
-  /** @brief Mutex for protection. */
+private:
+  /** @brief Mutex for protection of the variant value. */
   mutable std::recursive_timed_mutex m_varMutex;
 };
 
 } // namespace quasar::named
 
 #endif // QUASAR_NAMED_NAMEDVARIANT_HPP
-

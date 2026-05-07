@@ -56,17 +56,32 @@ class PolynomialCalibration : public ICalibration {
 public:
     explicit PolynomialCalibration(std::vector<double> coeffs) : m_coeffs(std::move(coeffs)) {}
 
+    /**
+     * @brief Transforms raw value to engineering value using polynomial coefficients.
+     * @param raw Raw variant value.
+     * @return Engineering variant value.
+     * @throws std::runtime_error If loop limit exceeded.
+     */
     Variant rawToEng(const Variant& raw) const override {
         double x = toDouble(raw);
         double result = 0.0;
         double x_pow = 1.0;
-        for (double coeff : m_coeffs) {
+        const size_t limit = 1000; // Safety limit [CS-0010.37]
+        size_t count = 0;
+        for (std::vector<double>::const_iterator it = m_coeffs.begin(); it != m_coeffs.end(); ++it) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in PolynomialCalibration::rawToEng");
+            double coeff = *it;
             result += coeff * x_pow;
             x_pow *= x;
         }
         return result;
     }
 
+    /**
+     * @brief Transforms engineering value back to raw value. Only supported for degree <= 1.
+     * @param eng Engineering variant value.
+     * @return Raw variant value.
+     */
     Variant engToRaw(const Variant& eng) const override {
         if (m_coeffs.size() <= 2) {
             double a0 = m_coeffs.empty() ? 0.0 : m_coeffs[0];
@@ -81,13 +96,22 @@ private:
     std::vector<double> m_coeffs;
 };
 
+/**
+ * @class TableCalibration
+ * @brief Calibration using a lookup table with linear interpolation.
+ */
 class TableCalibration : public ICalibration {
 public:
+    /** @brief Point in the lookup table. */
     struct Point {
         double x;
         double y;
     };
 
+    /**
+     * @brief Constructs a TableCalibration.
+     * @param points Vector of points for the lookup table.
+     */
     explicit TableCalibration(std::vector<Point> points) : m_points(std::move(points)) {
         if (m_points.empty()) throw std::invalid_argument("Point pairs cannot be empty");
         std::sort(m_points.begin(), m_points.end(), [](const Point& a, const Point& b) {
@@ -106,6 +130,13 @@ public:
 private:
     std::vector<Point> m_points;
 
+    /**
+     * @brief Interpolates values within the table.
+     * @param val Value to interpolate.
+     * @param isRawToEng Direction of transformation.
+     * @return Interpolated value.
+     * @throws std::runtime_error If loop limit exceeded.
+     */
     double interpolate(double val, bool isRawToEng) const {
         // Clamp to endpoints if out of range
         if (m_points.size() == 1) {
@@ -124,7 +155,10 @@ private:
             if (val >= max_y) return (m_points.back().y == max_y) ? m_points.back().x : m_points.front().x;
         }
 
+        const size_t limit = 1000000; // Safety limit [CS-0010.37]
+        size_t count = 0;
         for (size_t i = 0; i < m_points.size() - 1; ++i) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in TableCalibration::interpolate");
             double x0 = m_points[i].x;
             double y0 = m_points[i].y;
             double x1 = m_points[i+1].x;
@@ -136,9 +170,9 @@ private:
                     return y0 + (y1 - y0) * (val - x0) / (x1 - x0);
                 }
             } else {
-                double min_y = std::min(y0, y1);
-                double max_y = std::max(y0, y1);
-                if (val >= min_y && val <= max_y) {
+                double min_val_y = std::min(y0, y1);
+                double max_val_y = std::max(y0, y1);
+                if (val >= min_val_y && val <= max_val_y) {
                     if (y1 == y0) return x0;
                     return x0 + (x1 - x0) * (val - y0) / (y1 - y0);
                 }
@@ -148,17 +182,30 @@ private:
     }
 };
 
+/**
+ * @class EnumCalibration
+ * @brief Calibration using a key-value mapping.
+ */
 class EnumCalibration : public ICalibration {
 public:
+    /**
+     * @brief Constructs an EnumCalibration.
+     * @param mapping Map from integer keys to string values.
+     */
     explicit EnumCalibration(std::map<int64_t, std::string> mapping) : m_map(std::move(mapping)) {
-        for (const auto& [k, v] : m_map) {
+        const size_t limit = 1000000;
+        size_t count = 0;
+        for (std::map<int64_t, std::string>::const_iterator it = m_map.begin(); it != m_map.end(); ++it) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in EnumCalibration constructor");
+            const int64_t& k = it->first;
+            const std::string& v = it->second;
             m_reverse_map[v] = k;
         }
     }
 
     Variant rawToEng(const Variant& raw) const override {
         int64_t k = toInt(raw);
-        auto it = m_map.find(k);
+        std::map<int64_t, std::string>::const_iterator it = m_map.find(k);
         if (it != m_map.end()) return it->second;
         throw std::invalid_argument("Unknown enum key");
     }
@@ -166,7 +213,7 @@ public:
     Variant engToRaw(const Variant& eng) const override {
         if (!std::holds_alternative<std::string>(eng)) throw std::invalid_argument("Expected string for enum");
         const std::string& sv = std::get<std::string>(eng);
-        auto it = m_reverse_map.find(sv);
+        std::map<std::string, int64_t>::const_iterator it = m_reverse_map.find(sv);
         if (it != m_reverse_map.end()) return it->second;
         throw std::invalid_argument("Unknown enum string");
     }

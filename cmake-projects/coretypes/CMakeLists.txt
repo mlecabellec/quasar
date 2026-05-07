@@ -11,12 +11,14 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 add_library(quasar_coretypes SHARED ${SOURCES} ${HEADERS})
 
-target_compile_options(quasar_coretypes PRIVATE -Wall -Wextra -Werror -pedantic)
+quasar_apply_standards(quasar_coretypes)
 
 target_include_directories(quasar_coretypes PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+target_link_libraries(quasar_coretypes PUBLIC)
 
 # Installation
 install(TARGETS quasar_coretypes

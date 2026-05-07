@@ -46,7 +46,7 @@ TEST(NamedObjectStress, WideHierarchy) {
   int width = 5000;
 
   for (int i = 0; i < width; ++i) {
-    NamedObject::create("child_" + std::to_string(i), root);
+    (void)NamedObject::create("child_" + std::to_string(i), root);
   }
 
   // Assertion: Check if number of children matches

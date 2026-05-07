@@ -19,9 +19,16 @@ Architecture is splitted by types:
 
 # Components
 
+- [CP-0010.md](CP-0010.md : Core types)
+
 # Constraints
 
 - [CS-0010.md](CS-0010.md : C++ coding standards)
+- [CS-0020.md](CS-0020.md : Advanced C++ coding standards)
+- [CS-0030.md](CS-0030.md : Code Modification, Deletion, and Review Standards)
+- [CS-0040.md](CS-0040.md : Strategic Constant Management and Limitation Enforcement)
+- [CS-0050.md](CS-0050.md : Verifiable Integrity and C++26 Safety Standards)
+- [CS-0060.md](CS-0060.md : High-Integrity and Deterministic Logic Standards)
 
 # Dependencies
 
@@ -36,4 +43,3 @@ Architecture is splitted by types:
 # Requirements
 
 # Tools
-

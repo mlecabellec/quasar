@@ -69,6 +69,7 @@ if(BUILD_TESTING)
         quasar_zmq
         quasar_named
         quasar_scripting
+        ECSS_SMP
     )
 
     # Force ASan linkage if enabled to ensure correct initialization order

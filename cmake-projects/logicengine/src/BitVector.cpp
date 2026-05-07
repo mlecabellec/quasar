@@ -56,7 +56,10 @@ BitVector BitVector::operator&(const BitVector& other) const {
     const std::size_t minSize = std::min(m_size, other.m_size);
     BitVector result(minSize);
     const std::size_t wordCount = result.m_words.size();
+    const std::size_t limit = 1000000;
+    size_t count = 0;
     for (std::size_t i = 0; i < wordCount; ++i) {
+        if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitVector::operator&");
         result.m_words[i] = m_words[i] & other.m_words[i];
     }
     return result;
@@ -66,16 +69,21 @@ BitVector BitVector::operator|(const BitVector& other) const {
     const std::size_t maxSize = std::max(m_size, other.m_size);
     BitVector result(maxSize);
     const std::size_t wordCount = std::min(m_words.size(), other.m_words.size());
+    const std::size_t limit = 1000000;
+    size_t count = 0;
     for (std::size_t i = 0; i < wordCount; ++i) {
+        if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitVector::operator| (1)");
         result.m_words[i] = m_words[i] | other.m_words[i];
     }
     // Copy remaining words from the larger vector if any
     if (m_words.size() > other.m_words.size()) {
         for (std::size_t i = wordCount; i < m_words.size(); ++i) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitVector::operator| (2)");
             result.m_words[i] = m_words[i];
         }
     } else if (other.m_words.size() > m_words.size()) {
         for (std::size_t i = wordCount; i < other.m_words.size(); ++i) {
+            if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitVector::operator| (3)");
             result.m_words[i] = other.m_words[i];
         }
     }
