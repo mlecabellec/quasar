@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(quasar_all)
 
+# Option to enable/disable building of the WebUI component
+option(BUILD_WEBUI "Build the WebUI component (frontend + library)" OFF)
+
 enable_testing()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -30,7 +33,8 @@ add_subdirectory(opcua)
 add_subdirectory(sample-models)
 add_subdirectory(sim-test)
 add_subdirectory(datalogger)
-add_subdirectory(webui)
+if(BUILD_WEBUI)
+endif()
 add_subdirectory(manual-tests)
 
 # CPack Configuration

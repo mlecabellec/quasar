@@ -237,11 +237,11 @@ bool BitBuffer::equals(const BitBuffer &other) const {
   if (!lock2.owns_lock()) throw std::runtime_error("Timeout acquiring bit buffer lock (2)");
 
   size_t effectiveSize = (bitSize_ ? bitSize_ : data_.size() * 8);
-  const size_t limit = 1000000;
+  const size_t LIMIT = 1000000;
   size_t count = 0;
 
   for (size_t i = 0; i < effectiveSize; ++i) {
-    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::equals");
+    if (++count > LIMIT) throw std::runtime_error("Loop limit exceeded in BitBuffer::equals");
     bool v1 = (data_[i / 8] >> (7 - (i % 8))) & 1;
     bool v2 = (other.data_[i / 8] >> (7 - (i % 8))) & 1;
     if (v1 != v2) return false;
@@ -256,10 +256,10 @@ void BitBuffer::reverseBits() {
   size_t size = (bitSize_ ? bitSize_ : data_.size() * 8);
   // Swap bits from outer edges moving towards the center.
   // Efficiency: we only need to iterate half-way.
-  const size_t limit = 1000000;
+  const size_t LIMIT = 1000000;
   size_t count = 0;
   for (size_t i = 0; i < size / 2; ++i) {
-    if (++count > limit) throw std::runtime_error("Loop limit exceeded in BitBuffer::reverseBits");
+    if (++count > LIMIT) throw std::runtime_error("Loop limit exceeded in BitBuffer::reverseBits");
     size_t j = size - 1 - i;
 
     size_t b1 = i / 8;
@@ -273,13 +273,13 @@ void BitBuffer::reverseBits() {
     // If bits are different, they need to be flipped in their new positions.
     // If they are the same, swapping doesn't change anything.
     if (v1 != v2) {
-      if (v2) {
+      if (v2 == true) {
         data_[b1] |= (1 << (7 - o1));
       } else {
         data_[b1] &= ~(1 << (7 - o1));
       }
 
-      if (v1) {
+      if (v1 == true) {
         data_[b2] |= (1 << (7 - o2));
       } else {
         data_[b2] &= ~(1 << (7 - o2));
@@ -302,20 +302,20 @@ void BitBuffer::reverseBits(size_t groupSize) {
     throw std::invalid_argument("Size not multiple of group size");
 
   size_t groups = size / groupSize;
-  const size_t limitOuter = BIT_BUFFER_MAX_SAFE_SIZE;
+  const size_t LIMIT_OUTER = BIT_BUFFER_MAX_SAFE_SIZE;
   size_t countOuter = 0;
   // Iterate through pairs of groups and swap their entire bit contents.
   for (size_t i = 0; i < groups / 2; ++i) {
-    if (++countOuter > limitOuter) throw std::runtime_error("Outer loop limit exceeded in BitBuffer::reverseBits(groupSize)");
+    if (++countOuter > LIMIT_OUTER) throw std::runtime_error("Outer loop limit exceeded in BitBuffer::reverseBits(groupSize)");
     size_t startA = i * groupSize;
     size_t startB = (groups - 1 - i) * groupSize;
 
     // Inner loop swaps individual bits within the two chosen groups.
-    const size_t limitInner = BIT_BUFFER_MAX_SAFE_SIZE;
+    const size_t LIMIT_INNER = BIT_BUFFER_MAX_SAFE_SIZE;
 
     size_t countInner = 0;
     for (size_t k = 0; k < groupSize; ++k) {
-      if (++countInner > limitInner) throw std::runtime_error("Inner loop limit exceeded in BitBuffer::reverseBits(groupSize)");
+      if (++countInner > LIMIT_INNER) throw std::runtime_error("Inner loop limit exceeded in BitBuffer::reverseBits(groupSize)");
       size_t idxA = startA + k;
       size_t idxB = startB + k;
 
@@ -328,13 +328,13 @@ void BitBuffer::reverseBits(size_t groupSize) {
       bool v2 = (data_[b2] >> (7 - o2)) & 1;
 
       if (v1 != v2) {
-        if (v2) {
+        if (v2 == true) {
           data_[b1] |= (1 << (7 - o1));
         } else {
           data_[b1] &= ~(1 << (7 - o1));
         }
 
-        if (v1) {
+        if (v1 == true) {
           data_[b2] |= (1 << (7 - o2));
         } else {
           data_[b2] &= ~(1 << (7 - o2));

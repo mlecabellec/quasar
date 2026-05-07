@@ -64,8 +64,13 @@ struct LuaSecureWSServer::Impl {
         LuaSecureWSServer* m_owner = nullptr;
 
     protected:
+        /**
+         * @brief Create a new secure session.
+         * @param server The server object.
+         * @return A shared pointer to the new session.
+         */
         std::shared_ptr<::CppServer::Asio::SSLSession> CreateSession(const std::shared_ptr<::CppServer::Asio::SSLServer>& server) override {
-            auto session = std::make_shared<LuaSecureWSSession>(std::static_pointer_cast<::CppServer::WS::WSSServer>(server));
+            std::shared_ptr<LuaSecureWSSession> session = std::make_shared<LuaSecureWSSession>(std::static_pointer_cast<::CppServer::WS::WSServer>(server));
             session->m_owner = m_owner;
             return session;
         }

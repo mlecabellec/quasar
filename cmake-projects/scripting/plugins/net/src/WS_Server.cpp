@@ -99,9 +99,14 @@ struct LuaWSServer::Impl {
             ::CppServer::WS::WSServer::onDisconnected(session);
         }
 
+        /**
+         * @brief Create a new session.
+         * @param server The server object.
+         * @return A shared pointer to the new session.
+         */
         std::shared_ptr<::CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<::CppServer::Asio::TCPServer>& server) override {
             std::cout << "[CPP Debug] InternalServer::CreateSession triggered" << std::endl;
-            auto session = std::make_shared<LuaWSSession>(std::static_pointer_cast<::CppServer::WS::WSServer>(server));
+            std::shared_ptr<LuaWSSession> session = std::make_shared<LuaWSSession>(std::static_pointer_cast<::CppServer::WS::WSServer>(server));
             session->m_owner = m_owner;
             return session;
         }
@@ -153,7 +158,7 @@ bool LuaWSServer::broadcastText(const std::string& text) {
 
 bool LuaWSServer::sendText(const std::string& id, const std::string& text) {
     std::lock_guard<std::mutex> lock(m_impl->sessionMutex);
-    auto it = m_impl->sessions.find(id);
+    std::map<std::string, std::shared_ptr<Impl::LuaWSSession>>::iterator it = m_impl->sessions.find(id);
     if (it != m_impl->sessions.end()) {
         return it->second->SendTextAsync(text);
     }

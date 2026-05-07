@@ -269,13 +269,13 @@ TEST(BitBufferTest, Performance_GetSet) {
   // Step: Initialize BitBuffer for performance test
   std::cout << "Step: Initialize BitBuffer for performance test" << std::endl;
   BitBuffer bb(1024 * 8); // 1KB
-  const int iterations = 10000;
+  const int ITERATIONS = 10000;
 
   // Step: Measure 1M setBit operations
   std::cout << "Step: Measure 1M setBit operations" << std::endl;
   std::chrono::high_resolution_clock::time_point start =
       std::chrono::high_resolution_clock::now();
-  for (int i = 0; i < iterations; ++i) {
+  for (int i = 0; i < ITERATIONS; ++i) {
     bb.setBit(i % (1024 * 8), true);
   }
   std::chrono::high_resolution_clock::time_point end =
@@ -315,7 +315,7 @@ TEST(BitBufferTest, ThreadSafety) {
     int i = 0;
     while (!stop) {
       // Just read to provoke race if any
-      volatile bool b = bb.getBit(i % 1024);
+      bool b = bb.getBit(i % 1024);
       (void)b;
       i++;
       std::this_thread::yield();
