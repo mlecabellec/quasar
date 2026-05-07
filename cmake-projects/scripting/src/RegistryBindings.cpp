@@ -1,3 +1,8 @@
+/**
+ * @file RegistryBindings.cpp
+ * @brief Lua bindings for the Quasar named object system.
+ */
+
 #include "quasar/scripting/RegistryBindings.hpp"
 #include "quasar/scripting/LuaProxy.hpp"
 #include "quasar/scripting/ScriptableNamedObject.hpp"
@@ -76,7 +81,10 @@ static void bindNamedObjectMethods(U& ut) {
         std::list<std::shared_ptr<NamedObject>> children = self.lock()->getChildren();
         std::vector<LuaProxy<NamedObject>> proxies;
         proxies.reserve(children.size());
+        // [CS-0010.37] Loop hard limit.
+        size_t count = 0;
         for (std::shared_ptr<NamedObject> const& c : children) {
+            if (++count > 1000000) break;
             proxies.emplace_back(c);
         }
         return proxies;
@@ -196,7 +204,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     serializationTable["fromJson"] = [](const std::string& json, sol::this_state L) {
         std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromJson(json);
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
     serializationTable["toYaml"] = [](sol::object obj) {
@@ -204,7 +212,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     serializationTable["fromYaml"] = [](const std::string& yaml, sol::this_state L) {
         std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromYaml(yaml);
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
     serializationTable["toXml"] = [](sol::object obj) {
@@ -212,7 +220,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     serializationTable["fromXml"] = [](const std::string& xml, sol::this_state L) {
         std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromXml(xml);
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
     serializationTable["toBinary"] = [](sol::object obj) {
@@ -221,9 +229,14 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     serializationTable["fromBinary"] = [](sol::table data, sol::this_state L) {
         std::vector<uint8_t> v;
         v.reserve(data.size());
-        for (size_t i = 1; i <= data.size(); ++i) v.push_back(data.get<uint8_t>(i));
+        // [CS-0010.37] Loop hard limit.
+        size_t count = 0;
+        for (size_t i = 1; i <= data.size(); ++i) {
+            if (++count > 100000000) break; // 100MB limit
+            v.push_back(data.get<uint8_t>(i));
+        }
         std::shared_ptr<NamedObject> ptr = quasar::named::serialization::fromBinary(v);
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
 
@@ -236,7 +249,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     bindNamedObjectMethods<NamedObject>(utNamedObject);
     namedTable["createObject"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedObject> ptr = NamedObject::create(name, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObject>(ptr);
     };
 
@@ -248,7 +261,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utScriptable["getLuaSelf"] = [](LuaProxy<ScriptableNamedObject> self) { return self.lock()->getLuaSelf(); };
     namedTable["createScriptable"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<ScriptableNamedObject> ptr = ScriptableNamedObject::create(name, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<ScriptableNamedObject>(ptr);
     };
 
@@ -260,7 +273,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedLong["setValue"] = [](LuaProxy<NamedLong> self, int64_t v) { self.lock()->setValue(v); };
     namedTable["createLong"] = [](const std::string& name, int64_t v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedLong> ptr = NamedLong::create(name, v, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedLong>(ptr);
     };
 
@@ -272,7 +285,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedULong["setValue"] = [](LuaProxy<NamedULong> self, int64_t v) { self.lock()->setValue(static_cast<uint64_t>(v)); };
     namedTable["createULong"] = [](const std::string& name, int64_t v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedULong> ptr = NamedULong::create(name, static_cast<uint64_t>(v), extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedULong>(ptr);
     };
 
@@ -284,7 +297,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedDouble["setValue"] = [](LuaProxy<NamedDouble> self, double v) { self.lock()->setValue(v); };
     namedTable["createDouble"] = [](const std::string& name, double v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedDouble> ptr = NamedDouble::create(name, v, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedDouble>(ptr);
     };
 
@@ -296,7 +309,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedFloat["setValue"] = [](LuaProxy<NamedFloat> self, float v) { self.lock()->setValue(v); };
     namedTable["createFloat"] = [](const std::string& name, float v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedFloat> ptr = NamedFloat::create(name, v, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedFloat>(ptr);
     };
 
@@ -307,7 +320,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedBoolean["setValue"] = [](LuaProxy<NamedBoolean> self, bool v) { self.lock()->setValue(v); };
     namedTable["createBoolean"] = [](const std::string& name, bool v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedBoolean> ptr = NamedBoolean::create(name, v, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedBoolean>(ptr);
     };
 
@@ -318,7 +331,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedString["setValue"] = [](LuaProxy<NamedString> self, const std::string& v) { self.lock()->setValue(v); };
     namedTable["createString"] = [](const std::string& name, const std::string& v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedString> ptr = NamedString::create(name, v, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedString>(ptr);
     };
 
@@ -328,7 +341,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedTimestamp["value"] = [](LuaProxy<NamedTimestamp> self) { return self.lock()->value(); };
     namedTable["createTimestamp"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedTimestamp> ptr = NamedTimestamp::create(name, v.value_or(0), extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedTimestamp>(ptr);
     };
 
@@ -338,7 +351,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedDuration["value"] = [](LuaProxy<NamedDuration> self) { return self.lock()->value(); };
     namedTable["createDuration"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedDuration> ptr = NamedDuration::create(name, v.value_or(0), extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedDuration>(ptr);
     };
 
@@ -348,7 +361,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedDate["value"] = [](LuaProxy<NamedDate> self) { return self.lock()->value(); };
     namedTable["createDate"] = [](const std::string& name, sol::optional<int64_t> v, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedDate> ptr = NamedDate::create(name, v.value_or(0), extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedDate>(ptr);
     };
 
@@ -359,7 +372,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedQuantity["setValue"] = [](LuaProxy<NamedQuantity> self, double v) { self.lock()->setValue(v); };
     namedTable["createQuantity"] = [](const std::string& name, double v, const std::string& unit, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedQuantity> ptr = NamedQuantity::create(name, v, unit, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedQuantity>(ptr);
     };
 
@@ -384,13 +397,18 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             std::vector<uint8_t> v;
             sol::table t = obj.as<sol::table>();
             v.reserve(t.size());
-            for (size_t i = 1; i <= t.size(); ++i) v.push_back(t.get<uint8_t>(i));
+            // [CS-0010.37] Loop hard limit.
+            size_t count = 0;
+            for (size_t i = 1; i <= t.size(); ++i) {
+                if (++count > 1000000) break;
+                v.push_back(t.get<uint8_t>(i));
+            }
             self.lock()->setVariant(coretypes::Variant(v));
         }
     };
     namedTable["createVariant"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedVariant> ptr = NamedVariant::create(name, coretypes::Variant(), extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedVariant>(ptr);
     };
 
@@ -411,7 +429,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     namedTable["createBuffer"] = [](const std::string& name, size_t sz, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedBuffer> ptr = NamedBuffer::create(name, sz, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedBuffer>(ptr);
     };
 
@@ -423,7 +441,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedBitBuffer["setBit"] = [](LuaProxy<NamedBitBuffer> self, size_t i, bool v) { self.lock()->setBit(i, v); };
     namedTable["createBitBuffer"] = [](const std::string& name, size_t bc, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedBitBuffer> ptr = NamedBitBuffer::create(name, bc, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedBitBuffer>(ptr);
     };
 
@@ -437,7 +455,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     namedTable["createArray"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedObjectArray> ptr = NamedObjectArray::create(name, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObjectArray>(ptr);
     };
 
@@ -451,7 +469,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     namedTable["createMap"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedObjectMap> ptr = NamedObjectMap::create(name, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedObjectMap>(ptr);
     };
 
@@ -482,7 +500,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     };
     namedTable["createLuaMethod"] = [](const std::string& name, sol::function f, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedLuaMethod> ptr = NamedLuaMethod::create(name, f, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedLuaMethod>(ptr);
     };
 
@@ -509,7 +527,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     utNamedService["setCycleTime"] = [](LuaProxy<NamedService> self, int ms) { self.lock()->setCycleTime(std::chrono::milliseconds(ms)); };
     namedTable["createService"] = [](const std::string& name, sol::object parent, sol::this_state L) {
         std::shared_ptr<NamedService> ptr = NamedService::create(name, extractNamedObject(parent));
-        if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
+        if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
         return LuaProxy<NamedService>(ptr);
     };
 
@@ -542,7 +560,10 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
                     std::vector<std::shared_ptr<NamedObject>> out;
                     if (res.get_type() == sol::type::table) {
                         sol::table tbl = res.get<sol::table>();
+                        // [CS-0010.37] Loop hard limit.
+                        size_t count = 0;
                         for (size_t i = 1; i <= tbl.size(); ++i) {
+                            if (++count > 1000000) break;
                             std::shared_ptr<NamedObject> ptr = extractNamedObject(tbl[i]);
                             if (ptr) {
                                 if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
@@ -551,8 +572,8 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
                         }
                     } else {
                         std::shared_ptr<NamedObject> ptr = extractNamedObject(res.get<sol::object>());
-                        if (ptr) {
-                            if (!ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                        if (ptr != nullptr) {
+                            if (ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(id, ptr);
                             out.push_back(ptr);
                         }
                     }
@@ -568,8 +589,11 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             std::vector<std::shared_ptr<NamedObject>> res = self.transform(extractNamedObject(root));
             std::vector<LuaProxy<NamedObject>> out;
             size_t id = getEngineId(L);
+            // [CS-0010.37] Loop hard limit.
+            size_t count = 0;
             for (const std::shared_ptr<NamedObject>& ptr : res) {
-                if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                if (++count > 1000000) break;
+                if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(id, ptr);
                 out.emplace_back(ptr);
             }
             return out;
@@ -581,8 +605,11 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
             std::vector<std::shared_ptr<NamedObject>> res = self.transformSubtree(extractNamedObject(node), depth, path);
             std::vector<LuaProxy<NamedObject>> out;
             size_t id = getEngineId(L);
+            // [CS-0010.37] Loop hard limit.
+            size_t count = 0;
             for (const std::shared_ptr<NamedObject>& ptr : res) {
-                if (ptr && !ptr->getParent()) ObjectTracker::getInstance().trackStrong(id, ptr);
+                if (++count > 1000000) break;
+                if (ptr != nullptr && ptr->getParent() == nullptr) ObjectTracker::getInstance().trackStrong(id, ptr);
                 out.emplace_back(ptr);
             }
             return out;
@@ -593,7 +620,10 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     sol::table predefinedTable = traversalTable["rules"].get_or_create<sol::table>();
     predefinedTable["sliceBuffer"] = [](const std::string& name, sol::table slices, CopyPolicy policy, int priority) {
         std::vector<quasar::named::traversal::SliceDefinition> v;
+        // [CS-0010.37] Loop hard limit.
+        size_t count = 0;
         for (size_t i = 1; i <= slices.size(); ++i) {
+            if (++count > 10000) break;
             sol::table s = slices[i];
             v.push_back({s.get<std::string>("name"), s.get<size_t>("offset"), s.get<size_t>("length")});
         }
@@ -602,7 +632,10 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
 
     predefinedTable["castToStructure"] = [](const std::string& name, sol::table mappings, int priority) {
         std::vector<quasar::named::traversal::FieldMapping> v;
+        // [CS-0010.37] Loop hard limit.
+        size_t count = 0;
         for (size_t i = 1; i <= mappings.size(); ++i) {
+            if (++count > 10000) break;
             sol::table m = mappings[i];
             v.push_back({m.get<std::string>("name"), m.get<std::string>("type"), m.get<size_t>("offset"), m.get_or("endian", quasar::coretypes::Endianness::BigEndian)});
         }
@@ -614,7 +647,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
     quasarTable["isAlive"] = [](LuaProxy<NamedObject> obj) { return obj.isAlive(); };
     quasarTable["resolve"] = [](LuaProxy<NamedObject> root, const std::string& path) -> std::optional<LuaProxy<NamedObject>> {
         std::shared_ptr<NamedObject> ptr = root.lock();
-        if (!ptr) return std::nullopt;
+        if (ptr == nullptr) return std::nullopt;
         if (path.empty()) return LuaProxy<NamedObject>(ptr);
         std::stringstream ss(path);
         std::string segment;
@@ -622,7 +655,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         while (std::getline(ss, segment, '/')) {
             if (segment.empty()) continue;
             current = current->getChild(segment);
-            if (!current) return std::nullopt;
+            if (current == nullptr) return std::nullopt;
         }
         return LuaProxy<NamedObject>(current);
     };
@@ -634,7 +667,7 @@ void bindNamedTypes(sol::state_view lua, std::shared_ptr<LuaService> service) {
         sol::object engineObj = lua["__quasar_engine"];
         if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
             std::shared_ptr<LuaEngine> engine = engineObj.as<std::weak_ptr<LuaEngine>>().lock();
-            if (engine) {
+            if (engine != nullptr) {
                 engine->getMutex().unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
                 engine->getMutex().lock();

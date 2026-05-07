@@ -44,7 +44,7 @@ public:
       : FieldDef(name, codec, bitOffset), m_condition(condition) {}
 
   bool isPresent(const quasar::named::NamedObject *context) const {
-    if (m_condition) {
+    if (m_condition != nullptr) {
       return m_condition(context);
     }
     return true;

@@ -1,3 +1,8 @@
+/**
+ * @file TestNamedObjectThreadSafety.cpp
+ * @brief Stress tests for NamedObject thread safety.
+ */
+
 #include "quasar/named/NamedObject.hpp"
 #include <atomic>
 #include <gtest/gtest.h>
@@ -8,6 +13,9 @@
 
 using namespace quasar::named;
 
+/**
+ * @brief Stress test for concurrent NamedObject operations.
+ */
 TEST(NamedObjectThreadSafety, StressTest) {
   // Proof of compliance: [FE-0020.5] Operations on named objects shall be
   // thread safe. Step: Initialize root object and concurrency controls
@@ -24,12 +32,12 @@ TEST(NamedObjectThreadSafety, StressTest) {
     // [CS-0010.37] Loop hard limit.
     while (!stop) {
       if (++iterations > 10000000) {
-          break;
+          throw std::runtime_error("Loop limit exceeded in adder");
       }
       int id = counter++;
       try {
         // Step: Create child with unique ID
-        NamedObject::create("child_" + std::to_string(id), root);
+        (void)NamedObject::create("child_" + std::to_string(id), root);
       } catch (...) {
       }
       std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -44,7 +52,7 @@ TEST(NamedObjectThreadSafety, StressTest) {
     // [CS-0010.37] Loop hard limit.
     while (!stop) {
       if (++iterations > 10000000) {
-          break;
+          throw std::runtime_error("Loop limit exceeded in remover");
       }
       std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
       if (!children.empty()) {
@@ -67,7 +75,7 @@ TEST(NamedObjectThreadSafety, StressTest) {
     // [CS-0010.37] Loop hard limit.
     while (!stop) {
       if (++iterations > 10000000) {
-          break;
+          throw std::runtime_error("Loop limit exceeded in reader");
       }
       std::list<std::shared_ptr<NamedObject>> children = root->getChildren();
       // [CS-0010.34] auto forbidden.
@@ -99,9 +107,12 @@ TEST(NamedObjectThreadSafety, StressTest) {
   // Step: Signal stop and join all threads
   std::cout << "Step: Signal stop and join all threads" << std::endl;
   stop = true;
-  // [CS-0010.34] auto forbidden.
-  for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); ++it)
+  // [CS-0010.34] auto forbidden. [CS-0010.37] Loop hard limit.
+  size_t join_count = 0;
+  for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); ++it) {
+    if (++join_count > 100) throw std::runtime_error("Too many threads to join");
     it->join();
+  }
 
   // Assertion: Thread safety verified if no crashes occurred
   std::cout << "Assertion: Thread safety verified" << std::endl;

@@ -127,7 +127,7 @@ private:
                 }
             }
 
-            if (child) {
+            if (child != nullptr) {
                 // Ensure proper tree attachment
                 child->setParent(root);
             } else {
