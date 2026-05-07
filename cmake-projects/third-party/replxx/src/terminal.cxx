@@ -1,4 +1,6 @@
 #include <memory>
+#include <algorithm>
+#include <initializer_list>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>

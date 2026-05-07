@@ -20,7 +20,7 @@ NamedString::create(const std::string &name, const std::string &value,
   obj->setSelf(obj);
 
   // Link to parent if one is provided.
-  if (parent) {
+  if (parent != nullptr) {
     obj->setParent(parent);
   }
   return obj;

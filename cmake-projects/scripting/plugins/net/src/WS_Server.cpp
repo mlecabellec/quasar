@@ -11,6 +11,8 @@ namespace quasar::net {
 using namespace quasar::scripting;
 
 struct LuaWSServer::Impl {
+    class LuaWSSession;
+
     class LuaWSSession : public ::CppServer::WS::WSSession {
     public:
         explicit LuaWSSession(const std::shared_ptr<::CppServer::WS::WSServer>& server) 

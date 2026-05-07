@@ -12,15 +12,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 
 function(quasar_apply_standards target)
-    # Treat third-party headers as SYSTEM to suppress their warnings
-    get_target_property(target_sources ${target} SOURCES)
+    # Check if target is third-party based on its source directory
+    get_target_property(target_source_dir ${target} SOURCE_DIR)
     set(is_third_party FALSE)
-    foreach(source ${target_sources})
-        if(source MATCHES "third-party")
-            set(is_third_party TRUE)
-            break()
-        endif()
-    endforeach()
+    if(target_source_dir MATCHES "third-party")
+        set(is_third_party TRUE)
+    endif()
 
     # Enforce C++23
     target_compile_features(${target} PUBLIC cxx_std_23)
@@ -37,8 +34,12 @@ function(quasar_apply_standards target)
             -fstack-usage
         )
     else()
-        # For third-party, we want to BE QUIET
-        target_compile_options(${target} PRIVATE -w)
+        # For third-party, we want to BE QUIET and definitely NO Werror
+        if(MSVC)
+            target_compile_options(${target} PRIVATE /W0)
+        else()
+            target_compile_options(${target} PRIVATE -w)
+        endif()
     endif()
     
     # Enable assertions in standard library

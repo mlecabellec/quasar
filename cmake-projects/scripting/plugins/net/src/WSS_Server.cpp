@@ -11,6 +11,8 @@ namespace quasar::net {
 using namespace quasar::scripting;
 
 struct LuaSecureWSServer::Impl {
+    class LuaSecureWSSession;
+
     class LuaSecureWSSession : public ::CppServer::WS::WSSSession {
     public:
         explicit LuaSecureWSSession(const std::shared_ptr<::CppServer::WS::WSSServer>& server) 

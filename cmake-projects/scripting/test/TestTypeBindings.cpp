@@ -94,7 +94,7 @@ TEST_F(TypeBindingsTest, CppVariantHandling) {
     sol::state& lua = engine->getState();
     auto v = NamedVariant::create("v", coretypes::Variant(), root);
     v->setVariant(coretypes::Variant(std::string("CppContent")));
-
+    
     lua["v"] = LuaProxy<NamedVariant>(v);
 
     sol::protected_function_result result = lua.script("return v:getValue()");

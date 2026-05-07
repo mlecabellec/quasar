@@ -50,7 +50,7 @@ public:
     // [CS-0010.44] Explicit construction and initialization.
     std::shared_ptr<NamedVariant> obj = std::make_shared<NamedVariant>(name, variant);
     obj->setSelf(obj);
-    if (parent) {
+    if (parent != nullptr) {
       obj->setParent(parent);
     }
     return obj;
