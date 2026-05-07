@@ -62,8 +62,8 @@ TEST_F(TypeBindingsTest, QuantityMath) {
 
 TEST_F(TypeBindingsTest, HierarchyResolution) {
     sol::state& lua = engine->getState();
-    auto child = NamedObject::create("child", root);
-    auto grandchild = NamedObject::create("grandchild", child);
+    std::shared_ptr<NamedObject> child = NamedObject::create("child", root);
+    std::shared_ptr<NamedObject> grandchild = NamedObject::create("grandchild", child);
     
     lua["root"] = LuaProxy<NamedObject>(root);
     
@@ -78,7 +78,7 @@ TEST_F(TypeBindingsTest, HierarchyResolution) {
 
 TEST_F(TypeBindingsTest, VariantHandling) {
     sol::state& lua = engine->getState();
-    auto v = NamedVariant::create("v", root);
+    auto v = NamedVariant::create("v", coretypes::Variant(), root);
     lua["v"] = LuaProxy<NamedVariant>(v);
 
     lua.script(R"(
@@ -93,7 +93,7 @@ TEST_F(TypeBindingsTest, VariantHandling) {
 
 TEST_F(TypeBindingsTest, CppVariantHandling) {
     sol::state& lua = engine->getState();
-    auto v = NamedVariant::create("v", root);
+    auto v = NamedVariant::create("v", coretypes::Variant(), root);
     auto content = NamedObject::create("CppContent");
     v->set(content);
     

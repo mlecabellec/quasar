@@ -100,7 +100,8 @@ jobs:
           cmake -S cmake-projects -B build-projects \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
