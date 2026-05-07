@@ -34,7 +34,7 @@ public:
   static std::shared_ptr<NamedTimestamp> create(const std::string &name, int64_t us_since_epoch, std::shared_ptr<NamedObject> parent = nullptr) {
     std::shared_ptr<NamedTimestamp> obj = std::make_shared<NamedTimestamp>(name, us_since_epoch);
     obj->setSelf(obj);
-    if (parent) {
+    if (parent != nullptr) {
       obj->setParent(parent);
     }
     return obj;

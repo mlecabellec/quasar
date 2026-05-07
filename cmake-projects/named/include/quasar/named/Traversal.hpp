@@ -80,7 +80,7 @@ findByType(const std::shared_ptr<NamedObject> &root) {
   // Use depth-first traversal to find matching nodes.
   forEachDepthFirst(root, [&](std::shared_ptr<NamedObject> obj) {
     std::shared_ptr<T> casted = std::dynamic_pointer_cast<T>(obj);
-    if (casted) {
+    if (casted != nullptr) {
       result.push_back(casted);
     }
   });

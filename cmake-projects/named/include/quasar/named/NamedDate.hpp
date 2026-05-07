@@ -32,7 +32,7 @@ public:
   static std::shared_ptr<NamedDate> create(const std::string &name, int64_t days_since_epoch, std::shared_ptr<NamedObject> parent = nullptr) {
     std::shared_ptr<NamedDate> obj = std::make_shared<NamedDate>(name, days_since_epoch);
     obj->setSelf(obj);
-    if (parent) {
+    if (parent != nullptr) {
       obj->setParent(parent);
     }
     return obj;

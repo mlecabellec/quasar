@@ -57,7 +57,7 @@ public:
     obj->setSelf(obj);
 
     // Attach to parent if provided.
-    if (parent) {
+    if (parent != nullptr) {
       obj->setParent(parent);
     }
     return obj;
@@ -72,7 +72,7 @@ public:
    * @return A new NamedInteger with the same name and value, but no hierarchy.
    */
   std::shared_ptr<NamedObject> clone(CopyPolicy policy = CopyPolicy::DUPLICATE) const override {
-    if (policy == CopyPolicy::SHARE && m_bound) {
+    if (policy == CopyPolicy::SHARE && m_bound == true) {
         std::shared_ptr<NamedInteger<T>> newObj = create(this->getName(), this->value());
         newObj->bind(m_backingStore.lock(), m_bound_offset);
         newObj->setEndianness(m_endian);
@@ -87,7 +87,7 @@ public:
    * @return true if bound.
    * @feature [TSK-20260311-001.6] Buffer-to-Primitive Binding.
    */
-  bool isBound() const override { return m_bound; }
+  bool isBound() const override { return (m_bound == true); }
   /** @brief Returns the offset in bytes. */
   std::size_t getBoundOffset() const override { return m_bound_offset; }
   /** @brief Returns the length in bytes. */
@@ -99,7 +99,7 @@ public:
    */
   void setEndianness(quasar::coretypes::Endianness endian) override {
       m_endian = endian;
-      if (m_bound) {
+      if (m_bound == true) {
           syncFromBuffer();
       }
   }

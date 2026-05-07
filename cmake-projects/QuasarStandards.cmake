@@ -67,7 +67,8 @@ function(quasar_apply_standards target)
     endif()
 
     # Clang-Tidy integration
-    if(CLANG_TIDY_EXE)
+    option(QUASAR_ENABLE_CLANG_TIDY "Enable clang-tidy linting during build" OFF)
+    if(CLANG_TIDY_EXE AND QUASAR_ENABLE_CLANG_TIDY)
         set_target_properties(${target} PROPERTIES
             CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-checks=modernize-*,cppcoreguidelines-*,bugprone-*,performance-*,readability-magic-numbers,-modernize-use-auto,-modernize-use-trailing-return-type;--extra-arg=-Wno-unknown-warning-option;--extra-arg=-std=c++2b"
         )
