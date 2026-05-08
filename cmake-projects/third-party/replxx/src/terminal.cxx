@@ -637,7 +637,7 @@ Terminal::EVENT_TYPE Terminal::wait_for_input( int long timeout_ ) {
 	}
 #else
 	fd_set fdSet;
-	int nfds( max( {_interrupt[0], _interrupt[1], _in_fd} ) + 1 );
+	int nfds( std::max( { static_cast<int>(_interrupt[0]), static_cast<int>(_interrupt[1]), static_cast<int>(_in_fd) } ) + 1 );
 	while ( true ) {
 		FD_ZERO( &fdSet );
 		FD_SET( _in_fd, &fdSet );

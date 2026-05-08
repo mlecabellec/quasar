@@ -331,11 +331,11 @@ static void display_el3318(const ProcessImage &img, uint32_t offset) {
     bool over = (status & EL33XX_STATUS_OVERRANGE_BIT) != 0U;
     bool under = (status & EL33XX_STATUS_UNDERRANGE_BIT) != 0U;
     std::cout << "  Ch" << (ch + 1U) << ": ";
-    if (err) {
+    if (err == true) {
       std::cout << "ERROR";
-    } else if (over) {
+    } else if (over == true) {
       std::cout << "OVERRANGE";
-    } else if (under) {
+    } else if (under == true) {
       std::cout << "UNDERRANGE";
     } else {
       std::cout << std::fixed << std::setprecision(1) << temp << " degC";
@@ -360,11 +360,11 @@ static void display_el3314(const ProcessImage &img, uint32_t offset) {
     bool over = (status & EL33XX_STATUS_OVERRANGE_BIT) != 0U;
     bool under = (status & EL33XX_STATUS_UNDERRANGE_BIT) != 0U;
     std::cout << "  Ch" << (ch + 1U) << ": ";
-    if (err) {
+    if (err == true) {
       std::cout << "ERROR";
-    } else if (over) {
+    } else if (over == true) {
       std::cout << "OVERRANGE";
-    } else if (under) {
+    } else if (under == true) {
       std::cout << "UNDERRANGE";
     } else {
       std::cout << std::fixed << std::setprecision(1) << temp << " degC";

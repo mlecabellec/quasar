@@ -93,7 +93,7 @@ Smp::IObject *Simulator::GetParent() const { return nullptr; }
 
 Smp::IObject *Simulator::GetChild(Smp::String8 name) const {
   Smp::IContainer* container = GetContainer(name);
-  if (container) {
+  if (container != nullptr) {
     return container;
   }
   return nullptr;

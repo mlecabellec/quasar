@@ -19,7 +19,7 @@ std::shared_ptr<State> State::create(const std::string& name, std::shared_ptr<qu
     };
     std::shared_ptr<Helper> state = std::make_shared<Helper>(name);
     state->setSelf(state);
-    if (parent) {
+    if (parent != nullptr) {
         state->setParent(parent);
     }
     return state;

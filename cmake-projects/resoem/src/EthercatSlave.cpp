@@ -10,7 +10,7 @@ std::shared_ptr<EthercatSlave> EthercatSlave::create(const std::string& name, co
     struct make_shared_enabler : public EthercatSlave {
         make_shared_enabler(const std::string& n, uint16_t addr) : EthercatSlave(n, addr) {}
     };
-    auto slave = std::make_shared<make_shared_enabler>(name, info.configured_address);
+    std::shared_ptr<EthercatSlave> slave = std::make_shared<make_shared_enabler>(name, info.configured_address);
     slave->setSelf(slave);
     if (parent) {
         slave->setParent(parent);

@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     try {
         RawSocket socket(iface);
         Enumerator enumerator(socket);
-        auto enum_res = enumerator.enumerate();
+        Result<size_t> enum_res = enumerator.enumerate();
         if (!enum_res) return 1;
 
         if (slave_idx < 0 || slave_idx >= static_cast<int>(enumerator.slaves().size())) {
@@ -33,18 +33,18 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        auto& slave = const_cast<SlaveInfo&>(enumerator.slaves()[slave_idx]);
+        SlaveInfo& slave = const_cast<SlaveInfo&>(enumerator.slaves()[static_cast<size_t>(slave_idx)]);
         MailboxHandler mailbox(socket);
         CoEHandler coe(mailbox);
 
         if (options.is_set("read")) {
             std::string target = options["read"];
             size_t colon = target.find(':');
-            uint16_t index = std::stoul(target.substr(0, colon), nullptr, 16);
-            uint8_t subindex = (colon != std::string::npos) ? std::stoul(target.substr(colon + 1), nullptr, 16) : 0;
+            uint16_t index = static_cast<uint16_t>(std::stoul(target.substr(0, colon), nullptr, 16));
+            uint8_t subindex = (colon != std::string::npos) ? static_cast<uint8_t>(std::stoul(target.substr(colon + 1), nullptr, 16)) : static_cast<uint8_t>(0);
 
             std::vector<uint8_t> buffer(1024);
-            auto res = coe.sdo_read(slave, index, subindex, std::span<uint8_t>(buffer));
+            Result<size_t> res = coe.sdo_read(slave, index, subindex, std::span<uint8_t>(buffer));
             if (res) {
                 std::cout << "Value: " << resoem::tools::format_hex(buffer.data(), res.value()) << std::endl;
             }
@@ -58,21 +58,23 @@ int main(int argc, char* argv[]) {
             }
             std::string target = options["write"];
             size_t colon = target.find(':');
-            uint16_t index = std::stoul(target.substr(0, colon), nullptr, 16);
-            uint8_t subindex = (colon != std::string::npos) ? std::stoul(target.substr(colon + 1), nullptr, 16) : 0;
+            uint16_t index = static_cast<uint16_t>(std::stoul(target.substr(0, colon), nullptr, 16));
+            uint8_t subindex = (colon != std::string::npos) ? static_cast<uint8_t>(std::stoul(target.substr(colon + 1), nullptr, 16)) : static_cast<uint8_t>(0);
 
             std::vector<uint8_t> data = resoem::tools::parse_hex(pos_args[0]);
-            auto res = coe.sdo_write(slave, index, subindex, std::span<const uint8_t>(data));
+            Result<> res = coe.sdo_write(slave, index, subindex, std::span<const uint8_t>(data));
             if (res) {
                 std::cout << "Write Success." << std::endl;
             }
         } else {
             // Default: Browse OD
-            auto list_res = coe.read_od_list(slave);
+            Result<std::vector<uint16_t>> list_res = coe.read_od_list(slave);
             if (list_res) {
                 std::cout << "Object Dictionary for Slave " << slave_idx << ":" << std::endl;
-                for (uint16_t idx : list_res.value()) {
-                    auto desc = coe.read_od_description(slave, idx);
+                std::vector<uint16_t> indices = list_res.value();
+                for (std::vector<uint16_t>::const_iterator it = indices.begin(); it != indices.end(); ++it) {
+                    uint16_t idx = *it;
+                    Result<CoEHandler::ODEntry> desc = coe.read_od_description(slave, idx);
                     if (desc) {
                         std::cout << "0x" << std::hex << std::setw(4) << std::setfill('0') << idx << ": " 
                                   << desc.value().name << std::dec << std::endl;

@@ -12,7 +12,8 @@ namespace scripting {
  * @return std::shared_ptr<Environment> instance.
  */
 std::shared_ptr<Environment> Environment::create() {
-    return std::shared_ptr<Environment>(new Environment());
+    struct make_shared_enabler : public Environment {};
+    return std::make_shared<make_shared_enabler>();
 }
 
 /**

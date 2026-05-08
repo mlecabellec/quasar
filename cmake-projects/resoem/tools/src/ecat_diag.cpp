@@ -45,17 +45,17 @@ int main(int argc, char* argv[]) {
     try {
         RawSocket socket(iface);
         Enumerator enumerator(socket);
-        auto result = enumerator.enumerate();
-        if (!result) {
+        Result<size_t> result = enumerator.enumerate();
+        if (result == false) {
             std::cerr << "Enumeration failed." << std::endl;
             return 1;
         }
-        int count = result.value();
+        int count = static_cast<int>(result.value());
 
         for (int i = 0; i < count; ++i) {
             if (target_slave != -1 && i != target_slave) continue;
 
-            const auto& slave = enumerator.slaves()[i];
+            const SlaveInfo& slave = enumerator.slaves()[static_cast<size_t>(i)];
             int wkc = 0;
             uint16_t al_status = enumerator.read_register_fprd<uint16_t>(slave.configured_address, regs::AL_STATUS, wkc);
             uint16_t al_code = enumerator.read_register_fprd<uint16_t>(slave.configured_address, 0x0134, wkc);

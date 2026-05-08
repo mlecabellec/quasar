@@ -1,0 +1,3369 @@
+[
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 107,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 112,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 136,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 141,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 143,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 162,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 168,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 139,
+    "message": "Implicit boolean conversion in '(composite)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 142,
+    "message": "Implicit boolean conversion in '(containers)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 146,
+    "message": "Implicit boolean conversion in '(container)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 150,
+    "message": "Implicit boolean conversion in '(next)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 163,
+    "message": "Implicit boolean conversion in '(component)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Resolver.cpp",
+    "line": 169,
+    "message": "Implicit boolean conversion in '(field)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Model.cpp",
+    "line": 132,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Model.cpp",
+    "line": 134,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 283,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 289,
+    "message": "Implicit boolean conversion in '(composite)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 308,
+    "message": "Implicit boolean conversion in '(composite)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 328,
+    "message": "Implicit boolean conversion in '(composite)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 341,
+    "message": "Implicit boolean conversion in '(composite)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 402,
+    "message": "Implicit boolean conversion in '(factory)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Simulator.cpp",
+    "line": 456,
+    "message": "Implicit boolean conversion in '(initFunc)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 22,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 36,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 50,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 64,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 78,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 92,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 106,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 120,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 134,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 148,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 162,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 176,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 189,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 198,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 217,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 237,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 197,
+    "message": "Implicit boolean conversion in '(field)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/Publication.cpp",
+    "line": 199,
+    "message": "Implicit boolean conversion in '(internalField)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/TypeRegistry.cpp",
+    "line": 151,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/TypeRegistry.cpp",
+    "line": 166,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/TypeRegistry.cpp",
+    "line": 175,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 97,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 112,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 114,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 131,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 133,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 134,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 159,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 178,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 183,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 202,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 204,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 205,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sim/src/LinkRegistry.cpp",
+    "line": 213,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/smp_impl/Request.cpp",
+    "line": 43,
+    "message": "Implicit boolean conversion in '(isVoid)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim/src/smp_impl/Request.cpp",
+    "line": 50,
+    "message": "Implicit boolean conversion in '(isVoid)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/manual-tests/TestManualScripts.cpp",
+    "line": 42,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/manual-tests/TestManualScripts.cpp",
+    "line": 86,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/utils/src/Logger.cpp",
+    "line": 145,
+    "message": "Implicit boolean conversion in '(sender)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/utils/src/EventManager.cpp",
+    "line": 253,
+    "message": "Implicit boolean conversion in '(ep)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/utils/src/TimeKeeper.cpp",
+    "line": 150,
+    "message": "Implicit boolean conversion in '(_eventManager)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/utils/src/TimeKeeper.cpp",
+    "line": 168,
+    "message": "Implicit boolean conversion in '(_eventManager)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 62,
+    "message": "Implicit boolean conversion in '(ni32)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 68,
+    "message": "Implicit boolean conversion in '(ni64)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 74,
+    "message": "Implicit boolean conversion in '(num)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 96,
+    "message": "Implicit boolean conversion in '(num)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 120,
+    "message": "Implicit boolean conversion in '(ni32)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 124,
+    "message": "Implicit boolean conversion in '(ni64)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 130,
+    "message": "Implicit boolean conversion in '(ni64)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 134,
+    "message": "Implicit boolean conversion in '(ni32)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 142,
+    "message": "Implicit boolean conversion in '(nb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 150,
+    "message": "Implicit boolean conversion in '(ns)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/include/quasar/opcua/UA_Common.hpp",
+    "line": 157,
+    "message": "Implicit boolean conversion in '(nf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/include/quasar/opcua/OpcUaClientService.hpp",
+    "line": 93,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/include/quasar/opcua/OpcUaClientService.hpp",
+    "line": 109,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/src/OpcUaClientService.cpp",
+    "line": 30,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/src/OpcUaClientService.cpp",
+    "line": 66,
+    "message": "Implicit boolean conversion in '(m_client)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/src/OpcUaServerService.cpp",
+    "line": 144,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/src/OpcUaServerService.cpp",
+    "line": 324,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/src/OpcUaServerService.cpp",
+    "line": 46,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/opcua/src/OpcUaServerService.cpp",
+    "line": 94,
+    "message": "Implicit boolean conversion in '(m_server)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaServer.cpp",
+    "line": 50,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaServer.cpp",
+    "line": 53,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 26,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 28,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 73,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 76,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 79,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 82,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 101,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 104,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 107,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 110,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 114,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 115,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/opcua/test/TestOpcUaClient.cpp",
+    "line": 119,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/coretypes/include/quasar/coretypes/Integer.hpp",
+    "line": 370,
+    "message": "Implicit boolean conversion in '(negative)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/coretypes/include/quasar/coretypes/Integer.hpp",
+    "line": 387,
+    "message": "Implicit boolean conversion in '(negative)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/coretypes/src/BitBuffer.cpp",
+    "line": 108,
+    "message": "Implicit boolean conversion in '(value)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/coretypes/src/BitBuffer.cpp",
+    "line": 150,
+    "message": "Implicit boolean conversion in '(bit)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/coretypes/src/BitBuffer.cpp",
+    "line": 179,
+    "message": "Implicit boolean conversion in '(bit)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedInteger.hpp",
+    "line": 146,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedInteger.hpp",
+    "line": 160,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedInteger.hpp",
+    "line": 199,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedInteger.hpp",
+    "line": 210,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedQuantity.hpp",
+    "line": 52,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 62,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 105,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 149,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 163,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 203,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedFloatingPoint.hpp",
+    "line": 214,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedArray.hpp",
+    "line": 51,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedArray.hpp",
+    "line": 146,
+    "message": "Implicit boolean conversion in '(casted)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedArray.hpp",
+    "line": 163,
+    "message": "Implicit boolean conversion in '(child)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedMap.hpp",
+    "line": 47,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedMap.hpp",
+    "line": 148,
+    "message": "Implicit boolean conversion in '(casted)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedMap.hpp",
+    "line": 180,
+    "message": "Implicit boolean conversion in '(casted)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedSet.hpp",
+    "line": 47,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedSet.hpp",
+    "line": 144,
+    "message": "Implicit boolean conversion in '(casted)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedSet.hpp",
+    "line": 176,
+    "message": "Implicit boolean conversion in '(casted)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/NamedDuration.hpp",
+    "line": 35,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/include/quasar/named/traversal/PredefinedRules.hpp",
+    "line": 114,
+    "message": "Implicit boolean conversion in '(parentBuf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 117,
+    "message": "Implicit boolean conversion in '(b)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 120,
+    "message": "Implicit boolean conversion in '(n)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 123,
+    "message": "Implicit boolean conversion in '(bb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 126,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 129,
+    "message": "Implicit boolean conversion in '(s)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 132,
+    "message": "Implicit boolean conversion in '(v)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 187,
+    "message": "Implicit boolean conversion in '(child)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 210,
+    "message": "Implicit boolean conversion in '(child)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 358,
+    "message": "Implicit boolean conversion in '(bb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Serialization.cpp",
+    "line": 372,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Traversal.cpp",
+    "line": 84,
+    "message": "Implicit boolean conversion in '(root)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/Traversal.cpp",
+    "line": 123,
+    "message": "Implicit boolean conversion in '(newParent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/ActiveEntity.cpp",
+    "line": 86,
+    "message": "Implicit boolean conversion in '(cmd)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBuffer.cpp",
+    "line": 24,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/WebNamedMethod.cpp",
+    "line": 27,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 10,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 57,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 67,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 78,
+    "message": "Implicit boolean conversion in '(m_bound)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 88,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBoolean.cpp",
+    "line": 96,
+    "message": "Implicit boolean conversion in '(buf)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedService.cpp",
+    "line": 21,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedService.cpp",
+    "line": 49,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedService.cpp",
+    "line": 90,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedService.cpp",
+    "line": 109,
+    "message": "Implicit boolean conversion in '(child)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedService.cpp",
+    "line": 112,
+    "message": "Implicit boolean conversion in '(method)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 46,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 81,
+    "message": "Implicit boolean conversion in '(parentPtr)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 110,
+    "message": "Implicit boolean conversion in '(p)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 123,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 142,
+    "message": "Implicit boolean conversion in '(oldParent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 205,
+    "message": "Implicit boolean conversion in '(removed)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 260,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 303,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedObject.cpp",
+    "line": 489,
+    "message": "Implicit boolean conversion in '(newParent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBuffer.cpp",
+    "line": 29,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBuffer.cpp",
+    "line": 46,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedMethod.cpp",
+    "line": 20,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 26,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 97,
+    "message": "Implicit boolean conversion in '(nb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 101,
+    "message": "Implicit boolean conversion in '(newNb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 110,
+    "message": "Implicit boolean conversion in '(nbs)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 115,
+    "message": "Implicit boolean conversion in '(newNbs)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBufferSlice.cpp",
+    "line": 131,
+    "message": "Implicit boolean conversion in '(newParent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/TypedNamedMethod.cpp",
+    "line": 42,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/TypedNamedMethod.cpp",
+    "line": 63,
+    "message": "Implicit boolean conversion in '(args)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/TypedNamedMethod.cpp",
+    "line": 68,
+    "message": "Implicit boolean conversion in '(m_inputSchema)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 29,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 96,
+    "message": "Implicit boolean conversion in '(nb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 100,
+    "message": "Implicit boolean conversion in '(newNb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 109,
+    "message": "Implicit boolean conversion in '(nbs)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 114,
+    "message": "Implicit boolean conversion in '(newNbs)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/src/quasar/named/NamedBitBufferSlice.cpp",
+    "line": 130,
+    "message": "Implicit boolean conversion in '(newParent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/test/TestActiveEntity.cpp",
+    "line": 78,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/named/test/TestNamedMethodAndService.cpp",
+    "line": 39,
+    "message": "Implicit boolean conversion in '(ownerData)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 55,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 56,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 20,
+    "message": "Implicit boolean conversion in '(context)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 221,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 222,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 27,
+    "message": "Implicit boolean conversion in '(socket)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/zmq/src/ZmqBindings.cpp",
+    "line": 67,
+    "message": "Implicit boolean conversion in '(root)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/zmq/test/TestZmqPlugin.cpp",
+    "line": 63,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 31,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 45,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 46,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 52,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 61,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 63,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 76,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 77,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 101,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 111,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 30,
+    "message": "Implicit boolean conversion in '(onConnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 44,
+    "message": "Implicit boolean conversion in '(onDisconnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 49,
+    "message": "Implicit boolean conversion in '(self)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 54,
+    "message": "Implicit boolean conversion in '(self)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 60,
+    "message": "Implicit boolean conversion in '(onReceivedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 75,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 110,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 24,
+    "message": "Implicit boolean conversion in '(onStartedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 30,
+    "message": "Implicit boolean conversion in '(onStoppedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 36,
+    "message": "Implicit boolean conversion in '(onReceivedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 47,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 30,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 41,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 42,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 25,
+    "message": "Implicit boolean conversion in '(onConnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 31,
+    "message": "Implicit boolean conversion in '(onDisconnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 37,
+    "message": "Implicit boolean conversion in '(onReceivedResponseCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 45,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 63,
+    "message": "Implicit boolean conversion in '(onConnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 69,
+    "message": "Implicit boolean conversion in '(onDisconnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 75,
+    "message": "Implicit boolean conversion in '(onReceivedResponseCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 83,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 30,
+    "message": "Implicit boolean conversion in '(onConnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 37,
+    "message": "Implicit boolean conversion in '(onDisconnectedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 43,
+    "message": "Implicit boolean conversion in '(onReceivedCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 55,
+    "message": "Implicit boolean conversion in '(onErrorCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 61,
+    "message": "Implicit boolean conversion in '(onJoinedMulticastGroupCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 67,
+    "message": "Implicit boolean conversion in '(onLeftMulticastGroupCb)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPClientWrapper.cpp",
+    "line": 112,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 38,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 65,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 74,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 75,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 88,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 89,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 11,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 26,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 27,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 40,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 50,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 41,
+    "message": "Implicit boolean conversion in '(session)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 51,
+    "message": "Implicit boolean conversion in '(session)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/SSLContextWrapper.cpp",
+    "line": 19,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 304,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 350,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 58,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 70,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 100,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 112,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 123,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 139,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 177,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 188,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 217,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 228,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 238,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 254,
+    "message": "Implicit boolean conversion in '(o)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/WebNamedMethodBindings.cpp",
+    "line": 44,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 122,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 138,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 143,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 166,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 179,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 184,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 207,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 29,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 40,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 51,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 48,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 60,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 72,
+    "message": "Implicit boolean conversion in '(m_owner)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPServerWrapper.cpp",
+    "line": 11,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPServerWrapper.cpp",
+    "line": 18,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPServerWrapper.cpp",
+    "line": 19,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPServerWrapper.cpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPClientWrapper.cpp",
+    "line": 11,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPClientWrapper.cpp",
+    "line": 18,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPClientWrapper.cpp",
+    "line": 19,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/net/src/UDPClientWrapper.cpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 18,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 22,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 40,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 17,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 18,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 25,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 30,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 34,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 35,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 38,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 42,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 45,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 54,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 58,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/plugins/resoem/src/ResoemPlugin.cpp",
+    "line": 61,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/plugins/datalogger/src/DataLoggerPlugin.cpp",
+    "line": 48,
+    "message": "Implicit boolean conversion in '(parentPtr)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/qlsh/main.cpp",
+    "line": 49,
+    "message": "Implicit boolean conversion in '(g_sigint_received)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/qlsh/main.cpp",
+    "line": 247,
+    "message": "Implicit boolean conversion in '(g_sigint_received)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/qlsh/ShellCompleter.cpp",
+    "line": 69,
+    "message": "Implicit boolean conversion in '(no)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/qlsh/LocalTracker.hpp",
+    "line": 37,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/qlsh/ShellUtilities.cpp",
+    "line": 96,
+    "message": "Implicit boolean conversion in '(ae)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/include/quasar/scripting/LuaService.hpp",
+    "line": 100,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 14,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 62,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 96,
+    "message": "Implicit boolean conversion in '(initOk)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 140,
+    "message": "Implicit boolean conversion in '(m_engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 151,
+    "message": "Implicit boolean conversion in '(m_engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaService.cpp",
+    "line": 158,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/ObjectTracker.cpp",
+    "line": 75,
+    "message": "Implicit boolean conversion in '(method)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/src/LuaObserver.cpp",
+    "line": 17,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/src/LuaObserver.cpp",
+    "line": 35,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/RegistryBindings.cpp",
+    "line": 55,
+    "message": "Implicit boolean conversion in '(engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/RegistryBindings.cpp",
+    "line": 517,
+    "message": "Implicit boolean conversion in '(engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/RegistryBindings.cpp",
+    "line": 568,
+    "message": "Implicit boolean conversion in '(ptr)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/NamedLuaMethod.cpp",
+    "line": 95,
+    "message": "Implicit boolean conversion in '(engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/NamedLuaMethod.cpp",
+    "line": 127,
+    "message": "Implicit boolean conversion in '(p)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/NamedLuaMethod.cpp",
+    "line": 135,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/ScriptableNamedObject.cpp",
+    "line": 13,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/Environment.cpp",
+    "line": 15,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/Environment.cpp",
+    "line": 31,
+    "message": "Implicit boolean conversion in '(m_engine)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/src/LuaEngine.cpp",
+    "line": 16,
+    "message": "Implicit boolean conversion in '(message)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 16,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 33,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 50,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 62,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 70,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 78,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/src/TypeBindings.cpp",
+    "line": 95,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestExtendableClasses.cpp",
+    "line": 24,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestExtendableClasses.cpp",
+    "line": 27,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestExtendableClasses.cpp",
+    "line": 52,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestExtendableClasses.cpp",
+    "line": 55,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestExtendableClasses.cpp",
+    "line": 69,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 33,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 44,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 55,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 74,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 81,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestTypeBindings.cpp",
+    "line": 95,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestScriptManager.cpp",
+    "line": 42,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestScriptManager.cpp",
+    "line": 61,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/scripting/test/TestScriptManager.cpp",
+    "line": 46,
+    "message": "Implicit boolean conversion in '(svc)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestLuaEngine.cpp",
+    "line": 8,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestLuaEngine.cpp",
+    "line": 20,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestLuaEngine.cpp",
+    "line": 49,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestLuaEngine.cpp",
+    "line": 59,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/test/TestQlsh.cpp",
+    "line": 109,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 34,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 35,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 38,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 47,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/scripting/test/TestNamedLuaMethod.cpp",
+    "line": 53,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/scripting/test_plugin/TestPlugin.cpp",
+    "line": 36,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sched/src/Scheduler.cpp",
+    "line": 422,
+    "message": "Implicit boolean conversion in '(ep)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sched/src/Scheduler.cpp",
+    "line": 462,
+    "message": "Implicit boolean conversion in '(ep)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 334,
+    "message": "Implicit boolean conversion in '(err)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 336,
+    "message": "Implicit boolean conversion in '(over)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 338,
+    "message": "Implicit boolean conversion in '(under)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 363,
+    "message": "Implicit boolean conversion in '(err)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 365,
+    "message": "Implicit boolean conversion in '(over)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/testmaster100.cpp",
+    "line": 367,
+    "message": "Implicit boolean conversion in '(under)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/eni_test.cpp",
+    "line": 106,
+    "message": "Implicit boolean conversion in '(all_safe_op)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/eni_test.cpp",
+    "line": 121,
+    "message": "Implicit boolean conversion in '(op)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/firm_update.cpp",
+    "line": 112,
+    "message": "Implicit boolean conversion in '(res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/eoe_test.cpp",
+    "line": 158,
+    "message": "Implicit boolean conversion in '(res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/slaveinfo.cpp",
+    "line": 210,
+    "message": "Implicit boolean conversion in '(print_od)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/slaveinfo.cpp",
+    "line": 224,
+    "message": "Implicit boolean conversion in '(list_res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/slaveinfo.cpp",
+    "line": 228,
+    "message": "Implicit boolean conversion in '(desc_res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/samples/simple_ng.cpp",
+    "line": 160,
+    "message": "Implicit boolean conversion in '(all_op)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/include/resoem/ProcessImage.hpp",
+    "line": 79,
+    "message": "Implicit boolean conversion in '(value)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/resoem/include/resoem/RawSocket.hpp",
+    "line": 42,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/resoem/include/resoem/RawSocket.hpp",
+    "line": 43,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/resoem/src/Enumerator.cpp",
+    "line": 617,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/Enumerator.cpp",
+    "line": 1147,
+    "message": "Implicit boolean conversion in '(is_mailbox)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/Enumerator.cpp",
+    "line": 1148,
+    "message": "Implicit boolean conversion in '(is_write)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/Enumerator.cpp",
+    "line": 1161,
+    "message": "Implicit boolean conversion in '(is_write)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/CoEHandler.cpp",
+    "line": 139,
+    "message": "Implicit boolean conversion in '(last_seg)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/CoEHandler.cpp",
+    "line": 268,
+    "message": "Implicit boolean conversion in '(last_seg)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/CoEHandler.cpp",
+    "line": 278,
+    "message": "Implicit boolean conversion in '(last_seg)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/CoEHandler.cpp",
+    "line": 308,
+    "message": "Implicit boolean conversion in '(more)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EoEHandler.cpp",
+    "line": 79,
+    "message": "Implicit boolean conversion in '(last)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/RawSocket.cpp",
+    "line": 155,
+    "message": "Implicit boolean conversion in '(out_port_index)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/RawSocket.cpp",
+    "line": 164,
+    "message": "Implicit boolean conversion in '(out_port_index)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/RawSocket.cpp",
+    "line": 186,
+    "message": "Implicit boolean conversion in '(out_port_index)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EthercatMasterService.cpp",
+    "line": 181,
+    "message": "Implicit boolean conversion in '(slaveNode)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EthercatMasterService.cpp",
+    "line": 245,
+    "message": "Implicit boolean conversion in '(args)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EthercatMasterService.cpp",
+    "line": 325,
+    "message": "Implicit boolean conversion in '(m_slavesRoot)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EthercatMasterService.cpp",
+    "line": 357,
+    "message": "Implicit boolean conversion in '(m_enumerator)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/src/EthercatSlave.cpp",
+    "line": 13,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/src/EthercatSlave.cpp",
+    "line": 15,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/test/test_coe_upload.cpp",
+    "line": 59,
+    "message": "Implicit boolean conversion in '(err)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_diag.cpp",
+    "line": 48,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_diag.cpp",
+    "line": 58,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_ls.cpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_ls.cpp",
+    "line": 50,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_ls.cpp",
+    "line": 68,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_ls.cpp",
+    "line": 28,
+    "message": "Implicit boolean conversion in '(verbose)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 19,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 20,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 24,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 35,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 37,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 38,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 47,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 49,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 54,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 56,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 58,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 60,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 62,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 63,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 64,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 86,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 87,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 36,
+    "message": "Implicit boolean conversion in '(slavesNode)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 55,
+    "message": "Implicit boolean conversion in '(slavesNode)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_top.cpp",
+    "line": 98,
+    "message": "Implicit boolean conversion in '(refresh_active)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 28,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 36,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 47,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 65,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 71,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 75,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 48,
+    "message": "Implicit boolean conversion in '(res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 66,
+    "message": "Implicit boolean conversion in '(res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 72,
+    "message": "Implicit boolean conversion in '(list_res)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/resoem/tools/src/ecat_sdo.cpp",
+    "line": 76,
+    "message": "Implicit boolean conversion in '(desc)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 22,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 47,
+    "message": "Implicit boolean conversion in '(m_onEntry)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 51,
+    "message": "Implicit boolean conversion in '(m_onExit)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 60,
+    "message": "Implicit boolean conversion in '(transition)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 67,
+    "message": "Implicit boolean conversion in '(p)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 85,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 109,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 159,
+    "message": "Implicit boolean conversion in '(target)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 165,
+    "message": "Implicit boolean conversion in '(m_currentState)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 171,
+    "message": "Implicit boolean conversion in '(m_currentState)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/StateMachine.cpp",
+    "line": 173,
+    "message": "Implicit boolean conversion in '(m_currentState)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/CauseEffectMatrix.cpp",
+    "line": 23,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/CauseEffectMatrix.cpp",
+    "line": 56,
+    "message": "Implicit boolean conversion in '(m_paused)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/BitVector.cpp",
+    "line": 35,
+    "message": "Implicit boolean conversion in '(value)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/LogicEngine.cpp",
+    "line": 27,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/SFC.cpp",
+    "line": 19,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/SFC.cpp",
+    "line": 82,
+    "message": "Implicit boolean conversion in '(target)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/EvaluationPool.cpp",
+    "line": 125,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/logicengine/src/EvaluationPool.cpp",
+    "line": 181,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sample-models/include/common/SimpleCollection.hpp",
+    "line": 32,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/include/common/SimpleCollection.hpp",
+    "line": 80,
+    "message": "Implicit boolean conversion in '(element)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/InverterLib.cpp",
+    "line": 17,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/InverterLib.cpp",
+    "line": 19,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/InverterLib.cpp",
+    "line": 19,
+    "message": "Implicit boolean conversion in '(instance)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/InverterLib.cpp",
+    "line": 28,
+    "message": "Implicit boolean conversion in '(simulator)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/DelayedSimpleLib.cpp",
+    "line": 16,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/DelayedSimpleLib.cpp",
+    "line": 18,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/DelayedSimpleLib.cpp",
+    "line": 18,
+    "message": "Implicit boolean conversion in '(instance)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/DelayedSimpleLib.cpp",
+    "line": 27,
+    "message": "Implicit boolean conversion in '(simulator)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/DelayedArrayLib.cpp",
+    "line": 16,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sample-models/src/DelayedArrayLib.cpp",
+    "line": 18,
+    "message": "Use of \"delete\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/DelayedArrayLib.cpp",
+    "line": 18,
+    "message": "Implicit boolean conversion in '(instance)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/DelayedArrayLib.cpp",
+    "line": 27,
+    "message": "Implicit boolean conversion in '(simulator)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sample-models/src/InverterModel.cpp",
+    "line": 19,
+    "message": "Implicit boolean conversion in '(receiver)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sample-models/src/common/SmpModel.cpp",
+    "line": 19,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/sample-models/src/common/SmpModel.cpp",
+    "line": 20,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/ConditionalCalibration.hpp",
+    "line": 65,
+    "message": "Implicit boolean conversion in '(m_defaultCase)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/ConditionalCalibration.hpp",
+    "line": 71,
+    "message": "Implicit boolean conversion in '(m_defaultCase)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/ConditionalCalibration.hpp",
+    "line": 77,
+    "message": "Implicit boolean conversion in '(m_defaultCase)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/ConditionalCalibration.hpp",
+    "line": 83,
+    "message": "Implicit boolean conversion in '(m_defaultCase)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/Calibrations.hpp",
+    "line": 146,
+    "message": "Implicit boolean conversion in '(isRawToEng)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/calibration/include/quasar/calibration/Calibrations.hpp",
+    "line": 167,
+    "message": "Implicit boolean conversion in '(isRawToEng)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.10",
+    "file": "cmake-projects/sim-test/src/main.cpp",
+    "line": 27,
+    "message": "Use of \"new\" is forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/sim-test/src/dynamic_main.cpp",
+    "line": 59,
+    "message": "Implicit boolean conversion in '(model)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/include/quasar/datalogger/Log.hpp",
+    "line": 24,
+    "message": "Implicit boolean conversion in '(logger_inst)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0010.34",
+    "file": "cmake-projects/datalogger/include/quasar/datalogger/CsvFileWriter.hpp",
+    "line": 31,
+    "message": "Use of \"auto\" is strictly forbidden.",
+    "severity": "error"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/CsvFileWriter.cpp",
+    "line": 60,
+    "message": "Implicit boolean conversion in '(m_running)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/CsvFileWriter.cpp",
+    "line": 64,
+    "message": "Implicit boolean conversion in '(m_swapReady)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/ValueThresholdTrigger.cpp",
+    "line": 24,
+    "message": "Implicit boolean conversion in '(isNumeric)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/ValueThresholdTrigger.cpp",
+    "line": 25,
+    "message": "Implicit boolean conversion in '(m_triggerAbove)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/ValueThresholdTrigger.cpp",
+    "line": 34,
+    "message": "Implicit boolean conversion in '(m_isTriggered)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/DataLoggerService.cpp",
+    "line": 66,
+    "message": "Implicit boolean conversion in '(g_instance)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/src/DataLoggerService.cpp",
+    "line": 78,
+    "message": "Implicit boolean conversion in '(parent)'.",
+    "severity": "warning"
+  },
+  {
+    "rule_id": "CS-0050.2",
+    "file": "cmake-projects/datalogger/test/TestLogMacros.cpp",
+    "line": 45,
+    "message": "Implicit boolean conversion in '(inst)'.",
+    "severity": "warning"
+  }
+]

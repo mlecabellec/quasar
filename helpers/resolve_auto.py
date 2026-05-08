@@ -1,8 +1,14 @@
 import os
 import re
 import argparse
+import sys
+
+# [DISABLED] This script is forbidden from modifying source code per engineering directive.
+# Use skilled AI agents for type resolution instead of automated regex-based scripts.
 
 def resolve_auto_in_file(file_path):
+    print("ERROR: resolve_auto.py is DISABLED and shall never modify source code.")
+    sys.exit(1)
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     

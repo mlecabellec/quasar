@@ -14,26 +14,27 @@ LuaObserver::~LuaObserver() {
 }
 
 void LuaObserver::notify(std::shared_ptr<quasar::named::NamedObject> eventData) {
-    auto notifyInternal = [this, eventData]() {
-        if (!m_valid || !m_engine) return;
+    std::function<void()> notifyInternal = [this, eventData]() {
+        if (m_valid == false || m_engine == nullptr) return;
 
         // [CS-0010.46] Always acquire engine lock.
         std::unique_lock<std::recursive_mutex> lock = m_engine->acquireLock();
 
         std::unique_lock<std::recursive_mutex> implLock(m_mutex);
-        if (!m_func.valid() || !m_valid) {
+        if (m_func.valid() == false || m_valid == false) {
             return;
         }
 
         sol::protected_function_result result = m_func(LuaProxy<quasar::named::NamedObject>(eventData));
-        if (!result.valid()) {
+        if (result.valid() == false) {
             sol::error err = result;
             std::cerr << "LuaObserver notification error: " << err.what() << std::endl;
         }
     };
 
-    if (auto svc = m_service.lock()) {
-        if (svc->isRunning()) {
+    std::shared_ptr<LuaService> svc = m_service.lock();
+    if (svc != nullptr) {
+        if (svc->isRunning() == true) {
             svc->postTask(notifyInternal);
             return;
         }

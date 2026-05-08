@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <functional>
 
 using namespace resoem;
 
@@ -29,12 +30,12 @@ int main(int argc, char* argv[]) {
             enumerator.set_verbose(1);
         }
 
-        auto result = enumerator.enumerate();
+        Result<size_t> result = enumerator.enumerate();
         if (!result) {
             std::cerr << "Enumeration failed." << std::endl;
             return 1;
         }
-        int count = result.value();
+        int count = static_cast<int>(result.value());
         std::cout << "Found " << count << " slaves.\n" << std::endl;
 
         std::cout << std::left << std::setfill(' ')
@@ -47,7 +48,9 @@ int main(int argc, char* argv[]) {
         std::cout << std::string(85, '-') << std::endl;
 
         int i = 0;
-        for (const auto& slave : enumerator.slaves()) {
+        const std::vector<SlaveInfo>& slaves = enumerator.slaves();
+        for (std::vector<SlaveInfo>::const_iterator it = slaves.begin(); it != slaves.end(); ++it) {
+            const SlaveInfo& slave = *it;
             int wkc = 0;
             uint16_t al_status = enumerator.read_register_fprd<uint16_t>(slave.configured_address, regs::AL_STATUS, wkc);
             std::string state_str = "UNKNOWN";
@@ -65,9 +68,9 @@ int main(int argc, char* argv[]) {
 
             // Port status logic
             uint16_t dl_status = enumerator.read_register_fprd<uint16_t>(slave.configured_address, regs::DL_STATUS, wkc);
-            auto get_port_link = [&](int bit) {
+            std::function<std::string(int)> get_port_link = [&](int bit) -> std::string {
                 if (wkc == 0) return "?";
-                return (dl_status & (1 << bit)) ? "L" : ".";
+                return ((dl_status & (1 << bit)) != 0) ? "L" : ".";
             };
 
             std::cout << std::left
