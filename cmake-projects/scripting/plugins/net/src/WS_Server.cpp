@@ -44,11 +44,11 @@ struct LuaWSServer::Impl {
 
         void onWSConnected(const ::CppServer::HTTP::HTTPRequest& request) override {
             (void)request;
-            std::cout << "[CPP Debug] LuaWSSession::onWSConnected triggered for " << (void*)this << std::endl;
-            if (m_owner) {
+            std::cout << "[CPP Debug] LuaWSSession::onWSConnected triggered for " << static_cast<void*>(this) << std::endl;
+            if (m_owner != nullptr) {
                 m_owner->m_impl->registerSession(id().string(), std::static_pointer_cast<LuaWSSession>(shared_from_this()));
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onWSConnected) {
+                if (m_owner->onWSConnected.valid() == true) {
                     std::string sid = id().string();
                     EventTrampoline::getInstance().defer([cb = m_owner->onWSConnected, sid]() { cb(sid); });
                 }
@@ -56,10 +56,10 @@ struct LuaWSServer::Impl {
         }
 
         void onWSDisconnected() override {
-            std::cout << "[CPP Debug] LuaWSSession::onWSDisconnected triggered for " << (void*)this << std::endl;
-            if (m_owner) {
+            std::cout << "[CPP Debug] LuaWSSession::onWSDisconnected triggered for " << static_cast<void*>(this) << std::endl;
+            if (m_owner != nullptr) {
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onDisconnected) {
+                if (m_owner->onDisconnected.valid() == true) {
                     std::string sid = id().string();
                     EventTrampoline::getInstance().defer([cb = m_owner->onDisconnected, sid]() { cb(sid); });
                 }
@@ -69,11 +69,11 @@ struct LuaWSServer::Impl {
 
         void onWSReceived(const void* buffer, size_t size) override {
             std::cout << "[CPP Debug] LuaWSSession::onWSReceived triggered, size: " << size << std::endl;
-            if (m_owner) {
+            if (m_owner != nullptr) {
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onWSReceived) {
+                if (m_owner->onWSReceived.valid() == true) {
                     std::string sid = id().string();
-                    std::string data((const char*)buffer, size);
+                    std::string data(static_cast<const char*>(buffer), size);
                     EventTrampoline::getInstance().defer([cb = m_owner->onWSReceived, sid, data]() { cb(sid, data); });
                 }
             }

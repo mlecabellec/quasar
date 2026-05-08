@@ -174,9 +174,9 @@ void LuaSecureWSClient::setReconnectionPolicy(const ReconnectionPolicy& policy) 
 void LuaSecureWSClient::InternalClient::onConnected() {
     CppServer::WS::WSSClient::onConnected();
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onConnected) {
+        if (o->onConnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
         }
     }
@@ -185,13 +185,13 @@ void LuaSecureWSClient::InternalClient::onConnected() {
 void LuaSecureWSClient::InternalClient::onDisconnected() {
     CppServer::WS::WSSClient::onDisconnected();
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onDisconnected) {
+        if (o->onDisconnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
         }
 
-        if (o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
+        if (o->m_policy.enabled == true && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
             std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
             std::thread([o, delay]() {
                 std::this_thread::sleep_for(delay);
@@ -200,7 +200,6 @@ void LuaSecureWSClient::InternalClient::onDisconnected() {
         }
     }
 }
-
 void LuaSecureWSClient::InternalClient::onWSConnecting(CppServer::HTTP::HTTPRequest& request) {
     std::cout << "[CPP Debug] Secure InternalClient::onWSConnecting triggered" << std::endl;
     request.SetBegin("GET", "/");
@@ -214,9 +213,9 @@ void LuaSecureWSClient::InternalClient::onWSConnecting(CppServer::HTTP::HTTPRequ
 
 void LuaSecureWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSConnected) {
+        if (o->onWSConnected.valid() == true) {
             std::string status = std::to_string(response.status());
             EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
         }
@@ -225,9 +224,9 @@ void LuaSecureWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTT
 
 void LuaSecureWSClient::InternalClient::onWSDisconnected() {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSDisconnected) {
+        if (o->onWSDisconnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onWSDisconnected]() { cb(); });
         }
     }
@@ -235,9 +234,9 @@ void LuaSecureWSClient::InternalClient::onWSDisconnected() {
 
 void LuaSecureWSClient::InternalClient::onWSReceived(const void* buffer, size_t size) {
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSReceived) {
+        if (o->onWSReceived.valid() == true) {
             std::string data(static_cast<const char*>(buffer), size);
             EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
         }
@@ -251,9 +250,9 @@ void LuaSecureWSClient::InternalClient::onReceived(const void* buffer, size_t si
 void LuaSecureWSClient::InternalClient::onError(int error, const std::string& category, const std::string& message) {
     (void)category;
     std::shared_ptr<LuaSecureWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onError) {
+        if (o->onError.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
         }
     }

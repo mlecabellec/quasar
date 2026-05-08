@@ -62,7 +62,7 @@ void bindClientMethods(sol::usertype<LuaProxy<ClientType>>& ut) {
 }
 
 void bindHTTPClient(sol::state_view& lua) {
-    auto clientTable = lua["quasar"]["net"]["client"].get_or_create<sol::table>();
+    sol::table clientTable = lua["quasar"]["net"]["client"].get_or_create<sol::table>();
 
     sol::usertype<LuaProxy<LuaHTTPClient>> ut = lua.new_usertype<LuaProxy<LuaHTTPClient>>("HTTPClient",
         sol::no_constructor,
@@ -72,7 +72,7 @@ void bindHTTPClient(sol::state_view& lua) {
 
     clientTable["HTTPClient"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::string& address, int port, sol::this_state L) {
-            auto ptr = std::make_shared<LuaHTTPClient>(service, address, port);
+            std::shared_ptr<LuaHTTPClient> ptr = std::make_shared<LuaHTTPClient>(service, address, port);
             ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaHTTPClient>(ptr);
         }
@@ -86,7 +86,7 @@ void bindHTTPClient(sol::state_view& lua) {
 
     clientTable["SecureHTTPClient"] = lua.create_table_with(
         "new", [](const std::shared_ptr<CppServer::Asio::Service>& service, const std::shared_ptr<CppServer::Asio::SSLContext>& context, const std::string& address, int port, sol::this_state L) {
-            auto ptr = std::make_shared<LuaSecureHTTPClient>(service, context, address, port);
+            std::shared_ptr<LuaSecureHTTPClient> ptr = std::make_shared<LuaSecureHTTPClient>(service, context, address, port);
             ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);
             return LuaProxy<LuaSecureHTTPClient>(ptr);
         }

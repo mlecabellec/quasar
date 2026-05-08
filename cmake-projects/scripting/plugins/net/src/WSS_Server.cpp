@@ -26,10 +26,10 @@ struct LuaSecureWSServer::Impl {
 
         void onWSConnected(const ::CppServer::HTTP::HTTPRequest& request) override {
             (void)request;
-            if (m_owner) {
+            if (m_owner != nullptr) {
                 m_owner->m_impl->registerSession(id().string(), std::static_pointer_cast<LuaSecureWSSession>(shared_from_this()));
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onWSConnected) {
+                if (m_owner->onWSConnected.valid() == true) {
                     std::string sid = id().string();
                     EventTrampoline::getInstance().defer([cb = m_owner->onWSConnected, sid]() { cb(sid); });
                 }
@@ -37,9 +37,9 @@ struct LuaSecureWSServer::Impl {
         }
 
         void onWSDisconnected() override {
-            if (m_owner) {
+            if (m_owner != nullptr) {
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onDisconnected) {
+                if (m_owner->onDisconnected.valid() == true) {
                     std::string sid = id().string();
                     EventTrampoline::getInstance().defer([cb = m_owner->onDisconnected, sid]() { cb(sid); });
                 }
@@ -48,11 +48,11 @@ struct LuaSecureWSServer::Impl {
         }
 
         void onWSReceived(const void* buffer, size_t size) override {
-            if (m_owner) {
+            if (m_owner != nullptr) {
                 std::lock_guard<std::recursive_mutex> lock(m_owner->m_callbackMutex);
-                if (m_owner->onWSReceived) {
+                if (m_owner->onWSReceived.valid() == true) {
                     std::string sid = id().string();
-                    std::string data((const char*)buffer, size);
+                    std::string data(static_cast<const char*>(buffer), size);
                     EventTrampoline::getInstance().defer([cb = m_owner->onWSReceived, sid, data]() { cb(sid, data); });
                 }
             }
@@ -119,7 +119,7 @@ bool LuaSecureWSServer::broadcastText(const std::string& text) {
 
 bool LuaSecureWSServer::sendText(const std::string& id, const std::string& text) {
     std::lock_guard<std::mutex> lock(m_impl->sessionMutex);
-    auto it = m_impl->sessions.find(id);
+    std::map<std::string, std::shared_ptr<Impl::LuaSecureWSSession>>::iterator it = m_impl->sessions.find(id);
     if (it != m_impl->sessions.end()) {
         return it->second->SendTextAsync(text);
     }
@@ -135,13 +135,13 @@ void bindWebServer(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     utWs["start"] = [](LuaProxy<LuaWSServer> self, sol::this_state L) { 
-        auto res = self.lock()->startAsync();
-        if (res) return sol::make_object(L, true);
+        std::expected<void, std::string> res = self.lock()->startAsync();
+        if (res.has_value() == true) return sol::make_object(L, true);
         return sol::make_object(L, res.error());
     };
     utWs["stop"] = [](LuaProxy<LuaWSServer> self, sol::this_state L) { 
-        auto res = self.lock()->stopAsync();
-        if (res) return sol::make_object(L, true);
+        std::expected<void, std::string> res = self.lock()->stopAsync();
+        if (res.has_value() == true) return sol::make_object(L, true);
         return sol::make_object(L, res.error());
     };
     utWs["broadcastText"] = [](LuaProxy<LuaWSServer> self, const std::string& text) { return self.lock()->broadcastText(text); };
@@ -176,13 +176,13 @@ void bindWebServer(sol::state_view& lua) {
         sol::base_classes, sol::bases<ILuaProxy>());
 
     utSw["start"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
-        auto res = self.lock()->startAsync();
-        if (res) return sol::make_object(L, true);
+        std::expected<void, std::string> res = self.lock()->startAsync();
+        if (res.has_value() == true) return sol::make_object(L, true);
         return sol::make_object(L, res.error());
     };
     utSw["stop"] = [](LuaProxy<LuaSecureWSServer> self, sol::this_state L) { 
-        auto res = self.lock()->stopAsync();
-        if (res) return sol::make_object(L, true);
+        std::expected<void, std::string> res = self.lock()->stopAsync();
+        if (res.has_value() == true) return sol::make_object(L, true);
         return sol::make_object(L, res.error());
     };
     utSw["broadcastText"] = [](LuaProxy<LuaSecureWSServer> self, const std::string& text) { return self.lock()->broadcastText(text); };

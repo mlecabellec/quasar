@@ -26,6 +26,8 @@ set(SOURCE_FILES
 # Library target
 add_library(quasar_logicengine STATIC ${SOURCE_FILES})
 
+quasar_apply_standards(quasar_logicengine)
+
 # Link dependencies
 target_link_libraries(quasar_logicengine quasar_coretypes quasar_named quasar_scripting pthread)
 

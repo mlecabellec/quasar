@@ -21,19 +21,19 @@ public:
 
 protected:
     void onStarted() override {
-        if (onStartedCb) {
+        if (onStartedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onStartedCb]() { cb(); });
         }
     }
 
     void onStopped() override {
-        if (onStoppedCb) {
+        if (onStoppedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onStoppedCb]() { cb(); });
         }
     }
 
     void onReceived(const asio::ip::udp::endpoint& endpoint, const void* buffer, size_t size) override {
-        if (onReceivedCb) {
+        if (onReceivedCb.valid() == true) {
             std::string data(static_cast<const char*>(buffer), size);
             std::string addr = endpoint.address().to_string();
             int port = endpoint.port();
@@ -44,7 +44,7 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
+        if (onErrorCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onErrorCb, error, message]() {
                 cb("udpserver", error, message);
             });

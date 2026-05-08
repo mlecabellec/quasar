@@ -100,8 +100,6 @@ file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h")
 
 add_library(quasar_named SHARED ${SOURCES} ${HEADERS})
 
-quasar_apply_standards(quasar_named)
-
 target_include_directories(quasar_named PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -131,6 +129,8 @@ target_link_libraries(quasar_named PUBLIC
     ${TINYXML2_LIBRARIES}
     ${JSONCONS_LIBRARIES}
 )
+
+quasar_apply_standards(quasar_named)
 
 # Testing
 enable_testing()

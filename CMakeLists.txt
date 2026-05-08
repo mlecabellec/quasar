@@ -14,6 +14,9 @@ find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 
 include(cmake-projects/QuasarStandards.cmake)
 
+# Treat all third-party includes as SYSTEM globally
+include_directories(SYSTEM cmake-projects/third-party)
+
 # Options
 option(QUASAR_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(QUASAR_ENABLE_TSAN "Enable ThreadSanitizer" OFF)

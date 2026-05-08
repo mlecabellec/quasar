@@ -27,20 +27,20 @@ public:
 
 protected:
     void onConnected() override {
-        if (onConnectedCb) {
+        if (onConnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onConnectedCb]() { cb(); });
         }
         ReceiveAsync();
     }
 
     void onDisconnected() override {
-        if (onDisconnectedCb) {
+        if (onDisconnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onDisconnectedCb]() { cb(); });
         }
     }
 
     void onReceived(const asio::ip::udp::endpoint& endpoint, const void* buffer, size_t size) override {
-        if (onReceivedCb) {
+        if (onReceivedCb.valid() == true) {
             std::string data(static_cast<const char*>(buffer), size);
             std::string ep_addr = endpoint.address().to_string();
             int ep_port = endpoint.port();
@@ -52,19 +52,19 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
+        if (onErrorCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onErrorCb, error, msg = message]() { cb(error, msg); });
         }
     }
 
     void onJoinedMulticastGroup(const std::string& address) override {
-        if (onJoinedMulticastGroupCb) {
+        if (onJoinedMulticastGroupCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onJoinedMulticastGroupCb, addr = address]() { cb(addr); });
         }
     }
 
     void onLeftMulticastGroup(const std::string& address) override {
-        if (onLeftMulticastGroupCb) {
+        if (onLeftMulticastGroupCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onLeftMulticastGroupCb, addr = address]() { cb(addr); });
         }
     }

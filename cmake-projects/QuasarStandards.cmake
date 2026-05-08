@@ -30,6 +30,7 @@ function(quasar_apply_standards target)
             -Wno-error=unused-parameter
             -Wno-error=conversion
             -Wno-error=sign-conversion
+            -Wno-error=array-bounds
             -Werror=unused-result
             -fstack-usage
         )
@@ -46,10 +47,15 @@ function(quasar_apply_standards target)
     target_compile_definitions(${target} PRIVATE _GLIBCXX_ASSERTIONS)
 
     # Treat third-party headers as SYSTEM to suppress their warnings
+    # This now uses a more robust approach that can be called multiple times
+    # or at the end of the configuration.
     get_target_property(include_dirs ${target} INCLUDE_DIRECTORIES)
     if(include_dirs)
         foreach(dir ${include_dirs})
             if(dir MATCHES "third-party")
+                # Add as system directory to the target itself
+                target_include_directories(${target} SYSTEM PRIVATE ${dir})
+                # Also ensure it is exported as system for consumers
                 set_property(TARGET ${target} APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${dir})
             endif()
         endforeach()

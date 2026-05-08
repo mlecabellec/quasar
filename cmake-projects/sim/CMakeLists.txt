@@ -20,14 +20,14 @@ add_library(sim
     src/smp_impl/TimeKind.cpp
 )
 
-quasar_apply_standards(sim)
-
 target_include_directories(sim PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(sim PUBLIC ECSS_SMP core utils sched ${CMAKE_DL_LIBS})
+
+quasar_apply_standards(sim)
 
 # Test executable
 add_executable(test_basic_simulation test/test_basic_simulation.cpp)

@@ -52,6 +52,8 @@ target_link_libraries(datacodec PUBLIC
     ${JSONCONS_LIBRARIES}
 )
 
+quasar_apply_standards(datacodec)
+
 # Testing
 enable_testing()
 add_subdirectory(test)
