@@ -27,12 +27,12 @@ protected:
     }
 
     void onConnected() override {
-        if (onConnectedCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+        if (onConnectedCb.valid() == true) {
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str)]() {
                 try {
-                    if (self && self->onConnectedCb) self->onConnectedCb(id);
+                    if (self != nullptr && self->onConnectedCb.valid() == true) self->onConnectedCb(id);
                 } catch (const std::exception& e) {
                     fprintf(stderr, "TCPSession onConnected C++ EXCEPTION: %s\n", e.what());
                 }
@@ -41,29 +41,29 @@ protected:
     }
 
     void onDisconnected() override {
-        if (onDisconnectedCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+        if (onDisconnectedCb.valid() == true) {
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str)]() {
-                if (self && self->onDisconnectedCb) self->onDisconnectedCb(id);
-                if (self) self->clearCallbacks();
+                if (self != nullptr && self->onDisconnectedCb.valid() == true) self->onDisconnectedCb(id);
+                if (self != nullptr) self->clearCallbacks();
             });
         } else {
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self]() {
-                if (self) self->clearCallbacks();
+                if (self != nullptr) self->clearCallbacks();
             });
         }
     }
 
     void onReceived(const void* buffer, size_t size) override {
-        if (onReceivedCb) {
-            auto id_str = this->id().string();
+        if (onReceivedCb.valid() == true) {
+            std::string id_str = this->id().string();
             std::string data(static_cast<const char*>(buffer), size);
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str), data = std::move(data)]() {
                 try {
-                    if (self && self->onReceivedCb) self->onReceivedCb(id, data);
+                    if (self != nullptr && self->onReceivedCb.valid() == true) self->onReceivedCb(id, data);
                 } catch (const std::exception& e) {
                     fprintf(stderr, "TCPSession onReceived C++ EXCEPTION: %s\n", e.what());
                 }
@@ -72,12 +72,12 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
-            auto id_str = this->id().string();
-            auto self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
+        if (onErrorCb.valid() == true) {
+            std::string id_str = this->id().string();
+            std::shared_ptr<LuaTCPSession> self = std::dynamic_pointer_cast<LuaTCPSession>(shared_from_this());
             EventTrampoline::getInstance().defer([self, id = std::move(id_str), error, message]() {
                 try {
-                    if (self && self->onErrorCb) self->onErrorCb(id, error, message);
+                    if (self != nullptr && self->onErrorCb.valid() == true) self->onErrorCb(id, error, message);
                 } catch (const std::exception& e) {
                     fprintf(stderr, "TCPSession onError C++ EXCEPTION: %s\n", e.what());
                 }
@@ -98,7 +98,7 @@ public:
 
 protected:
     std::shared_ptr<CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<CppServer::Asio::TCPServer>& server) override {
-        auto session = std::make_shared<LuaTCPSession>(server);
+        std::shared_ptr<LuaTCPSession> session = std::make_shared<LuaTCPSession>(server);
         session->onConnectedCb = onConnectedCb;
         session->onDisconnectedCb = onDisconnectedCb;
         session->onReceivedCb = onReceivedCb;
@@ -107,10 +107,10 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
-            auto self = std::dynamic_pointer_cast<LuaTCPServer>(shared_from_this());
+        if (onErrorCb.valid() == true) {
+            std::shared_ptr<LuaTCPServer> self = std::dynamic_pointer_cast<LuaTCPServer>(shared_from_this());
             EventTrampoline::getInstance().defer([self, error, message]() {
-                if (self && self->onErrorCb) self->onErrorCb("server", error, message);
+                if (self != nullptr && self->onErrorCb.valid() == true) self->onErrorCb("server", error, message);
             });
         }
     }

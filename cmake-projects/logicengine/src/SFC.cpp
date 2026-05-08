@@ -16,7 +16,7 @@ std::shared_ptr<SFC> SFC::create(const std::string& name, std::shared_ptr<quasar
     };
     std::shared_ptr<Helper> sfc = std::make_shared<Helper>(name);
     sfc->setSelf(sfc);
-    if (parent) {
+    if (parent != nullptr) {
         sfc->setParent(parent);
     }
     return sfc;
@@ -36,7 +36,7 @@ void SFC::setContextRoot(std::shared_ptr<quasar::named::NamedObject> root) { m_c
 void SFC::addInitialStep(const std::shared_ptr<State>& step) { m_activeStates.insert(step); }
 
 void SFC::step(duration dt) {
-    if (m_paused || getState() != quasar::named::EntityState::Running) return;
+    if (m_paused == true || getState() != quasar::named::EntityState::Running) return;
     processCycle(dt);
 }
 
@@ -56,9 +56,9 @@ void SFC::processCycle(duration /*dt*/) {
         std::shared_ptr<State> currentState = *it;
 
         // 1. Invariant Verification
-        if (!currentState->getInvariant().evaluate(m_contextRoot)) {
+        if (currentState->getInvariant().evaluate(m_contextRoot) == false) {
             std::shared_ptr<State> failState = currentState->getFailureState();
-            nextActiveStates.insert(failState ? failState : m_groundState);
+            nextActiveStates.insert((failState != nullptr) ? failState : m_groundState);
             continue; 
         }
 
@@ -71,23 +71,23 @@ void SFC::processCycle(duration /*dt*/) {
         for (std::vector<std::shared_ptr<Transition>>::const_iterator tIt = transitions.begin(); tIt != transitions.end(); ++tIt) {
             const std::shared_ptr<Transition>& transition = *tIt;
 
-            if (transition->getPreCondition().evaluate(m_contextRoot)) {
+            if (transition->getPreCondition().evaluate(m_contextRoot) == true) {
                 // 3. Action
-                if (transition->getAction()) {
+                if (transition->getAction() != nullptr) {
                     transition->getAction()->execute(m_contextRoot);
                 }
 
                 // 4. Commitment
                 std::shared_ptr<State> target = transition->getTarget();
-                if (target) {
+                if (target != nullptr) {
                     bool postOk = transition->getPostCondition().evaluate(m_contextRoot);
                     bool targetInvOk = target->getInvariant().evaluate(m_contextRoot);
 
-                    if (postOk && targetInvOk) {
+                    if (postOk == true && targetInvOk == true) {
                         nextActiveStates.insert(target);
                     } else {
                         std::shared_ptr<State> failState = target->getFailureState();
-                        nextActiveStates.insert(failState ? failState : m_groundState);
+                        nextActiveStates.insert((failState != nullptr) ? failState : m_groundState);
                     }
                     transitioned = true;
                 }
@@ -95,7 +95,7 @@ void SFC::processCycle(duration /*dt*/) {
         }
 
         // If no transition fired, stay in current state
-        if (!transitioned) {
+        if (transitioned == false) {
             nextActiveStates.insert(currentState);
         }
     }

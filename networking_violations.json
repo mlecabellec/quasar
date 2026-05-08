@@ -1,0 +1,572 @@
+[
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 55,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 56,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Context.hpp",
+    "line": 20,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(context)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 221,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 222,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/include/quasar/zmq/Socket.hpp",
+    "line": 27,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(socket)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/src/ZmqBindings.cpp",
+    "line": 67,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(root)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/zmq/test/TestZmqPlugin.cpp",
+    "line": 63,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 31,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 32,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 45,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 46,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 52,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 61,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 63,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 76,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 77,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 101,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 111,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 30,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onConnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 44,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onDisconnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 49,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(self)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 54,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(self)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 60,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onReceivedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 75,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/TCPServerWrapper.hpp",
+    "line": 110,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 24,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onStartedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 30,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onStoppedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 36,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onReceivedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPServerWrapper.hpp",
+    "line": 47,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 30,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 41,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/EventTrampoline.hpp",
+    "line": 42,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 25,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onConnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 31,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onDisconnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 37,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onReceivedResponseCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 45,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 63,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onConnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 69,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onDisconnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 75,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onReceivedResponseCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/HTTPClientWrapper.hpp",
+    "line": 83,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 30,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onConnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 37,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onDisconnectedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 43,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onReceivedCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 55,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onErrorCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 61,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onJoinedMulticastGroupCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/include/quasar/net/UDPClientWrapper.hpp",
+    "line": 67,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(onLeftMulticastGroupCb)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPClientWrapper.cpp",
+    "line": 112,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 38,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"delete\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 65,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 74,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 75,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 88,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/HTTPClientWrapper.cpp",
+    "line": 89,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 11,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 26,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 27,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 40,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 50,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 41,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(session)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/TCPServerWrapper.cpp",
+    "line": 51,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(session)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/SSLContextWrapper.cpp",
+    "line": 19,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 304,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 350,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 58,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 70,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 100,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 112,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 123,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 139,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 177,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 188,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 217,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 228,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 238,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSClientWrapper.cpp",
+    "line": 254,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(o)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WebNamedMethodBindings.cpp",
+    "line": 44,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 122,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 138,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 143,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 166,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 179,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 184,
+    "rule": "CS-0010.34",
+    "msg": "Use of \"auto\" is strictly forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 207,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 29,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 40,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WSS_Server.cpp",
+    "line": 51,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 48,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 60,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/WS_Server.cpp",
+    "line": 72,
+    "rule": "CS-0050.2",
+    "msg": "Implicit boolean conversion in '(m_owner)'."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/UDPServerWrapper.cpp",
+    "line": 18,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/src/UDPClientWrapper.cpp",
+    "line": 18,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 18,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 22,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  },
+  {
+    "file": "cmake-projects/scripting/plugins/net/test/TestSandbox.cpp",
+    "line": 40,
+    "rule": "CS-0010.10",
+    "msg": "Use of \"new\" is forbidden."
+  }
+]

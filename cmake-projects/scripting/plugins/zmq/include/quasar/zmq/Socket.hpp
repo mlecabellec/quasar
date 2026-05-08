@@ -24,7 +24,7 @@ namespace quasar::zmq {
  */
 struct SocketDeleter {
     void operator()(void* socket) const {
-        if (socket) {
+        if (socket != nullptr) {
             zmq_close(socket);
         }
     }

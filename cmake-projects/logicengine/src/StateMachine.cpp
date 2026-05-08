@@ -44,11 +44,11 @@ void State::addTransition(const std::shared_ptr<Transition>& transition) {
 const std::vector<std::shared_ptr<Transition>>& State::getTransitions() const { return m_transitions; }
 
 void State::enter(std::shared_ptr<quasar::named::NamedObject> ctx) {
-    if (m_onEntry) m_onEntry->execute(ctx);
+    if (m_onEntry != nullptr) m_onEntry->execute(ctx);
 }
 
 void State::exit(std::shared_ptr<quasar::named::NamedObject> ctx) {
-    if (m_onExit) m_onExit->execute(ctx);
+    if (m_onExit != nullptr) m_onExit->execute(ctx);
 }
 
 void State::addChild(std::shared_ptr<quasar::named::NamedObject> child) {
@@ -57,14 +57,14 @@ void State::addChild(std::shared_ptr<quasar::named::NamedObject> child) {
 
     // [CS-0010.44] Auto-register if child is a transition.
     std::shared_ptr<Transition> transition = std::dynamic_pointer_cast<Transition>(child);
-    if (transition) {
+    if (transition != nullptr) {
         addTransition(transition);
     }
 }
 
 bool State::isChildOf(const std::shared_ptr<State>& other) const {
     std::shared_ptr<quasar::named::NamedObject> p = getParent();
-    while (p) {
+    while (p != nullptr) {
         if (p == other) return true;
         p = p->getParent();
     }
@@ -82,7 +82,7 @@ std::shared_ptr<Transition> Transition::create(const std::string& name, const st
     };
     std::shared_ptr<Helper> transition = std::make_shared<Helper>(name, target);
     transition->setSelf(transition);
-    if (parent) {
+    if (parent != nullptr) {
         transition->setParent(parent);
     }
     return transition;
@@ -106,7 +106,7 @@ std::shared_ptr<StateMachine> StateMachine::create(const std::string& name, std:
     };
     std::shared_ptr<Helper> sm = std::make_shared<Helper>(name);
     sm->setSelf(sm);
-    if (parent) {
+    if (parent != nullptr) {
         sm->setParent(parent);
     }
     return sm;
@@ -126,19 +126,19 @@ void StateMachine::setContextRoot(std::shared_ptr<quasar::named::NamedObject> ro
 void StateMachine::setInitialState(const std::shared_ptr<State>& state) { m_currentState = state; }
 
 void StateMachine::step(duration /*dt*/) {
-    if (m_paused || getState() != quasar::named::EntityState::Running) return;
+    if (m_paused == true || getState() != quasar::named::EntityState::Running) return;
     processCycle();
 }
 
 void StateMachine::processCycle() {
-    if (!m_currentState) {
+    if (m_currentState == nullptr) {
         m_currentState = m_groundState;
     }
 
     // 1. Invariant Verification
-    if (!m_currentState->getInvariant().evaluate(m_contextRoot)) {
+    if (m_currentState->getInvariant().evaluate(m_contextRoot) == false) {
         std::shared_ptr<State> failState = m_currentState->getFailureState();
-        m_currentState = failState ? failState : m_groundState;
+        m_currentState = (failState != nullptr) ? failState : m_groundState;
         return; // Forced transition, end cycle.
     }
 
@@ -148,29 +148,29 @@ void StateMachine::processCycle() {
         const std::shared_ptr<Transition>& transition = *it;
         
         // 3. Pre-condition
-        if (transition->getPreCondition().evaluate(m_contextRoot)) {
+        if (transition->getPreCondition().evaluate(m_contextRoot) == true) {
             // 4. Action Execution
-            if (transition->getAction()) {
+            if (transition->getAction() != nullptr) {
                 transition->getAction()->execute(m_contextRoot);
             }
 
             // 5. Commitment (Post-condition AND Destination Invariant)
             std::shared_ptr<State> target = transition->getTarget();
-            if (target) {
+            if (target != nullptr) {
                 bool postOk = transition->getPostCondition().evaluate(m_contextRoot);
                 bool targetInvOk = target->getInvariant().evaluate(m_contextRoot);
 
-                if (postOk && targetInvOk) {
+                if (postOk == true && targetInvOk == true) {
                     // Success
-                    if (m_currentState) m_currentState->exit(m_contextRoot);
+                    if (m_currentState != nullptr) m_currentState->exit(m_contextRoot);
                     m_currentState = target;
                     m_currentState->enter(m_contextRoot);
                 } else {
                     // Fail to commit, move to target's failure state or ground
                     std::shared_ptr<State> failState = target->getFailureState();
-                    if (m_currentState) m_currentState->exit(m_contextRoot);
-                    m_currentState = failState ? failState : m_groundState;
-                    if (m_currentState) m_currentState->enter(m_contextRoot);
+                    if (m_currentState != nullptr) m_currentState->exit(m_contextRoot);
+                    m_currentState = (failState != nullptr) ? failState : m_groundState;
+                    if (m_currentState != nullptr) m_currentState->enter(m_contextRoot);
                 }
                 return; // One transition per cycle for StateMachine
             }

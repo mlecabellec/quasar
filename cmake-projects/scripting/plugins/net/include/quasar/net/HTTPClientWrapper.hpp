@@ -22,19 +22,19 @@ public:
 
 protected:
     void onConnected() override {
-        if (onConnectedCb) {
+        if (onConnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onConnectedCb]() { cb(); });
         }
     }
 
     void onDisconnected() override {
-        if (onDisconnectedCb) {
+        if (onDisconnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onDisconnectedCb]() { cb(); });
         }
     }
 
     void onReceivedResponse(const CppServer::HTTP::HTTPResponse& response) override {
-        if (onReceivedResponseCb) {
+        if (onReceivedResponseCb.valid() == true) {
             int status = response.status();
             std::string body = std::string(response.body());
             EventTrampoline::getInstance().defer([cb = onReceivedResponseCb, status, body = std::move(body)]() { cb(status, body); });
@@ -42,7 +42,7 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
+        if (onErrorCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onErrorCb, error, message]() { cb(error, message); });
         }
     }
@@ -60,19 +60,19 @@ public:
 
 protected:
     void onConnected() override {
-        if (onConnectedCb) {
+        if (onConnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onConnectedCb]() { cb(); });
         }
     }
 
     void onDisconnected() override {
-        if (onDisconnectedCb) {
+        if (onDisconnectedCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onDisconnectedCb]() { cb(); });
         }
     }
 
     void onReceivedResponse(const CppServer::HTTP::HTTPResponse& response) override {
-        if (onReceivedResponseCb) {
+        if (onReceivedResponseCb.valid() == true) {
             int status = response.status();
             std::string body = std::string(response.body());
             EventTrampoline::getInstance().defer([cb = onReceivedResponseCb, status, body = std::move(body)]() { cb(status, body); });
@@ -80,7 +80,7 @@ protected:
     }
 
     void onError(int error, const std::string& category, const std::string& message) override {
-        if (onErrorCb) {
+        if (onErrorCb.valid() == true) {
             EventTrampoline::getInstance().defer([cb = onErrorCb, error, message]() { cb(error, message); });
         }
     }

@@ -122,12 +122,12 @@ EvaluationStatus EvaluationPool::evaluate(const std::vector<std::byte>& bytecode
 }
 
 void EvaluationPool::workerLoop(LogicWorker& worker) {
-    while (m_running) {
+    while (m_running == true) {
         std::shared_ptr<EvaluationTask> task;
         {
             std::unique_lock<std::mutex> lock(m_queueMutex);
-            m_cv.wait(lock, [this] { return !m_tasks.empty() || !m_running; });
-            if (!m_running && m_tasks.empty()) break;
+            m_cv.wait(lock, [this] { return m_tasks.empty() == false || m_running == false; });
+            if (m_running == false && m_tasks.empty() == true) break;
             task = m_tasks.front();
             m_tasks.pop();
         }

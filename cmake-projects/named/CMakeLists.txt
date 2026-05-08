@@ -100,7 +100,7 @@ file(GLOB_RECURSE HEADERS "include/*.hpp" "include/*.h")
 
 add_library(quasar_named SHARED ${SOURCES} ${HEADERS})
 
-target_compile_options(quasar_named PRIVATE -Wall -Wextra -Werror -pedantic)
+quasar_apply_standards(quasar_named)
 
 target_include_directories(quasar_named PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

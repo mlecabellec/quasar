@@ -55,9 +55,9 @@ void LuaWSClient::InternalClient::onConnected() {
     std::cout << "[CPP Debug] InternalClient::onConnected triggered" << std::endl;
     CppServer::WS::WSClient::onConnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onConnected) {
+        if (o->onConnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onConnected]() { cb(); });
         }
     }
@@ -67,13 +67,13 @@ void LuaWSClient::InternalClient::onDisconnected() {
     std::cout << "[CPP Debug] InternalClient::onDisconnected triggered" << std::endl;
     CppServer::WS::WSClient::onDisconnected();
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onDisconnected) {
+        if (o->onDisconnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onDisconnected]() { cb(); });
         }
         
-        if (o->m_policy.enabled && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
+        if (o->m_policy.enabled == true && (o->m_policy.maxAttempts == -1 || o->m_attempt < o->m_policy.maxAttempts)) {
             std::chrono::milliseconds delay = o->m_policy.calculateDelay(o->m_attempt++);
             std::thread([o, delay]() {
                 std::this_thread::sleep_for(delay);
@@ -97,9 +97,9 @@ void LuaWSClient::InternalClient::onWSConnecting(CppServer::HTTP::HTTPRequest& r
 void LuaWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPResponse& response) {
     std::cout << "[CPP Debug] InternalClient::onWSConnected triggered for session " << id().string() << ", status: " << response.status() << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSConnected) {
+        if (o->onWSConnected.valid() == true) {
             std::string status = std::to_string(response.status());
             EventTrampoline::getInstance().defer([cb = o->onWSConnected, s = std::move(status)]() { cb(s); });
         }
@@ -109,9 +109,9 @@ void LuaWSClient::InternalClient::onWSConnected(const CppServer::HTTP::HTTPRespo
 void LuaWSClient::InternalClient::onWSDisconnected() {
     std::cout << "[CPP Debug] InternalClient::onWSDisconnected triggered" << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSDisconnected) {
+        if (o->onWSDisconnected.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onWSDisconnected]() { cb(); });
         }
     }
@@ -120,9 +120,9 @@ void LuaWSClient::InternalClient::onWSDisconnected() {
 void LuaWSClient::InternalClient::onWSReceived(const void* buffer, size_t size) {
     std::cout << "[CPP Debug] InternalClient::onWSReceived triggered, size: " << size << std::endl;
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onWSReceived) {
+        if (o->onWSReceived.valid() == true) {
             std::string data(static_cast<const char*>(buffer), size);
             EventTrampoline::getInstance().defer([cb = o->onWSReceived, d = std::move(data)]() { cb(d); });
         }
@@ -136,9 +136,9 @@ void LuaWSClient::InternalClient::onReceived(const void* buffer, size_t size) {
 void LuaWSClient::InternalClient::onError(int error, const std::string& category, const std::string& message) {
     (void)category;
     std::shared_ptr<LuaWSClient> o = owner.lock();
-    if (o) {
+    if (o != nullptr) {
         std::lock_guard<std::recursive_mutex> lock(o->m_callbackMutex);
-        if (o->onError) {
+        if (o->onError.valid() == true) {
             EventTrampoline::getInstance().defer([cb = o->onError, error, msg = message]() { cb(error, msg); });
         }
     }

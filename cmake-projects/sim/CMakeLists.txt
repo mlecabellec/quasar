@@ -20,7 +20,7 @@ add_library(sim
     src/smp_impl/TimeKind.cpp
 )
 
-set_target_properties(sim PROPERTIES POSITION_INDEPENDENT_CODE ON)
+quasar_apply_standards(sim)
 
 target_include_directories(sim PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -24,7 +24,7 @@ std::shared_ptr<LogicEngine> LogicEngine::create(const std::string& name, std::s
     // Properly initialize self-reference
     engine->setSelf(engine);
     
-    if (parent) {
+    if (parent != nullptr) {
         engine->setParent(parent);
     }
     return engine;

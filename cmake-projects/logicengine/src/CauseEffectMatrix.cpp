@@ -20,7 +20,7 @@ std::shared_ptr<CauseEffectMatrix> CauseEffectMatrix::create(const std::string& 
     };
     std::shared_ptr<Helper> matrix = std::make_shared<Helper>(name, causeCount, effectCount);
     matrix->setSelf(matrix);
-    if (parent) {
+    if (parent != nullptr) {
         matrix->setParent(parent);
     }
     return matrix;
@@ -53,7 +53,7 @@ void CauseEffectMatrix::resume() {
 }
 
 void CauseEffectMatrix::step(duration /*dt*/) {
-    if (m_paused) return;
+    if (m_paused == true) return;
 
     // [TSK-20260311-009.4.2] Optimize AND/OR matrix evaluation.
     // Effect[i] = ((Inputs & AndMask[i]) == AndMask[i]) | ((Inputs & OrMask[i]) != 0)

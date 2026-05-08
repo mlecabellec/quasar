@@ -17,7 +17,7 @@ namespace quasar::zmq {
  */
 struct ContextDeleter {
     void operator()(void* context) const {
-        if (context) {
+        if (context != nullptr) {
             zmq_ctx_term(context);
         }
     }
