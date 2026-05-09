@@ -56,14 +56,17 @@ int tun_alloc(char *dev) {
   // IFF_TAP provides Ethernet-level frames (Layer 2)
   // IFF_NO_PI avoids the 4-byte protocol info header
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if (*dev)
-    strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
+  if (*dev) {
+    const std::size_t copy_len = std::min(std::strlen(dev), static_cast<std::size_t>(IFNAMSIZ - 1));
+    std::memcpy(ifr.ifr_name, dev, copy_len);
+    ifr.ifr_name[copy_len] = '\0';
+  }
 
   if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0) {
     close(fd);
     return err;
   }
-  strcpy(dev, ifr.ifr_name);
+  std::memcpy(dev, ifr.ifr_name, IFNAMSIZ);
   return fd;
 }
 
@@ -110,7 +113,7 @@ int main(int argc, char *argv[]) {
     // Allocate TAP
     std::cout << "[STEP 2] Allocating Linux TAP interface..." << std::endl;
     char tun_name[IFNAMSIZ];
-    strcpy(tun_name, "resoem_tap0");
+    std::memcpy(tun_name, "resoem_tap0", std::strlen("resoem_tap0") + 1);
     int tun_fd = tun_alloc(tun_name);
     if (tun_fd < 0) {
       std::cerr << "[ERROR] Failed to allocate TAP interface. Try running with sudo.\n";

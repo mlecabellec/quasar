@@ -46,7 +46,11 @@ void RawSocket::open_socket(const std::string &iface, int &fd, int &idx) {
 
   struct ifreq ifr;
   std::memset(&ifr, 0, sizeof(ifr));
-  std::strncpy(ifr.ifr_name, iface.c_str(), IFNAMSIZ - 1);
+  
+  // Ensure the interface name fits and is null-terminated
+  const std::size_t copy_len = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
+  std::memcpy(ifr.ifr_name, iface.c_str(), copy_len);
+  ifr.ifr_name[copy_len] = '\0';
 
   if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
     close(fd);
@@ -225,7 +229,11 @@ std::array<uint8_t, 6> RawSocket::get_mac_address(bool use_secondary) const {
 
   struct ifreq ifr;
   std::memset(&ifr, 0, sizeof(ifr));
-  std::strncpy(ifr.ifr_name, iface.c_str(), IFNAMSIZ - 1);
+  
+  // Ensure the interface name fits and is null-terminated
+  const std::size_t copy_len = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
+  std::memcpy(ifr.ifr_name, iface.c_str(), copy_len);
+  ifr.ifr_name[copy_len] = '\0';
 
   // [FE-0040.1.2] Interface-specific MAC address retrieval.
   if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) {
