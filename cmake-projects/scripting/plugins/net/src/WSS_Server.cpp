@@ -11,11 +11,11 @@ namespace quasar::net {
 using namespace quasar::scripting;
 
 struct LuaSecureWSServer::Impl {
-    class LuaSecureWSSSession;
+    class LuaSecureWSSession;
 
-    class LuaSecureWSSSession : public ::CppServer::WS::WSSSession {
+    class LuaSecureWSSession : public ::CppServer::WS::WSSSession {
     public:
-        explicit LuaSecureWSSSession(const std::shared_ptr<::CppServer::WS::WSSServer>& server) 
+        explicit LuaSecureWSSession(const std::shared_ptr<::CppServer::WS::WSSServer>& server) 
             : ::CppServer::WS::WSSSession(server) {}
         LuaSecureWSServer* m_owner = nullptr;
 
@@ -72,17 +72,17 @@ struct LuaSecureWSServer::Impl {
          * @return A shared pointer to the new session.
          */
         std::shared_ptr<::CppServer::Asio::SSLSession> CreateSession(const std::shared_ptr<::CppServer::Asio::SSLServer>& server) override {
-            std::shared_ptr<LuaSecureWSSSession> session = std::make_shared<LuaSecureWSSSession>(std::static_pointer_cast<::CppServer::WS::WSSServer>(server));
+            std::shared_ptr<LuaSecureWSSession> session = std::make_shared<LuaSecureWSSession>(std::static_pointer_cast<::CppServer::WS::WSSServer>(server));
             session->m_owner = m_owner;
             return session;
         }
     };
 
     std::shared_ptr<InternalServer> server;
-    std::map<std::string, std::shared_ptr<LuaSecureWSSSession>> sessions;
+    std::map<std::string, std::shared_ptr<LuaSecureWSSession>> sessions;
     std::mutex sessionMutex;
 
-    void registerSession(const std::string& id, std::shared_ptr<LuaSecureWSSSession> session) {
+    void registerSession(const std::string& id, std::shared_ptr<LuaSecureWSSession> session) {
         std::lock_guard<std::mutex> lock(sessionMutex);
         sessions[id] = session;
     }
