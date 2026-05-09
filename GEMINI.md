@@ -17,33 +17,32 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 
 ---
 
-## 🛠️ Mandatory Technical Standards (CS-0010)
-*Violation of these rules constitutes a failure of structural integrity.*
+## 🛠️ Mandatory Technical Standards (CS-0000)
+*Violation of these rules constitutes a failure of structural integrity. Full details in `doc/architecture/`.*
 
-### 1. Memory & Ownership
-*   **Forbidden Keywords**: `new`, `delete`, `malloc`, `free`, `calloc`, `realloc`, `strdup`, `strndup` (`CS-0010.10-13`).
-*   **Move Semantics**: Mandatory for passing by value (`CS-0010.2`) and returning objects (`CS-0010.4`).
-*   **References**: Use `const` references instead of pointers for parameters whenever possible (`CS-0010.3`).
-*   **Smart Pointers**: `shared_ptr` for shared lifecycles, `unique_ptr` for non-shared fields (`CS-0010.6-7`).
-*   **Zero/One/Three**: Follow for constructor parameters (`CS-0010.9`).
+### 1. Language & Primitives (CS-0010, CS-0020)
+*   **Standards**: C++23 mandatory, C++26 features encouraged where compiler-supported (`CS-0010`, `CS-0020`).
+*   **Memory**: No `new`/`delete`/`malloc`. Use Smart Pointers (`shared_ptr`, `unique_ptr`) and RAII for all resources (`CS-0010.6-24`).
+*   **Types**: NO `auto`. Explicit type declarations required (`CS-0010.34`). Move semantics mandatory for value passing/return (`CS-0010.2-4`).
+*   **Safety**: Mandatory handling of all potentially throwing functions (`CS-0010.20`). Timed mutexes required for all shared modifications (`CS-0010.46`).
 
-### 2. Safety & Control Flow
-*   **NO `auto`**: Explicit type declarations are strictly mandated (`CS-0010.34`).
-*   **Forbidden Flow**: `goto` keywords (`CS-0010.17`) and unbounded arrays (`CS-0010.16`).
-*   **Wait/Sleep**: Forbidden without timeouts. Use timed mutexes (`CS-0010.26-27`).
-*   **Loop Limits**: Hard limits on all loops and recursion; throw exception on limit breach (`CS-0010.37-38`).
-*   **Exceptions**: Mandatory handling for all potentially throwing functions (`CS-0010.20`).
+### 2. Integrity & Determinism (CS-0050, CS-0060)
+*   **Control Flow**: No `goto`. Loops/recursion MUST have hard limits and throw on breach (`CS-0010.37-38`, `CS-0060`).
+*   **Safety Revolution**: Leverage C++26 verifiable safety and explicit intent. Prefer explicit composition over complex inheritance (`CS-0050`).
+*   **Deterministic Logic**: Follow high-integrity standards (MISRA/JSF inspired) to ensure decidability and predictability (`CS-0060`).
 
-### 3. Concurrency & Integrity
-*   **Timed Mutexes**: Mandatory for all shared field modifications (`CS-0010.46`).
-*   **RAII**: Mandatory for mutexes, files, sockets, and memory-mapped files (`CS-0010.21-24`).
-*   **Refinement**: Literal -> Constant -> Enum -> Template -> Concept -> Trait progression (`CS-0010.39-43`).
+### 3. Modifications & Feature Protection (CS-0030, CS-0040)
+*   **Deletions**: No unjustified deletions. Any signature removal requires documented justification and caller/callee impact analysis (`CS-0030.3-5`).
+*   **Annotations**: All methods must have Doxygen comments and `@feature` annotations detailing their contribution (`CS-0010.45`, `CS-0030.1`).
+*   **Constants**: No "magic numbers". All system limitations and constants MUST be explicitly defined in dedicated headers (`CS-0040`).
 
-### 4. Documentation & Clarity
-*   **Comments**: Every code block requires an explanatory comment; max 5 lines without comments (`CS-0010.44`).
-*   **Doxygen**: Mandatory for every class, field, and method (`CS-0010.45`).
-*   **Functions**: Maximum 200 lines. Classes: Maximum 1600 lines.
-*   **Agent Protocols**: Agents MUST follow the operational standards defined in `CS-0070`.
+### 4. Agent Operational Standards (CS-0070)
+*   **Clearance**: Agents MUST NOT `commit` or `push` without explicit user clearance per task (`CS-0070.1`).
+*   **Validation**: Every submission MUST be preceded by:
+    1.  Successful local build (`CS-0070.3`).
+    2.  Successful test pass of all relevant suites (`CS-0070.4`).
+    3.  Deletion analysis report via `helpers/detect_deletions.py` (`CS-0070.5`).
+*   **Review**: Agents MUST provide an impact summary and recommend manual review for all changes (`CS-0070.6-7`).
 
 ---
 
