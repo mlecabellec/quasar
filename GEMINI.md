@@ -43,6 +43,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 *   **Comments**: Every code block requires an explanatory comment; max 5 lines without comments (`CS-0010.44`).
 *   **Doxygen**: Mandatory for every class, field, and method (`CS-0010.45`).
 *   **Functions**: Maximum 200 lines. Classes: Maximum 1600 lines.
+*   **Agent Protocols**: Agents MUST follow the operational standards defined in `CS-0070`.
 
 ---
 
