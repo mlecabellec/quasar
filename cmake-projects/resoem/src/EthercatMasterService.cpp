@@ -265,14 +265,23 @@ std::shared_ptr<NamedObject> EthercatMasterService::reconfigureSlave(std::shared
 
     try {
         // 1. Transition to PRE-OP
-        m_enumerator->request_state(slaveIdx, states::PRE_OP);
+        Result<uint16_t> resPreOp = m_enumerator->request_state(slaveIdx, states::PRE_OP);
+        if (!resPreOp) {
+            throw std::runtime_error("Failed to transition to PRE-OP");
+        }
 
         // 2. Update mappings
         uint8_t zero = 0;
-        m_coe->sdo_write(slaveInfo, 0x1C12, 0x00, std::span<const byte>(&zero, 1));
+        Result<> resWrite = m_coe->sdo_write(slaveInfo, 0x1C12, 0x00, std::span<const byte>(&zero, 1));
+        if (!resWrite) {
+            throw std::runtime_error("Failed to update mapping SDO (0x1C12:00)");
+        }
 
         // 3. Return to OP
-        m_enumerator->request_state(slaveIdx, states::OP);
+        Result<uint16_t> resOp = m_enumerator->request_state(slaveIdx, states::OP);
+        if (!resOp) {
+            throw std::runtime_error("Failed to return to OP");
+        }
 
         // 4. Update tree
         m_mutex.unlock();
