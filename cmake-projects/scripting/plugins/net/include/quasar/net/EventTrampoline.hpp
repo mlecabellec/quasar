@@ -24,12 +24,13 @@ public:
         std::vector<std::function<void()>> current;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_queue.empty()) return;
+            if (m_queue.empty() == true) return;
             current.swap(m_queue);
         }
-        for (auto& func : current) {
+        for (std::vector<std::function<void()>>::iterator it = current.begin(); it != current.end(); ++it) {
+            std::function<void()>& func = *it;
             try {
-                if (func) func();
+                if (func != nullptr) func();
             } catch (...) {
                 // Ignore exceptions in trampoline to prevent crashing the main loop
             }

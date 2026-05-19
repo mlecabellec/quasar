@@ -60,7 +60,7 @@ TEST(ZmqPluginTest, PublishReceiveTree) {
     EXPECT_EQ(received->getName(), "mybuffer");
     EXPECT_EQ(received->getType(), "NamedBuffer");
     
-    auto rxBuf = std::dynamic_pointer_cast<NamedBuffer>(received);
+    std::shared_ptr<NamedBuffer> rxBuf = std::dynamic_pointer_cast<NamedBuffer>(received);
     ASSERT_NE(rxBuf, nullptr);
     EXPECT_EQ(rxBuf->toVector(), data);
 }
