@@ -85,6 +85,13 @@ public:
   std::string getType() const override;
 
   /**
+   * @brief Replaces the entire buffer payload with new data.
+   * @param data The new byte vector.
+   * @feature [TSK-20260529-001.2] Frame Buffer Modification.
+   */
+  void setBufferData(const std::vector<uint8_t> &data);
+
+  /**
    * @brief Constructs a NamedBuffer instance with a given size.
    * @param name The name of the object.
    * @param size The initial buffer size.

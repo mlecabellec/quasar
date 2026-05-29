@@ -59,13 +59,13 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 ### New Initiatives (Backlog)
 - **[TSK-20260410-002]**: **ENI Engineering**: ETG.2100 generation and Hot Connect topology resilience.
 - **[TSK-20260410-005]**: **Master Redundancy**: Passive monitoring and redundancy ring failover logic.
+- **[TSK-20260529-001]**: **Raw Ethernet Socket Service**: Dynamic packet capture and TreeTransformer integration.
 
 ### Current Directive
 - **[TSK-20260328-001]**: **Reflexive Execution & Service Orchestration**.
     - Implementing `NamedMethod`, `NamedLuaMethod`, and `NamedService`.
 
 ### Recently Completed
-- **[TSK-20260311-007]**: Phased out **Apache Kafka Integration** (`librdkafka` removal).
 - **[TSK-20260310-001]**: Standalone Script Runner (`sre`) with plugin support.
 - **[TSK-20260308-001]**: Full Polymorphic Integer Dispatch.
 

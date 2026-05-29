@@ -51,5 +51,14 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
 
 std::string NamedBuffer::getType() const { return "NamedBuffer"; }
 
+void NamedBuffer::setBufferData(const std::vector<uint8_t> &data) {
+  std::unique_lock<std::recursive_timed_mutex> lock(mutex_, std::chrono::seconds(1));
+  if (!lock.owns_lock()) {
+    throw std::runtime_error("Timeout acquiring buffer lock");
+  }
+  data_ = data;
+  notifyObservers(getSelf());
+}
+
 } // namespace quasar::named
 

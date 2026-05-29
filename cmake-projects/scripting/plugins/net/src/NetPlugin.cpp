@@ -15,6 +15,7 @@ namespace quasar::net {
 
 // [CS-0010.44] Forward declarations for Lua bindings.
 void bindWebNamedMethod(sol::state_view& lua);
+void bindRawEthernetService(sol::state_view& lua);
 
 extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lua) {
     // Ensure intermediate tables exist before creating sub-tables.
@@ -40,6 +41,9 @@ extern "C" QUASAR_PLUGIN_EXPORT void registerPluginComponents(sol::state_view lu
     
     // TSK-20260311-008: Web API Routing
     bindWebNamedMethod(lua);
+
+    // [CS-0010.44] Bind the RawEthernetService components.
+    bindRawEthernetService(lua);
 
     // Register poll LAST so sub-table construction cannot overwrite it.
     netTable = quasarTable["net"].get_or_create<sol::table>();

@@ -19,10 +19,10 @@
 - [ ] **[TSK-20260311-003]** Networking Client Plugin
 - [ ] **[TSK-20260311-005]** OPC UA Server/Client Service
 - [ ] **[TSK-20260311-006]** CAN Bus / SocketCAN Integration
-- [ ] **[TSK-20260311-007]** Apache Kafka Integration
-- [ ] **[TSK-20260311-008]** Web UI Dashboard & REST API
+- [ ] **[TSK-20260529-001]** Raw Ethernet Socket Service (RawEthernetService)
 
 ## ✅ Recently Completed
+- [x] **[TSK-20260311-008]** Simple Web Server (REST + WS)
 - [x] **[TSK-20260311-009]** LogicEngine (FSM/HSM/SFC/Grafcet)
 - [x] **[TSK-20260310-001]** Standalone Script Runner (`sre`)
 - [x] **[TSK-20260308-001]** Full Polymorphic Integer Dispatch

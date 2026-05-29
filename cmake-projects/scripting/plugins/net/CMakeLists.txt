@@ -15,6 +15,7 @@ set(SOURCES
     src/WSClientWrapper.cpp
     src/SSLContextWrapper.cpp
     src/WebNamedMethodBindings.cpp
+    src/RawEthernetServiceBindings.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
