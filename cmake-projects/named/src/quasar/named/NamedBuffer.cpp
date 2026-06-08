@@ -26,7 +26,7 @@ NamedBuffer::create(const std::string &name, size_t size,
   obj->setSelf(obj);
 
   // If a parent is specified, add this buffer to the hierarchy.
-  if (parent) {
+  if (parent != nullptr) {
     obj->setParent(parent);
   }
   return obj;
@@ -43,7 +43,7 @@ NamedBuffer::create(const std::string &name, const std::vector<uint8_t> &data,
   obj->setSelf(obj);
 
   // If a parent is specified, add this buffer to the hierarchy.
-  if (parent) {
+  if (parent != nullptr) {
     obj->setParent(parent);
   }
   return obj;

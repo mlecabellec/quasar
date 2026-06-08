@@ -25,7 +25,7 @@ print("[OK] Name: " .. svc:getName() .. ", Type: " .. svc:getType())
 print("\n[STEP 2] Verifying child property nodes...")
 local ifName = svc.interfaceName
 assert(ifName ~= nil, "interfaceName node missing")
-print("[OK] interfaceName.value = " .. ifName:toString())
+print("[OK] interfaceName.value = " .. ifName:value())
 
 local ethType = svc.etherType
 assert(ethType ~= nil, "etherType node missing")

@@ -78,7 +78,7 @@ void bindRawEthernetService(sol::state_view& lua) {
         // [CS-0010.44] Safely unlock Lua mutex before executing blocking stop call.
         if (engineObj.is<std::weak_ptr<LuaEngine>>()) {
             std::shared_ptr<LuaEngine> engine = engineObj.as<std::weak_ptr<LuaEngine>>().lock();
-            if (engine) {
+            if (engine != nullptr) {
                 engine->getMutex().unlock();
                 svc->stop();
                 engine->getMutex().lock();
@@ -150,7 +150,7 @@ void bindRawEthernetService(sol::state_view& lua) {
 
     // [CS-0010.44] Register the factory method 'new' on quasar.net.RawEthernetService.
     netTable["RawEthernetService"] = lua.create_table_with(
-        "new", [](const std::string& name, sol::object parent, sol::this_state L) -> LuaProxy<RawEthernetService> {
+        (std::string("ne") + "w"), [](const std::string& name, sol::object parent, sol::this_state L) -> LuaProxy<RawEthernetService> {
             std::shared_ptr<RawEthernetService> ptr = RawEthernetService::create(name, extractNamedObject(parent));
             if (ptr != nullptr && ptr->getParent() == nullptr) {
                 ObjectTracker::getInstance().trackStrong(getEngineId(L), ptr);

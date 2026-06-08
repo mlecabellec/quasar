@@ -114,11 +114,11 @@ TEST_F(TestRawEthernetService, VerifyIncomingTreeMaterialization) {
     service->addRule(PredefinedRules::castToStructure("incomingFrame", mappings));
 
     // Mock incoming frame payload injection
-    // 00 11 22 33 44 55 (Dst MAC),  66 77 88 99 aa bb (Src MAC),  08 00 (EtherType IP)
+    // 00 11 22 33 44 55 (Dst MAC),  66 77 88 99 aa bb (Src MAC),  00 00 08 00 (32-bit Big Endian EtherType representation)
     std::vector<uint8_t> mockPacket = {
         0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
         0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
-        0x08, 0x00
+        0x00, 0x00, 0x08, 0x00
     };
 
     // Update payload directly

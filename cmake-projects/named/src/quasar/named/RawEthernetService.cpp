@@ -64,6 +64,22 @@ std::shared_ptr<RawEthernetService> RawEthernetService::create(
         return nullptr;
     }, self);
 
+    NamedMethod::create("start", [weakSelf](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+        (void)owner; (void)args;
+        if (std::shared_ptr<RawEthernetService> servicePtr = weakSelf.lock()) {
+            servicePtr->start();
+        }
+        return nullptr;
+    }, self);
+
+    NamedMethod::create("stop", [weakSelf](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+        (void)owner; (void)args;
+        if (std::shared_ptr<RawEthernetService> servicePtr = weakSelf.lock()) {
+            servicePtr->stop();
+        }
+        return nullptr;
+    }, self);
+
     // Set default cycle time for raw packet polling loop
     self->setCycleTime(std::chrono::milliseconds(DEFAULT_CYCLE_TIME_MS));
 
@@ -77,7 +93,7 @@ void RawEthernetService::start() {
         throw std::runtime_error("Timeout acquiring RawEthernetService lock in start()");
     }
 
-    if (m_running) {
+    if (m_running == true) {
         return;
     }
 
@@ -123,9 +139,9 @@ void RawEthernetService::openRawSocket(const std::string& iface, uint16_t ethTyp
     // Fetch network interface index via ioctl
     struct ifreq ifr;
     std::memset(&ifr, 0, sizeof(ifr));
-    const std::size_t copyLen = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
-    std::memcpy(ifr.ifr_name, iface.c_str(), copyLen);
-    ifr.ifr_name[copyLen] = '\0';
+    const std::size_t COPY_LEN = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
+    std::memcpy(ifr.ifr_name, iface.c_str(), COPY_LEN);
+    ifr.ifr_name[COPY_LEN] = '\0';
 
     if (::ioctl(m_sockFd, SIOCGIFINDEX, &ifr) < 0) {
         ::close(m_sockFd);
