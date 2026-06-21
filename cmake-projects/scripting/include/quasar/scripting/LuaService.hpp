@@ -23,22 +23,14 @@ class ScriptComponent {
 public:
     virtual ~ScriptComponent() = default;
 
-    /**
-     * @brief Initialization hook.
-     * Called when the component is first loaded.
-     */
+    /// @brief Initialization hook. Called when the component is first loaded.
     virtual bool onInit() = 0;
 
-    /**
-     * @brief Periodic update hook.
-     * @param dt Delta time since last update.
-     */
+    /// @brief Periodic update hook.
+    /// @param dt Delta time since last update.
     virtual void onUpdate(double dt) = 0;
 
-    /**
-     * @brief Shutdown hook.
-     * Called before the component is destroyed.
-     */
+    /// @brief Shutdown hook. Called before the component is destroyed.
     virtual void onShutdown() = 0;
 };
 
@@ -55,11 +47,8 @@ public:
      */
     static std::shared_ptr<LuaService> create(const std::string& name, std::shared_ptr<named::NamedObject> parent = nullptr);
 
-    /**
-     * @brief Loads and executes a Lua script file as the service body.
-     * @param path Path to the .lua file.
-     * @return True if loaded successfully.
-     */
+    /// @brief Loads and executes a Lua script file as the service body.
+    /// @param path Path to the .lua file.
     bool loadScript(const std::string& path);
 
     /**
@@ -67,9 +56,11 @@ public:
      */
     sol::protected_function_result execute(const std::string& script);
 
-    // ScriptComponent implementation
+    /// @brief Initialize the service components.
     bool onInit() override;
+    /// @brief Periodic update callback for the service.
     void onUpdate(double dt) override;
+    /// @brief Shutdown callback for the service.
     void onShutdown() override;
 
     /**
@@ -92,12 +83,10 @@ public:
      */
     void postTask(std::function<void()> task);
 
-    /**
-     * @brief Posts a task to be executed on the service's worker thread and returns a future for the result.
-     */
+    /// @brief Posts a task to the service worker thread and returns a future for the result.
     template<typename T>
     std::future<T> postTaskWithResult(std::function<T()> task) {
-        auto promise = std::make_shared<std::promise<T>>();
+        std::shared_ptr<std::promise<T>> promise = std::make_shared<std::promise<T>>();
         postTask([task, promise]() {
             try {
                 promise->set_value(task());
@@ -138,6 +127,7 @@ protected:
     std::timed_mutex m_queueMutex;
     std::queue<std::function<void()>> m_taskQueue;
 
+    /// @brief Main worker thread execution loop.
     void workerLoop();
 };
 

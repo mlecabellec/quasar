@@ -14,8 +14,10 @@ end
 local asio = quasar.net.server.AsioService.new()
 asio:start()
 
--- 2. Create the TCP Server on port 8080
-local server = quasar.net.server.TCPServer.new(asio, 8080)
+-- 2. Create the TCP Server on a random port to avoid port conflicts
+math.randomseed(os.time())
+local port = math.random(10000, 60000)
+local server = quasar.net.server.TCPServer.new(asio, port)
 
 -- 3. Define Callbacks
 -- "A good server always knows who's talking and what they're saying."
@@ -48,15 +50,15 @@ server.onError = function(err)
 end
 
 -- 4. Start the Server
-print("Starting TCP Server on port 8080...")
+print("Starting TCP Server on port " .. port .. "...")
 local started = server:start()
 
 if started then
-    print("Server is listening. (You can test with 'nc localhost 8080')")
-    print("Waiting 5 seconds before shutting down...")
+    print("Server is listening. (You can test with 'nc localhost " .. port .. "')")
+    print("Waiting 1 second before shutting down...")
     
-    -- Keep alive for 5 seconds
-    if quasar.sleep then quasar.sleep(5000) else os.execute("sleep 5") end
+    -- Keep alive for 1 second
+    if quasar.sleep then quasar.sleep(1000) else os.execute("sleep 1") end
 else
     print("FAILED to start server.")
 end

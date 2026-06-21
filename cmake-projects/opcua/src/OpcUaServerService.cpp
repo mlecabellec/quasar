@@ -12,10 +12,15 @@ namespace quasar::opcua {
 
 using namespace named;
 
+/// @brief TreeObserver implementation for handling Quasar tree updates.
 class OpcUaServerService::TreeObserver : public named::IObserver {
 public:
+    /// @brief Construct a TreeObserver.
+    /// @param service The server service instance.
     explicit TreeObserver(OpcUaServerService& service) : m_service(service) {}
     
+    /// @brief Callback notified when a NamedObject changes.
+    /// @param eventData The changed object.
     void notify(std::shared_ptr<NamedObject> eventData) override {
         m_service.handleObjectChanged(eventData);
     }
@@ -23,6 +28,8 @@ private:
     OpcUaServerService& m_service;
 };
 
+/// @brief Constructor for OpcUaServerService.
+/// @param name Name of the service.
 OpcUaServerService::OpcUaServerService(const std::string& name)
     : NamedService(name) {
     // Initialize the change observer for the tree synchronization.
@@ -37,13 +44,14 @@ OpcUaServerService::~OpcUaServerService() {
 std::shared_ptr<OpcUaServerService> OpcUaServerService::create(const std::string& name, std::shared_ptr<NamedObject> parent) {
     // Enabler struct to allow make_shared with a protected constructor.
     struct make_shared_enabler : public OpcUaServerService {
+        /// @brief Helper constructor.
         explicit make_shared_enabler(const std::string& n) : OpcUaServerService(n) {}
     };
     // Create the service instance.
     std::shared_ptr<OpcUaServerService> self = std::make_shared<make_shared_enabler>(name);
     // Setup reflexive reference and hierarchy.
     self->setSelf(self);
-    if (parent) {
+    if (parent != nullptr) {
         self->setParent(parent);
     }
     
@@ -91,7 +99,7 @@ void OpcUaServerService::stop() {
     // Shut down the background execution thread.
     NamedService::stop();
 
-    if (m_server) {
+    if (m_server != nullptr) {
         // Graceful server shutdown.
         UA_Server_run_shutdown(m_server);
         UA_Server_delete(m_server);
@@ -138,10 +146,15 @@ void OpcUaServerService::initializeOpcUa() {
     // Setup the identity provider if authentication is required.
     if (!m_users.empty() || !m_allowAnonymous) {
         size_t userCount = m_users.size();
-        // Use stack/vector instead of manual malloc to follow CS-0010.11.
-        std::vector<UA_UsernamePasswordLogin> logins(userCount);
+        
+        /// @brief Temporary vector holding user login details.
+        std::vector<UA_UsernamePasswordLogin> logins;
+        logins.resize(userCount);
+        
         size_t i = 0;
-        for (auto const& [u, p] : m_users) {
+        for (const std::pair<const std::string, std::string>& pair : m_users) {
+            const std::string& u = pair.first;
+            const std::string& p = pair.second;
             logins[i].username = UA_String_fromStdString(u);
             logins[i].password = UA_ByteString_fromStdString(p);
             i++;
@@ -332,7 +345,7 @@ void OpcUaServerService::handleObjectChanged(std::shared_ptr<named::NamedObject>
     if (!m_server || !obj) return;
     
     // Find the corresponding node in the OPC UA address space.
-    auto it = m_objectToNodeMap.find(obj);
+    std::map<std::shared_ptr<named::NamedObject>, UA_NodeId>::const_iterator it = m_objectToNodeMap.find(obj);
     if (it != m_objectToNodeMap.end()) {
         // Fetch the new value and write it to the server.
         UA_Variant value = toUaVariant(obj);

@@ -6,10 +6,8 @@
 #include <memory>
 #include <sim/Simulator.hpp>
 
-/**
- * @brief Entry point for the SMP Simulation Test.
- * @return 0 on success, 1 on failure.
- */
+/// @brief Entry point for the SMP Simulation Test.
+/// @return 0 on success, 1 on failure.
 int main() {
   std::cout << "--- SMP Simulation Test ---" << std::endl;
 
@@ -24,10 +22,11 @@ int main() {
   // In a strictly compliant system, we might use a factory, but here we 
   // must ensure the container manages the pointer.
   
-  sample::InverterModel* model = new sample::InverterModel("Inverter", "Boolean Inverter Model", nullptr);
+  std::unique_ptr<sample::InverterModel> unique_model = std::make_unique<sample::InverterModel>("Inverter", "Boolean Inverter Model", nullptr);
+  sample::InverterModel* model = unique_model.get();
 
   // Add model to simulator - The simulator (via its Container) takes ownership
-  simulator.AddModel(model);
+  simulator.AddModel(unique_model.release());
 
   // Step 1: Transition model to the Publishing state
   std::cout << "Step 1: Publishing..." << std::endl;

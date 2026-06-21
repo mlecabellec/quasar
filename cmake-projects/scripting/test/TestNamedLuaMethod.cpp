@@ -11,11 +11,13 @@ using namespace quasar::named;
 
 class NamedLuaMethodTest : public ::testing::Test {
 protected:
+    /// @brief Set up the test suite.
     void SetUp() override {
         root = NamedObject::create("root");
         engine = LuaEngine::create();
     }
     
+    /// @brief Clean up the test suite.
     void TearDown() override {
         engine->shutdown();
     }
@@ -29,13 +31,13 @@ TEST_F(NamedLuaMethodTest, Execution) {
     
     sol::function func = lua.load("return function(self, args) return args:asLong():value() * 2 end").call();
     
-    auto method = NamedLuaMethod::create("multiply", func, root);
+    std::shared_ptr<NamedLuaMethod> method = NamedLuaMethod::create("multiply", func, root);
     
-    auto args = NamedInteger<int64_t>::create("args", 21);
-    auto result = method->execute(args);
+    std::shared_ptr<NamedInteger<int64_t>> args = NamedInteger<int64_t>::create("args", 21);
+    std::shared_ptr<NamedObject> result = method->execute(args);
     
     ASSERT_NE(result, nullptr);
-    auto resInt = std::dynamic_pointer_cast<NamedInteger<int64_t>>(result);
+    std::shared_ptr<NamedInteger<int64_t>> resInt = std::dynamic_pointer_cast<NamedInteger<int64_t>>(result);
     ASSERT_NE(resInt, nullptr);
     EXPECT_EQ(resInt->value(), 42);
 }
@@ -44,13 +46,13 @@ TEST_F(NamedLuaMethodTest, Invalidation) {
     sol::state& lua = engine->getState();
     sol::function func = lua.load("return function(self, args) return 0 end").call();
     
-    auto method = NamedLuaMethod::create("test", func, root);
+    std::shared_ptr<NamedLuaMethod> method = NamedLuaMethod::create("test", func, root);
     
     // Simulate engine shutdown
     engine->shutdown();
     
     // Execution should now return nullptr gracefully
-    auto result = method->execute(nullptr);
+    std::shared_ptr<NamedObject> result = method->execute(nullptr);
     EXPECT_EQ(result, nullptr);
 }
 

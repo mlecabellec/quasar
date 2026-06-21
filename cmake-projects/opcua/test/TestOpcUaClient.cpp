@@ -12,6 +12,7 @@ using namespace quasar::opcua;
 
 class OpcUaIntegrationTest : public ::testing::Test {
 protected:
+    /// @brief Set up integration test suite.
     void SetUp() override {
         // Setup Server
         serverRoot = NamedObject::create("ServerRoot");
@@ -23,9 +24,9 @@ protected:
             if (!args) return nullptr;
             
             int64_t val = 0;
-            if (auto i32 = std::dynamic_pointer_cast<NamedInteger<int32_t>>(args)) {
+            if (std::shared_ptr<NamedInteger<int32_t>> i32 = std::dynamic_pointer_cast<NamedInteger<int32_t>>(args)) {
                 val = i32->value();
-            } else if (auto i64 = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args)) {
+            } else if (std::shared_ptr<NamedInteger<int64_t>> i64 = std::dynamic_pointer_cast<NamedInteger<int64_t>>(args)) {
                 val = i64->value();
             } else {
                 return nullptr;
@@ -52,6 +53,7 @@ protected:
         client->setUrl("opc.tcp://localhost:4842");
     }
 
+    /// @brief Tear down integration test suite.
     void TearDown() override {
         if (client && client->isRunning()) {
             client->stop();

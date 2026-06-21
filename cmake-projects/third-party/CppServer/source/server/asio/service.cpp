@@ -109,33 +109,64 @@ bool Service::Stop()
         return false;
 
     // Post the stop routine
-    auto self(this->shared_from_this());
-    auto stop_handler = [this, self]()
-    {
-        if (!IsStarted())
-            return;
-
-        // Stop Asio services
-        for (auto& service : _services)
-            service->stop();
-
-        // Update the started flag
-        _started = false;
-
-        // Call the service stopped handler
-        onStopped();
-    };
+    std::shared_ptr<Service> self(this->shared_from_this());
     if (_strand_required)
-        _strand->post(stop_handler);
-    else
-        _services[0]->post(stop_handler);
+    {
+        _strand->post([this, self]()
+        {
+            if (!IsStarted())
+                return;
 
-    // Wait for all service working threads
-    for (auto& thread : _threads)
-        thread.join();
+            // Stop Asio services
+            for (const std::shared_ptr<asio::io_service>& service : _services)
+                service->stop();
+
+            // Update the started flag
+            _started = false;
+
+            // Call the service stopped handler
+            onStopped();
+        });
+    }
+    else
+    {
+        _services[0]->post([this, self]()
+        {
+            if (!IsStarted())
+                return;
+
+            // Stop Asio services
+            for (const std::shared_ptr<asio::io_service>& service : _services)
+                service->stop();
+
+            // Update the started flag
+            _started = false;
+
+            // Call the service stopped handler
+            onStopped();
+        });
+    }
+
+    // Wait for all service working threads to finish execution
+    for (std::thread& thread : _threads)
+    {
+        if (thread.joinable())
+            thread.join();
+    }
 
     // Update polling loop mode flag
     _polling = false;
+
+    // If the stop handler was never processed (e.g., threads crashed or exited prematurely),
+    // we must manually stop the services, set the started flag to false, and call the stopped handler
+    // to prevent deadlocks / infinite loops in while (IsStarted()).
+    if (_started)
+    {
+        for (const std::shared_ptr<asio::io_service>& service : _services)
+            service->stop();
+        _started = false;
+        onStopped();
+    }
 
     // Wait for service is stopped
     while (IsStarted())

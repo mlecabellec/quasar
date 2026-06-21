@@ -3,11 +3,15 @@
 #include "quasar/named/NamedBoolean.hpp"
 #include "quasar/named/NamedBuffer.hpp"
 #include "quasar/named/NamedFloatingPoint.hpp"
+
+// Primitives and value types
 #include "quasar/named/NamedInteger.hpp"
 #include "quasar/named/NamedString.hpp"
 #include "quasar/named/NamedTimestamp.hpp"
 #include "quasar/named/NamedDuration.hpp"
 #include "quasar/named/NamedDate.hpp"
+
+// Quantity and hierarchy containers
 #include "quasar/named/NamedQuantity.hpp"
 #include "quasar/named/NamedArray.hpp"
 #include "quasar/named/NamedMap.hpp"
@@ -106,30 +110,28 @@ createFromTypeAndValue(const std::string &name, const std::string &type,
 }
 
 // --- Value Helper ---
-/**
- * @brief Serializes the value of a NamedObject to a string.
- * @param obj The object.
- * @return String representation.
- */
+/// @brief Serializes the value of a NamedObject to a string representation.
+/// @param obj The object to serialize.
+/// @return String representation of the value.
 std::string getValueAsString(const std::shared_ptr<NamedObject>& obj) {
     // [CS-0010.34] auto forbidden.
     const quasar::coretypes::Boolean* b = dynamic_cast<const quasar::coretypes::Boolean*>(obj.get());
-    if (b) return b->toString();
+    if (b != nullptr) return b->toString();
     
     const quasar::coretypes::Number* n = dynamic_cast<const quasar::coretypes::Number*>(obj.get());
-    if (n) return n->toString();
+    if (n != nullptr) return n->toString();
     
     const quasar::coretypes::BitBuffer* bb = dynamic_cast<const quasar::coretypes::BitBuffer*>(obj.get());
-    if (bb) return bb->toString();
+    if (bb != nullptr) return bb->toString();
     
     const quasar::coretypes::Buffer* buf = dynamic_cast<const quasar::coretypes::Buffer*>(obj.get());
-    if (buf) return buf->toString();
+    if (buf != nullptr) return buf->toString();
     
     const quasar::coretypes::String* s = dynamic_cast<const quasar::coretypes::String*>(obj.get());
-    if (s) return s->toString();
+    if (s != nullptr) return s->toString();
     
     const NamedVariant* v = dynamic_cast<const NamedVariant*>(obj.get());
-    if (v) return v->toString();
+    if (v != nullptr) return v->toString();
     
     return "";
 }
@@ -160,6 +162,9 @@ void serializeToXml(XMLElement *element, const std::shared_ptr<NamedObject> &obj
   }
 }
 
+/// @brief Serialize a NamedObject hierarchy to an XML string.
+/// @param obj Shared pointer to the object.
+/// @return XML string representation.
 std::string toXml(const std::shared_ptr<NamedObject> &obj) {
   if (obj == nullptr) {
     return "";
@@ -187,7 +192,7 @@ void deserializeFromXml(XMLElement *element, std::shared_ptr<NamedObject> parent
   XMLElement *child = element->FirstChildElement("NamedObject");
   // [CS-0010.37] Loop hard limit.
   std::size_t iterations = 0;
-  while (child) {
+  while (child != nullptr) {
     if (++iterations > config::HARD_LIMIT_ITERATIONS) {
         throw std::runtime_error("Hard limit reached in deserializeFromXml");
     }
@@ -196,6 +201,9 @@ void deserializeFromXml(XMLElement *element, std::shared_ptr<NamedObject> parent
   }
 }
 
+/// @brief Reconstruct a NamedObject hierarchy from an XML string.
+/// @param xml XML string representation.
+/// @return Shared pointer to the root object.
 std::shared_ptr<NamedObject> fromXml(const std::string &xml) {
   XMLDocument doc;
   if (doc.Parse(xml.c_str()) != XML_SUCCESS) throw std::runtime_error("Failed to parse XML");
@@ -210,7 +218,7 @@ std::shared_ptr<NamedObject> fromXml(const std::string &xml) {
   
   // [CS-0010.37] Loop hard limit.
   std::size_t iterations = 0;
-  while (child) {
+  while (child != nullptr) {
     if (++iterations > config::HARD_LIMIT_ITERATIONS) {
         throw std::runtime_error("Hard limit reached in fromXml");
     }
@@ -243,6 +251,9 @@ YAML::Node serializeToYaml(const std::shared_ptr<NamedObject> &obj) {
   return node;
 }
 
+/// @brief Serialize a NamedObject hierarchy to a YAML string.
+/// @param obj Shared pointer to the object.
+/// @return YAML string representation.
 std::string toYaml(const std::shared_ptr<NamedObject> &obj) {
   if (obj == nullptr) {
     return "null";
@@ -268,6 +279,9 @@ void deserializeFromYaml(const YAML::Node &node, std::shared_ptr<NamedObject> pa
   }
 }
 
+/// @brief Reconstruct a NamedObject hierarchy from a YAML string.
+/// @param yaml YAML string representation.
+/// @return Shared pointer to the root object.
 std::shared_ptr<NamedObject> fromYaml(const std::string &yaml) {
   YAML::Node root = YAML::Load(yaml);
   if (!root.IsDefined()) throw std::runtime_error("Invalid YAML");
@@ -312,6 +326,9 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
   return j;
 }
 
+/// @brief Serialize a NamedObject hierarchy to a JSON string.
+/// @param obj Shared pointer to the object.
+/// @return JSON string representation.
 std::string toJson(const std::shared_ptr<NamedObject> &obj) {
   if (obj == nullptr) {
     return "null";
@@ -334,6 +351,9 @@ void deserializeFromJson(const json &j, std::shared_ptr<NamedObject> parent) {
   }
 }
 
+/// @brief Reconstruct a NamedObject hierarchy from a JSON string.
+/// @param jsonStr JSON string representation.
+/// @return Shared pointer to the root object.
 std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
   json j = json::parse(jsonStr);
   std::string name = j["name"].as<std::string>();
@@ -352,19 +372,17 @@ std::shared_ptr<NamedObject> fromJson(const std::string &jsonStr) {
 
 // --- BSON ---
 
-/**
- * @brief Helper to serialize a NamedObject to a json object suitable for BSON.
- * @param obj The object to serialize.
- * @return A json object.
- * @compliance [FE-0020.9.2] BSON conversion.
- */
+/// @brief Helper to serialize a NamedObject to a json object suitable for BSON.
+/// @param obj The object to serialize.
+/// @return A json object.
+/// @compliance [FE-0020.9.2] BSON conversion.
 json serializeToBinaryJson(const std::shared_ptr<NamedObject> &obj) {
   json j;
   j["name"] = obj->getName();
   j["type"] = obj->getType();
   
   const quasar::coretypes::BitBuffer* bb = dynamic_cast<const quasar::coretypes::BitBuffer*>(obj.get());
-  if (bb) {
+  if (bb != nullptr) {
       std::vector<uint8_t> vec = bb->toVector();
       j["value"] = jsoncons::byte_string(vec.data(), vec.size());
       j["bitSize"] = static_cast<uint64_t>(bb->bitSize());
@@ -378,7 +396,7 @@ json serializeToBinaryJson(const std::shared_ptr<NamedObject> &obj) {
       }
   } else {
       const quasar::coretypes::Buffer* buf = dynamic_cast<const quasar::coretypes::Buffer*>(obj.get());
-      if (buf) {
+      if (buf != nullptr) {
           std::vector<uint8_t> vec = buf->toVector();
           j["value"] = jsoncons::byte_string(vec.data(), vec.size());
       } else {
@@ -399,13 +417,11 @@ json serializeToBinaryJson(const std::shared_ptr<NamedObject> &obj) {
   return j;
 }
 
-/**
- * @brief Helper to reconstruct a NamedObject hierarchy from a json object (BSON context).
- * @param j The json object.
- * @param parent Optional parent.
- * @return Shared pointer to the created object.
- * @compliance [FE-0020.9.2] BSON conversion.
- */
+/// @brief Helper to reconstruct a NamedObject hierarchy from a json object (BSON context).
+/// @param j The json object.
+/// @param parent Optional parent.
+/// @return Shared pointer to the created object.
+/// @compliance [FE-0020.9.2] BSON conversion.
 std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr<NamedObject> parent) {
   std::string name = j["name"].as<std::string>();
   std::string type = j["type"].as<std::string>();
@@ -421,7 +437,7 @@ std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr
       obj = nbb;
   } else if (type == "NamedBuffer" || type == "Buffer") {
       jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
-      std::vector<uint8_t> data(bytes.begin(), bytes.end());
+      std::vector<uint8_t> data{bytes.begin(), bytes.end()};
       obj = NamedBuffer::create(name, data, parent);
   } else if (type == "NamedVariant") {
       quasar::coretypes::VariantType vt = j.contains("variantType") ? 
@@ -430,7 +446,7 @@ std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr
       
       if (vt == quasar::coretypes::VariantType::Buffer) {
           jsoncons::byte_string bytes = j["value"].as<jsoncons::byte_string>();
-          std::vector<uint8_t> vec(bytes.begin(), bytes.end());
+          std::vector<uint8_t> vec{bytes.begin(), bytes.end()};
           obj = NamedVariant::create(name, quasar::coretypes::Variant(vec), parent);
       } else if (vt == quasar::coretypes::VariantType::Boolean) {
           obj = NamedVariant::create(name, quasar::coretypes::Variant(j["value"].as<std::string>() == "true"), parent);
@@ -456,6 +472,9 @@ std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr
   return obj;
 }
 
+/// @brief Serialize a NamedObject hierarchy to a BSON/binary byte vector.
+/// @param obj The object.
+/// @return Byte vector of BSON data.
 std::vector<uint8_t> toBinary(const std::shared_ptr<NamedObject> &obj) {
   if (obj == nullptr) {
     return {};
@@ -466,6 +485,9 @@ std::vector<uint8_t> toBinary(const std::shared_ptr<NamedObject> &obj) {
   return buffer;
 }
 
+/// @brief Reconstruct a NamedObject hierarchy from BSON/binary bytes.
+/// @param data BSON data byte vector.
+/// @return Shared pointer to the root object.
 std::shared_ptr<NamedObject> fromBinary(const std::vector<uint8_t> &data) {
   json j = jsoncons::bson::decode_bson<json>(data);
   return createFromBinaryJson(j, nullptr);
