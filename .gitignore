@@ -9,3 +9,9 @@ build_log.txt
 sensor_data.csv
 .cache/
 build_asan/
+.idea/editor.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/quasar.iml
+.idea/vcs.xml
+.gradle/

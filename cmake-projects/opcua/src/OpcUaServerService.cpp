@@ -185,30 +185,41 @@ UA_StatusCode OpcUaServerService::onMethodCall(UA_Server *server, const UA_NodeI
                                                 const UA_Variant *input, size_t outputSize,
                                                 UA_Variant *output) {
     (void)server; (void)sessionId; (void)sessionContext; (void)methodId; (void)methodContext; (void)objectId; (void)objectContext;
-    // Delegate method calls from OPC UA to Quasar's NamedMethod execution engine.
-    if (!methodContext || inputSize == 0 || outputSize == 0) return UA_STATUSCODE_BADINTERNALERROR;
+    
+    // [CS-0010.15], [CS-0050.2] Check methodContext nullness explicitly.
+    if (methodContext == nullptr) return UA_STATUSCODE_BADINTERNALERROR;
 
     NamedMethod* method = static_cast<NamedMethod*>(methodContext);
     
-    // Arguments are exchanged as JSON strings for generic support.
-    if (input[0].type != &UA_TYPES[UA_TYPES_STRING]) return UA_STATUSCODE_BADTYPEMISMATCH;
-    UA_String uas = *(UA_String*)input[0].data;
-    std::string jsonArgs((char*)uas.data, uas.length);
-
-    // Deserialize incoming arguments.
+    // [CS-0050.2] Deserialise incoming arguments if input is provided.
     std::shared_ptr<NamedObject> args = nullptr;
-    if (jsonArgs != "null") {
-        args = serialization::fromJson(jsonArgs);
+    if (inputSize > 0 && input != nullptr) {
+        // [CS-0010.14] Validate input argument types to avoid mismatches.
+        if (input[0].type != &UA_TYPES[UA_TYPES_STRING]) return UA_STATUSCODE_BADTYPEMISMATCH;
+        
+        // Extract string data safely.
+        UA_String uas = *(UA_String*)input[0].data;
+        std::string jsonArgs;
+        if (uas.data != nullptr && uas.length > 0) {
+            jsonArgs = std::string((char*)uas.data, uas.length);
+        }
+        
+        // Parse non-empty parameters.
+        if (!jsonArgs.empty() && jsonArgs != "null") {
+            args = serialization::fromJson(jsonArgs);
+        }
     }
 
     // Execute logic and serialize result.
     std::shared_ptr<NamedObject> resObj = method->execute(args);
     std::string jsonRes = serialization::toJson(resObj);
     
-    // Return the response as an OPC UA string.
-    UA_String uares = UA_STRING_ALLOC(jsonRes.c_str());
-    UA_Variant_setScalarCopy(output, &uares, &UA_TYPES[UA_TYPES_STRING]);
-    UA_String_clear(&uares);
+    // [CS-0050.2] Return the response as an OPC UA string if output is expected.
+    if (outputSize > 0 && output != nullptr) {
+        UA_String uares = UA_STRING_ALLOC(jsonRes.c_str());
+        UA_Variant_setScalarCopy(output, &uares, &UA_TYPES[UA_TYPES_STRING]);
+        UA_String_clear(&uares);
+    }
 
     return UA_STATUSCODE_GOOD;
 }

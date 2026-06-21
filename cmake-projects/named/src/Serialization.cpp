@@ -161,6 +161,9 @@ void serializeToXml(XMLElement *element, const std::shared_ptr<NamedObject> &obj
 }
 
 std::string toXml(const std::shared_ptr<NamedObject> &obj) {
+  if (obj == nullptr) {
+    return "";
+  }
   XMLDocument doc;
   XMLElement *root = doc.NewElement("NamedObject");
   doc.InsertFirstChild(root);
@@ -241,6 +244,9 @@ YAML::Node serializeToYaml(const std::shared_ptr<NamedObject> &obj) {
 }
 
 std::string toYaml(const std::shared_ptr<NamedObject> &obj) {
+  if (obj == nullptr) {
+    return "null";
+  }
   YAML::Node root = serializeToYaml(obj);
   YAML::Emitter out;
   out << root;
@@ -307,6 +313,9 @@ json serializeToJson(const std::shared_ptr<NamedObject> &obj) {
 }
 
 std::string toJson(const std::shared_ptr<NamedObject> &obj) {
+  if (obj == nullptr) {
+    return "null";
+  }
   return serializeToJson(obj).to_string();
 }
 
@@ -448,6 +457,9 @@ std::shared_ptr<NamedObject> createFromBinaryJson(const json &j, std::shared_ptr
 }
 
 std::vector<uint8_t> toBinary(const std::shared_ptr<NamedObject> &obj) {
+  if (obj == nullptr) {
+    return {};
+  }
   json j = serializeToBinaryJson(obj);
   std::vector<uint8_t> buffer;
   jsoncons::bson::encode_bson(j, buffer);

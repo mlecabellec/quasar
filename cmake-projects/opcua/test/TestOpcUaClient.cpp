@@ -34,6 +34,11 @@ protected:
             return NamedInteger<int64_t>::create("result", val * 2);
         }, serverData);
 
+        serverVoidMethod = NamedMethod::create("VoidMethod", [](std::shared_ptr<NamedObject> owner, std::shared_ptr<NamedObject> args) -> std::shared_ptr<NamedObject> {
+            (void)owner; (void)args;
+            return nullptr;
+        }, serverData);
+
         server = OpcUaServerService::create("OpcUaServer");
         server->setPort(4842); // Port for integration test
         server->setRootObject(serverRoot);
@@ -61,6 +66,11 @@ protected:
     std::shared_ptr<NamedInteger<int32_t>> serverInt;
     std::shared_ptr<NamedMethod> serverMethod;
     
+    /**
+     * @brief Mirrored void method on the OPC UA server for testing.
+     */
+    std::shared_ptr<NamedMethod> serverVoidMethod;
+    
     std::shared_ptr<OpcUaServerService> server;
     std::shared_ptr<OpcUaClientService> client;
 };
@@ -70,16 +80,16 @@ TEST_F(OpcUaIntegrationTest, MirroringAndValueSync) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Allow mirroring to complete
     
     // Verify Mirroring
-    auto mirroredRoot = client->getChild("ServerRoot");
+    std::shared_ptr<NamedObject> mirroredRoot = client->getChild("ServerRoot");
     ASSERT_NE(mirroredRoot, nullptr) << "Failed to mirror ServerRoot";
     
-    auto mirroredData = mirroredRoot->getChild("Data");
+    std::shared_ptr<NamedObject> mirroredData = mirroredRoot->getChild("Data");
     ASSERT_NE(mirroredData, nullptr) << "Failed to mirror Data";
     
-    auto mirroredIntObj = mirroredData->getChild("MyInt");
+    std::shared_ptr<NamedObject> mirroredIntObj = mirroredData->getChild("MyInt");
     ASSERT_NE(mirroredIntObj, nullptr) << "Failed to mirror MyInt";
     
-    auto mirroredInt = std::dynamic_pointer_cast<NamedInteger<int32_t>>(mirroredIntObj);
+    std::shared_ptr<NamedInteger<int32_t>> mirroredInt = std::dynamic_pointer_cast<NamedInteger<int32_t>>(mirroredIntObj);
     ASSERT_NE(mirroredInt, nullptr) << "MyInt is not a NamedInteger<int32_t>";
     
     // Check initial value
@@ -98,26 +108,50 @@ TEST_F(OpcUaIntegrationTest, MethodExecution) {
     EXPECT_NO_THROW(client->start());
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Allow mirroring
     
-    auto mirroredRoot = client->getChild("ServerRoot");
+    std::shared_ptr<NamedObject> mirroredRoot = client->getChild("ServerRoot");
     ASSERT_NE(mirroredRoot, nullptr);
     
-    auto mirroredData = mirroredRoot->getChild("Data");
+    std::shared_ptr<NamedObject> mirroredData = mirroredRoot->getChild("Data");
     ASSERT_NE(mirroredData, nullptr);
     
-    auto mirroredMethodObj = mirroredData->getChild("Multiply");
+    std::shared_ptr<NamedObject> mirroredMethodObj = mirroredData->getChild("Multiply");
     ASSERT_NE(mirroredMethodObj, nullptr) << "Failed to mirror Multiply method";
     
-    auto mirroredMethod = std::dynamic_pointer_cast<NamedMethod>(mirroredMethodObj);
+    std::shared_ptr<NamedMethod> mirroredMethod = std::dynamic_pointer_cast<NamedMethod>(mirroredMethodObj);
     ASSERT_NE(mirroredMethod, nullptr) << "Multiply is not a NamedMethod";
     
     // Execute method remotely
-    auto args = NamedInteger<int64_t>::create("input", 21);
-    auto resultObj = mirroredMethod->execute(args);
+    std::shared_ptr<NamedInteger<int64_t>> args = NamedInteger<int64_t>::create("input", 21);
+    std::shared_ptr<NamedObject> resultObj = mirroredMethod->execute(args);
     
     ASSERT_NE(resultObj, nullptr) << "Remote method execution returned nullptr (timed out or failed)";
     
-    auto resultNum = std::dynamic_pointer_cast<quasar::coretypes::Number>(resultObj);
+    std::shared_ptr<quasar::coretypes::Number> resultNum = std::dynamic_pointer_cast<quasar::coretypes::Number>(resultObj);
     ASSERT_NE(resultNum, nullptr) << "Result is not a coretypes::Number";
     
     EXPECT_EQ(resultNum->toInt64(), 42) << "Mathematical operation failed remotely";
+}
+
+/**
+ * @brief Integration test verifying successful remote execution of void methods over OPC UA.
+ */
+TEST_F(OpcUaIntegrationTest, VoidMethodExecution) {
+    EXPECT_NO_THROW(client->start());
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Allow mirroring
+    
+    std::shared_ptr<NamedObject> mirroredRoot = client->getChild("ServerRoot");
+    ASSERT_NE(mirroredRoot, nullptr);
+    
+    std::shared_ptr<NamedObject> mirroredData = mirroredRoot->getChild("Data");
+    ASSERT_NE(mirroredData, nullptr);
+    
+    std::shared_ptr<NamedObject> mirroredMethodObj = mirroredData->getChild("VoidMethod");
+    ASSERT_NE(mirroredMethodObj, nullptr) << "Failed to mirror VoidMethod method";
+    
+    std::shared_ptr<NamedMethod> mirroredMethod = std::dynamic_pointer_cast<NamedMethod>(mirroredMethodObj);
+    ASSERT_NE(mirroredMethod, nullptr) << "VoidMethod is not a NamedMethod";
+    
+    std::shared_ptr<NamedObject> resultObj = mirroredMethod->execute(nullptr);
+    ASSERT_NE(resultObj, nullptr);
+    EXPECT_EQ(resultObj->getName(), "void");
 }
