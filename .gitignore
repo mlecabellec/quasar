@@ -15,3 +15,7 @@ build_asan/
 .idea/quasar.iml
 .idea/vcs.xml
 .gradle/
+helpers/__pycache__/check_annotations.cpython-313.pyc
+helpers/__pycache__/check_metrics.cpython-313.pyc
+.gitignore
+helpers/__pycache__/compliance_suite.cpython-313.pyc
