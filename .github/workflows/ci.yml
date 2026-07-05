@@ -53,7 +53,7 @@ jobs:
           apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                              libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
-                             curl ca-certificates nodejs npm
+                             curl ca-certificates nodejs npm python3-pip python3-venv plantuml default-jre libpango-1.0-0
           npm install -g n
           n stable
           # Refresh path for the next steps
@@ -68,7 +68,7 @@ jobs:
                          mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
                          gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
                          yaml-cpp-devel tinyxml2-devel ccache gdb \
-                         curl nodejs npm
+                         curl nodejs npm python3-pip plantuml java-latest-openjdk pango cairo
           npm install -g n
           n stable
           hash -r
@@ -81,7 +81,7 @@ jobs:
                          linux-headers autoconf automake libtool dkms \
                          alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
                          gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
-                         curl nodejs npm
+                         curl nodejs npm python-pip plantuml jre-openjdk pango cairo
           npm install -g n
           n stable
           hash -r
@@ -139,6 +139,25 @@ jobs:
           SAFE_NAME=$(echo "${{ matrix.container }}" | tr ':' '-')
           echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
 
+      - name: Checkout MkDocs Kit
+        uses: actions/checkout@v4
+        with:
+          repository: mlecabellec/mkdocs-kit
+          path: mkdocs-kit
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Python dependencies for documentation
+        run: |
+          python3 -m venv .venv-docs
+          .venv-docs/bin/pip install --upgrade pip
+          .venv-docs/bin/pip install "setuptools<82.0.0"
+          .venv-docs/bin/pip install mkdocs mkdocs-material weasyprint wireviz nwdiag bit_field
+
+      - name: Build Documentation
+        run: |
+          PYTHONPATH=$GITHUB_WORKSPACE/mkdocs-kit/src .venv-docs/bin/python3 $GITHUB_WORKSPACE/mkdocs-kit/src/mkdocs_kit/cli.py build
+        working-directory: doc
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -147,6 +166,9 @@ jobs:
             build-projects/*.deb
             build-projects/*.rpm
             build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+
 
       - name: Prepare Linux Modules (EtherCAT)
         # This step might fail if the kernel headers don't match uname -r

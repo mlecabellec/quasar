@@ -1,0 +1,13 @@
+plugins:
+- search
+site_name: Quasar Documentation
+theme:
+  features:
+  - navigation.tabs
+  - navigation.sections
+  - toc.integrate
+  name: material
+  palette:
+    accent: indigo
+    primary: indigo
+    scheme: slate

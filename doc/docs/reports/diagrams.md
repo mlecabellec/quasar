@@ -1,0 +1,92 @@
+# Reports Diagrams
+
+This page showcases the PlantUML diagrams for the Quasar reports.
+
+## Dependency Architecture
+
+```plantuml
+@startuml
+skinparam componentStyle uml2
+skinparam NoteBackgroundColor #FEFECE
+skinparam NoteBorderColor #A80036
+
+title Quasar Framework Dependency Architecture
+
+package "Foundation Layer" #DDDDDD {
+    [ECSS_SMP] <<INTERFACE>>
+    [core] <<INTERFACE>>
+    [utils] <<SHARED>>
+    [sched] <<SHARED>>
+}
+
+package "Data & Type Layer" #CCFFCC {
+    [quasar_coretypes] <<SHARED>>
+    [quasar_named] <<SHARED>>
+}
+
+package "Simulation & Runtime" #CCCCFF {
+    [sim] <<SHARED>>
+}
+
+package "Logic & Scripting" #FFCCCC {
+    [quasar_scripting] <<SHARED>>
+    [quasar_logicengine] <<SHARED>>
+}
+
+package "I/O & Communication" #FFFFCC {
+    [resoem] <<SHARED>>
+    [quasar_zmq] <<PLUGIN>>
+}
+
+' Links and Explanations
+
+[core] --> [ECSS_SMP] : "Mandatory"
+note on link: Provides base templates and macros\nadhering to SMP standards.
+
+[utils] --> [ECSS_SMP] : "Mandatory"
+[utils] --> [core] : "Mandatory"
+note on link: Centralizes logging, timing, and\nevent management for the bus.
+
+[sched] --> [ECSS_SMP] : "Mandatory"
+[sched] --> [utils] : "Mandatory"
+note on link: Implements SMP scheduler\nusing core timing services.
+
+[quasar_coretypes] --> [utils] : "Mandatory"
+note on link: Implements memory-safe data structures\n(Number, String, Buffer).
+
+[quasar_named] --> [quasar_coretypes] : "Mandatory"
+note on link: The 'Reflexive Tree' - Source of Truth\nfor the framework state.
+
+[sim] --> [ECSS_SMP] : "Mandatory"
+[sim] --> [core] : "Mandatory"
+[sim] --> [utils] : "Mandatory"
+[sim] --> [sched] : "Mandatory"
+note bottom of [sim]: Provides concrete implementation of SMP types\n(e.g., AnySimple). Crucial for runtime symbols.
+
+[quasar_scripting] --> [quasar_named] : "Mandatory"
+[quasar_scripting] --> [quasar_coretypes] : "Mandatory"
+[quasar_scripting] --> [utils] : "Mandatory"
+note on link: Orchestrates Lua/Python logic hooks\nmapped to the Reflexive Tree.
+
+[resoem] --> [quasar_named] : "Mandatory"
+[resoem] --> [utils] : "Mandatory"
+note on link: Maps physical EtherCAT slaves\ninto the named hierarchy.
+
+[quasar_logicengine] --> [quasar_scripting] : "Mandatory"
+[quasar_logicengine] --> [quasar_named] : "Mandatory"
+note on link: Executes HSM/SFC models\ntriggering reflexive logic.
+
+[quasar_zmq] ..> [sim] : "MISSING (FIX REQUIRED)"
+note right of [quasar_zmq]: Currently fails to link due to\nmissing implementation symbols\nfrom 'sim' (e.g. AnySimple).
+
+legend right
+  |= Color |= Layer |
+  | #DDDDDD | Foundation |
+  | #CCFFCC | Data/Type |
+  | #CCCCFF | Simulation |
+  | #FFCCCC | Logic/Scripting |
+  | #FFFFCC | I/O/Comm |
+endlegend
+
+@enduml
+```
