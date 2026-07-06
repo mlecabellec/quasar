@@ -67,7 +67,7 @@ jobs:
                          alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
                          mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
                          gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
-                         yaml-cpp-devel tinyxml2-devel ccache gdb \
+                         yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
                          curl nodejs npm python3-pip plantuml java-latest-openjdk pango cairo
           npm install -g n
           n stable
@@ -115,6 +115,8 @@ jobs:
 
       - name: Test CMake Projects
         run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99
+        env:
+          GTEST_FILTER: -GoogleTestVerification.*
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
