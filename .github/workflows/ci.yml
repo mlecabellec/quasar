@@ -114,9 +114,7 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
 
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99
-        env:
-          GTEST_FILTER: -GoogleTestVerification.*:TestRawEthernetService.VerifyPermissionSkippingOnStart
+        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
