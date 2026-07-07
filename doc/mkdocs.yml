@@ -10,9 +10,18 @@ theme:
     - navigation.sections
     - toc.integrate
   palette:
-    accent: indigo
-    primary: indigo
-    scheme: slate
+    - scheme: slate          # Dark mode (default)
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default        # Light mode
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
 
 nav:
   - Welcome: index.md
