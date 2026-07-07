@@ -1,13 +1,81 @@
-plugins:
-- search
 site_name: Quasar Documentation
+use_directory_urls: false
+plugins:
+  - search
+
 theme:
-  features:
-  - navigation.tabs
-  - navigation.sections
-  - toc.integrate
   name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
   palette:
     accent: indigo
     primary: indigo
     scheme: slate
+
+nav:
+  - Welcome: index.md
+  - Topics Index: topics_index.md
+  - Project Rules:
+      - Rules Index: architecture/rules_index.md
+      - "CS-0010 Quality Standards": architecture/CS-0010.md
+      - "CS-0020 C++ Coding Standards": architecture/CS-0020.md
+      - "CS-0030 Modifications Standards": architecture/CS-0030.md
+      - "CS-0040 Constant Management": architecture/CS-0040.md
+      - "CS-0050 C++26 Safety Standards": architecture/CS-0050.md
+      - "CS-0060 Bounded Logic Scheduler": architecture/CS-0060.md
+      - "CS-0070 High-Integrity ZeroMQ": architecture/CS-0070.md
+  - Architecture:
+      - Architecture Index: architecture/architecture_index.md
+      - Components Register: architecture/components_index.md
+      - Core Primitive Types: architecture/CP-0010.md
+      - Architecture diagrams: architecture/diagrams.md
+      - System Overview: architecture/README.md
+  - Features Specification:
+      - Features Overview: features/README.md
+      - "Use Case UC-0010": features/UC-0010.md
+      - "FE-0010 Data Codec Engine": features/FE-0010.md
+      - "FE-0020 Scheduler Service": features/FE-0020.md
+      - "FE-0030 Named Primitive Mapping": features/FE-0030.md
+      - "FE-0040 Object Lifecycle": features/FE-0040.md
+      - "FE-0050 Calibration Functions": features/FE-0050.md
+      - "FE-0060 Scripting Engine Extension": features/FE-0060.md
+      - "FE-0070 RPC Methods Integration": features/FE-0070.md
+      - "FE-0080 Logic Engine Integration": features/FE-0080.md
+      - "FE-0090 Named Containers": features/FE-0090.md
+      - "FE-0100 Binary serialization": features/FE-0100.md
+      - "FE-0110 Cause Effect Matrix": features/FE-0110.md
+      - "FE-0120 Lua Logic Engine bindings": features/FE-0120.md
+      - "FE-0130 ZeroMQ Transports": features/FE-0130.md
+      - "FE-0140 OPC-UA server/client": features/FE-0140.md
+      - "FE-0150 Net plugin interface": features/FE-0150.md
+      - "FE-0160 High performance calibration": features/FE-0160.md
+      - "FE-0170 Calibration service logic": features/FE-0170.md
+      - "FE-0180 OPC-UA client service": features/FE-0180.md
+      - "FE-0190 Net plugin base class": features/FE-0190.md
+      - "FE-0200 OPC-UA server service": features/FE-0200.md
+      - "FE-0210 Calibration service parameters": features/FE-0210.md
+      - "FE-0220 OPC-UA client parameters": features/FE-0220.md
+      - "FE-0230 Net plugin library loading": features/FE-0230.md
+      - "FE-0240 OPC-UA server parameters": features/FE-0240.md
+      - "FE-0250 Tree transformers": features/FE-0250.md
+      - "FE-0260 Raw Ethernet service": features/FE-0260.md
+  - User Manual & Scripting:
+      - Manual Index: manual/README.md
+      - Named Service Lua integration: manual/named-service-lua.md
+  - Standards:
+      - Standards Overview: standards/index.md
+  - Developer Reports:
+      - Developer Reports Index: reports/index.md
+      - ASAN Handover Report: reports/HANDOVER-ASAN-STABILIZATION-20260423.md
+      - Web Networking Plan: reports/REFLEXIVE-WEB-NETWORKING-PLAN-20260422.md
+      - Q2 2026 Roadmap: reports/ROADMAP-Q2-2026.md
+      - named module CS-0010 Audit: reports/named-CS-0010-2026-02-25.md
+      - scripting module CS-0010 Audit: reports/scripting-CS-0010-2026-03-08.md
+  - Guides & Operations:
+      - Developer Helpers: helpers/README.md
+      - OS Requirements: DEBIAN-REQUIREMENTS.md
+      - Fedora Requirements: FEDORA-REQUIREMENTS.md
+      - Arch Linux Requirements: ARCHLINUX-REQUIREMENTS.md
+      - Project TODOs: TODO.md
