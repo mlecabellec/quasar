@@ -14,6 +14,8 @@ protected:
     }
 };
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ManualScriptTest);
+
 TEST_P(ManualScriptTest, Execute) {
     std::filesystem::path scriptPath = GetParam();
     std::cout << "[ManualTest] Running: " << scriptPath.filename().string() << std::endl;

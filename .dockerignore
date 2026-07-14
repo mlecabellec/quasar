@@ -1,3 +1,20 @@
+# Exclude large local build artifacts and caches from build context
 build/
 .git/
-.opencode/
+.cache/
+.github/
+.agents/
+bookworm_fail.log
+prev_fail.log
+violations.json
+critical_violations.json
+networking_violations.json
+recent_changes.patch
+dox/
+doc/
+docs/
+manual/
+Testing/
+tests/
+bin/
+lib/
