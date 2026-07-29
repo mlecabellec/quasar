@@ -24,4 +24,7 @@ option(QUASAR_ENABLE_TSAN "Enable ThreadSanitizer" OFF)
 enable_testing()
 
 add_subdirectory(cmake-projects)
-add_subdirectory(linux-modules)
+option(BUILD_LINUX_MODULES "Build Linux kernel modules" ON)
+if(BUILD_LINUX_MODULES)
+    add_subdirectory(linux-modules)
+endif()

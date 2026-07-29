@@ -143,3 +143,11 @@ These rules are loaded by agents and must be strictly followed when writing, mod
 *   **[CS-0070.5]** **Deletion Analysis**: Run `helpers/detect_deletions.py` to confirm no unintended feature/interface loss. Justify any deletions.
 *   **[CS-0070.6]** **Impact Summary**: Summarize changes, why/how, and impact on dependencies.
 *   **[CS-0070.7]** **Review Recommendation**: Recommend manual code reviews highlighting complex/high-risk areas.
+
+## Machine Resource Constraints & Thread Limits (CS-0080)
+
+*   **[CS-0080.1]** On this specific machine, system resources are severely limited. Limit running threads to at most 2, including Antigravity threads.
+*   **[CS-0080.2]** Prefer single-threaded processes and executions wherever possible.
+*   **[CS-0080.3]** All C++ builds must be single-threaded. Do NOT use parallel compilation flags (e.g., do not use `-j` or `-jN` with `make` or `ninja`, unless explicitly specifying `-j1`). Use `make -j1` or simply `make`.
+*   **[CS-0080.4]** All Java builds must be single-threaded. Do NOT run Maven or Gradle builds in parallel mode. Do NOT use `-T` or `--threads` with Maven.
+
