@@ -1,9 +1,10 @@
 # 🌌 Quasar Project TODO
 
 ## 🎯 Current Focus
-- [ ] **[TSK-20260410-002]** ENI and ESI management (Hot Connect, E²PROM access)
+*None (All ongoing tasks are currently on Stand-by)*
 
-## 🔄 Ongoing Tasks (In Progress)
+## ⏸️ Ongoing Tasks (Stand-by)
+- [ ] **[TSK-20260410-002]** ENI and ESI management (Hot Connect, E²PROM access)
 - [ ] **[TSK-20260410-005]** Passive Master capabilities (standby/takeover)
 
 ## 📋 Backlog (Not Started)
