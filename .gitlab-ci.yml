@@ -14,6 +14,8 @@ stages:
     - ctest --test-dir build-projects --output-on-failure -E "(ScriptManagerTest\.MemoryStress|LuaServiceTest\.FullLifecycle)"
     - echo "Packaging..."
     - cd build-projects && cpack -G DEB
+- chmod +x ./helpers/build-docs.sh
+- ./helpers/build-docs.sh build --refresh
     - echo "Configuring linux-modules..."
     - cd ..
     - cmake -S linux-modules -B build-modules

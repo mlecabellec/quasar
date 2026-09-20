@@ -39,7 +39,7 @@ jobs:
       - name: Build Documentation
         run: |
           chmod +x ./helpers/build-docs.sh
-          ./helpers/build-docs.sh build
+          ./helpers/build-docs.sh build --refresh
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

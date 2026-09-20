@@ -158,7 +158,8 @@ apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-heade
       - name: Build Documentation
         continue-on-error: true
         run: |
-          PYTHONPATH=$GITHUB_WORKSPACE/mkdocs-kit/src $GITHUB_WORKSPACE/.venv-docs/bin/python3 $GITHUB_WORKSPACE/mkdocs-kit/src/mkdocs_kit/cli.py build
+          chmod +x ./helpers/build-docs.sh
+./helpers/build-docs.sh build --refresh
         working-directory: doc
 
       - name: Upload Artifacts
