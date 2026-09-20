@@ -15,6 +15,15 @@ add_library(resoem STATIC
     src/Diagnostics.cpp
     src/EthercatMasterService.cpp
     src/EthercatSlave.cpp
+    src/EniDocument.cpp
+    src/EniConfigurator.cpp
+    src/virtual/SimulatedSlave.cpp
+    src/virtual/VirtualEtherCATBus.cpp
+    src/virtual/StubRawSocket.cpp
+    src/RedundancyManager.cpp
+    src/HotConnectManager.cpp
+    src/EniGenerator.cpp
+    src/EniComparator.cpp
 )
 quasar_apply_standards(resoem)
 # ...
@@ -43,18 +52,37 @@ target_link_libraries(test_redundancy PRIVATE resoem)
 add_executable(test_diagnostics test/test_diagnostics.cpp)
 target_link_libraries(test_diagnostics PRIVATE resoem)
 
+add_executable(test_eni_parser test/test_eni_parser.cpp)
+target_link_libraries(test_eni_parser PRIVATE resoem tinyxml2)
+
+add_executable(test_virtual_bus test/test_virtual_bus.cpp)
+target_link_libraries(test_virtual_bus PRIVATE resoem tinyxml2)
+
+add_executable(test_eni_configurator test/test_eni_configurator.cpp)
+target_link_libraries(test_eni_configurator PRIVATE resoem tinyxml2)
+
+add_executable(test_redundancy_loop test/test_redundancy_loop.cpp)
+target_link_libraries(test_redundancy_loop PRIVATE resoem tinyxml2)
+
+add_executable(test_hot_connect test/test_hot_connect.cpp)
+target_link_libraries(test_hot_connect PRIVATE resoem tinyxml2)
+
+add_executable(test_eni_generator_comparator test/test_eni_generator_comparator.cpp)
+target_link_libraries(test_eni_generator_comparator PRIVATE resoem tinyxml2)
+
 # Samples
 add_subdirectory(samples)
 
 target_include_directories(resoem PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third-party/tinyxml2>
     $<INSTALL_INTERFACE:include>
 )
 
 target_compile_features(resoem PUBLIC cxx_std_23)
 set_target_properties(resoem PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(resoem PUBLIC quasar_named utils)
+target_link_libraries(resoem PUBLIC quasar_named utils tinyxml2)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(Threads REQUIRED)
     target_link_libraries(resoem PRIVATE Threads::Threads)

@@ -14,6 +14,20 @@
 
 namespace resoem {
 
+namespace eni {
+class EniDocument;
+class EniConfigurator;
+}
+
+namespace hot_connect {
+class HotConnectManager;
+}
+
+namespace redundancy {
+class RedundancyManager;
+enum class RedundancyState : std::uint8_t;
+}
+
 /**
  * @class EthercatMasterService
  * @brief Service responsible for managing the EtherCAT master stack and reflexive slave discovery.
@@ -76,6 +90,34 @@ public:
      */
     std::shared_ptr<quasar::named::NamedObject> reconfigureSlave(std::shared_ptr<quasar::named::NamedObject> args);
 
+    /**
+     * @brief Configure cable redundancy.
+     * @param enable Whether to enable redundancy.
+     * @param secondary_iface Secondary network interface name.
+     */
+    void setRedundancy(bool enable, const std::string& secondary_iface = "");
+
+    /**
+     * @brief Load and apply an ENI configuration file.
+     * @param args NamedObject containing "filepath".
+     * @return Result NamedObject.
+     */
+    std::shared_ptr<quasar::named::NamedObject> loadEni(std::shared_ptr<quasar::named::NamedObject> args);
+
+    /**
+     * @brief Export the current bus topology as an ETG.2100 ENI XML file.
+     * @param args NamedObject containing "filepath" and optional "masterName".
+     * @return Result NamedObject.
+     */
+    std::shared_ptr<quasar::named::NamedObject> exportEni(std::shared_ptr<quasar::named::NamedObject> args);
+
+    /**
+     * @brief Compare a reference ENI file against the live bus.
+     * @param args NamedObject containing "filepath" and optional "level".
+     * @return Result NamedObject with "matched" (bool) and "summary" (string).
+     */
+    std::shared_ptr<quasar::named::NamedObject> compareEni(std::shared_ptr<quasar::named::NamedObject> args);
+
 protected:
     /**
      * @brief Constructor.
@@ -97,6 +139,13 @@ private:
     std::unique_ptr<CoEHandler> m_coe;
     std::shared_ptr<quasar::named::NamedObject> m_slavesRoot;
     std::vector<uint16_t> m_slaveStates;
+    bool m_redundancyEnabled{false};
+    std::string m_secondaryInterfaceName{""};
+    std::unique_ptr<eni::EniDocument> m_eniDoc;
+    std::unique_ptr<eni::EniConfigurator> m_eniConfigurator;
+    std::unique_ptr<hot_connect::HotConnectManager> m_hotConnectMgr;
+    std::unique_ptr<redundancy::RedundancyManager> m_redundancyMgr;
+    redundancy::RedundancyState m_lastRedundancyState;
 
     /**
      * @brief Mutex for protecting shared fields.

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "resoem/EtherCATTypes.hpp"
+#include "resoem/IRawSocket.hpp"
 #include "resoem/RawSocket.hpp"
 #include "resoem/Slave.hpp"
 #include <chrono>
@@ -23,9 +24,9 @@ class MailboxHandler {
 public:
   /**
    * @brief Construct a new Mailbox Handler object.
-   * @param socket The raw socket for communication.
+   * @param socket The raw socket (physical or virtual) for communication.
    */
-  explicit MailboxHandler(RawSocket &socket);
+  explicit MailboxHandler(IRawSocket &socket);
 
   /**
    * @brief Write data to the slave's output mailbox.
@@ -60,7 +61,7 @@ public:
   void set_verbose(int level) { verbose_level_ = level; }
 
 private:
-  RawSocket &socket_;        ///< Raw socket reference
+  IRawSocket &socket_;       ///< Raw socket reference (physical or virtual)
   uint8_t current_idx_ = 0;  ///< Cyclic datagram index
   int retries_ = 3;          ///< Max transmission retries
   int verbose_level_ = 0;    ///< Verbose logging level

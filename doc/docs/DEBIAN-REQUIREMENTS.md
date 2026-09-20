@@ -48,6 +48,7 @@ Raylib is vendored but links against system libraries on Linux.
 *   `uuid-dev`: Universally Unique ID library.
 *   `zlib1g-dev`: Compression library.
 *   `binutils-dev`: Binary utilities development files (often for symbol resolution and debugging).
+*   `libbfd-dev`: BFD library development files (required for backtrace and symbol handling).
 *   `libiberty-dev`: Library of GNU utility functions.
 
 ### Optional / Optimization

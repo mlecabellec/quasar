@@ -4,6 +4,8 @@ build-projects/
 build-modules/
 doc/doxydoc/
 tmp/
+tmp
+/tmp
 build_output.txt
 build_log.txt
 sensor_data.csv

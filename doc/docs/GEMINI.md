@@ -48,6 +48,9 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 
 ## 🚀 Active Roadmap & Task Context
 
+### Ongoing & Active
+- None
+
 ### ⏸️ Stand-by Tasks (On Hold)
 - **[TSK-20260410-002]**: **ENI Engineering**: ETG.2100 generation and Hot Connect topology resilience.
 - **[TSK-20260410-005]**: **Master Redundancy**: Passive monitoring and redundancy ring failover logic.
@@ -58,6 +61,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 - **[TSK-20260410-003]**: **ESI Cache Management**: Local index and resolver for vendor XML files.
 
 ### ✅ Recently Completed
+- **[TSK-20260920-001](project/tasks/TSK-20260920-001.md)**: **EtherCAT Cable Redundancy, Hot Connect & ETG.2100 ENI Framework**.
 - **[TSK-20260529-001]**: **Raw Ethernet Socket Service**: Dynamic packet capture and TreeTransformer integration.
 - **[TSK-20260421-001]**: **Interactive Lua shell (`qlsh`)**: Command line REPL for Quasar script testing.
 - **[TSK-20260410-004]**: **Interactive TUI (`ecat-top`)**: Keyboard-driven bus orchestration over SSH.

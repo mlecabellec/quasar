@@ -66,6 +66,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
     - Implementing `NamedMethod`, `NamedLuaMethod`, and `NamedService`.
 
 ### Recently Completed
+- **[TSK-20260920-001]**: **EtherCAT Cable Redundancy, Hot Connect & ETG.2100 ENI Framework**.
 - **[TSK-20260310-001]**: Standalone Script Runner (`sre`) with plugin support.
 - **[TSK-20260308-001]**: Full Polymorphic Integer Dispatch.
 

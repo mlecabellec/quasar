@@ -16,7 +16,7 @@
 
 namespace resoem {
 
-Enumerator::Enumerator(RawSocket &socket) : socket_(socket) {}
+Enumerator::Enumerator(IRawSocket &socket) : socket_(socket) {}
 
 Result<size_t> Enumerator::enumerate() {
   // Check if verbose logging is enabled and print start message.

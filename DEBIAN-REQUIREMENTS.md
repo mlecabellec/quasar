@@ -48,7 +48,9 @@ Raylib is vendored but links against system libraries on Linux.
 *   `uuid-dev`: Universally Unique ID library.
 *   `zlib1g-dev`: Compression library.
 *   `binutils-dev`: Binary utilities development files (often for symbol resolution and debugging).
+*   `libbfd-dev`: BFD library development files (required for backtrace and symbol handling).
 *   `libiberty-dev`: Library of GNU utility functions.
+*   `libsasl2-dev`: SASL development library (required for authentication mechanisms).
 
 ### Optional / Optimization
 The build system can use system versions of these libraries if found, speeding up the build and avoiding network fetches.
@@ -89,7 +91,7 @@ sudo apt-get install -y \
     linux-headers-$(uname -r) autoconf automake libtool dkms \
     libasound2-dev libx11-dev libxrandr-dev libxi-dev \
     libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-    libgmp-dev libssl-dev uuid-dev zlib1g-dev binutils-dev libiberty-dev \
+    libgmp-dev libssl-dev uuid-dev zlib1g-dev binutils-dev libbfd-dev libiberty-dev \
     libyaml-cpp-dev libtinyxml2-dev libjsoncons-dev \
     doxygen graphviz texlive-latex-base texlive-fonts-recommended texlive-latex-extra \
     clang-tidy cppcheck valgrind lcov gcovr tig nodejs npm python3-clang

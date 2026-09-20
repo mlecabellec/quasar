@@ -7,7 +7,7 @@
 
 namespace resoem {
 
-MailboxHandler::MailboxHandler(RawSocket &socket) : socket_(socket) {}
+MailboxHandler::MailboxHandler(IRawSocket &socket) : socket_(socket) {}
 
 int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
                           std::span<const byte> data,

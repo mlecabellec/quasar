@@ -1,7 +1,7 @@
 # 🌌 Quasar Project TODO
 
 ## 🎯 Current Focus
-*None (All ongoing tasks are currently on Stand-by)*
+- None
 
 ## ⏸️ Ongoing Tasks (Stand-by)
 - [ ] **[TSK-20260410-002]** ENI and ESI management (Hot Connect, E²PROM access)
@@ -13,6 +13,7 @@
 - [ ] **[TSK-20260410-003]** ESI local cache
 
 ## ✅ Recently Completed
+- [x] **[TSK-20260920-001]** EtherCAT Cable Redundancy, Hot Connect & ETG.2100 ENI Framework
 - [x] **[TSK-20260529-001]** Raw Ethernet Socket Service (RawEthernetService)
 - [x] **[TSK-20260410-004]** Terminal User Interface (`ecat-top`)
 - [x] **[TSK-20260421-001]** Interactive Lua REPL (`qlsh` / `quasar-shell`)

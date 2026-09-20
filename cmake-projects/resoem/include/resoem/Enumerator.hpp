@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "resoem/IRawSocket.hpp"
 #include "resoem/RawSocket.hpp"
 #include "resoem/Slave.hpp"
 #include "resoem/common.hpp"
@@ -32,9 +33,9 @@ class Enumerator {
 public:
   /**
    * @brief Construct a new Enumerator.
-   * @param socket The raw socket to use for communication.
+   * @param socket The raw socket (physical or virtual) to use for communication.
    */
-  explicit Enumerator(RawSocket &socket);
+  explicit Enumerator(IRawSocket &socket);
 
   /**
    * @brief Run the full enumeration process.
@@ -256,7 +257,7 @@ public:
   int write_register_broadcast(uint16_t reg, const T &value);
 
 private:
-  RawSocket &socket_;             ///< Raw socket reference
+  IRawSocket &socket_;            ///< Raw socket reference (physical or virtual)
   std::vector<SlaveInfo> slaves_; ///< List of discovered slaves
   uint8_t current_idx_ = 0;       ///< Cyclic index for datagrams
   int verbose_level_ = 0;         ///< Verbose logging level

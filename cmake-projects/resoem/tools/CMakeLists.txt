@@ -29,3 +29,18 @@ target_link_libraries(ecat-sdo PRIVATE resoem quasar_named)
 add_executable(ecat-top src/ecat_top.cpp)
 target_include_directories(ecat-top PRIVATE ${TOOLS_INCLUDES})
 target_link_libraries(ecat-top PRIVATE resoem quasar_named ftxui::screen ftxui::dom ftxui::component)
+
+# ecat-scan
+add_executable(ecat-scan src/ecat_scan.cpp ../../third-party/cpp-optparse/OptionParser.cpp)
+target_include_directories(ecat-scan PRIVATE ${TOOLS_INCLUDES})
+target_link_libraries(ecat-scan PRIVATE resoem quasar_named tinyxml2)
+
+# ecat-topocheck
+add_executable(ecat-topocheck src/ecat_topocheck.cpp ../../third-party/cpp-optparse/OptionParser.cpp)
+target_include_directories(ecat-topocheck PRIVATE ${TOOLS_INCLUDES})
+target_link_libraries(ecat-topocheck PRIVATE resoem quasar_named tinyxml2)
+
+# ecat-cmp
+add_executable(ecat-cmp src/ecat_cmp.cpp ../../third-party/cpp-optparse/OptionParser.cpp)
+target_include_directories(ecat-cmp PRIVATE ${TOOLS_INCLUDES})
+target_link_libraries(ecat-cmp PRIVATE resoem quasar_named tinyxml2)

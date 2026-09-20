@@ -48,9 +48,9 @@ void RawSocket::open_socket(const std::string &iface, int &fd, int &idx) {
   std::memset(&ifr, 0, sizeof(ifr));
   
   // Ensure the interface name fits and is null-terminated
-  const std::size_t copy_len = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
-  std::memcpy(ifr.ifr_name, iface.c_str(), copy_len);
-  ifr.ifr_name[copy_len] = '\0';
+  const std::size_t COPY_LEN = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
+  std::memcpy(ifr.ifr_name, iface.c_str(), COPY_LEN);
+  ifr.ifr_name[COPY_LEN] = '\0';
 
   if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
     close(fd);
@@ -219,7 +219,7 @@ void RawSocket::set_timeout(int timeout_ms) {
   }
 }
 
-std::array<uint8_t, 6> RawSocket::get_mac_address(bool use_secondary) const {
+std::array<uint8_t, ETHERNET_MAC_ADDRESS_LENGTH> RawSocket::get_mac_address(bool use_secondary) const {
   int fd = use_secondary ? sock_fd_secondary_ : sock_fd_;
   if (fd < 0)
     throw SocketError("Socket not open");
@@ -231,9 +231,9 @@ std::array<uint8_t, 6> RawSocket::get_mac_address(bool use_secondary) const {
   std::memset(&ifr, 0, sizeof(ifr));
   
   // Ensure the interface name fits and is null-terminated
-  const std::size_t copy_len = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
-  std::memcpy(ifr.ifr_name, iface.c_str(), copy_len);
-  ifr.ifr_name[copy_len] = '\0';
+  const std::size_t COPY_LEN = std::min(iface.size(), static_cast<std::size_t>(IFNAMSIZ - 1));
+  std::memcpy(ifr.ifr_name, iface.c_str(), COPY_LEN);
+  ifr.ifr_name[COPY_LEN] = '\0';
 
   // [FE-0040.1.2] Interface-specific MAC address retrieval.
   if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0) {
@@ -241,8 +241,8 @@ std::array<uint8_t, 6> RawSocket::get_mac_address(bool use_secondary) const {
                       std::string(strerror(errno)));
   }
 
-  std::array<uint8_t, 6> mac;
-  std::memcpy(mac.data(), ifr.ifr_hwaddr.sa_data, 6);
+  std::array<uint8_t, ETHERNET_MAC_ADDRESS_LENGTH> mac;
+  std::memcpy(mac.data(), ifr.ifr_hwaddr.sa_data, ETHERNET_MAC_ADDRESS_LENGTH);
   return mac;
 }
 

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "resoem/IRawSocket.hpp"
 #include "resoem/common.hpp"
 #include <optional>
 #include <string>
@@ -19,7 +20,7 @@ namespace resoem {
  * This class provides a simple wrapper around Linux raw sockets (AF_PACKET)
  * specifically for EtherCAT (EtherType 0x88A4).
  */
-class RawSocket {
+class RawSocket : public IRawSocket {
 public:
   /**
    * @brief Construct a new Raw Socket object.
@@ -36,7 +37,7 @@ public:
   /**
    * @brief Destroy the Raw Socket object and close the file descriptor.
    */
-  ~RawSocket();
+  ~RawSocket() override;
 
   // Prevent copying
   RawSocket(const RawSocket &) = delete;
@@ -60,7 +61,7 @@ public:
    * @return Number of bytes sent.
    * @throws SocketError on failure.
    */
-  size_t send(std::span<const byte> data, bool use_secondary = false);
+  size_t send(std::span<const byte> data, bool use_secondary = false) override;
 
   /**
    * @brief Receive a raw frame.
@@ -71,35 +72,35 @@ public:
    * @return Number of bytes received.
    * @throws SocketError on failure.
    */
-  size_t receive(std::span<byte> buffer, int *out_port_index = nullptr);
+  size_t receive(std::span<byte> buffer, int *out_port_index = nullptr) override;
 
   /**
    * @brief Set receive and send timeouts.
    * @details [FE-0040.1.2] Support configurable receive timeouts.
    * @param timeout_ms Timeout in milliseconds.
    */
-  void set_timeout(int timeout_ms);
+  void set_timeout(int timeout_ms) override;
 
   /**
    * @brief Get the interface name.
    * @return The interface name string.
    */
-  const std::string &interface_name() const { return interface_name_; }
+  const std::string &interface_name() const noexcept override { return interface_name_; }
 
   /**
    * @brief Get the MAC address of the bound interface.
    * @details [FE-0040.1.2] Interface-specific MAC address retrieval.
    * @param use_secondary If true, get the MAC of the secondary interface.
-   * @return 6-byte array containing the MAC address.
+   * @return Array containing the MAC address.
    * @throws SocketError if the MAC address cannot be retrieved.
    */
-  std::array<uint8_t, 6> get_mac_address(bool use_secondary = false) const;
+  std::array<uint8_t, ETHERNET_MAC_ADDRESS_LENGTH> get_mac_address(bool use_secondary = false) const override;
 
   /**
    * @brief Check if redundancy is available (secondary interface configured).
    * @return true if secondary interface is active.
    */
-  bool has_redundancy() const { return sock_fd_secondary_ >= 0; }
+  bool has_redundancy() const noexcept override { return sock_fd_secondary_ >= 0; }
 
 private:
   std::string interface_name_; ///< Name of the primary network interface

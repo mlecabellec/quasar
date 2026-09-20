@@ -46,6 +46,10 @@ constexpr uint16_t ETHERCAT_ETHERTYPE = 0x88A4; ///< EtherCAT Ethernet type (0x8
 constexpr size_t ETHERNET_HEADER_SIZE = 14;     ///< Standard Ethernet header size
 constexpr size_t ETHERCAT_HEADER_SIZE = 2;       ///< EtherCAT frame header size
 constexpr size_t MIN_FRAME_SIZE = 64;           ///< Minimum Ethernet frame size
+constexpr size_t MAX_FRAME_SIZE = 1514;         ///< Maximum standard Ethernet frame size (excluding 4-byte FCS)
+constexpr size_t ETHERNET_MAC_ADDRESS_LENGTH = 6; ///< Standard Ethernet MAC address length in bytes
+constexpr size_t DATAGRAM_HEADER_SIZE = 10;     ///< Standard EtherCAT datagram header size in bytes
+constexpr size_t WORKING_COUNTER_SIZE = 2;     ///< Standard EtherCAT working counter (WKC) size in bytes
 
 /**
  * @brief Exception thrown for socket-related errors.
