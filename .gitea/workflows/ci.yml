@@ -429,13 +429,15 @@ jobs:
           echo "=== pkg-config Libraries (subset) ==="
           pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
-      - name: ccache cache
+      - name: Restore ccache
+        id: ccache-restore
         continue-on-error: true
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ubuntu-latest-ccache-${{ gitea.sha }}
+          key: ubuntu-latest-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
           restore-keys: |
+            ubuntu-latest-ccache-${{ gitea.sha }}-
             ubuntu-latest-ccache-
 
       - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
@@ -473,7 +475,20 @@ jobs:
         run: |
           set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc) --verbose
+          CPUS=$(nproc 2>/dev/null || echo 2)
+          MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+          # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
+          MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+          if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+          BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+          if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+          echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+          free -h || true
+          cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
+          # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
+          cmake --build build-projects --target quasar_scripting --parallel 1 --verbose
+          cmake --build build-projects --parallel "$BUILD_JOBS" --verbose
+          free -h || true
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
@@ -562,11 +577,20 @@ jobs:
           set -x
           cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
+      - name: Save ccache
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ubuntu-latest-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
           ccache -s 2>/dev/null || true
@@ -672,13 +696,15 @@ jobs:
           echo "=== pkg-config Libraries (subset) ==="
           pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
-      - name: ccache cache
+      - name: Restore ccache
+        id: ccache-restore
         continue-on-error: true
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: debian-12-ccache-${{ gitea.sha }}
+          key: debian-12-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
           restore-keys: |
+            debian-12-ccache-${{ gitea.sha }}-
             debian-12-ccache-
 
       - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
@@ -716,7 +742,20 @@ jobs:
         run: |
           set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc) --verbose
+          CPUS=$(nproc 2>/dev/null || echo 2)
+          MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+          # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
+          MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+          if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+          BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+          if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+          echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+          free -h || true
+          cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
+          # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
+          cmake --build build-projects --target quasar_scripting --parallel 1 --verbose
+          cmake --build build-projects --parallel "$BUILD_JOBS" --verbose
+          free -h || true
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
@@ -805,11 +844,20 @@ jobs:
           set -x
           cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
+      - name: Save ccache
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: debian-12-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
           ccache -s 2>/dev/null || true
@@ -916,13 +964,15 @@ jobs:
           echo "=== pkg-config Libraries (subset) ==="
           pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
-      - name: ccache cache
+      - name: Restore ccache
+        id: ccache-restore
         continue-on-error: true
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: debian-13-ccache-${{ gitea.sha }}
+          key: debian-13-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
           restore-keys: |
+            debian-13-ccache-${{ gitea.sha }}-
             debian-13-ccache-
 
       - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
@@ -960,7 +1010,20 @@ jobs:
         run: |
           set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc) --verbose
+          CPUS=$(nproc 2>/dev/null || echo 2)
+          MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+          # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
+          MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+          if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+          BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+          if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+          echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+          free -h || true
+          cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
+          # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
+          cmake --build build-projects --target quasar_scripting --parallel 1 --verbose
+          cmake --build build-projects --parallel "$BUILD_JOBS" --verbose
+          free -h || true
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
@@ -1049,11 +1112,20 @@ jobs:
           set -x
           cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
+      - name: Save ccache
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: debian-13-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
           ccache -s 2>/dev/null || true
@@ -1161,13 +1233,15 @@ jobs:
           echo "=== pkg-config Libraries (subset) ==="
           pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
-      - name: ccache cache
+      - name: Restore ccache
+        id: ccache-restore
         continue-on-error: true
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: fedora-ccache-${{ gitea.sha }}
+          key: fedora-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
           restore-keys: |
+            fedora-ccache-${{ gitea.sha }}-
             fedora-ccache-
 
       - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
@@ -1205,7 +1279,20 @@ jobs:
         run: |
           set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc) --verbose
+          CPUS=$(nproc 2>/dev/null || echo 2)
+          MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+          # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
+          MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+          if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+          BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+          if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+          echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+          free -h || true
+          cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
+          # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
+          cmake --build build-projects --target quasar_scripting --parallel 1 --verbose
+          cmake --build build-projects --parallel "$BUILD_JOBS" --verbose
+          free -h || true
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
@@ -1294,11 +1381,20 @@ jobs:
           set -x
           cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
+      - name: Save ccache
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: fedora-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
           ccache -s 2>/dev/null || true
@@ -1405,13 +1501,15 @@ jobs:
           echo "=== pkg-config Libraries (subset) ==="
           pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
-      - name: ccache cache
+      - name: Restore ccache
+        id: ccache-restore
         continue-on-error: true
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: archlinux-ccache-${{ gitea.sha }}
+          key: archlinux-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
           restore-keys: |
+            archlinux-ccache-${{ gitea.sha }}-
             archlinux-ccache-
 
       - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
@@ -1449,7 +1547,20 @@ jobs:
         run: |
           set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc) --verbose
+          CPUS=$(nproc 2>/dev/null || echo 2)
+          MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+          # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
+          MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+          if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+          BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+          if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+          echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+          free -h || true
+          cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
+          # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
+          cmake --build build-projects --target quasar_scripting --parallel 1 --verbose
+          cmake --build build-projects --parallel "$BUILD_JOBS" --verbose
+          free -h || true
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
@@ -1537,11 +1648,20 @@ jobs:
           set -x
           cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
+      - name: Save ccache
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: archlinux-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
           ccache -s 2>/dev/null || true
