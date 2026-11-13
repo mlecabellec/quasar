@@ -1,14 +1,8 @@
-# Machine Resource Constraints & Thread Limits
+# Machine Resource Constraints & Build Parallelism
 
-On this specific machine, system resources are severely limited. Running too many threads can cause the system to crash.
+Single-threaded build restrictions are **only** applicable on severely resource-limited systems where parallel compilation can exhaust memory or CPU and destabilize the host.
 
 ## Rules & Guidelines
 
-1. **Thread Limit**: Limit running threads to at most 2, including Antigravity threads.
-2. **Single-Threaded Preference**: Prefer single-threaded processes and executions wherever possible.
-3. **C++ Builds**: All C++ builds must be single-threaded.
-   - Do NOT use parallel compilation flags (e.g., do not use `-j` or `-jN` with `make` or `ninja`, unless explicitly specifying `-j1`).
-   - Use `make -j1` or simply `make`.
-4. **Java Builds**: All Java builds must be single-threaded.
-   - Do NOT run Maven or Gradle builds in parallel mode.
-   - Do NOT use `-T` or `--threads` with Maven.
+1. **Standard Systems (Default)**: Parallel C++ and Java builds (e.g., `cmake --build --parallel`, `make -j$(nproc)`, `ninja`) are permitted.
+2. **Limited Systems Only**: When operating on a severely resource-constrained system, cap concurrent threads (`<= 2`) and use single-threaded builds (`-j1`, sequential Maven/Gradle) to prevent resource exhaustion.

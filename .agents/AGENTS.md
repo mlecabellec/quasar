@@ -146,10 +146,8 @@ These rules are loaded by agents and must be strictly followed when writing, mod
 
 ## Machine Resource Constraints & Thread Limits (CS-0080)
 
-*   **[CS-0080.1]** On this specific machine, system resources are severely limited. Limit running threads to at most 2, including Antigravity threads.
-*   **[CS-0080.2]** Prefer single-threaded processes and executions wherever possible.
-*   **[CS-0080.3]** All C++ builds must be single-threaded. Do NOT use parallel compilation flags (e.g., do not use `-j` or `-jN` with `make` or `ninja`, unless explicitly specifying `-j1`). Use `make -j1` or simply `make`.
-*   **[CS-0080.4]** All Java builds must be single-threaded. Do NOT run Maven or Gradle builds in parallel mode. Do NOT use `-T` or `--threads` with Maven.
+*   **[CS-0080.1]** **Standard Systems (Default)**: No single-thread constraint applies to builds. Parallel C++, CMake, and Java builds (e.g., `cmake --build --parallel`, `make -j$(nproc)`, `ninja`) are permitted.
+*   **[CS-0080.2]** **Limited-Resource Systems Only**: Single-threaded builds (`-j1`) and strict thread caps (`<= 2` concurrent threads) apply **only** on severely CPU/RAM-limited machines where parallel compilation risks exhausting system resources.
 
 ## Formal C++ Commenting, Doxygen & Traceability Standards (CS-0090)
 
