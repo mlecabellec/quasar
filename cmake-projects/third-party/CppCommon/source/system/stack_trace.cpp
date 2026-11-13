@@ -132,7 +132,7 @@ StackTrace::StackTrace(int skip)
         const char* functionname = nullptr;
         unsigned int line;
 
-        bfd_boolean found = false;
+        bool found = false;
         bfd_vma pc;
 
         if ((frame.address == nullptr) || (info.dli_fname == nullptr))
@@ -151,9 +151,9 @@ StackTrace::StackTrace(int skip)
         if ((bfd_get_file_flags(abfd) & HAS_SYMS) == 0)
             goto cleanup;
 
-        symcount = bfd_read_minisymbols(abfd, FALSE, &symsptr, &symsize);
+        symcount = bfd_read_minisymbols(abfd, false, &symsptr, &symsize);
         if (symcount == 0)
-            symcount = bfd_read_minisymbols(abfd, TRUE, &symsptr, &symsize);
+            symcount = bfd_read_minisymbols(abfd, true, &symsptr, &symsize);
         if (symcount < 0)
             goto cleanup;
         syms = (asymbol**)symsptr;
