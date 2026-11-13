@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build, Test & Package (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
     continue-on-error: ${{ matrix.optional }}
     strategy:
       fail-fast: false
@@ -71,6 +72,7 @@ jobs:
       - name: Checkout Quasar
         uses: actions/checkout@v4
         with:
+          github-server-url: https://gitea2.lecabellec.fr
           submodules: recursive
 
       - name: ccache cache
@@ -120,11 +122,24 @@ jobs:
             cpack -G TGZ
           fi
 
+      - name: Checkout MkDocs Kit
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: m/mkdocs-kit
+          github-server-url: https://gitea2.lecabellec.fr
+          path: .cache/mkdocs-kit
+          token: ${{ gitea.token }}
+
       - name: Build Documentation
         continue-on-error: true
         run: |
-          chmod +x ./helpers/build-docs.sh
-          ./helpers/build-docs.sh build --refresh
+          python3 -m venv .venv-docs
+          .venv-docs/bin/pip install --upgrade pip
+          .venv-docs/bin/pip install "setuptools<82.0.0"
+          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          cd doc
+          ../.venv-docs/bin/mkdocs-kit build
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
