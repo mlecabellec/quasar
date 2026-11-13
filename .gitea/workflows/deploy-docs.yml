@@ -147,6 +147,7 @@ jobs:
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
+          free -h || true
           df -h . || true
           du -sh * doc/site 2>/dev/null || true
           ls -la
