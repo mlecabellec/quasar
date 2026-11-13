@@ -50,10 +50,10 @@ jobs:
         if: "startsWith(matrix.container, 'debian')"
         run: |
           apt-get update
-apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
+          apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-headers-amd64 \
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
-                             curl ca-certificates nodejs npm python3-pip python3-venv plantuml default-jre libpango-1.0-0
+                              curl ca-certificates nodejs npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
           npm install -g n
           n stable
           # Refresh path for the next steps
@@ -141,26 +141,11 @@ apt-get install -y ccache cmake g++ make git pkg-config python3 file linux-heade
           SAFE_NAME=$(echo "${{ matrix.container }}" | tr ':' '-')
           echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
 
-      - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
-        with:
-          repository: mlecabellec/mkdocs-kit
-          path: mkdocs-kit
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Python dependencies for documentation
-        run: |
-          python3 -m venv .venv-docs
-          .venv-docs/bin/pip install --upgrade pip
-          .venv-docs/bin/pip install "setuptools<82.0.0"
-          .venv-docs/bin/pip install mkdocs mkdocs-material weasyprint wireviz nwdiag bit_field
-
       - name: Build Documentation
         continue-on-error: true
         run: |
           chmod +x ./helpers/build-docs.sh
-./helpers/build-docs.sh build --refresh
-        working-directory: doc
+          ./helpers/build-docs.sh build --refresh
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

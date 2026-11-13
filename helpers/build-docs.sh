@@ -129,16 +129,22 @@ setup_mkdocs_kit() {
         fi
     fi
     
-    # Setup virtual environment
-    if [[ ! -d "$MKDOCS_KIT_VENV" ]]; then
+    # Setup virtual environment (recreate if missing or broken across relocated caches)
+    if [[ ! -d "$MKDOCS_KIT_VENV" ]] || ! "$MKDOCS_KIT_VENV/bin/python3" -m pip --version >/dev/null 2>&1; then
+        rm -rf "$MKDOCS_KIT_VENV"
         info "Creating virtual environment for mkdocs-kit..."
         python3 -m venv "$MKDOCS_KIT_VENV"
         
         info "Installing Python dependencies (this might take a few moments)..."
-        "$MKDOCS_KIT_VENV/bin/pip" install --upgrade pip
-        "$MKDOCS_KIT_VENV/bin/pip" install "setuptools<82.0.0"
-        "$MKDOCS_KIT_VENV/bin/pip" install mkdocs mkdocs-material weasyprint wireviz nwdiag bit_field
+        "$MKDOCS_KIT_VENV/bin/python3" -m pip install --upgrade pip
+        "$MKDOCS_KIT_VENV/bin/python3" -m pip install "setuptools<82.0.0"
+        "$MKDOCS_KIT_VENV/bin/python3" -m pip install "$MKDOCS_KIT_DIR"
         success "Virtual environment setup complete."
+    elif [[ "${REFRESH:-false}" == "true" ]]; then
+        info "Refreshing Python dependencies for mkdocs-kit..."
+        "$MKDOCS_KIT_VENV/bin/python3" -m pip install "setuptools<82.0.0"
+        "$MKDOCS_KIT_VENV/bin/python3" -m pip install --upgrade "$MKDOCS_KIT_DIR"
+        success "Virtual environment refresh complete."
     else
         info "Using cached Python virtual environment."
     fi

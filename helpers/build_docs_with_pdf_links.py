@@ -55,9 +55,10 @@ def rewrite_combined_pdf_html(master_html: str) -> str:
     page_ids = {}
     id_map = {}
 
-    # Pass 1: Assign deterministic page IDs and per-page namespaced element IDs.
-    for rel_html, _open_tag, body in sections:
-        page_id = _slugify_page_id(rel_html)
+    # Pass 1: Assign deterministic page IDs (reusing any upstream section id) and per-page namespaced element IDs.
+    for rel_html, open_tag, body in sections:
+        existing_id_match = _ID_ATTR_RE.search(open_tag)
+        page_id = existing_id_match.group(2) if existing_id_match else _slugify_page_id(rel_html)
         page_ids[rel_html] = page_id
         if rel_html.endswith(".md"):
             page_ids[rel_html[:-3] + ".html"] = page_id
@@ -72,7 +73,7 @@ def rewrite_combined_pdf_html(master_html: str) -> str:
     rebuilt_sections = []
     for rel_html, open_tag, body in sections:
         page_id = page_ids[rel_html]
-        if ' id="' not in open_tag and " id='" not in open_tag:
+        if _ID_ATTR_RE.search(open_tag) is None:
             open_tag = open_tag[:-1] + f' id="{page_id}">'
 
         def _rewrite_id(m: re.Match) -> str:
@@ -181,7 +182,7 @@ def main() -> int:
             found.append(node)
         return found
 
-    def _PatchedGeneratePDF(site_dir: str, mkdocs_yml_path: str, pdf_output_path: str) -> None:
+    def _PatchedGeneratePDF(site_dir: str, mkdocs_yml_path: str, pdf_output_path: str, *args, **kwargs) -> None:
         temp_copies: list[str] = []
         try:
             with open(mkdocs_yml_path, "r", encoding="utf-8") as fh:
@@ -194,7 +195,7 @@ def main() -> int:
                 if os.path.isfile(idx_html) and not os.path.exists(readme_html):
                     shutil.copy2(idx_html, readme_html)
                     temp_copies.append(readme_html)
-            orig_generate_pdf(site_dir, mkdocs_yml_path, pdf_output_path)
+            orig_generate_pdf(site_dir, mkdocs_yml_path, pdf_output_path, *args, **kwargs)
         finally:
             for tmp_path in temp_copies:
                 if os.path.exists(tmp_path):
