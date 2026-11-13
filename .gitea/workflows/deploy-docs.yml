@@ -14,46 +14,59 @@ jobs:
     if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
 
     steps:
-      - name: "Diagnostic: Environment & Runner Context"
+      - name: "Diagnostic: Environment, Runner & Container Socket Context"
         env:
           CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
           CTX_STRATEGY: ${{ toJSON(strategy) }}
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== Host / Container OS ==="
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Host / Container OS & Hardware ==="
           cat /etc/os-release 2>/dev/null || true
           uname -a
+          hostname -f 2>/dev/null || hostname || true
           id
           pwd
-          df -h . || true
-          echo "=== Runner Context ==="
+          nproc || true
+          free -h || true
+          df -hT . || true
+          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          ls -la /var/run/docker.sock /run/podman/podman.sock 2>/dev/null || true
+          docker images --all 2>/dev/null || true
+          echo "=== Runner & Job Context ==="
           printf '%s\n' "$CTX_RUNNER"
+          printf '%s\n' "$CTX_JOB"
           echo "=== Strategy / Matrix Context ==="
           printf '%s\n' "$CTX_STRATEGY"
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Checkout MkDocs Kit
         run: |
+          set -x
           rm -rf mkdocs-kit
-          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
+          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
+          git -C mkdocs-kit log -1 --oneline || true
 
-      - name: "Diagnostic: Workspace & Toolchain Check"
+      - name: "Diagnostic: Workspace, Git & Toolchain Check"
         run: |
-          echo "=== Workspace Files ==="
+          set -x
           ls -la
-          if [ -d .git ]; then
-            git status -sb || true
-            git remote -v || true
-            git log -1 --oneline || true
-          fi
-          echo "=== Available Tools ==="
-          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+          ls -la doc/ 2>/dev/null || true
+          git status -sb || true
+          git remote -v || true
+          git log -n 5 --oneline --decorate || true
+          for cmd in node git python3 pip3 cmake gcc g++ make java mvn podman docker curl plantuml dot; do
             if command -v "$cmd" >/dev/null 2>&1; then
               printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
             else
@@ -63,10 +76,14 @@ jobs:
 
       - name: Install System Dependencies
         run: |
+          set -x
           SUDO=""
           [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
           $SUDO apt-get update
           $SUDO apt-get install -y --no-install-recommends plantuml graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev default-jre-headless
+          plantuml -version || true
+          dot -V || true
+          java -version 2>&1 || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -74,16 +91,36 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      - name: "Diagnostic: Python Environment Check"
+        run: |
+          set -x
+          python --version
+          pip --version
+          pip list
+
       - name: Install Python Dependencies
         run: |
-          pip install --upgrade pip
-          pip install "setuptools<82.0.0"
-          pip install ./mkdocs-kit
+          set -x
+          pip install -v --upgrade pip
+          pip install -v "setuptools<82.0.0"
+          pip install -v ./mkdocs-kit
+          pip list
 
       - name: Build Documentation
         run: |
+          set -x
           cd doc
-          mkdocs-kit build
+          ls -la
+          mkdocs-kit build -v
+          tail -n 120 mkdocs-kit.log 2>/dev/null || true
+
+      - name: "Diagnostic: Pre-Upload Documentation Artifacts Inventory"
+        if: always()
+        run: |
+          set -x
+          ls -lh doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+          ls -la doc/site/ 2>/dev/null || true
+          du -sh doc/site/ 2>/dev/null || true
 
       - name: Upload Documentation Site Artifact
         uses: actions/upload-artifact@v3
@@ -100,6 +137,8 @@ jobs:
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
           df -h . || true
+          du -sh * doc/site 2>/dev/null || true
           ls -la

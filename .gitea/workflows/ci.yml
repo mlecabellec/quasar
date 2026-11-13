@@ -7,67 +7,389 @@ on:
     branches: ["main", "master"]
   workflow_dispatch:
 
+env:
+  CMAKE_VERBOSE_MAKEFILE: "ON"
+  CTEST_OUTPUT_ON_FAILURE: "1"
+
 jobs:
-  build-debian-12:
-    name: Build, Test & Package (debian-12)
-    runs-on: debian-12
+  runner-diagnostics:
+    name: Pre-Matrix Runner & Container Discovery
+    runs-on: ubuntu-latest
     if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    outputs:
+      runner_name: ${{ steps.discover-containers.outputs.runner_name }}
+      container_engine: ${{ steps.discover-containers.outputs.container_engine }}
+      available_images: ${{ steps.discover-containers.outputs.available_images }}
+      available_labels: ${{ steps.discover-containers.outputs.available_labels }}
 
     steps:
-      - name: "Diagnostic: Environment & Runner Context"
+      - name: "Debug: Full Gitea, Runner, Strategy, Matrix & Env Contexts"
         env:
           CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
+          CTX_STRATEGY: ${{ toJSON(strategy) }}
+          CTX_MATRIX: ${{ toJSON(matrix) }}
+          CTX_VARS: ${{ toJSON(vars) }}
+          CTX_INPUTS: ${{ toJSON(inputs) }}
+          CTX_GITEA: ${{ toJSON(gitea) }}
+        run: |
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Runner Context ==="
+          printf '%s\n' "$CTX_RUNNER"
+          echo "=== Job Context ==="
+          printf '%s\n' "$CTX_JOB"
+          echo "=== Strategy / Matrix Context ==="
+          printf '%s\n' "$CTX_STRATEGY"
+          printf '%s\n' "$CTX_MATRIX"
+          echo "=== Vars / Inputs Context ==="
+          printf '%s\n' "$CTX_VARS"
+          printf '%s\n' "$CTX_INPUTS"
+          echo "=== Gitea Context (token redacted) ==="
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (sensitive values redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
+
+      - name: "Debug: Host OS, Kernel, Hardware, Cgroups & Network"
+        run: |
+          set +e
+          set -x
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          hostname -f 2>/dev/null || hostname || true
+          id
+          pwd
+          uptime || true
+          nproc || true
+          lscpu 2>/dev/null | head -n 30 || true
+          free -h || true
+          df -hT || true
+          ls -la / /.dockerenv /run/.containerenv 2>/dev/null || true
+          cat /run/.containerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          grep -E 'overlay|fuse|cgroup|docker|podman|/var/run/act|/opt/hostedtoolcache' /proc/self/mountinfo 2>/dev/null || true
+          cat /etc/resolv.conf 2>/dev/null || true
+          cat /etc/hosts 2>/dev/null || true
+          ip addr 2>/dev/null || hostname -I 2>/dev/null || true
+          ip route 2>/dev/null || true
+          getent hosts gitea2.lecabellec.fr github.com registry-1.docker.io 2>/dev/null || true
+          ls -la /opt/hostedtoolcache /var/run/act /root/.cache/act 2>/dev/null || true
+          for cmd in docker podman crictl buildah skopeo curl wget python3 jq git node npm cmake gcc g++ make ccache gdb plantuml java mvn; do
+            if command -v "$cmd" >/dev/null 2>&1; then
+              printf "%-12s %s\n" "$cmd:" "$(command -v "$cmd")"
+            else
+              printf "%-12s missing\n" "$cmd:"
+            fi
+          done
+
+      - name: "Debug: Container Socket & Daemon Introspection (Images, Containers, Labels)"
+        id: discover-containers
+        run: |
+          set +e
+          echo "=== Candidate Container Sockets ==="
+          ls -la /var/run/docker.sock /run/podman/podman.sock /run/docker.sock /run/user/*/podman/podman.sock 2>/dev/null || true
+          echo "DOCKER_HOST=${DOCKER_HOST:-unset} CONTAINER_HOST=${CONTAINER_HOST:-unset}"
+
+          if command -v docker >/dev/null 2>&1; then
+            echo "=== docker version ==="
+            docker version 2>&1 || true
+            echo "=== docker info ==="
+            docker info 2>&1 || true
+            echo "=== docker images -a ==="
+            docker images --all --digests 2>&1 || true
+            echo "=== docker ps -a ==="
+            docker ps -a --no-trunc 2>&1 || true
+            echo "=== docker network ls / volume ls ==="
+            docker network ls 2>&1 || true
+            docker volume ls 2>&1 || true
+          fi
+
+          if command -v podman >/dev/null 2>&1; then
+            echo "=== podman info / images / ps ==="
+            podman --version 2>&1 || true
+            podman info 2>&1 || true
+            podman images --all 2>&1 || true
+            podman ps -a 2>&1 || true
+            podman network ls 2>&1 || true
+          fi
+
+          if command -v python3 >/dev/null 2>&1; then
+            python3 - <<'PY'
+          import glob, http.client, json, os, socket, urllib.parse
+
+          class UnixHTTPConnection(http.client.HTTPConnection):
+              def __init__(self, sock_path, timeout=5):
+                  super().__init__("localhost", timeout=timeout)
+                  self.sock_path = sock_path
+              def connect(self):
+                  s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                  s.settimeout(self.timeout)
+                  s.connect(self.sock_path)
+                  self.sock = s
+
+          def api_get(sock_path, path):
+              conn = UnixHTTPConnection(sock_path, timeout=5)
+              conn.request("GET", path, headers={"Host": "localhost"})
+              resp = conn.getresponse()
+              raw = resp.read().decode("utf-8", errors="replace")
+              conn.close()
+              return resp.status, raw
+
+          candidates = []
+          for p in ["/var/run/docker.sock", "/run/docker.sock", "/run/podman/podman.sock"] + glob.glob("/run/user/*/podman/podman.sock"):
+              if os.path.exists(p) and p not in candidates:
+                  candidates.append(p)
+
+          dh = os.environ.get("DOCKER_HOST", "")
+          if dh.startswith("unix://"):
+              p = dh[len("unix://"):]
+              if os.path.exists(p) and p not in candidates:
+                  candidates.insert(0, p)
+
+          print(f"=== Unix Socket API Introspection (found: {candidates}) ===")
+          engine_summary = "unknown"
+          image_tags = []
+          matched_labels = []
+
+          expected_label_images = {
+              "ubuntu-latest": ["catthehacker/ubuntu:act-latest", "docker.io/catthehacker/ubuntu:act-latest", "gitea/runner-images:ubuntu-24.04", "docker.io/gitea/runner-images:ubuntu-24.04"],
+              "debian-12": ["debian:bookworm", "docker.io/library/debian:bookworm"],
+              "debian-13": ["debian:trixie", "docker.io/library/debian:trixie"],
+              "fedora": ["fedora:latest", "docker.io/library/fedora:latest"],
+              "archlinux": ["archlinux:latest", "docker.io/library/archlinux:latest"],
+          }
+
+          for sock in candidates:
+              print(f"\n--- Socket: {sock} ---")
+              try:
+                  st, ping = api_get(sock, "/_ping")
+                  print(f"GET /_ping -> {st} {ping.strip()}")
+              except Exception as e:
+                  print(f"Socket probe failed: {e}")
+                  continue
+
+              try:
+                  st, ver_raw = api_get(sock, "/version")
+                  print(f"GET /version ({st}):")
+                  ver = json.loads(ver_raw) if st == 200 else {}
+                  print(json.dumps(ver, indent=2))
+                  components = [c.get("Name", "") for c in ver.get("Components", []) if isinstance(c, dict)]
+                  engine_summary = f"{(ver.get('Platform') or {}).get('Name', 'engine')} {ver.get('Version', '')} (API {ver.get('ApiVersion', '')}, components={components})".strip()
+              except Exception as e:
+                  print(f"/version parse error: {e}")
+
+              try:
+                  st, info_raw = api_get(sock, "/info")
+                  print(f"GET /info ({st}) summary:")
+                  info = json.loads(info_raw) if st == 200 else {}
+                  keys = [
+                      "ID", "Name", "OperatingSystem", "OSType", "Architecture", "KernelVersion",
+                      "NCPU", "MemTotal", "ServerVersion", "Driver", "CgroupDriver", "CgroupVersion",
+                      "DockerRootDir", "SecurityOptions", "Labels", "Runtimes", "DefaultRuntime",
+                      "RegistryConfig",
+                  ]
+                  filtered = {k: info.get(k) for k in keys if k in info}
+                  print(json.dumps(filtered, indent=2))
+              except Exception as e:
+                  print(f"/info parse error: {e}")
+
+              try:
+                  st, imgs_raw = api_get(sock, "/images/json?all=1")
+                  imgs = json.loads(imgs_raw) if st == 200 else []
+                  print(f"GET /images/json?all=1 ({st}) -> {len(imgs)} images:")
+                  for idx, img in enumerate(imgs):
+                      tags = img.get("RepoTags") or ["<none>"]
+                      digests = img.get("RepoDigests") or []
+                      size_mb = round((img.get("Size") or 0) / (1024 * 1024), 1)
+                      img_id = img.get("Id", "")[:24]
+                      print(f"  [{idx}] id={img_id} size={size_mb}MB tags={tags} digests={digests[:1]}")
+                      for t in tags:
+                          if t != "<none>" and t not in image_tags:
+                              image_tags.append(t)
+                      # Inspect tagged images for Arch/OS/Entrypoint/Cmd/User
+                      if tags != ["<none>"]:
+                          ref = urllib.parse.quote(img.get("Id", ""), safe="")
+                          ist, iraw = api_get(sock, f"/images/{ref}/json")
+                          if ist == 200:
+                              idet = json.loads(iraw)
+                              cfg = idet.get("Config") or {}
+                              print(
+                                  f"       os={idet.get('Os')}/{idet.get('Architecture')} "
+                                  f"user={cfg.get('User') or 'root'} "
+                                  f"entrypoint={cfg.get('Entrypoint')} cmd={cfg.get('Cmd')} "
+                                  f"workdir={cfg.get('WorkingDir')}"
+                              )
+              except Exception as e:
+                  print(f"/images/json error: {e}")
+
+              try:
+                  st, ctrs_raw = api_get(sock, "/containers/json?all=1")
+                  ctrs = json.loads(ctrs_raw) if st == 200 else []
+                  print(f"GET /containers/json?all=1 ({st}) -> {len(ctrs)} containers:")
+                  for c in ctrs:
+                      names = c.get("Names")
+                      image = c.get("Image")
+                      state = c.get("State")
+                      status = c.get("Status")
+                      net = (c.get("HostConfig") or {}).get("NetworkMode")
+                      mounts = [f"{m.get('Type')}:{m.get('Source')}->{m.get('Destination')}" for m in (c.get("Mounts") or [])]
+                      print(f"  - names={names} image={image} state={state} ({status}) net={net} mounts={mounts}")
+              except Exception as e:
+                  print(f"/containers/json error: {e}")
+
+              try:
+                  st, nets_raw = api_get(sock, "/networks")
+                  nets = json.loads(nets_raw) if st == 200 else []
+                  print(f"GET /networks ({st}): {[{'name': n.get('Name'), 'driver': n.get('Driver'), 'scope': n.get('Scope')} for n in nets]}")
+              except Exception as e:
+                  print(f"/networks error: {e}")
+
+              try:
+                  st, vols_raw = api_get(sock, "/volumes")
+                  vols = json.loads(vols_raw) if st == 200 else {}
+                  vol_list = vols.get("Volumes") or []
+                  print(f"GET /volumes ({st}) -> {len(vol_list)} volumes: {[v.get('Name') for v in vol_list]}")
+              except Exception as e:
+                  print(f"/volumes error: {e}")
+
+          print("\n=== Matrix Label <-> Discovered Image Match Report ===")
+          for label, refs in expected_label_images.items():
+              found = [r for r in refs if any(r in t or t.endswith(r) for t in image_tags)]
+              status = f"CACHED ({found})" if found else "NOT CACHED LOCALLY (pull needed on job start)"
+              print(f"  {label:14s} -> {status}")
+              if found:
+                  matched_labels.append(label)
+
+          runner_name = os.environ.get("RUNNER_NAME", "unknown")
+          out_path = os.environ.get("GITHUB_OUTPUT") or os.environ.get("GITEA_OUTPUT")
+          if out_path:
+              with open(out_path, "a", encoding="utf-8") as fh:
+                  fh.write(f"runner_name={runner_name}\n")
+                  fh.write(f"container_engine={engine_summary}\n")
+                  fh.write(f"available_images={json.dumps(image_tags)}\n")
+                  fh.write(f"available_labels={json.dumps(matched_labels)}\n")
+              print(f"Wrote discovery outputs to {out_path}")
+          PY
+          fi
+
+      - name: "Debug: Probe Gitea Instance API & External Connectivity"
+        run: |
+          set +e
+          set -x
+          if command -v curl >/dev/null 2>&1; then
+            curl -sS -m 5 "${{ gitea.server_url }}/api/v1/version" || true
+            echo ""
+            curl -sSI -m 5 https://github.com | head -n 5 || true
+          fi
+
+      - name: "Diagnostic: Pre-Matrix Discovery Summary"
+        if: always()
+        run: |
+          echo "Discovery Job Status: ${{ job.status }}"
+          echo "Runner Name:          ${{ steps.discover-containers.outputs.runner_name }}"
+          echo "Container Engine:     ${{ steps.discover-containers.outputs.container_engine }}"
+          echo "Available Images:     ${{ steps.discover-containers.outputs.available_images }}"
+          echo "Cached Matrix Labels: ${{ steps.discover-containers.outputs.available_labels }}"
+
+  build-debian-12:
+    name: Build, Test & Package (debian-12)
+    needs: runner-diagnostics
+    runs-on: debian-12
+    if: (!cancelled()) && startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+
+    steps:
+      - name: "Diagnostic: Environment, Pre-Matrix & Runner Context"
+        env:
+          CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
+          CTX_NEEDS: ${{ toJSON(needs) }}
           CTX_STRATEGY: ${{ toJSON(strategy) }}
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== Host / Container OS ==="
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Host / Container OS & Hardware ==="
           cat /etc/os-release 2>/dev/null || true
           uname -a
+          hostname -f 2>/dev/null || hostname || true
           id
           pwd
-          df -h . || true
-          echo "=== Runner Context ==="
+          nproc || true
+          free -h || true
+          df -hT . || true
+          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          cat /etc/resolv.conf 2>/dev/null || true
+          echo "=== Pre-Matrix Discovery Outputs (needs) ==="
+          printf '%s\n' "$CTX_NEEDS"
+          echo "=== Runner & Job Context ==="
           printf '%s\n' "$CTX_RUNNER"
+          printf '%s\n' "$CTX_JOB"
           echo "=== Strategy / Matrix Context ==="
           printf '%s\n' "$CTX_STRATEGY"
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
 
       - name: Install Node.js and Git Prerequisites (Debian)
-        run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
+        run: |
+          set -x
+          apt-get update
+          apt-get install -y --no-install-recommends nodejs git ca-certificates
+          node --version
+          git --version
 
       - name: Checkout Quasar
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: "Diagnostic: Post-Checkout Git & Submodule State"
+        run: |
+          set -x
+          ls -la
+          git status -sb || true
+          git branch -a || true
+          git remote -v || true
+          git log -n 5 --oneline --decorate || true
+          git submodule status --recursive || true
+          ls -la cmake-projects doc linux-modules 2>/dev/null || true
+
       - name: Install dependencies (Debian)
         run: |
+          set -x
           apt-get update
           apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
 
-      - name: "Diagnostic: Workspace & Toolchain Check"
+      - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
         run: |
           echo "=== Workspace Files ==="
           ls -la
-          if [ -d .git ]; then
-            git status -sb || true
-            git remote -v || true
-            git log -1 --oneline || true
-          fi
-          echo "=== Available Tools ==="
-          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+          echo "=== Available Tools & Versions ==="
+          for cmd in node npm git python3 pip3 cmake ctest cpack ccache gcc g++ ld make gdb pkg-config plantuml dot java dpkg dpkg-deb mvn podman docker curl; do
             if command -v "$cmd" >/dev/null 2>&1; then
-              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+              printf "%-12s %s\n" "$cmd:" "$(command -v "$cmd")"
             else
-              printf "%-10s missing\n" "$cmd:"
+              printf "%-12s missing\n" "$cmd:"
             fi
           done
+          cmake --version || true
+          gcc --version | head -n 1 || true
+          g++ --version | head -n 1 || true
+          python3 --version || true
+          node --version || true
+          java -version 2>&1 || true
+          ccache --version | head -n 1 || true
+          gdb --version | head -n 1 || true
+          echo "=== pkg-config Libraries (subset) ==="
+          pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
       - name: ccache cache
         continue-on-error: true
@@ -78,11 +400,21 @@ jobs:
           restore-keys: |
             debian-12-ccache-
 
+      - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
+        run: |
+          set -x
+          ls -la .ccache 2>/dev/null || true
+          ccache -s || true
+          head -n 40 cmake-projects/CMakeLists.txt || true
+
       - name: Configure CMake Projects
         run: |
+          set -x
           mkdir -p .ccache build-projects
           cmake -S cmake-projects -B build-projects \
+                --log-level=VERBOSE \
                 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -92,48 +424,88 @@ jobs:
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Post-Configure CMake Cache & Discovered Tests"
+        run: |
+          echo "=== CMakeCache.txt Key Entries ==="
+          grep -E '^(CMAKE_(C|CXX)_COMPILER|CMAKE_BUILD_TYPE|CMAKE_.*_LAUNCHER|CMAKE_GENERATOR|CMAKE_VERBOSE_MAKEFILE|CMAKE_SHARED_LINKER_FLAGS|CMAKE_EXE_LINKER_FLAGS)' build-projects/CMakeCache.txt || true
+          echo "=== Discovered CTest Cases ==="
+          ctest --test-dir build-projects -N || true
+
       - name: Build CMake Projects
         run: |
+          set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc)
+          cmake --build build-projects --parallel $(nproc) --verbose
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Build Outputs & Binaries Inspection"
+        run: |
+          set -x
+          ls -la build-projects
+          ls -la build-projects/bin 2>/dev/null || true
+          ls -la build-projects/lib 2>/dev/null || true
+          du -sh build-projects .ccache 2>/dev/null || true
+          if [ -x ./build-projects/bin/scripting_test ]; then
+            file ./build-projects/bin/scripting_test || true
+            ldd ./build-projects/bin/scripting_test || true
+          fi
+
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+        run: |
+          set -x
+          ctest --test-dir build-projects --verbose --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
-        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+        run: |
+          set -x
+          ls -lh ./build-projects/bin/scripting_test || true
+          gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
       - name: Package (Debian/RPM/TGZ)
         run: |
+          set -x
           cd build-projects
           if command -v dpkg > /dev/null; then
-            cpack -G DEB
+            cpack -V -G DEB
           elif command -v rpmbuild > /dev/null; then
-            cpack -G RPM
+            cpack -V -G RPM
           else
-            cpack -G TGZ
+            cpack -V -G TGZ
           fi
+          ls -lh *.deb *.rpm *.tar.gz 2>/dev/null || true
+          for pkg in *.deb; do [ -f "$pkg" ] && dpkg-deb -I "$pkg" || true; done
 
       - name: Checkout MkDocs Kit
         continue-on-error: true
         run: |
+          set -x
           rm -rf .cache/mkdocs-kit
           mkdir -p .cache
-          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git -C .cache/mkdocs-kit log -1 --oneline || true
 
       - name: Build Documentation
         continue-on-error: true
         run: |
+          set -x
           python3 -m venv .venv-docs
-          .venv-docs/bin/pip install --upgrade pip
-          .venv-docs/bin/pip install "setuptools<82.0.0"
-          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          .venv-docs/bin/pip install -v --upgrade pip
+          .venv-docs/bin/pip install -v "setuptools<82.0.0"
+          .venv-docs/bin/pip install -v ./.cache/mkdocs-kit
           cd doc
-          ../.venv-docs/bin/mkdocs-kit build
+          ls -la
+          ../.venv-docs/bin/mkdocs-kit build -v
+          tail -n 80 mkdocs-kit.log 2>/dev/null || true
+
+      - name: "Diagnostic: Pre-Upload Artifacts Inventory"
+        if: always()
+        run: |
+          set -x
+          ls -lh build-projects/*.deb build-projects/*.rpm build-projects/*.tar.gz doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+          ls -la doc/site/ 2>/dev/null || true
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -148,76 +520,119 @@ jobs:
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
-        run: cmake -S linux-modules -B build-modules
+        run: |
+          set -x
+          cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
           df -h . || true
+          du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
+          ccache -s 2>/dev/null || true
           ls -la
 
   build-debian-13:
     name: Build, Test & Package (debian-13)
+    needs: runner-diagnostics
     runs-on: debian-13
-    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    if: (!cancelled()) && startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
     continue-on-error: true
 
     steps:
-      - name: "Diagnostic: Environment & Runner Context"
+      - name: "Diagnostic: Environment, Pre-Matrix & Runner Context"
         env:
           CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
+          CTX_NEEDS: ${{ toJSON(needs) }}
           CTX_STRATEGY: ${{ toJSON(strategy) }}
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== Host / Container OS ==="
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Host / Container OS & Hardware ==="
           cat /etc/os-release 2>/dev/null || true
           uname -a
+          hostname -f 2>/dev/null || hostname || true
           id
           pwd
-          df -h . || true
-          echo "=== Runner Context ==="
+          nproc || true
+          free -h || true
+          df -hT . || true
+          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          cat /etc/resolv.conf 2>/dev/null || true
+          echo "=== Pre-Matrix Discovery Outputs (needs) ==="
+          printf '%s\n' "$CTX_NEEDS"
+          echo "=== Runner & Job Context ==="
           printf '%s\n' "$CTX_RUNNER"
+          printf '%s\n' "$CTX_JOB"
           echo "=== Strategy / Matrix Context ==="
           printf '%s\n' "$CTX_STRATEGY"
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
 
       - name: Install Node.js and Git Prerequisites (Debian)
-        run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
+        run: |
+          set -x
+          apt-get update
+          apt-get install -y --no-install-recommends nodejs git ca-certificates
+          node --version
+          git --version
 
       - name: Checkout Quasar
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: "Diagnostic: Post-Checkout Git & Submodule State"
+        run: |
+          set -x
+          ls -la
+          git status -sb || true
+          git branch -a || true
+          git remote -v || true
+          git log -n 5 --oneline --decorate || true
+          git submodule status --recursive || true
+          ls -la cmake-projects doc linux-modules 2>/dev/null || true
+
       - name: Install dependencies (Debian)
         run: |
+          set -x
           apt-get update
           apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
 
-      - name: "Diagnostic: Workspace & Toolchain Check"
+      - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
         run: |
           echo "=== Workspace Files ==="
           ls -la
-          if [ -d .git ]; then
-            git status -sb || true
-            git remote -v || true
-            git log -1 --oneline || true
-          fi
-          echo "=== Available Tools ==="
-          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+          echo "=== Available Tools & Versions ==="
+          for cmd in node npm git python3 pip3 cmake ctest cpack ccache gcc g++ ld make gdb pkg-config plantuml dot java dpkg dpkg-deb mvn podman docker curl; do
             if command -v "$cmd" >/dev/null 2>&1; then
-              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+              printf "%-12s %s\n" "$cmd:" "$(command -v "$cmd")"
             else
-              printf "%-10s missing\n" "$cmd:"
+              printf "%-12s missing\n" "$cmd:"
             fi
           done
+          cmake --version || true
+          gcc --version | head -n 1 || true
+          g++ --version | head -n 1 || true
+          python3 --version || true
+          node --version || true
+          java -version 2>&1 || true
+          ccache --version | head -n 1 || true
+          gdb --version | head -n 1 || true
+          echo "=== pkg-config Libraries (subset) ==="
+          pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
       - name: ccache cache
         continue-on-error: true
@@ -228,11 +643,21 @@ jobs:
           restore-keys: |
             debian-13-ccache-
 
+      - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
+        run: |
+          set -x
+          ls -la .ccache 2>/dev/null || true
+          ccache -s || true
+          head -n 40 cmake-projects/CMakeLists.txt || true
+
       - name: Configure CMake Projects
         run: |
+          set -x
           mkdir -p .ccache build-projects
           cmake -S cmake-projects -B build-projects \
+                --log-level=VERBOSE \
                 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -242,48 +667,88 @@ jobs:
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Post-Configure CMake Cache & Discovered Tests"
+        run: |
+          echo "=== CMakeCache.txt Key Entries ==="
+          grep -E '^(CMAKE_(C|CXX)_COMPILER|CMAKE_BUILD_TYPE|CMAKE_.*_LAUNCHER|CMAKE_GENERATOR|CMAKE_VERBOSE_MAKEFILE|CMAKE_SHARED_LINKER_FLAGS|CMAKE_EXE_LINKER_FLAGS)' build-projects/CMakeCache.txt || true
+          echo "=== Discovered CTest Cases ==="
+          ctest --test-dir build-projects -N || true
+
       - name: Build CMake Projects
         run: |
+          set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc)
+          cmake --build build-projects --parallel $(nproc) --verbose
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Build Outputs & Binaries Inspection"
+        run: |
+          set -x
+          ls -la build-projects
+          ls -la build-projects/bin 2>/dev/null || true
+          ls -la build-projects/lib 2>/dev/null || true
+          du -sh build-projects .ccache 2>/dev/null || true
+          if [ -x ./build-projects/bin/scripting_test ]; then
+            file ./build-projects/bin/scripting_test || true
+            ldd ./build-projects/bin/scripting_test || true
+          fi
+
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+        run: |
+          set -x
+          ctest --test-dir build-projects --verbose --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
-        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+        run: |
+          set -x
+          ls -lh ./build-projects/bin/scripting_test || true
+          gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
       - name: Package (Debian/RPM/TGZ)
         run: |
+          set -x
           cd build-projects
           if command -v dpkg > /dev/null; then
-            cpack -G DEB
+            cpack -V -G DEB
           elif command -v rpmbuild > /dev/null; then
-            cpack -G RPM
+            cpack -V -G RPM
           else
-            cpack -G TGZ
+            cpack -V -G TGZ
           fi
+          ls -lh *.deb *.rpm *.tar.gz 2>/dev/null || true
+          for pkg in *.deb; do [ -f "$pkg" ] && dpkg-deb -I "$pkg" || true; done
 
       - name: Checkout MkDocs Kit
         continue-on-error: true
         run: |
+          set -x
           rm -rf .cache/mkdocs-kit
           mkdir -p .cache
-          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git -C .cache/mkdocs-kit log -1 --oneline || true
 
       - name: Build Documentation
         continue-on-error: true
         run: |
+          set -x
           python3 -m venv .venv-docs
-          .venv-docs/bin/pip install --upgrade pip
-          .venv-docs/bin/pip install "setuptools<82.0.0"
-          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          .venv-docs/bin/pip install -v --upgrade pip
+          .venv-docs/bin/pip install -v "setuptools<82.0.0"
+          .venv-docs/bin/pip install -v ./.cache/mkdocs-kit
           cd doc
-          ../.venv-docs/bin/mkdocs-kit build
+          ls -la
+          ../.venv-docs/bin/mkdocs-kit build -v
+          tail -n 80 mkdocs-kit.log 2>/dev/null || true
+
+      - name: "Diagnostic: Pre-Upload Artifacts Inventory"
+        if: always()
+        run: |
+          set -x
+          ls -lh build-projects/*.deb build-projects/*.rpm build-projects/*.tar.gz doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+          ls -la doc/site/ 2>/dev/null || true
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -298,53 +763,90 @@ jobs:
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
-        run: cmake -S linux-modules -B build-modules
+        run: |
+          set -x
+          cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
           df -h . || true
+          du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
+          ccache -s 2>/dev/null || true
           ls -la
 
   build-fedora:
     name: Build, Test & Package (fedora)
+    needs: runner-diagnostics
     runs-on: fedora
-    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    if: (!cancelled()) && startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
     continue-on-error: true
 
     steps:
-      - name: "Diagnostic: Environment & Runner Context"
+      - name: "Diagnostic: Environment, Pre-Matrix & Runner Context"
         env:
           CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
+          CTX_NEEDS: ${{ toJSON(needs) }}
           CTX_STRATEGY: ${{ toJSON(strategy) }}
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== Host / Container OS ==="
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Host / Container OS & Hardware ==="
           cat /etc/os-release 2>/dev/null || true
           uname -a
+          hostname -f 2>/dev/null || hostname || true
           id
           pwd
-          df -h . || true
-          echo "=== Runner Context ==="
+          nproc || true
+          free -h || true
+          df -hT . || true
+          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          cat /etc/resolv.conf 2>/dev/null || true
+          echo "=== Pre-Matrix Discovery Outputs (needs) ==="
+          printf '%s\n' "$CTX_NEEDS"
+          echo "=== Runner & Job Context ==="
           printf '%s\n' "$CTX_RUNNER"
+          printf '%s\n' "$CTX_JOB"
           echo "=== Strategy / Matrix Context ==="
           printf '%s\n' "$CTX_STRATEGY"
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
 
       - name: Install Node.js and Git Prerequisites (Fedora)
-        run: dnf install -y nodejs git ca-certificates
+        run: |
+          set -x
+          dnf install -y nodejs git ca-certificates
+          node --version
+          git --version
 
       - name: Checkout Quasar
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: "Diagnostic: Post-Checkout Git & Submodule State"
+        run: |
+          set -x
+          ls -la
+          git status -sb || true
+          git branch -a || true
+          git remote -v || true
+          git log -n 5 --oneline --decorate || true
+          git submodule status --recursive || true
+          ls -la cmake-projects doc linux-modules 2>/dev/null || true
+
       - name: Install dependencies (Fedora)
         run: |
+          set -x
           dnf install -y gcc-c++ make cmake pkgconf-pkg-config python3 file \
                          kernel-devel autoconf automake libtool dkms rpm-build \
                          alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
@@ -353,23 +855,28 @@ jobs:
                          yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
                          curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
 
-      - name: "Diagnostic: Workspace & Toolchain Check"
+      - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
         run: |
           echo "=== Workspace Files ==="
           ls -la
-          if [ -d .git ]; then
-            git status -sb || true
-            git remote -v || true
-            git log -1 --oneline || true
-          fi
-          echo "=== Available Tools ==="
-          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+          echo "=== Available Tools & Versions ==="
+          for cmd in node npm git python3 pip3 cmake ctest cpack ccache gcc g++ ld make gdb pkg-config plantuml dot java rpmbuild rpm mvn podman docker curl; do
             if command -v "$cmd" >/dev/null 2>&1; then
-              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+              printf "%-12s %s\n" "$cmd:" "$(command -v "$cmd")"
             else
-              printf "%-10s missing\n" "$cmd:"
+              printf "%-12s missing\n" "$cmd:"
             fi
           done
+          cmake --version || true
+          gcc --version | head -n 1 || true
+          g++ --version | head -n 1 || true
+          python3 --version || true
+          node --version || true
+          java -version 2>&1 || true
+          ccache --version | head -n 1 || true
+          gdb --version | head -n 1 || true
+          echo "=== pkg-config Libraries (subset) ==="
+          pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
       - name: ccache cache
         continue-on-error: true
@@ -380,11 +887,21 @@ jobs:
           restore-keys: |
             fedora-ccache-
 
+      - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
+        run: |
+          set -x
+          ls -la .ccache 2>/dev/null || true
+          ccache -s || true
+          head -n 40 cmake-projects/CMakeLists.txt || true
+
       - name: Configure CMake Projects
         run: |
+          set -x
           mkdir -p .ccache build-projects
           cmake -S cmake-projects -B build-projects \
+                --log-level=VERBOSE \
                 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -394,48 +911,88 @@ jobs:
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Post-Configure CMake Cache & Discovered Tests"
+        run: |
+          echo "=== CMakeCache.txt Key Entries ==="
+          grep -E '^(CMAKE_(C|CXX)_COMPILER|CMAKE_BUILD_TYPE|CMAKE_.*_LAUNCHER|CMAKE_GENERATOR|CMAKE_VERBOSE_MAKEFILE|CMAKE_SHARED_LINKER_FLAGS|CMAKE_EXE_LINKER_FLAGS)' build-projects/CMakeCache.txt || true
+          echo "=== Discovered CTest Cases ==="
+          ctest --test-dir build-projects -N || true
+
       - name: Build CMake Projects
         run: |
+          set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc)
+          cmake --build build-projects --parallel $(nproc) --verbose
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Build Outputs & Binaries Inspection"
+        run: |
+          set -x
+          ls -la build-projects
+          ls -la build-projects/bin 2>/dev/null || true
+          ls -la build-projects/lib 2>/dev/null || true
+          du -sh build-projects .ccache 2>/dev/null || true
+          if [ -x ./build-projects/bin/scripting_test ]; then
+            file ./build-projects/bin/scripting_test || true
+            ldd ./build-projects/bin/scripting_test || true
+          fi
+
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+        run: |
+          set -x
+          ctest --test-dir build-projects --verbose --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
-        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+        run: |
+          set -x
+          ls -lh ./build-projects/bin/scripting_test || true
+          gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
       - name: Package (Debian/RPM/TGZ)
         run: |
+          set -x
           cd build-projects
           if command -v dpkg > /dev/null; then
-            cpack -G DEB
+            cpack -V -G DEB
           elif command -v rpmbuild > /dev/null; then
-            cpack -G RPM
+            cpack -V -G RPM
           else
-            cpack -G TGZ
+            cpack -V -G TGZ
           fi
+          ls -lh *.deb *.rpm *.tar.gz 2>/dev/null || true
+          for pkg in *.rpm; do [ -f "$pkg" ] && rpm -qip "$pkg" || true; done
 
       - name: Checkout MkDocs Kit
         continue-on-error: true
         run: |
+          set -x
           rm -rf .cache/mkdocs-kit
           mkdir -p .cache
-          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git -C .cache/mkdocs-kit log -1 --oneline || true
 
       - name: Build Documentation
         continue-on-error: true
         run: |
+          set -x
           python3 -m venv .venv-docs
-          .venv-docs/bin/pip install --upgrade pip
-          .venv-docs/bin/pip install "setuptools<82.0.0"
-          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          .venv-docs/bin/pip install -v --upgrade pip
+          .venv-docs/bin/pip install -v "setuptools<82.0.0"
+          .venv-docs/bin/pip install -v ./.cache/mkdocs-kit
           cd doc
-          ../.venv-docs/bin/mkdocs-kit build
+          ls -la
+          ../.venv-docs/bin/mkdocs-kit build -v
+          tail -n 80 mkdocs-kit.log 2>/dev/null || true
+
+      - name: "Diagnostic: Pre-Upload Artifacts Inventory"
+        if: always()
+        run: |
+          set -x
+          ls -lh build-projects/*.deb build-projects/*.rpm build-projects/*.tar.gz doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+          ls -la doc/site/ 2>/dev/null || true
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -450,53 +1007,90 @@ jobs:
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
-        run: cmake -S linux-modules -B build-modules
+        run: |
+          set -x
+          cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
           df -h . || true
+          du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
+          ccache -s 2>/dev/null || true
           ls -la
 
   build-archlinux:
     name: Build, Test & Package (archlinux)
+    needs: runner-diagnostics
     runs-on: archlinux
-    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    if: (!cancelled()) && startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
     continue-on-error: true
 
     steps:
-      - name: "Diagnostic: Environment & Runner Context"
+      - name: "Diagnostic: Environment, Pre-Matrix & Runner Context"
         env:
           CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_JOB: ${{ toJSON(job) }}
+          CTX_NEEDS: ${{ toJSON(needs) }}
           CTX_STRATEGY: ${{ toJSON(strategy) }}
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== Host / Container OS ==="
+          echo "=== UTC Timestamp ==="
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
+          echo "=== Host / Container OS & Hardware ==="
           cat /etc/os-release 2>/dev/null || true
           uname -a
+          hostname -f 2>/dev/null || hostname || true
           id
           pwd
-          df -h . || true
-          echo "=== Runner Context ==="
+          nproc || true
+          free -h || true
+          df -hT . || true
+          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+          cat /proc/1/cgroup 2>/dev/null || true
+          cat /etc/resolv.conf 2>/dev/null || true
+          echo "=== Pre-Matrix Discovery Outputs (needs) ==="
+          printf '%s\n' "$CTX_NEEDS"
+          echo "=== Runner & Job Context ==="
           printf '%s\n' "$CTX_RUNNER"
+          printf '%s\n' "$CTX_JOB"
           echo "=== Strategy / Matrix Context ==="
           printf '%s\n' "$CTX_STRATEGY"
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+          echo "=== Environment Variables (redacted) ==="
+          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
 
       - name: Install Node.js and Git Prerequisites (Arch Linux)
-        run: pacman -Sy --noconfirm nodejs git ca-certificates
+        run: |
+          set -x
+          pacman -Sy --noconfirm nodejs git ca-certificates
+          node --version
+          git --version
 
       - name: Checkout Quasar
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: "Diagnostic: Post-Checkout Git & Submodule State"
+        run: |
+          set -x
+          ls -la
+          git status -sb || true
+          git branch -a || true
+          git remote -v || true
+          git log -n 5 --oneline --decorate || true
+          git submodule status --recursive || true
+          ls -la cmake-projects doc linux-modules 2>/dev/null || true
+
       - name: Install dependencies (Arch Linux)
         run: |
+          set -x
           pacman -S --needed --noconfirm \
                          base-devel cmake python file \
                          linux-headers autoconf automake libtool dkms \
@@ -504,23 +1098,28 @@ jobs:
                          gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
                          curl npm python-pip plantuml graphviz jre-openjdk pango cairo
 
-      - name: "Diagnostic: Workspace & Toolchain Check"
+      - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
         run: |
           echo "=== Workspace Files ==="
           ls -la
-          if [ -d .git ]; then
-            git status -sb || true
-            git remote -v || true
-            git log -1 --oneline || true
-          fi
-          echo "=== Available Tools ==="
-          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+          echo "=== Available Tools & Versions ==="
+          for cmd in node npm git python3 pip cmake ctest cpack ccache gcc g++ ld make gdb pkg-config plantuml dot java pacman mvn podman docker curl; do
             if command -v "$cmd" >/dev/null 2>&1; then
-              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+              printf "%-12s %s\n" "$cmd:" "$(command -v "$cmd")"
             else
-              printf "%-10s missing\n" "$cmd:"
+              printf "%-12s missing\n" "$cmd:"
             fi
           done
+          cmake --version || true
+          gcc --version | head -n 1 || true
+          g++ --version | head -n 1 || true
+          python3 --version || true
+          node --version || true
+          java -version 2>&1 || true
+          ccache --version | head -n 1 || true
+          gdb --version | head -n 1 || true
+          echo "=== pkg-config Libraries (subset) ==="
+          pkg-config --list-all 2>/dev/null | grep -iE 'alsa|x11|gl|ssl|zstd|uuid|curl|yaml|tinyxml|zlib|pango' | sort || true
 
       - name: ccache cache
         continue-on-error: true
@@ -531,11 +1130,21 @@ jobs:
           restore-keys: |
             archlinux-ccache-
 
+      - name: "Diagnostic: Pre-Configure ccache & CMake Environment"
+        run: |
+          set -x
+          ls -la .ccache 2>/dev/null || true
+          ccache -s || true
+          head -n 40 cmake-projects/CMakeLists.txt || true
+
       - name: Configure CMake Projects
         run: |
+          set -x
           mkdir -p .ccache build-projects
           cmake -S cmake-projects -B build-projects \
+                --log-level=VERBOSE \
                 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -545,48 +1154,87 @@ jobs:
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Post-Configure CMake Cache & Discovered Tests"
+        run: |
+          echo "=== CMakeCache.txt Key Entries ==="
+          grep -E '^(CMAKE_(C|CXX)_COMPILER|CMAKE_BUILD_TYPE|CMAKE_.*_LAUNCHER|CMAKE_GENERATOR|CMAKE_VERBOSE_MAKEFILE|CMAKE_SHARED_LINKER_FLAGS|CMAKE_EXE_LINKER_FLAGS)' build-projects/CMakeCache.txt || true
+          echo "=== Discovered CTest Cases ==="
+          ctest --test-dir build-projects -N || true
+
       - name: Build CMake Projects
         run: |
+          set -x
           ccache -z
-          cmake --build build-projects --parallel $(nproc)
+          cmake --build build-projects --parallel $(nproc) --verbose
           ccache -s
         env:
           CCACHE_DIR: ${{ gitea.workspace }}/.ccache
 
+      - name: "Diagnostic: Build Outputs & Binaries Inspection"
+        run: |
+          set -x
+          ls -la build-projects
+          ls -la build-projects/bin 2>/dev/null || true
+          ls -la build-projects/lib 2>/dev/null || true
+          du -sh build-projects .ccache 2>/dev/null || true
+          if [ -x ./build-projects/bin/scripting_test ]; then
+            file ./build-projects/bin/scripting_test || true
+            ldd ./build-projects/bin/scripting_test || true
+          fi
+
       - name: Test CMake Projects
-        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+        run: |
+          set -x
+          ctest --test-dir build-projects --verbose --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
 
       - name: Run Stress Tests in GDB
         continue-on-error: true
-        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+        run: |
+          set -x
+          ls -lh ./build-projects/bin/scripting_test || true
+          gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
 
       - name: Package (Debian/RPM/TGZ)
         run: |
+          set -x
           cd build-projects
           if command -v dpkg > /dev/null; then
-            cpack -G DEB
+            cpack -V -G DEB
           elif command -v rpmbuild > /dev/null; then
-            cpack -G RPM
+            cpack -V -G RPM
           else
-            cpack -G TGZ
+            cpack -V -G TGZ
           fi
+          ls -lh *.deb *.rpm *.tar.gz 2>/dev/null || true
 
       - name: Checkout MkDocs Kit
         continue-on-error: true
         run: |
+          set -x
           rm -rf .cache/mkdocs-kit
           mkdir -p .cache
-          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+          git -C .cache/mkdocs-kit log -1 --oneline || true
 
       - name: Build Documentation
         continue-on-error: true
         run: |
+          set -x
           python3 -m venv .venv-docs
-          .venv-docs/bin/pip install --upgrade pip
-          .venv-docs/bin/pip install "setuptools<82.0.0"
-          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          .venv-docs/bin/pip install -v --upgrade pip
+          .venv-docs/bin/pip install -v "setuptools<82.0.0"
+          .venv-docs/bin/pip install -v ./.cache/mkdocs-kit
           cd doc
-          ../.venv-docs/bin/mkdocs-kit build
+          ls -la
+          ../.venv-docs/bin/mkdocs-kit build -v
+          tail -n 80 mkdocs-kit.log 2>/dev/null || true
+
+      - name: "Diagnostic: Pre-Upload Artifacts Inventory"
+        if: always()
+        run: |
+          set -x
+          ls -lh build-projects/*.deb build-projects/*.rpm build-projects/*.tar.gz doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+          ls -la doc/site/ 2>/dev/null || true
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -601,11 +1249,16 @@ jobs:
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
-        run: cmake -S linux-modules -B build-modules
+        run: |
+          set -x
+          cmake -S linux-modules -B build-modules --log-level=VERBOSE
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ"
           echo "Job Status: ${{ job.status }}"
           df -h . || true
+          du -sh * .cache .ccache .venv-docs build-* 2>/dev/null || true
+          ccache -s 2>/dev/null || true
           ls -la
