@@ -57,6 +57,7 @@ enum class DatagramCmd : std::uint8_t {
   APRW = 3,
   FPRD = 4,
   FPWR = 5,
+  // Broadcast and logical EtherCAT commands [ETG.1000.4]
   FPRW = 6,
   BRD = 7,
   BWR = 8,
@@ -78,6 +79,7 @@ enum class EsmTransition : std::uint16_t {
   PI = 0x0004, ///< Pre-Operational to Init
   SP = 0x0008, ///< Safe-Operational to Pre-Operational
   SO = 0x0010, ///< Safe-Operational to Operational
+  // Reverse / Bootstrap / self-transitions [ETG.1000.6]
   SI = 0x0020, ///< Safe-Operational to Init
   OS = 0x0040, ///< Operational to Safe-Operational
   OP = 0x0080, ///< Operational to Pre-Operational

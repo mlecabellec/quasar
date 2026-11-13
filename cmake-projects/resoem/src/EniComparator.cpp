@@ -214,7 +214,7 @@ ComparisonReport EniComparator::compare_live_bus(const EniDocument &reference,
                                                 IRawSocket &socket,
                                                 ComparisonLevel level) {
   // Generate ENI topology directly from live bus scanning
-  EniGenerator generator(socket);
+  EniGenerator generator{socket};
   Result<EniDocument> live_doc = generator.generate("LiveMaster");
   if (!live_doc.has_value()) {
     // Record scan failure mismatch

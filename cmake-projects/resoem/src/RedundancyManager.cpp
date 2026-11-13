@@ -22,10 +22,11 @@ constexpr std::uint16_t DGRAM_MORE_FLAG = 0x8000;
 } // anonymous namespace
 
 RedundancyManager::RedundancyManager(IRawSocket &socket)
-    : m_socket(socket) {}
+    : m_socket{socket} {}
 
+/// @brief Get current redundancy engine state cleanly under mutex.
 RedundancyState RedundancyManager::state() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_state;
   } else {
@@ -34,7 +35,7 @@ RedundancyState RedundancyManager::state() const noexcept {
 }
 
 void RedundancyManager::set_expected_wkc(std::uint16_t expected_wkc) noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     m_expectedWkc = expected_wkc;
   } else {
@@ -43,7 +44,7 @@ void RedundancyManager::set_expected_wkc(std::uint16_t expected_wkc) noexcept {
 }
 
 std::uint16_t RedundancyManager::expected_wkc() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_expectedWkc;
   } else {
@@ -52,7 +53,7 @@ std::uint16_t RedundancyManager::expected_wkc() const noexcept {
 }
 
 std::size_t RedundancyManager::break_count() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_breakCount;
   } else {
@@ -61,7 +62,7 @@ std::size_t RedundancyManager::break_count() const noexcept {
 }
 
 std::size_t RedundancyManager::heal_count() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_healCount;
   } else {
@@ -70,7 +71,7 @@ std::size_t RedundancyManager::heal_count() const noexcept {
 }
 
 void RedundancyManager::set_probe_interval_cycles(std::size_t cycles) noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     m_probeIntervalCycles = cycles;
   } else {
@@ -216,7 +217,8 @@ bool RedundancyManager::check_healing_probe() {
     return false;
   }
 
-  std::vector<byte> probe_rx(MAX_FRAME_SIZE, static_cast<byte>(0));
+  std::vector<byte> probe_rx{};
+  probe_rx.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
   int rx_port = -1;
   std::size_t rec = 0;
   try {
@@ -245,7 +247,7 @@ bool RedundancyManager::check_healing_probe() {
 
 Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> frame_data,
                                                               std::uint16_t expected_wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return std::unexpected(ECError::Timeout);
   } else {
@@ -263,7 +265,8 @@ Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> f
       return std::unexpected(ECError::ProtocolError);
     }
 
-    std::vector<byte> rx_buffer(frame_data.size(), static_cast<byte>(0));
+    std::vector<byte> rx_buffer{};
+    rx_buffer.assign(frame_data.size(), static_cast<byte>(0));
     int rx_port = -1;
     std::size_t rec = 0;
     try {
@@ -290,14 +293,15 @@ Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> f
       ++m_breakCount;
 
       // Retransmit on secondary port
-      std::vector<byte> sec_tx(frame_data.begin(), frame_data.end());
+      std::vector<byte> sec_tx{frame_data.begin(), frame_data.end()};
       try {
         m_socket.send(sec_tx, true);
       } catch (const SocketError &) {
         return prim_wkc;
       }
 
-      std::vector<byte> sec_rx(frame_data.size(), static_cast<byte>(0));
+      std::vector<byte> sec_rx{};
+      sec_rx.assign(frame_data.size(), static_cast<byte>(0));
       int sec_port = -1;
       std::size_t sec_rec = 0;
       try {
@@ -307,7 +311,7 @@ Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> f
       }
       (void)sec_rec;
 
-      std::vector<byte> original_tx(frame_data.begin(), frame_data.end());
+      std::vector<byte> original_tx{frame_data.begin(), frame_data.end()};
       std::uint16_t sec_wkc = extract_wkc_from_frame(sec_rx);
       std::memcpy(frame_data.data(), rx_buffer.data(), std::min(frame_data.size(), rec));
       merge_datagram_payloads(frame_data, sec_rx, original_tx);
@@ -318,7 +322,7 @@ Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> f
     }
   } else if (m_state == RedundancyState::BIFURCATED_BROKEN ||
              m_state == RedundancyState::HEALING_PROBING) {
-    std::vector<byte> original_tx(frame_data.begin(), frame_data.end());
+    std::vector<byte> original_tx{frame_data.begin(), frame_data.end()};
 
     // Send on primary
     try {
@@ -327,20 +331,22 @@ Result<std::uint16_t> RedundancyManager::exchange_cyclic_frame(std::span<byte> f
       return std::unexpected(ECError::ProtocolError);
     }
 
-    std::vector<byte> prim_rx(frame_data.size(), static_cast<byte>(0));
+    std::vector<byte> prim_rx{};
+    prim_rx.assign(frame_data.size(), static_cast<byte>(0));
     int prim_port = -1;
     (void)m_socket.receive(prim_rx, &prim_port);
     std::uint16_t prim_wkc = extract_wkc_from_frame(prim_rx);
 
     // Send on secondary
-    std::vector<byte> sec_tx(original_tx.begin(), original_tx.end());
+    std::vector<byte> sec_tx{original_tx.begin(), original_tx.end()};
     try {
       m_socket.send(sec_tx, true);
     } catch (const SocketError &) {
       return prim_wkc;
     }
 
-    std::vector<byte> sec_rx(frame_data.size(), static_cast<byte>(0));
+    std::vector<byte> sec_rx{};
+    sec_rx.assign(frame_data.size(), static_cast<byte>(0));
     int sec_port = -1;
     (void)m_socket.receive(sec_rx, &sec_port);
     std::uint16_t sec_wkc = extract_wkc_from_frame(sec_rx);

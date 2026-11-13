@@ -11,7 +11,8 @@ It is organized by namespaces and contains documentation for the core framework 
 - [quasar/named](quasar/named/README.md): Hierarchical object system and tree management.
 
 ### Industrial Communication
-- [resoem](resoem/README.md): Clean-room EtherCAT master implementation.
+- [resoem](resoem/README.md): Clean-room EtherCAT MainDevice (master) implementation.
+- [resoes](resoes/README.md): Clean-room EtherCAT SubDevice (slave) implementation.
 - [opcua](opcua/README.md): OPC UA server and client services.
 
 ### Logic and Control

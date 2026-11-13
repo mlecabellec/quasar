@@ -22,11 +22,7 @@ struct EtherCATHeader {
   uint16_t type : 4;      ///< Protocol type (1 for EtherCAT)
 };
 
-/**
- * @brief EtherCAT Datagram Header (10 bytes).
- * 
- * Each datagram within a frame starts with this header.
- */
+/// @brief EtherCAT Datagram Header (10 bytes).
 struct __attribute__((packed)) DatagramHeader {
   uint8_t command;      ///< Command type (APRD, BWR, etc.)
   uint8_t index;        ///< Working counter index
@@ -81,12 +77,7 @@ public:
   void add_datagram_logical(uint8_t cmd, uint8_t idx, uint32_t address,
                             std::span<const byte> data);
 
-  /**
-   * @brief Finalize the frame, calculating headers and fixing 'More' bits.
-   * @details [FE-0040.2.3] Implement automatic "More" bit handling and frame padding to minimum size.
-   * 
-   * @return A span pointing to the complete frame data in the internal buffer.
-   */
+  /// @brief Finalize the frame, calculating headers and fixing 'More' bits ([FE-0040.2.3]).
   std::span<const byte> build();
 
   /**

@@ -21,6 +21,7 @@
 
 using namespace resoem;
 
+/// @brief Entry point for FoE firmware update sample.
 int main(int argc, char *argv[]) {
   if (argc < 4) {
     std::cout << "Usage: firm_update IFNAME SLAVE FILENAME [PASSWORD] [-v]\n";
@@ -46,8 +47,8 @@ int main(int argc, char *argv[]) {
     std::cout << "======================================================" << std::endl;
 
     std::cout << "[STEP 1] Initializing interface " << iface << "..." << std::endl;
-    RawSocket socket(iface);
-    Enumerator enumerator(socket);
+    RawSocket socket{iface};
+    Enumerator enumerator{socket};
     enumerator.set_verbose(verbose);
 
     if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
@@ -82,21 +83,22 @@ int main(int argc, char *argv[]) {
 
     // Read firmware file into memory
     std::cout << "[STEP 4] Loading firmware file: " << filename << "..." << std::endl;
-    std::ifstream infile(filename, std::ios::binary | std::ios::ate);
+    std::ifstream infile{filename, std::ios::binary | std::ios::ate};
     if (!infile) {
       std::cout << "[ERROR] Failed to open file: " << filename << "\n";
       return 1;
     }
     size_t size = infile.tellg();
     infile.seekg(0);
-    std::vector<byte> fw_data(size);
+    std::vector<byte> fw_data{};
+    fw_data.resize(size);
     infile.read(reinterpret_cast<char *>(fw_data.data()), static_cast<std::streamsize>(size));
     std::cout << "[INFO] Firmware loaded (" << size << " bytes).\n";
 
     std::cout << "[STEP 5] Starting FoE Download..." << std::endl;
-    MailboxHandler mbx(socket);
+    MailboxHandler mbx{socket};
     mbx.set_verbose(verbose);
-    FoEHandler foe(mbx);
+    FoEHandler foe{mbx};
 
     // Extract filename from path for the FoE request
     std::string name_only = filename;
@@ -109,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     Result<> res = foe.write_file(slave, name_only, password, fw_data);
     
-    if (res) {
+    if (res.has_value() == true) {
       std::cout << "\n[SUCCESS] Firmware download completed successfully." << std::endl;
     } else {
       std::cout << "\n[ERROR] Firmware download failed: " << static_cast<int>(res.error()) << std::endl;

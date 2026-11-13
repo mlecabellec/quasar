@@ -204,7 +204,7 @@ case "$COMMAND" in
         info "Building documentation with mkdocs-kit..."
         cd "$ROOT_DIR/doc"
         
-        PYTHONPATH="$MKDOCS_KIT_DIR/src" "$MKDOCS_KIT_VENV/bin/python3" "$MKDOCS_KIT_CLI" build
+        PYTHONPATH="$MKDOCS_KIT_DIR/src" "$MKDOCS_KIT_VENV/bin/python3" "$SCRIPT_DIR/build_docs_with_pdf_links.py" build
         
         success "Documentation successfully built at: $ROOT_DIR/doc/site/"
         ;;

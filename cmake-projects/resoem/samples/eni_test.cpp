@@ -29,6 +29,7 @@ extern "C" {
 extern ec_enit sample_eni;
 }
 
+/// @brief Entry point for ENI configuration validation sample.
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     std::cout << "Usage: eni_test IFNAME [-v]\n";
@@ -44,8 +45,8 @@ int main(int argc, char *argv[]) {
     std::cout << "======================================================" << std::endl;
 
     std::cout << "[STEP 1] Initializing Network on " << iface << "..." << std::endl;
-    RawSocket socket(iface);
-    Enumerator enumerator(socket);
+    RawSocket socket{iface};
+    Enumerator enumerator{socket};
     enumerator.set_verbose(verbose);
 
     // 1. Enumerate slaves on network
@@ -103,7 +104,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    if (all_safe_op) {
+    if (all_safe_op == true) {
       std::cout << "[SUCCESS] All slaves reached SAFE-OP.\n";
 
       std::cout << "[STEP 7] Requesting OPERATIONAL..." << std::endl;
@@ -118,7 +119,7 @@ int main(int argc, char *argv[]) {
           for (const SlaveInfo &s : enumerator.slaves()) {
             if (s.current_state != states::OP) op = false;
           }
-          if (op)
+          if (op == true)
             std::cout << "  - Cycle " << i << ": All Slaves OP\r" << std::flush;
           else
             std::cout << "  - Cycle " << i << ": Waiting for OP...\r" << std::flush;

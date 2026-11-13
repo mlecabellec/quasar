@@ -89,19 +89,26 @@ SOES is a library for implementing EtherCAT Slave devices (SubDevices). It is th
 
 ---
 
-## 4. Internal Project: Resoem
+## 4. Internal Projects: `resoem` and `resoes`
 
-**Location:** `cmake-projects/resoem`
+**Locations:** `cmake-projects/resoem` and `cmake-projects/resoes`
 
-### Overview
-`resoem` appears to be a **reimplementation** of SOEM using modern C++23.
+### Overview (`resoem` MainDevice)
+`resoem` is a clean-room C++23 EtherCAT MainDevice (Master) stack moving away from GPLv3 C dependencies to Quasar's internal safety and licensing standards.
 
-*   **Goal:** Create a clean-room implementation to move away from SOEM's GPLv3 license to a permissive one (Internal/Apache 2.0).
-*   **Tech Stack:** C++23.
-*   **Current State:**
-    *   Implements `RawSocket` for Linux.
-    *   Basic `EtherCATFrame` handling.
-    *   `Enumerator` logic.
+*   **Tech Stack:** C++23 (`CS-0010`..`CS-0090`, `std::timed_mutex`, `std::expected`).
+*   **Current Capabilities:**
+    *   `RawSocket` / `IRawSocket` transport (`AF_PACKET`) and `EtherCATFrame` multi-datagram builder/parser.
+    *   `Enumerator`, `SlaveInfo`, `ProcessImage`, Distributed Clocks (`dc_calc`), and `Diagnostics`.
+    *   Mailbox protocols: `MailboxHandler`, `CoEHandler`, `FoEHandler`, `EoEHandler`, `SoEHandler`.
+    *   ETG.2100 ENI engineering: `EniDocument`, `EniConfigurator`, `EniGenerator`, `EniComparator` (`TSK-20260920-001`).
+    *   Resilience & hardware-free CI simulation: `HotConnectManager`, `RedundancyManager`, `VirtualEtherCATBus`, `SimulatedSlave`, `StubRawSocket`, and `EthercatMasterService` (`ecat-top` TUI).
+
+### Overview (`resoes` SubDevice)
+`resoes` (`TSK-20261113-001`) is the clean-room C++23 EtherCAT SubDevice (Slave) counterpart to `SOES`:
+
+*   **Zero Globals / Explicit Error Handling:** Context-owned classes returning `std::expected<T, SlvError>` without C unions or `auto`.
+*   **Core Stack:** `EscController` (ESM, SM0-SM3, Watchdog, DC checks), `MailboxServer` (`SM0`/`SM1` pool & protocol multiplexer), `ObjectDictionary`, `CoeServer` (Expedited/Segmented/Complete-Access SDO, SDO Info, `0x1C12`/`0x1C13` sizing), `EepromEmulator` (`4B`/`8B` SII), `IEscHardware` / `MemoryEscHardware`, and `SlaveApplication` (`DIG_process` / `step_freerun`).
 
 ### Relationship to Modules
-`resoem` is the primary C++23 user-space master stack for Quasar. The legacy `linux-modules/SOEM` reference implementation has been removed.
+`resoem` is the primary C++23 user-space master stack and `resoes` is the companion C++23 slave stack for Quasar. The legacy `linux-modules/SOEM` directory has been removed. See [Resoem Classes](../impl/classes/resoem/README.md) and [Resoes Classes](../impl/classes/resoes/README.md).

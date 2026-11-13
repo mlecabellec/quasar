@@ -9,6 +9,7 @@
 #include "resoem/common.hpp"
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <span>
 #include <vector>
 
@@ -59,10 +60,7 @@ enum class SoEError : uint16_t {
  */
 class SoEHandler {
 public:
-  /**
-   * @brief Construct a new SoE Handler object.
-   * @param mailbox The low-level mailbox handler to use.
-   */
+  /// @brief Construct a new SoE Handler object.
   explicit SoEHandler(MailboxHandler &mailbox);
 
   /**
@@ -98,21 +96,38 @@ public:
                  std::chrono::microseconds timeout = std::chrono::seconds(2));
 
 private:
-  MailboxHandler &mailbox_;
+  MailboxHandler &mailbox_;          ///< Low-level mailbox handler
+  mutable std::timed_mutex mutex_{}; ///< Guard concurrent SoE transfers [CS-0010.46]
 
 #pragma pack(push, 1)
+  /**
+   * @brief Union-free SoE 4-byte protocol header [CS-0060.6].
+   */
   struct SoEHeader {
     uint8_t op_code : 3;
     uint8_t incomplete : 1;
     uint8_t error : 1;
     uint8_t drive_no : 3;
     uint8_t element_flags;
-    union {
-      uint16_t idn;
-      uint16_t fragments_left;
-    };
+    uint16_t idn_or_fragments;
+
+    /// @brief Get IDN value.
+    [[nodiscard]] constexpr uint16_t idn() const noexcept {
+      return idn_or_fragments;
+    }
+    /// @brief Set IDN value.
+    constexpr void set_idn(uint16_t val) noexcept { idn_or_fragments = val; }
+    /// @brief Get remaining fragments count.
+    [[nodiscard]] constexpr uint16_t fragments_left() const noexcept {
+      return idn_or_fragments;
+    }
+    /// @brief Set remaining fragments count.
+    constexpr void set_fragments_left(uint16_t val) noexcept {
+      idn_or_fragments = val;
+    }
   };
 #pragma pack(pop)
+  static_assert(sizeof(SoEHeader) == 4U, "SoEHeader must be 4 bytes");
 };
 
 } // namespace resoem

@@ -1,5 +1,23 @@
+/**
+ * @file EventManager.cpp
+ * @brief Implementation of the `utils::EventManager` SMP service methods.
+ *
+ * @details Defines predefined SMP event registration, thread-safe event ID lookup
+ * and allocation, entry-point subscription management, and lock-free snapshot dispatch
+ * for global event emission.
+ *
+ * @task TSK-20261113-003
+ * @feature FE-0070, FE-0080
+ * @constraint CS-0010.44, CS-0010.46, CS-0090.1, CS-0090.2, CS-0090.5, CS-0090.6
+ * @compliance Implements `EventManager` methods with timed mutex RAII guards,
+ * explicit types (no `auto`), bounded lock scopes, and control-flow comments.
+ */
+
+// Header under implementation and SMP entry point interface.
 #include "utils/EventManager.hpp"
 #include <Smp/IEntryPoint.h>
+
+// Standard algorithms, exception types, and Quasar standard SMP exceptions.
 #include <algorithm>
 #include <core/StandardExceptions.hpp>
 #include <cstring>
@@ -7,10 +25,7 @@
 
 namespace utils {
 
-/**
- * @brief Constructor for EventManager.
- * @details Initializes the predefined SMP events.
- */
+// Constructor for EventManager: initializes core::Object metadata and predefined SMP events.
 EventManager::EventManager()
     : core::Object("EventManager", "SMP Event Manager Service", nullptr) {
   // Register the standard SMP events
@@ -22,7 +37,7 @@ Smp::ComponentStateKind EventManager::GetState() const {
 }
 
 void EventManager::Publish(Smp::IPublication *receiver) {
-  // [CS-0010.16] Check for null pointers
+  // [CS-0010.16] Check for null pointers before any future publication usage.
   if (!receiver) {
     // Standard doesn't specify behavior here, but we should be safe
     return;
@@ -96,22 +111,28 @@ void EventManager::RegisterPredefinedEvents() {
   // these events. These events are crucial for simulation state transitions and
   // time updates.
 
-  // Map standard event names to their reserved IDs
+  // Map connecting and initialising simulator lifecycle event names to reserved IDs.
   _eventIds[SMP_LeaveConnecting] = SMP_LeaveConnectingId;
   _eventIds[SMP_EnterInitialising] = SMP_EnterInitialisingId;
   _eventIds[SMP_LeaveInitialising] = SMP_LeaveInitialisingId;
   _eventIds[SMP_EnterStandby] = SMP_EnterStandbyId;
   _eventIds[SMP_LeaveStandby] = SMP_LeaveStandbyId;
+
+  // Map executing, storing, and restoring simulator lifecycle event names to reserved IDs.
   _eventIds[SMP_EnterExecuting] = SMP_EnterExecutingId;
   _eventIds[SMP_LeaveExecuting] = SMP_LeaveExecutingId;
   _eventIds[SMP_EnterStoring] = SMP_EnterStoringId;
   _eventIds[SMP_LeaveStoring] = SMP_LeaveStoringId;
   _eventIds[SMP_EnterRestoring] = SMP_EnterRestoringId;
+
+  // Map exiting, aborting, and time-change event names to reserved IDs.
   _eventIds[SMP_LeaveRestoring] = SMP_LeaveRestoringId;
   _eventIds[SMP_EnterExiting] = SMP_EnterExitingId;
   _eventIds[SMP_EnterAborting] = SMP_EnterAbortingId;
   _eventIds[SMP_EpochTimeChanged] = SMP_EpochTimeChangedId;
   _eventIds[SMP_MissionTimeChanged] = SMP_MissionTimeChangedId;
+
+  // Map reconnecting and simulation time-change event names to reserved IDs.
   _eventIds[SMP_EnterReconnecting] = SMP_EnterReconnectingId;
   _eventIds[SMP_LeaveReconnecting] = SMP_LeaveReconnectingId;
   _eventIds[SMP_PreSimTimeChange] = SMP_PreSimTimeChangeId;
@@ -124,13 +145,14 @@ Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
   // EventIds. New IDs are generated if the event name is not found, ensuring
   // uniqueness throughout the simulation.
 
-  // [CS-0010.16] Check for null pointers
+  // [CS-0010.16] Reject null event names prior to locking so invalid arguments fail fast.
   if (!eventName) {
     throw core::InvalidEventName("Event name is null");
   }
 
-  // Use RAII for mutex [CS-0010.22]
+  // Use RAII for mutex [CS-0010.22] with a 1-second bounded wait [CS-0010.26].
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  // Fail deterministically if lock acquisition timed out under contention.
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring EventManager lock");
   }
@@ -139,11 +161,12 @@ Smp::Services::EventId EventManager::QueryEventId(Smp::String8 eventName) {
   // [CS-0010.35] Forbidden auto replaced with explicit type
   std::map<std::string, Smp::Services::EventId>::iterator it =
       _eventIds.find(eventName);
+  // Return existing identifier immediately if this event name was already registered.
   if (it != _eventIds.end()) {
     return it->second;
   }
 
-  // Create new event ID if not found
+  // Create new event ID if not found and store bidirectional name/ID mappings.
   Smp::Services::EventId newId = _nextEventId++;
   _eventIds[eventName] = newId;
   _eventNames[newId] = eventName;
@@ -156,13 +179,14 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   // point to an event. Also addresses FE-0070.4.3 and FE-0070.4.4 by managing
   // the subscription list.
 
-  // [CS-0010.16] Check for null pointers
+  // [CS-0010.16] Reject null entry point pointers prior to locking.
   if (!entryPoint) {
     throw std::invalid_argument("Entry point is null");
   }
 
-  // Use RAII for mutex [CS-0010.22]
+  // Use RAII for mutex [CS-0010.22] with a 1-second timeout [CS-0010.26].
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  // Abort with timeout exception if mutex cannot be acquired within 1 second.
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring EventManager lock");
   }
@@ -172,13 +196,13 @@ void EventManager::Subscribe(Smp::Services::EventId event,
   std::vector<const Smp::IEntryPoint *>::iterator it =
       std::find(subscribers.begin(), subscribers.end(), entryPoint);
 
-  // Verify if already subscribed
+  // Verify if already subscribed to enforce unique subscription per event.
   if (it != subscribers.end()) {
     throw core::EntryPointAlreadySubscribed(entryPoint,
                                             "Entry point already subscribed");
   }
 
-  // Add new subscriber
+  // Add new subscriber to the end of the ordered subscription list.
   subscribers.push_back(entryPoint);
 }
 
@@ -187,13 +211,14 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   // Implements FE-0070.4.6: IEventManager Unsubscribe shall unsubscribe an
   // entry point. Handles cases where the event or entry point might not exist.
 
-  // [CS-0010.16] Check for null pointers
+  // [CS-0010.16] Reject null entry point pointers before acquiring the mutex.
   if (!entryPoint) {
     throw std::invalid_argument("Entry point is null");
   }
 
-  // Use RAII for mutex [CS-0010.22]
+  // Use RAII for mutex [CS-0010.22] with a 1-second timeout [CS-0010.26].
   std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+  // Abort if timed lock wait expires under contention.
   if (!lock.owns_lock()) {
     throw std::runtime_error("Timeout acquiring EventManager lock");
   }
@@ -202,6 +227,7 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   std::map<Smp::Services::EventId,
            std::vector<const Smp::IEntryPoint *>>::iterator itSub =
       _subscriptions.find(event);
+  // Throw EntryPointNotSubscribed if no subscription list exists for this event ID.
   if (itSub == _subscriptions.end()) {
     throw core::EntryPointNotSubscribed(
         entryPoint, "Entry point not subscribed (event has no subscribers)");
@@ -212,13 +238,13 @@ void EventManager::Unsubscribe(Smp::Services::EventId event,
   std::vector<const Smp::IEntryPoint *>::iterator it =
       std::find(subscribers.begin(), subscribers.end(), entryPoint);
 
-  // Verify existence before removal
+  // Verify existence before removal to report unsubscribed entry points per SMP contract.
   if (it == subscribers.end()) {
     throw core::EntryPointNotSubscribed(entryPoint,
                                         "Entry point not subscribed");
   }
 
-  // Remove subscriber
+  // Remove subscriber from the event's vector.
   subscribers.erase(it);
 }
 
@@ -233,23 +259,28 @@ void EventManager::Emit(Smp::Services::EventId event, Smp::Bool synchronous) {
   // execution [CS-0010.35] Forbidden auto replaced with explicit type
   std::vector<const Smp::IEntryPoint *> subscribersCopy;
   {
+    // Acquire timed lock solely to snapshot the current subscriber vector.
     std::unique_lock<std::timed_mutex> lock(_mutex, std::chrono::seconds(1));
+    // Abort emission if lock acquisition times out after 1 second.
     if (!lock.owns_lock()) {
       throw std::runtime_error("Timeout acquiring EventManager lock");
     }
+    // Look up subscribers for the emitted event ID.
     std::map<Smp::Services::EventId,
              std::vector<const Smp::IEntryPoint *>>::iterator it =
         _subscriptions.find(event);
+    // Copy subscriber pointers if any subscribers are registered; empty map leaves copy empty.
     if (it != _subscriptions.end()) {
       subscribersCopy = it->second;
     }
   }
 
-  // Iterate over the copy and execute each entry point
+  // Iterate over the snapshot (bounded by snapshot length) and execute each non-null entry point outside _mutex.
   for (std::vector<const Smp::IEntryPoint *>::const_iterator itCopy =
            subscribersCopy.begin();
        itCopy != subscribersCopy.end(); ++itCopy) {
     const Smp::IEntryPoint *ep = *itCopy;
+    // Guard against null entry point pointers before invoking Execute().
     if (ep) {
       // Execute the entry point
       ep->Execute();

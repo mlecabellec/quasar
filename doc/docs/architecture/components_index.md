@@ -35,3 +35,11 @@ Manages deterministic scheduling loops, State Patterns, and hierarchical handsha
 - **State Handshaker**: `StateMachine` (HSM), wrapping State patterns for automations.
 - **Reference Diagram**: [Logic Engine HSM Overview](diagrams.md#logic-engine-models)
 - **Scheduling Rules**: [CS-0060: Bounded Logic Scheduler Standards](CS-0060.md)
+
+---
+
+## 🔌 EtherCAT Stacks (`resoem` & `resoes`)
+
+Provides clean-room C++23 EtherCAT MainDevice (`resoem`) and SubDevice (`resoes`) stacks:
+- **MainDevice (`resoem`)**: `Enumerator`, `RawSocket` / `IRawSocket`, `EniDocument`, `EniConfigurator`, `EniGenerator`, `EniComparator`, `HotConnectManager`, `RedundancyManager`, `CoEHandler` / `FoEHandler` / `EoEHandler` / `SoEHandler`, `VirtualEtherCATBus`, and `EthercatMasterService` (`[resoem Classes](../impl/classes/resoem/README.md)`).
+- **SubDevice (`resoes`)**: `EscController`, `MailboxServer`, `ObjectDictionary`, `CoeServer`, `EepromEmulator`, `IEscHardware` / `MemoryEscHardware`, and `SlaveApplication` (`[resoes Classes](../impl/classes/resoes/README.md)`).

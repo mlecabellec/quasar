@@ -9,6 +9,7 @@
 
 using namespace resoem;
 
+/// @brief Entry point for ecat_ls bus topology discovery tool.
 int main(int argc, char* argv[]) {
     optparse::OptionParser parser = optparse::OptionParser().description("Quasar EtherCAT Topology Discovery Tool");
 
@@ -23,10 +24,10 @@ int main(int argc, char* argv[]) {
 
     try {
         std::cout << "Scanning EtherCAT bus on " << iface << "..." << std::endl;
-        RawSocket socket(iface);
-        Enumerator enumerator(socket);
+        RawSocket socket{iface};
+        Enumerator enumerator{socket};
 
-        if (verbose) {
+        if (verbose == true) {
             enumerator.set_verbose(1);
         }
 
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
             uint16_t al_status = enumerator.read_register_fprd<uint16_t>(slave.configured_address, regs::AL_STATUS, wkc);
             std::string state_str = "UNKNOWN";
             if (wkc > 0) {
+                // Decode AL Status bits into state name
                 uint16_t state = al_status & 0x0F;
                 switch(state) {
                     case states::INIT:    state_str = "INIT"; break;

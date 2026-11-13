@@ -42,21 +42,13 @@ struct TransitionReport {
  */
 class EniConfigurator {
 public:
-  /**
-   * @brief Construct an EniConfigurator.
-   * @param socket Transport socket (physical RawSocket or virtual StubRawSocket).
-   * @param document Parsed ENI AST structure.
-   */
+  /// @brief Construct an EniConfigurator bound to socket and ENI AST.
   explicit EniConfigurator(IRawSocket &socket, const EniDocument &document);
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~EniConfigurator() noexcept = default;
 
-  // Prevent copying
-  EniConfigurator(const EniConfigurator &) = delete;
-  EniConfigurator &operator=(const EniConfigurator &) = delete;
+  // Non-copyable via std::timed_mutex member
 
   /**
    * @brief Configure the entire network from INIT to OPERATIONAL (OP).
@@ -133,16 +125,10 @@ public:
    */
   [[nodiscard]] const TransitionReport &last_report() const noexcept;
 
-  /**
-   * @brief Set whether mandatory slave failures abort configuration.
-   * @param abort If true, aborts immediately on mandatory failure.
-   */
+  /// @brief Set whether mandatory slave failures abort configuration.
   void set_abort_on_mandatory_failure(bool abort) noexcept;
 
-  /**
-   * @brief Set default maximum retry count for InitCmd execution.
-   * @param retries Maximum retries.
-   */
+  /// @brief Set default maximum retry count for InitCmd execution.
   void set_max_retries(std::uint32_t retries) noexcept;
 
 private:

@@ -18,8 +18,12 @@ RawEthernetService::RawEthernetService(const std::string& name)
     : NamedService(name) {}
 
 RawEthernetService::~RawEthernetService() {
-    // [CS-0010.44] Ensure socket and thread are fully stopped during destruction.
-    stop();
+    // [CS-0010.44][CS-0060.5] Ensure socket and thread are safely stopped without letting exceptions escape destructor.
+    try {
+        stop();
+    } catch (...) {
+        // [CS-0060.5] Suppress exceptions in noexcept destructor.
+    }
 }
 
 std::shared_ptr<RawEthernetService> RawEthernetService::create(

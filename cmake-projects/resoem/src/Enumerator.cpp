@@ -614,7 +614,7 @@ Result<bool> Enumerator::check_topology() {
             configure_mailbox(static_cast<uint16_t>(idx));
             
             if (verbose_level_ > 0) {
-                std::cout << "[TOPOLOGY] Configured new slave at pos " << idx 
+                std::cout << "[TOPOLOGY] Configured attached slave at pos " << idx 
                           << " (" << slaves_.back().name << ")" << std::endl;
             }
         }
@@ -700,7 +700,8 @@ void Enumerator::reset_to_init() {
   send_receive(cmds::BWR, 0x0000, regs::RX_ERR, zero_buf);
 
   // Clear FMMUs and SyncManagers.
-  std::vector<byte> large_zero(128, static_cast<byte>(0));
+  std::vector<byte> large_zero{};
+  large_zero.assign(128, static_cast<byte>(0));
   send_receive(cmds::BWR, 0x0000, regs::FMMU0, large_zero);
   send_receive(cmds::BWR, 0x0000, regs::SM0, large_zero);
 
@@ -753,18 +754,19 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
   FrameBuilder builder;
   uint8_t idx = current_idx_++;
   builder.add_datagram(cmd, idx, addr, offset, data);
-  std::span<const byte> frame = builder.build();
+  std::span<const byte> FRAME = builder.build();
 
   // Send the frame.
   try {
-    socket_.send(frame);
+    socket_.send(FRAME);
   } catch (const SocketError &e) {
     if (verbose_level_ > 1) std::cerr << "[VERBOSE] Socket send error in send_receive: " << e.what() << std::endl;
     return -1;
   }
 
   // Wait for the response with matching index.
-  std::vector<byte> rx_buffer(1500);
+  std::vector<byte> rx_buffer{};
+  rx_buffer.resize(1500);
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
 
@@ -822,7 +824,7 @@ int Enumerator::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
 template <typename T>
 T Enumerator::read_register_broadcast(uint16_t reg, int &wkc) {
   T val{};
-  std::span<byte> buf(reinterpret_cast<byte *>(&val), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&val), sizeof(T)};
   wkc = send_receive(cmds::BRD, 0x0000, reg, buf);
   return val;
 }
@@ -830,7 +832,7 @@ T Enumerator::read_register_broadcast(uint16_t reg, int &wkc) {
 template <typename T>
 int Enumerator::write_register_broadcast(uint16_t reg, const T &value) {
   T temp = value;
-  std::span<byte> buf(reinterpret_cast<byte *>(&temp), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&temp), sizeof(T)};
   return send_receive(cmds::BWR, 0x0000, reg, buf);
 }
 
@@ -838,7 +840,7 @@ template <typename T>
 int Enumerator::write_register_apwr(uint16_t auto_inc_addr, uint16_t reg,
                                     const T &value) {
   T temp = value;
-  std::span<byte> buf(reinterpret_cast<byte *>(&temp), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&temp), sizeof(T)};
   return send_receive(cmds::APWR, auto_inc_addr, reg, buf);
 }
 
@@ -846,7 +848,7 @@ template <typename T>
 T Enumerator::read_register_fprd(uint16_t configured_addr, uint16_t reg,
                                  int &wkc) {
   T val{};
-  std::span<byte> buf(reinterpret_cast<byte *>(&val), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&val), sizeof(T)};
   wkc = send_receive(cmds::FPRD, configured_addr, reg, buf);
   return val;
 }
@@ -855,7 +857,7 @@ template <typename T>
 int Enumerator::write_register_fpwr(uint16_t configured_addr, uint16_t reg,
                                     const T &value) {
   T temp = value;
-  std::span<byte> buf(reinterpret_cast<byte *>(&temp), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&temp), sizeof(T)};
   return send_receive(cmds::FPWR, configured_addr, reg, buf);
 }
 
@@ -1144,8 +1146,8 @@ void Enumerator::read_sii_categories(int slave_idx) {
       bool is_write     = ((ctrl >> 2) & 0x01) == 0x01;
 
       // Handle mailbox SyncManagers (operating mode = mailbox).
-      if (is_mailbox) {
-        if (is_write) {
+      if (is_mailbox == true) {
+        if (is_write == true) {
           // Mailbox output (Master -> Slave): stores receive mailbox address.
           info.mbx_out_offset = sm.start_addr;
           info.mbx_out_length = sm.length;
@@ -1158,7 +1160,7 @@ void Enumerator::read_sii_categories(int slave_idx) {
         }
       } else {
         // Handle Process Data SyncManagers (buffered or 3-buffer mode).
-        if (is_write) {
+        if (is_write == true) {
           sm.type = 3; // Outputs: Master writes, Slave reads (RxPDOs)
         } else {
           sm.type = 4; // Inputs:  Slave writes, Master reads (TxPDOs)
@@ -1325,7 +1327,8 @@ void Enumerator::map_topology(int count) {
 
   // Initialize consumed ports tracking
   // We can use a temporary valid/available port bitmask for each slave.
-  std::vector<uint8_t> available_ports(count);
+  std::vector<uint8_t> available_ports{};
+  available_ports.resize(count);
   for (int i = 0; i < count; ++i) {
     // A port is available for a CHILD if it is active.
     // Port 0 is usually the entry port from PARENT, so it's not available for
@@ -1498,9 +1501,9 @@ void Enumerator::load_eni(const ec_enit *eni) {
     return;
 
   if (verbose_level_ > 0) std::cout << "Loading ENI configuration..." << std::endl;
-  MailboxHandler mbx(socket_);
+  MailboxHandler mbx{socket_};
   mbx.set_verbose(verbose_level_);
-  CoEHandler coe_handler(mbx);
+  CoEHandler coe_handler{mbx};
   coe_handler.set_verbose(verbose_level_);
 
   for (int i = 0; i < eni->slavecount; ++i) {
@@ -1560,6 +1563,7 @@ void Enumerator::load_eni(const ec_enit *eni) {
       return 3;
     return 0; // Should not happen if 0 is active
   } else if (current_port == 1) {
+    // Check upstream priority for port 1
     if (ports[3].active)
       return 3;
     if (ports[0].active)
@@ -1568,6 +1572,7 @@ void Enumerator::load_eni(const ec_enit *eni) {
       return 2; // Loop back?
     return 1;
   } else if (current_port == 2) {
+    // Check upstream priority for port 2
     if (ports[1].active)
       return 1;
     if (ports[3].active)
@@ -1576,6 +1581,7 @@ void Enumerator::load_eni(const ec_enit *eni) {
       return 0;
     return 2;
   } else if (current_port == 3) {
+    // Check upstream priority for port 3
     if (ports[0].active)
       return 0;
     if (ports[2].active)
@@ -1684,10 +1690,12 @@ Result<> Enumerator::read_error_counters() {
       uint8_t fwd_rx_1;  // 0x309
       uint8_t fwd_rx_2;  // 0x30A
       uint8_t fwd_rx_3;  // 0x30B
+      // Processing and PDI error counters
       uint8_t proc_unit; // 0x30C
       uint8_t pdi;       // 0x30D
       uint8_t res1;
       uint8_t res2;        // 0x30E-0x30F Reserved
+      // Physical link loss counters
       uint8_t lost_link_0; // 0x310
       uint8_t lost_link_1; // 0x311
       uint8_t lost_link_2; // 0x312

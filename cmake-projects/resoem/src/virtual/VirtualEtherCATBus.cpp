@@ -28,7 +28,7 @@ std::shared_ptr<VirtualEtherCATBus> VirtualEtherCATBus::create() {
 }
 
 void VirtualEtherCATBus::attach_slave(std::shared_ptr<SimulatedSlave> slave) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     if (slave != nullptr) {
       m_slaves.push_back(slave);
@@ -41,7 +41,7 @@ void VirtualEtherCATBus::attach_slave(std::shared_ptr<SimulatedSlave> slave) {
 }
 
 void VirtualEtherCATBus::clear_slaves() {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     m_slaves.clear();
     m_brokenAfterSlave.reset();
@@ -51,7 +51,7 @@ void VirtualEtherCATBus::clear_slaves() {
 }
 
 std::size_t VirtualEtherCATBus::slave_count() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_slaves.size();
   } else {
@@ -60,7 +60,7 @@ std::size_t VirtualEtherCATBus::slave_count() const noexcept {
 }
 
 std::shared_ptr<SimulatedSlave> VirtualEtherCATBus::get_slave(std::size_t index) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     if (index < m_slaves.size()) {
       return m_slaves[index];
@@ -73,7 +73,7 @@ std::shared_ptr<SimulatedSlave> VirtualEtherCATBus::get_slave(std::size_t index)
 }
 
 void VirtualEtherCATBus::break_cable_after(std::size_t slave_index) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     m_brokenAfterSlave = slave_index;
   } else {
@@ -82,7 +82,7 @@ void VirtualEtherCATBus::break_cable_after(std::size_t slave_index) {
 }
 
 void VirtualEtherCATBus::restore_cable() {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     m_brokenAfterSlave.reset();
   } else {
@@ -91,7 +91,7 @@ void VirtualEtherCATBus::restore_cable() {
 }
 
 bool VirtualEtherCATBus::is_cable_broken() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     return m_brokenAfterSlave.has_value();
   } else {
@@ -101,7 +101,7 @@ bool VirtualEtherCATBus::is_cable_broken() const noexcept {
 
 void VirtualEtherCATBus::process_frame(std::span<const byte> tx_frame, bool from_secondary,
                                        std::vector<byte> &rx_frame) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
   if (!lock.owns_lock()) {
     rx_frame.assign(tx_frame.begin(), tx_frame.end());
     return;
@@ -193,7 +193,7 @@ void VirtualEtherCATBus::process_frame(std::span<const byte> tx_frame, bool from
       // Full datagram fits
     }
 
-    std::span<byte> payload(&rx_frame[offset + DATAGRAM_HEADER_SIZE], dgram_len);
+    std::span<byte> payload{&rx_frame[offset + DATAGRAM_HEADER_SIZE], dgram_len};
     std::uint16_t wkc = 0;
     std::memcpy(&wkc, &rx_frame[offset + DATAGRAM_HEADER_SIZE + dgram_len], sizeof(std::uint16_t));
 

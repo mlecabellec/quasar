@@ -30,42 +30,21 @@ namespace resoem::virtual_bus {
  */
 class StubRawSocket : public IRawSocket {
 public:
-  /**
-   * @brief Construct a new StubRawSocket.
-   * @param bus Shared pointer to the virtual EtherCAT bus backing this socket.
-   * @param enable_redundancy Whether secondary redundant interface is simulated as open.
-   */
+  /// @brief Construct a new StubRawSocket backed by a virtual bus.
   explicit StubRawSocket(std::shared_ptr<VirtualEtherCATBus> bus, bool enable_redundancy = false);
 
-  /**
-   * @brief Destructor.
-   */
+  /// @brief Destructor.
   ~StubRawSocket() override = default;
 
-  // Prevent copying
-  StubRawSocket(const StubRawSocket &) = delete;
-  StubRawSocket &operator=(const StubRawSocket &) = delete;
+  // Non-copyable via std::timed_mutex member
 
-  /**
-   * @brief Send a raw Ethernet frame into the virtual bus.
-   * @param data Frame payload to send.
-   * @param use_secondary If true, inject frame into secondary redundant interface.
-   * @return Number of bytes transmitted.
-   */
+  /// @brief Send a raw Ethernet frame into the virtual bus.
   std::size_t send(std::span<const byte> data, bool use_secondary = false) override;
 
-  /**
-   * @brief Receive a processed frame from the virtual bus.
-   * @param buffer Output buffer.
-   * @param out_port_index Optional pointer to record receiving interface (0=Primary, 1=Secondary).
-   * @return Number of bytes received.
-   */
+  /// @brief Receive a processed frame from the virtual bus.
   std::size_t receive(std::span<byte> buffer, int *out_port_index = nullptr) override;
 
-  /**
-   * @brief Set socket timeout in milliseconds.
-   * @param timeout_ms Timeout value.
-   */
+  /// @brief Set socket timeout in milliseconds.
   void set_timeout(int timeout_ms) override;
 
   /**
@@ -87,10 +66,7 @@ public:
    */
   [[nodiscard]] bool has_redundancy() const noexcept override;
 
-  /**
-   * @brief Configure whether the secondary redundant port is active.
-   * @param enable Redundancy state.
-   */
+  /// @brief Configure whether the secondary redundant port is active.
   void set_redundancy(bool enable) noexcept;
 
   /**

@@ -22,7 +22,7 @@ constexpr std::size_t MAX_SLAVE_LIMIT = 4096;
 } // anonymous namespace
 
 EniConfigurator::EniConfigurator(IRawSocket &socket, const EniDocument &document)
-    : m_socket(socket), m_document(document) {}
+    : m_socket{socket}, m_document{document} {}
 
 std::size_t EniConfigurator::slave_count() const noexcept {
   return m_document.slaves().size();
@@ -58,7 +58,8 @@ int EniConfigurator::send_receive_datagram(std::uint8_t cmd, std::uint16_t addr,
     return -1;
   }
 
-  std::vector<byte> rx_buffer(MAX_FRAME_SIZE, static_cast<byte>(0));
+  std::vector<byte> rx_buffer{};
+  rx_buffer.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
   std::size_t received = 0;
   try {
     received = m_socket.receive(rx_buffer);
@@ -113,7 +114,7 @@ bool EniConfigurator::validate_data(std::span<const byte> received,
 bool EniConfigurator::execute_single_init_cmd(const EniInitCmd &cmd, std::size_t slave_idx,
                                               bool is_optional) {
   std::vector<byte> payload_copy = cmd.data;
-  std::span<byte> payload_span(payload_copy.data(), payload_copy.size());
+  std::span<byte> payload_span{payload_copy.data(), payload_copy.size()};
 
   std::uint32_t max_retries = std::max(cmd.retries, m_defaultRetries);
   if (max_retries > MAX_RETRY_LIMIT) {
@@ -392,7 +393,7 @@ bool EniConfigurator::transition_slaves_to_state(std::uint16_t target_state,
 }
 
 Result<void> EniConfigurator::run_transition(EsmTransition transition) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
   if (!lock.owns_lock()) {
     return std::unexpected(ECError::Timeout);
   } else {
@@ -520,7 +521,7 @@ Result<void> EniConfigurator::configure_all() {
 
 Result<std::uint16_t> EniConfigurator::exchange_cyclic_frame(std::size_t frame_idx,
                                                              std::span<byte> process_image_data) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return std::unexpected(ECError::Timeout);
   } else {
@@ -539,7 +540,8 @@ Result<std::uint16_t> EniConfigurator::exchange_cyclic_frame(std::size_t frame_i
 
   for (const EniCyclicCmd &cmd : frame_cfg.commands) {
     std::size_t data_len = cmd.data_length;
-    std::vector<byte> cmd_payload(data_len, static_cast<byte>(0));
+    std::vector<byte> cmd_payload{};
+    cmd_payload.assign(data_len, static_cast<byte>(0));
 
     if (cmd.addr < process_image_data.size()) {
       std::size_t copy_bytes = std::min(data_len, process_image_data.size() - cmd.addr);
@@ -558,7 +560,8 @@ Result<std::uint16_t> EniConfigurator::exchange_cyclic_frame(std::size_t frame_i
     return std::unexpected(ECError::ProtocolError);
   }
 
-  std::vector<byte> rx_buffer(MAX_FRAME_SIZE, static_cast<byte>(0));
+  std::vector<byte> rx_buffer{};
+  rx_buffer.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
   std::size_t received = 0;
   try {
     received = m_socket.receive(rx_buffer);

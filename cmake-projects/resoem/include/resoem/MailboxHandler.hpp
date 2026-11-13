@@ -10,6 +10,7 @@
 #include "resoem/RawSocket.hpp"
 #include "resoem/Slave.hpp"
 #include <chrono>
+#include <mutex>
 #include <span>
 
 namespace resoem {
@@ -22,21 +23,10 @@ namespace resoem {
  */
 class MailboxHandler {
 public:
-  /**
-   * @brief Construct a new Mailbox Handler object.
-   * @param socket The raw socket (physical or virtual) for communication.
-   */
+  /// @brief Construct a new Mailbox Handler object.
   explicit MailboxHandler(IRawSocket &socket);
 
-  /**
-   * @brief Write data to the slave's output mailbox.
-   * 
-   * @param slave The target slave.
-   * @param type Mailbox protocol type (CoE, FoE, etc.).
-   * @param data Data payload to send.
-   * @param timeout Maximum time to wait for the mailbox to become empty.
-   * @return int Working Counter (WKC) on success, or <= 0 on failure.
-   */
+  /// @brief Write data to the slave's output mailbox.
   int write(SlaveInfo &slave, mailbox::Type type, std::span<const byte> data,
             std::chrono::microseconds timeout = std::chrono::milliseconds(100));
 
@@ -54,10 +44,7 @@ public:
            size_t &actual_len,
            std::chrono::microseconds timeout = std::chrono::milliseconds(100));
 
-  /**
-   * @brief Enable or disable verbose logging for mailbox operations.
-   * @param level Verbosity level (0=off, 1=normal, 2=high).
-   */
+  /// @brief Enable or disable verbose logging for mailbox operations.
   void set_verbose(int level) { verbose_level_ = level; }
 
 private:
@@ -65,14 +52,18 @@ private:
   uint8_t current_idx_ = 0;  ///< Cyclic datagram index
   int retries_ = 3;          ///< Max transmission retries
   int verbose_level_ = 0;    ///< Verbose logging level
+  mutable std::timed_mutex mutex_{}; ///< Guard concurrent mailbox socket access [CS-0010.46]
 
-  // Internal helper methods
+  /// @brief Send single mailbox datagram and wait for WKC response.
   int send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                    std::span<byte> data);
 
+  /// @brief Check SM1 mailbox full flag via FPRD.
   bool is_mailbox_full(const SlaveInfo &slave);
+  /// @brief Check SM0 mailbox empty flag via FPRD.
   bool is_mailbox_empty(const SlaveInfo &slave);
 
+  /// @brief Read typed ESC register via configured address FPRD.
   template <typename T>
   T read_register_fprd(uint16_t configured_addr, uint16_t reg, int &wkc);
 };

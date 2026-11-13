@@ -113,21 +113,21 @@ RawSocket &RawSocket::operator=(RawSocket &&other) noexcept {
 size_t RawSocket::send(std::span<const byte> data, bool use_secondary) {
   int fd = use_secondary ? sock_fd_secondary_ : sock_fd_;
   if (fd < 0)
-    throw SocketError("Socket not open");
+    throw SocketError{"Socket not open"};
 
   // [FE-0040.1.3] Implement non-blocking send operation.
   ssize_t sent = ::send(fd, data.data(), data.size(), 0);
   if (sent < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK)
       return 0;
-    throw SocketError("Failed to send data: " + std::string(strerror(errno)));
+    throw SocketError{"Failed to send data: " + std::string(strerror(errno))};
   }
   return static_cast<size_t>(sent);
 }
 
 size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
   if (sock_fd_ < 0)
-    throw SocketError("Socket not open");
+    throw SocketError{"Socket not open"};
 
   // [FE-0040.1.3] Implement non-blocking receive operation with select for timeout.
   // If redundancy is active, we need to poll both sockets.
@@ -156,7 +156,7 @@ size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
       if (FD_ISSET(sock_fd_, &readfds)) {
         ssize_t r = ::recv(sock_fd_, buffer.data(), buffer.size_bytes(), 0);
         if (r > 0) {
-          if (out_port_index)
+          if (out_port_index != nullptr)
             *out_port_index = 0;
           return static_cast<size_t>(r);
         }
@@ -165,7 +165,7 @@ size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
         ssize_t r =
             ::recv(sock_fd_secondary_, buffer.data(), buffer.size_bytes(), 0);
         if (r > 0) {
-          if (out_port_index)
+          if (out_port_index != nullptr)
             *out_port_index = 1;
           return static_cast<size_t>(r);
         }
@@ -176,7 +176,7 @@ size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
     } else {
       if (errno == EINTR)
         return 0;
-      throw SocketError("Select failed: " + std::string(strerror(errno)));
+      throw SocketError{"Select failed: " + std::string(strerror(errno))};
     }
   } else {
     // Single socket mode
@@ -184,10 +184,10 @@ size_t RawSocket::receive(std::span<byte> buffer, int *out_port_index) {
     if (received < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         return 0;
-      throw SocketError("Failed to receive data: " +
-                        std::string(strerror(errno)));
+      throw SocketError{"Failed to receive data: " +
+                        std::string(strerror(errno))};
     }
-    if (out_port_index)
+    if (out_port_index != nullptr)
       *out_port_index = 0;
     return static_cast<size_t>(received);
   }
@@ -222,7 +222,7 @@ void RawSocket::set_timeout(int timeout_ms) {
 std::array<uint8_t, ETHERNET_MAC_ADDRESS_LENGTH> RawSocket::get_mac_address(bool use_secondary) const {
   int fd = use_secondary ? sock_fd_secondary_ : sock_fd_;
   if (fd < 0)
-    throw SocketError("Socket not open");
+    throw SocketError{"Socket not open"};
 
   std::string iface =
       use_secondary ? secondary_interface_name_ : interface_name_;

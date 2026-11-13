@@ -44,6 +44,7 @@ constexpr uint16_t FMMU7 = 0x0670;
 constexpr uint16_t FMMU8 = 0x0680;
 constexpr uint16_t FMMU9 = 0x0690;
 constexpr uint16_t FMMU10 = 0x06A0;
+// Upper FMMU channels 11..15
 constexpr uint16_t FMMU11 = 0x06B0;
 constexpr uint16_t FMMU12 = 0x06C0;
 constexpr uint16_t FMMU13 = 0x06D0;
@@ -81,6 +82,7 @@ constexpr uint16_t SM7 = 0x0838;
 constexpr uint16_t SM8 = 0x0840;
 constexpr uint16_t SM9 = 0x0848;
 constexpr uint16_t SM10 = 0x0850;
+// Upper SyncManager register banks SM11..SM15
 constexpr uint16_t SM11 = 0x0858;
 constexpr uint16_t SM12 = 0x0860;
 constexpr uint16_t SM13 = 0x0868;
@@ -116,6 +118,7 @@ constexpr uint16_t RX_ERR_COUNT_PORT0 = 0x0300; ///< RX Error Counter Port 0
 constexpr uint16_t RX_ERR_COUNT_PORT1 = 0x0302; ///< RX Error Counter Port 1
 constexpr uint16_t RX_ERR_COUNT_PORT2 = 0x0304; ///< RX Error Counter Port 2
 constexpr uint16_t RX_ERR_COUNT_PORT3 = 0x0306; ///< RX Error Counter Port 3
+// Forwarded RX & processing error counters
 constexpr uint16_t FWD_RX_ERR_COUNT_PORT0 =
     0x0308; ///< Forwarded RX Error Counter Port 0
 constexpr uint16_t FWD_RX_ERR_COUNT_PORT1 =
@@ -128,6 +131,7 @@ constexpr uint16_t PROC_UNIT_ERR_COUNT =
     0x030C;                                ///< Processing Unit Error Counter
 constexpr uint16_t PDI_ERR_COUNT = 0x030D; ///< PDI Error Counter
 constexpr uint16_t LOST_LINK_COUNT_PORT0 = 0x0310; ///< Lost Link Counter Port 0
+// Lost link counters for ports 1..3
 constexpr uint16_t LOST_LINK_COUNT_PORT1 = 0x0311; ///< Lost Link Counter Port 1
 constexpr uint16_t LOST_LINK_COUNT_PORT2 = 0x0312; ///< Lost Link Counter Port 2
 constexpr uint16_t LOST_LINK_COUNT_PORT3 = 0x0313; ///< Lost Link Counter Port 3
@@ -159,6 +163,7 @@ constexpr uint8_t BWR = 0x08;  ///< Broadcast Write
 constexpr uint8_t BRW = 0x09;  ///< Broadcast ReadWrite
 constexpr uint8_t LRD = 0x0A;  ///< Logical Read
 constexpr uint8_t LWR = 0x0B;  ///< Logical Write
+// Logical Read/Write and Multiple Read/Write DC commands
 constexpr uint8_t LRW = 0x0C;  ///< Logical ReadWrite
 constexpr uint8_t ARMW = 0x0D; ///< Auto Increment Read Multiple Write
 constexpr uint8_t FRMW = 0x0E; ///< Configured Address Read Multiple Write
@@ -261,12 +266,7 @@ enum Type : uint8_t {
   VOE = 0x0f  ///< Vendor specific over EtherCAT
 };
 
-/**
- * @brief Helper to set the type and counter in the mailbox header.
- * @param type Mailbox protocol type.
- * @param cnt Mailbox counter [0..7].
- * @return Combined type and counter byte.
- */
+/// @brief Encode mailbox protocol type and 3-bit counter into one byte.
 static inline uint8_t set_type_cnt(Type type, uint8_t cnt) {
   return static_cast<uint8_t>(type) | ((cnt & 0x07) << 4);
 }
@@ -333,17 +333,28 @@ enum Opcode : uint8_t {
 };
 
 /**
- * @brief FoE Protocol Header.
+ * @brief FoE Protocol Header (union-free C++23 compliant wire layout).
+ * @feature [TSK-20261113-002] [CS-0060.6]
  */
 struct Header {
   uint8_t opcode;   ///< FoE opcode
   uint8_t reserved; ///< Reserved
-  union {
-    uint32_t password;   ///< Password for RRQ/WRQ
-    uint32_t packet_no;  ///< Packet number for DATA/ACK
-    uint32_t error_code; ///< Error code for ERR
-  };
+  uint32_t param;   ///< Password (RRQ/WRQ), Packet No (DATA/ACK), or Error Code (ERR)
+
+  /// @brief Get RRQ/WRQ password parameter.
+  [[nodiscard]] constexpr uint32_t password() const noexcept { return param; }
+  /// @brief Set RRQ/WRQ password parameter.
+  constexpr void set_password(uint32_t val) noexcept { param = val; }
+  /// @brief Get DATA/ACK packet sequence number.
+  [[nodiscard]] constexpr uint32_t packet_no() const noexcept { return param; }
+  /// @brief Set DATA/ACK packet sequence number.
+  constexpr void set_packet_no(uint32_t val) noexcept { param = val; }
+  /// @brief Get ERR frame error code.
+  [[nodiscard]] constexpr uint32_t error_code() const noexcept { return param; }
+  /// @brief Set ERR frame error code.
+  constexpr void set_error_code(uint32_t val) noexcept { param = val; }
 } __attribute__((packed));
+static_assert(sizeof(Header) == 6U, "FoE Header must remain 6 bytes");
 
 // FoE Error Codes
 constexpr uint32_t ERR_NOT_FOUND = 0x8001;

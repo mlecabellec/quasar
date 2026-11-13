@@ -22,6 +22,7 @@ using namespace quasar::named;
  */
 std::shared_ptr<EthercatMasterService> EthercatMasterService::create(const std::string& name, std::shared_ptr<NamedObject> parent) {
     struct make_shared_enabler : public EthercatMasterService {
+        /// @brief Construct enabled EthercatMasterService instance.
         explicit make_shared_enabler(const std::string& n) : EthercatMasterService(n) {}
     };
     std::shared_ptr<EthercatMasterService> svc = std::make_shared<make_shared_enabler>(name);
@@ -147,7 +148,7 @@ void EthercatMasterService::setInterface(const std::string& iface) {
     if (!m_mutex.try_lock_for(std::chrono::milliseconds(100))) {
         throw std::runtime_error("Failed to acquire mutex in setInterface");
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
     m_interfaceName = iface;
     std::shared_ptr<NamedObject> child = getChild("interface");
     if (child != nullptr) {
@@ -165,7 +166,7 @@ void EthercatMasterService::start() {
     if (!m_mutex.try_lock_for(std::chrono::milliseconds(1000))) {
         throw std::runtime_error("Failed to acquire mutex in start");
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     std::cout << "[EthercatMasterService] Starting on interface " << m_interfaceName << std::endl;
     
@@ -195,7 +196,7 @@ void EthercatMasterService::stop() {
     if (!m_mutex.try_lock_for(std::chrono::milliseconds(1000))) {
         return; // Already stopping or locked
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     std::cout << "[EthercatMasterService] Stopping..." << std::endl;
     NamedService::stop();
@@ -214,7 +215,7 @@ void EthercatMasterService::performDiagnosticSweep() {
     if (!m_mutex.try_lock_for(std::chrono::milliseconds(50))) {
         return; // Skip sweep if busy
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     if (m_enumerator == nullptr || m_slavesRoot == nullptr) return;
 
@@ -230,7 +231,7 @@ void EthercatMasterService::performDiagnosticSweep() {
         if (++slave_count > 65535) break;
 
         std::shared_ptr<NamedObject> slaveNode = m_slavesRoot->getChild("slave_" + std::to_string(i));
-        if (slaveNode) {
+        if (slaveNode != nullptr) {
             std::shared_ptr<NamedObject> diagNode = slaveNode->getChild("diagnostics");
             if (!diagNode) {
                 diagNode = NamedObject::create("diagnostics", slaveNode);
@@ -289,6 +290,7 @@ void EthercatMasterService::performDiagnosticSweep() {
                 NamedString::create("state", "BIFURCATED_BROKEN", faultEvent);
                 this->notifyObservers(faultEvent);
             } else if (currentState == redundancy::RedundancyState::CIRCULAR_NORMAL) {
+                // Notify observers on healed cable ring
                 std::shared_ptr<NamedObject> healedEvent = NamedObject::create("CableRedundancyHealedEvent");
                 NamedString::create("primaryInterface", m_interfaceName, healedEvent);
                 NamedString::create("secondaryInterface", m_secondaryInterfaceName, healedEvent);
@@ -316,12 +318,12 @@ std::shared_ptr<NamedObject> EthercatMasterService::reconfigureSlave(std::shared
          NamedBoolean::create("success", false, result);
          return result;
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     std::cout << "[EthercatMasterService] Reconfiguring slave..." << std::endl;
     
     int slaveIdx = 0;
-    if (args) {
+    if (args != nullptr) {
         if (std::shared_ptr<NamedInteger<int>> idxObj = std::dynamic_pointer_cast<NamedInteger<int>>(args->getChild("slaveIndex"))) {
             slaveIdx = idxObj->value();
         }
@@ -386,7 +388,7 @@ void EthercatMasterService::discoverSlaves() {
     if (!m_mutex.try_lock_for(std::chrono::milliseconds(1000))) {
         return;
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     if (!m_enumerator) return;
     
@@ -410,7 +412,7 @@ void EthercatMasterService::discoverSlaves() {
     }
 
     // Atomic replacement in tree
-    if (m_slavesRoot) {
+    if (m_slavesRoot != nullptr) {
         m_slavesRoot->replaceInTree(newSlavesRoot);
         m_slavesRoot = newSlavesRoot;
     }
@@ -439,10 +441,10 @@ std::shared_ptr<NamedObject> EthercatMasterService::forceInit(std::shared_ptr<Na
          NamedBoolean::create("success", false, result);
          return result;
     }
-    std::lock_guard<std::timed_mutex> lock(m_mutex, std::adopt_lock);
+    std::lock_guard<std::timed_mutex> lock{m_mutex, std::adopt_lock};
 
     std::cout << "[EthercatMasterService] Forcing slaves to INIT state..." << std::endl;
-    if (m_enumerator) {
+    if (m_enumerator != nullptr) {
         m_enumerator->reset_to_init();
     }
     std::shared_ptr<NamedObject> result = NamedObject::create("result");
@@ -450,8 +452,9 @@ std::shared_ptr<NamedObject> EthercatMasterService::forceInit(std::shared_ptr<Na
     return result;
 }
 
+/// @brief Configure cable redundancy and secondary interface.
 void EthercatMasterService::setRedundancy(bool enable, const std::string& secondary_iface) {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+    std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
     if (lock.owns_lock()) {
         m_redundancyEnabled = enable;
         m_secondaryInterfaceName = secondary_iface;
@@ -500,7 +503,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::loadEni(std::shared_ptr<Name
         return result;
     }
 
-    std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+    std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
     if (!lock.owns_lock()) {
         NamedBoolean::create("success", false, result);
         NamedString::create("error", "Lock timeout", result);
@@ -578,7 +581,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::exportEni(std::shared_ptr<Na
         // Default master name
     }
 
-    std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+    std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
     if (!lock.owns_lock()) {
         NamedBoolean::create("success", false, result);
         NamedString::create("error", "Lock timeout", result);
@@ -595,7 +598,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::exportEni(std::shared_ptr<Na
         // Valid socket
     }
 
-    eni::EniGenerator generator(*m_socket);
+    eni::EniGenerator generator{*m_socket};
     Result<eni::EniDocument> gen_res = generator.generate(master_name);
     if (!gen_res.has_value()) {
         NamedBoolean::create("success", false, result);
@@ -662,7 +665,7 @@ std::shared_ptr<NamedObject> EthercatMasterService::compareEni(std::shared_ptr<N
         // Default ALL
     }
 
-    std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+    std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
     if (!lock.owns_lock()) {
         NamedBoolean::create("success", false, result);
         NamedString::create("error", "Lock timeout", result);

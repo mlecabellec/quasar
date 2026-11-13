@@ -15,19 +15,10 @@ namespace resoem {
  */
 class EthercatSlave : public quasar::named::NamedObject {
 public:
-    /**
-     * @brief Factory method to create an EthercatSlave.
-     * @param name The name of the slave node.
-     * @param info Slave identity and configuration.
-     * @param parent Optional parent node.
-     * @return Shared pointer to the new slave node.
-     */
+    /// @brief Factory method to create an EthercatSlave.
     static std::shared_ptr<EthercatSlave> create(const std::string& name, const SlaveInfo& info, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
 
-    /**
-     * @brief Gets the type of the object.
-     * @return "EthercatSlave".
-     */
+    /// @brief Gets the type of the object.
     std::string getType() const override { return "EthercatSlave"; }
 
     /**

@@ -17,6 +17,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
@@ -26,17 +27,17 @@
 using namespace resoem;
 
 // Global flag for graceful exit on Ctrl+C
-volatile sig_atomic_t g_stop = 0;
-void handle_sigint(int) { g_stop = 1; }
+std::atomic<bool> g_stop{false};
+/// @brief Signal handler for SIGINT graceful shutdown.
+void handle_sigint(int) { g_stop.store(true); }
 
 /**
  * @brief Encapsulates the fieldbus state and context.
  */
 struct Fieldbus;
 
-/**
- * @brief Helper to get detailed error info for a slave.
- */
+/// @brief Helper to get detailed error info for a slave.
+/// @brief Retrieve formatted diagnostic status string for a slave.
 std::string get_diagnostics(Fieldbus &fb, int slave_idx);
 
 /**
@@ -51,6 +52,7 @@ struct Fieldbus {
   uint16_t expected_wkc = 0;
 };
 
+/// @brief Retrieve formatted diagnostic status string for a slave.
 std::string get_diagnostics(Fieldbus &fb, int slave_idx);
 
 /**
@@ -157,7 +159,7 @@ bool fieldbus_start(Fieldbus &fb, int verbose_level) {
       for (const SlaveInfo &s : fb.enumerator->slaves()) {
         if (s.current_state != states::OP) { all_op = false; break; }
       }
-      if (all_op) break;
+      if (all_op == true) break;
       std::cout << "." << std::flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
@@ -204,6 +206,7 @@ void fieldbus_stop(Fieldbus &fb) {
   std::cout << "[INFO] Goodbye." << std::endl;
 }
 
+/// @brief Entry point for simple_ng cyclic EtherCAT master demo.
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     std::cout << "Usage: simple_ng IFNAME [-v | -vv]" << std::endl;
@@ -230,7 +233,7 @@ int main(int argc, char *argv[]) {
     
     uint64_t cycle = 0;
     uint64_t max_cycles = 100; // Limit for testing
-    while (!g_stop && cycle < max_cycles) {
+    while (!g_stop.load() && cycle < max_cycles) {
       int wkc = fieldbus_roundtrip(fb);
       cycle++;
 

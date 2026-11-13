@@ -7,6 +7,11 @@
 
 namespace resoem {
 
+namespace {
+constexpr int MBX_MUTEX_TIMEOUT_MS = 200;
+} // namespace
+
+/// @brief Construct MailboxHandler wrapping a raw socket.
 MailboxHandler::MailboxHandler(IRawSocket &socket) : socket_(socket) {}
 
 int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
@@ -39,7 +44,8 @@ int MailboxHandler::write(SlaveInfo &slave, mailbox::Type type,
   }
 
   // 2. Prepare the Mailbox datagram.
-  std::vector<byte> mbx_buffer(slave.mbx_out_length, static_cast<byte>(0));
+  std::vector<byte> mbx_buffer{};
+  mbx_buffer.assign(slave.mbx_out_length, static_cast<byte>(0));
   mailbox::Header *header =
       reinterpret_cast<mailbox::Header *>(mbx_buffer.data());
   header->length = static_cast<uint16_t>(data.size());
@@ -86,7 +92,8 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
   }
 
   // 2. Read the response from the SyncManager input buffer.
-  std::vector<byte> mbx_buffer(slave.mbx_in_length + sizeof(mailbox::Header));
+  std::vector<byte> mbx_buffer{};
+  mbx_buffer.resize(slave.mbx_in_length + sizeof(mailbox::Header));
   int wkc = send_receive(cmds::FPRD, slave.configured_address,
                          slave.mbx_in_offset, mbx_buffer);
 
@@ -113,18 +120,25 @@ int MailboxHandler::read(SlaveInfo &slave, mailbox::Type &type,
   return wkc;
 }
 
+/// @brief Perform mutex-guarded mailbox datagram exchange with retries.
 int MailboxHandler::send_receive(uint8_t cmd, uint16_t addr, uint16_t offset,
                                  std::span<byte> data) {
+  std::unique_lock<std::timed_mutex> lock{
+      mutex_, std::chrono::milliseconds{MBX_MUTEX_TIMEOUT_MS}};
+  if (lock.owns_lock() == false) {
+    return -1;
+  }
   // Simple retry loop to handle intermittent network issues.
   for (int attempt = 0; attempt <= retries_; ++attempt) {
     FrameBuilder builder;
     uint8_t idx = current_idx_++;
     builder.add_datagram(cmd, idx, addr, offset, data);
-    std::span<const byte> frame = builder.build();
+    std::span<const byte> FRAME = builder.build();
 
-    socket_.send(frame);
+    socket_.send(FRAME);
 
-    std::vector<byte> rx_buffer(1500);
+    std::vector<byte> rx_buffer{};
+    rx_buffer.resize(1500);
     size_t received = socket_.receive(rx_buffer);
     if (received == 0) {
       // If no response, wait a bit and retry.
@@ -181,7 +195,7 @@ template <typename T>
 T MailboxHandler::read_register_fprd(uint16_t configured_addr, uint16_t reg,
                                      int &wkc) {
   T val{};
-  std::span<byte> buf(reinterpret_cast<byte *>(&val), sizeof(T));
+  std::span<byte> buf{reinterpret_cast<byte *>(&val), sizeof(T)};
   wkc = send_receive(cmds::FPRD, configured_addr, reg, buf);
   return val;
 }

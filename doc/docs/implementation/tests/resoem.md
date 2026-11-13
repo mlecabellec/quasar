@@ -69,3 +69,33 @@ Tests the Distributed Clocks (DC) calculations, including propagation delay and 
 
 ### Description
 Verifies the framing of Servo Profile over EtherCAT (SoE) datagrams.
+
+## test_topology
+
+### Description
+Verifies physical slave topology tree discovery (`Enumerator` port wiring and parent/child linkage).
+
+## test_virtual_bus (`resoem::virtual_bus`)
+
+### Description
+Executes hardware-free virtual bus tests using `VirtualEtherCATBus`, `StubRawSocket`, and `SimulatedSlave` (`BRD`, station addressing, FMMU/SM mappings, SII reads, and cable break injection).
+
+## test_eni_parser, test_eni_configurator & test_eni_generator_comparator
+
+### Description
+Validates ETG.2100 XML parsing (`EniDocument`), `INIT -> PRE_OP -> SAFE_OP -> OP` state machine orchestration (`EniConfigurator`), live bus ENI synthesis/XML serialization (`EniGenerator`), and multi-level reference vs. bus comparison (`EniComparator`).
+
+## test_hot_connect
+
+### Description
+Verifies dynamic Hot Connect group discovery via station aliases (`0x0012`), isolated group ESM stepping, dynamic WKC adjustment, and disconnect fail-safe policies (`ZERO_FILL`, freeze, custom).
+
+## test_redundancy & test_redundancy_loop
+
+### Description
+Verifies dual-interface cable redundancy bifurcation upon WKC loss, reverse frame merging, and automatic healing probe recovery (`RedundancyManager`).
+
+## test_compliance_and_stress
+
+### Description
+Exercises error handling, timeout bounds, bounded loop limits (`CS-0010.37`), concurrent `std::timed_mutex` stress tests, and compliance checks across `resoem` components.

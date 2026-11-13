@@ -60,9 +60,9 @@ quasar/
 
 ## 📚 Documentation Reference
 
-To dive deeper into the project specifications, consult the `/doc` tree.
-- [Architecture Details](doc/architecture)
-- [Feature Breakdown](doc/features)
-- [Task Log](doc/project/tasks)
+To dive deeper into the project specifications, consult the documentation tree:
+- [Architecture Details](architecture/architecture_index.md)
+- [Feature Breakdown](features/README.md)
+- [Task Log](project/tasks/README.md)
 
 > **Note to Contributors & Agents**: Always consult `doc/TODO.md` and `doc/project/` for short-term task horizons, and ensure absolute compliance with all definitions housed in `doc/architecture/CS-0010.md` before submitting code!

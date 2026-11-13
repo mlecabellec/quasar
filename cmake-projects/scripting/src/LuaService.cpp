@@ -136,7 +136,8 @@ void LuaService::onShutdown() {
         }
     }
 
-    // [CS-0010.21] RAII: Ensure the engine is explicitly shut down before pointer resets.
+    // [CS-0010.21] RAII: Clear Lua table reference before shutting down the engine.
+    m_luaSelf = sol::nil;
     if (m_engine) {
         m_engine->shutdown();
     }

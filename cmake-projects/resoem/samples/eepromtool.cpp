@@ -18,6 +18,7 @@
 
 using namespace resoem;
 
+/// @brief Entry point for EEPROM SII inspection and programming sample.
 int main(int argc, char *argv[]) {
   if (argc < 4) {
     std::cout << "Usage: eepromtool IFNAME SLAVE OP [FILE]\n";
@@ -33,8 +34,8 @@ int main(int argc, char *argv[]) {
 
   try {
     std::cout << "Connecting to " << iface << "..." << std::endl;
-    RawSocket socket(iface);
-    Enumerator enumerator(socket);
+    RawSocket socket{iface};
+    Enumerator enumerator{socket};
 
     std::cout << "Scanning for slaves..." << std::endl;
     if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]) {
       }
 
       if (!filename.empty()) {
-        std::ofstream outfile(filename, std::ios::binary);
+        std::ofstream outfile{filename, std::ios::binary};
         outfile.write(reinterpret_cast<const char *>(eeprom_data.data()),
                       eeprom_data.size());
         std::cout << "\n[SUCCESS] Saved " << eeprom_data.size() << " bytes to " << filename << "\n";
@@ -89,14 +90,15 @@ int main(int argc, char *argv[]) {
         std::cout << "[ERROR] File required for write operation.\n";
         return 1;
       }
-      std::ifstream infile(filename, std::ios::binary | std::ios::ate);
+      std::ifstream infile{filename, std::ios::binary | std::ios::ate};
       if (!infile) {
           std::cout << "[ERROR] Could not open file: " << filename << "\n";
           return 1;
       }
       size_t size = infile.tellg();
       infile.seekg(0);
-      std::vector<uint8_t> buffer(size);
+      std::vector<uint8_t> buffer{};
+      buffer.resize(size);
       infile.read(reinterpret_cast<char *>(buffer.data()), size);
 
       std::cout << "[OPERATION] Writing " << size << " bytes to EEPROM...\n";

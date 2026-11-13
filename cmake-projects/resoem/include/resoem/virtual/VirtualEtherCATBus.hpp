@@ -33,19 +33,12 @@ public:
    */
   [[nodiscard]] static std::shared_ptr<VirtualEtherCATBus> create();
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~VirtualEtherCATBus() noexcept = default;
 
-  // Prevent copying
-  VirtualEtherCATBus(const VirtualEtherCATBus &) = delete;
-  VirtualEtherCATBus &operator=(const VirtualEtherCATBus &) = delete;
+  // Non-copyable via std::timed_mutex member
 
-  /**
-   * @brief Attach a simulated slave to the downstream end of the bus.
-   * @param slave Shared pointer to slave instance.
-   */
+  /// @brief Attach a simulated slave to the downstream end of the bus.
   void attach_slave(std::shared_ptr<SimulatedSlave> slave);
 
   /**
@@ -66,12 +59,7 @@ public:
    */
   [[nodiscard]] std::shared_ptr<SimulatedSlave> get_slave(std::size_t index) const;
 
-  /**
-   * @brief Simulate a physical cable break after the specified slave index.
-   * @details Frames from primary interface will only reach slaves [0..slave_index].
-   * Frames from secondary interface (if redundancy enabled) will reach [slave_index+1..N-1].
-   * @param slave_index Index of the slave immediately preceding the cable break.
-   */
+  /// @brief Simulate a physical cable break after the specified slave index.
   void break_cable_after(std::size_t slave_index);
 
   /**

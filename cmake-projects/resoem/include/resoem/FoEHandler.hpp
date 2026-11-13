@@ -9,6 +9,7 @@
 #include "resoem/common.hpp"
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <span>
 #include <string_view>
 #include <vector>
@@ -22,10 +23,7 @@ namespace resoem {
  */
 class FoEHandler {
 public:
-  /**
-   * @brief Construct a new FoE Handler object.
-   * @param mailbox The low-level mailbox handler to use.
-   */
+  /// @brief Construct a new FoE Handler object.
   explicit FoEHandler(MailboxHandler &mailbox);
 
   /**
@@ -56,7 +54,8 @@ public:
                     std::chrono::microseconds timeout = std::chrono::seconds(5));
 
 private:
-  MailboxHandler &mailbox_; ///< Low-level mailbox handler
+  MailboxHandler &mailbox_;          ///< Low-level mailbox handler
+  mutable std::timed_mutex mutex_{}; ///< Guard concurrent FoE transfers [CS-0010.46]
 };
 
 } // namespace resoem

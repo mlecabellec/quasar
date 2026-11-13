@@ -61,6 +61,7 @@
 #include "resoem/Enumerator.hpp"
 #include "resoem/ProcessImage.hpp"
 #include "resoem/RawSocket.hpp"
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <iomanip>
@@ -78,15 +79,12 @@ using namespace resoem;
  * ========================================================================= */
 
 /// @brief Global stop flag — set by SIGINT/SIGTERM handler.
-volatile sig_atomic_t g_stop = 0;
+std::atomic<bool> g_stop{false};
 
-/**
- * @brief POSIX signal handler. Sets g_stop to terminate the cyclic loop.
- * @param sig Signal number (unused).
- */
+/// @brief POSIX signal handler. Sets g_stop to terminate the cyclic loop.
 static void handle_signal(int sig) {
   (void)sig;
-  g_stop = 1;
+  g_stop.store(true);
 }
 
 /* =========================================================================
@@ -142,41 +140,23 @@ constexpr uint32_t DISPLAY_EVERY_N_CYCLES = 100U;
  * Process image access helpers
  * ========================================================================= */
 
-/**
- * @brief Read a uint16_t from the process image at a given byte offset.
- * @details Uses ProcessImage::read_byte() for safe bounds-checked access.
- *          Little-endian decode: low byte at offset, high byte at offset+1.
- * @param img    The process image buffer.
- * @param offset Byte offset within the image.
- * @return 16-bit little-endian value at the offset.
- */
+/// @brief Read a uint16_t from the process image at a given byte offset.
+/// @details Little-endian decode via ProcessImage::read_byte() bounds check.
 static uint16_t read_u16(const ProcessImage &img, uint32_t offset) {
   uint16_t lo = static_cast<uint16_t>(img.read_byte(offset));
   uint16_t hi = static_cast<uint16_t>(img.read_byte(offset + 1U));
   return static_cast<uint16_t>((hi << 8U) | lo);
 }
 
-/**
- * @brief Write a uint16_t into the process image at a given byte offset.
- * @details Uses ProcessImage::write_byte() for safe bounds-checked access.
- *          Little-endian encode: low byte at offset, high byte at offset+1.
- * @param img    The process image buffer (mutable).
- * @param offset Byte offset within the image.
- * @param val    16-bit value to write (little-endian).
- */
+/// @brief Write a uint16_t into the process image at a given byte offset.
+/// @details Little-endian encode via ProcessImage::write_byte() bounds check.
 static void write_u16(ProcessImage &img, uint32_t offset, uint16_t val) {
   img.write_byte(offset, static_cast<uint8_t>(val & 0xFFU));
   img.write_byte(offset + 1U, static_cast<uint8_t>((val >> 8U) & 0xFFU));
 }
 
-/**
- * @brief Read a signed INT16 temperature from a thermocouple channel record.
- * @details Per Beckhoff EL33xx documentation: value = raw x 0.1 degC.
- *          Bytes 2-3 of each channel record hold the INT16 measurement.
- * @param img         The process image buffer.
- * @param base_offset Byte offset of the start of this channel's record.
- * @return Temperature in degC as a double.
- */
+/// @brief Read a signed INT16 temperature from a thermocouple channel record.
+/// @details Per Beckhoff EL33xx documentation: value = raw x 0.1 degC.
 static double read_el33xx_temperature(const ProcessImage &img,
                                       uint32_t base_offset) {
   // Temperature INT16 is stored at bytes [base+2, base+3] (little-endian).
@@ -186,14 +166,8 @@ static double read_el33xx_temperature(const ProcessImage &img,
   return static_cast<double>(raw) * 0.1;
 }
 
-/**
- * @brief Read the status low byte of a thermocouple channel record.
- * @details Byte 0 of the 2-byte status word holds error/underrange/overrange
- * bits.
- * @param img         The process image buffer.
- * @param base_offset Byte offset of the start of this channel's record.
- * @return Low byte of the status word.
- */
+/// @brief Read the status low byte of a thermocouple channel record.
+/// @details Byte 0 holds error/underrange/overrange bits.
 static uint8_t read_el33xx_status(const ProcessImage &img,
                                   uint32_t base_offset) {
   return static_cast<uint8_t>(img.read_byte(base_offset));
@@ -203,14 +177,8 @@ static uint8_t read_el33xx_status(const ProcessImage &img,
  * Topology validation
  * ========================================================================= */
 
-/**
- * @brief Validate that the discovered bus matches the expected topology.
- * @details Checks slave count, product names, and process image offsets.
- * Prints a clear error and returns false if anything is mismatched.
- * @param enumerator Populated Enumerator after configure_fmmu().
- * @param image_bytes Total process image size in bytes.
- * @return true if topology is exactly as expected, false otherwise.
- */
+/// @brief Validate that the discovered bus matches the expected topology.
+/// @details Checks slave count, product names, and process image offsets.
 static bool validate_topology(const Enumerator &enumerator,
                               uint32_t image_bytes) {
   const std::vector<SlaveInfo> &slaves = enumerator.slaves();
@@ -273,11 +241,7 @@ static bool validate_topology(const Enumerator &enumerator,
  * Display functions
  * ========================================================================= */
 
-/**
- * @brief Print all 16 EL1809 digital input channels.
- * @param img    Current process image.
- * @param offset Byte offset of EL1809 inputs in the image.
- */
+/// @brief Print all 16 EL1809 digital input channels.
 static void display_digital_inputs(const ProcessImage &img, uint32_t offset) {
   uint16_t di_word = read_u16(img, offset);
   std::cout << "[DI] EL1809 16x Digital Input:" << std::endl;
@@ -293,11 +257,7 @@ static void display_digital_inputs(const ProcessImage &img, uint32_t offset) {
   }
 }
 
-/**
- * @brief Print all 16 EL2809 digital output channels as currently written.
- * @param img    Current process image.
- * @param offset Byte offset of EL2809 outputs in the image.
- */
+/// @brief Print all 16 EL2809 digital output channels as currently written.
 static void display_digital_outputs(const ProcessImage &img, uint32_t offset) {
   uint16_t do_word = read_u16(img, offset);
   std::cout << "[DO] EL2809 16x Digital Output (current pattern=0x" << std::hex
@@ -313,11 +273,7 @@ static void display_digital_outputs(const ProcessImage &img, uint32_t offset) {
   }
 }
 
-/**
- * @brief Print all EL3318 thermocouple channel readings.
- * @param img    Current process image.
- * @param offset Byte offset of EL3318 inputs in the image.
- */
+/// @brief Print all EL3318 thermocouple channel readings.
 static void display_el3318(const ProcessImage &img, uint32_t offset) {
   std::cout << "[TC] EL3318 8x Thermocouple:" << std::endl;
   for (uint32_t ch = 0; ch < EL3318_CHANNELS; ++ch) {
@@ -344,11 +300,7 @@ static void display_el3318(const ProcessImage &img, uint32_t offset) {
   }
 }
 
-/**
- * @brief Print all EL3314-0002 thermocouple channel readings.
- * @param img    Current process image.
- * @param offset Byte offset of EL3314 inputs in the image.
- */
+/// @brief Print all EL3314-0002 thermocouple channel readings.
 static void display_el3314(const ProcessImage &img, uint32_t offset) {
   std::cout << "[TC] EL3314-0002 4x Thermocouple:" << std::endl;
   for (uint32_t ch = 0; ch < EL3314_CHANNELS; ++ch) {
@@ -377,24 +329,8 @@ static void display_el3314(const ProcessImage &img, uint32_t offset) {
  * Output pattern generator
  * ========================================================================= */
 
-/**
- * @brief Compute the next walking-bit DO pattern.
- * @details Cycles a single active bit across all 16 channels, then inverts
- * to all-ON, then returns to a walking pattern. Provides a visible indicator
- * that the master is alive and the outputs are functioning.
- *
- * Pattern sequence (repeating):
- *   Cycle 0:  0x0001 (Ch1 only)
- *   Cycle 1:  0x0002 (Ch2 only)
- *   ...
- *   Cycle 15: 0x8000 (Ch16 only)
- *   Cycle 16: 0xAAAA (even channels)
- *   Cycle 17: 0x5555 (odd channels)
- *   Then back to Cycle 0.
- *
- * @param step Current step counter (incremented by caller).
- * @return 16-bit pattern to write to EL2809 outputs.
- */
+/// @brief Compute the next walking-bit DO pattern.
+/// @details Cycles bit 0..15 across channels, then 0xAAAA and 0x5555.
 static uint16_t next_output_pattern(uint32_t step) {
   // Steps 0-15: walking single bit.
   constexpr uint32_t WALKING_STEPS = 16U;
@@ -414,14 +350,7 @@ static uint16_t next_output_pattern(uint32_t step) {
  * Main cyclic loop
  * ========================================================================= */
 
-/**
- * @brief Main entry point.
- * @details Parses CLI arguments, runs bus startup, then enters the cyclic
- * loop exchanging process data every 10 ms. Stops on SIGINT/SIGTERM.
- * @param argc Argument count.
- * @param argv Argument vector. argv[1] = ethernet interface name.
- * @return 0 on clean exit, 1 on error.
- */
+/// @brief Main entry point driving the 10 ms cyclic process data exchange loop.
 int main(int argc, char *argv[]) {
   // -----------------------------------------------------------------------
   // Argument parsing
@@ -611,7 +540,7 @@ int main(int argc, char *argv[]) {
   // The actual limit is unreachable in practice (>27 days at 10ms).
   std::chrono::steady_clock::time_point app_start =
       std::chrono::steady_clock::now();
-  for (uint64_t guard = 0U; guard < 9000000000ULL && g_stop == 0; ++guard) {
+  for (uint64_t guard = 0U; guard < 9000000000ULL && g_stop.load() == false; ++guard) {
     // Exit after 60s for testing
     if (std::chrono::steady_clock::now() - app_start >=
         std::chrono::seconds(60)) {

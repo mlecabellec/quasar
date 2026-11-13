@@ -17,6 +17,7 @@ using namespace resoem::eni;
 
 namespace {
 
+/// @brief Parse CLI comparison strictness level string into enum value.
 ComparisonLevel parse_level(const std::string &str) {
   if (str == "topology") {
     return ComparisonLevel::TOPOLOGY;
@@ -33,6 +34,7 @@ ComparisonLevel parse_level(const std::string &str) {
 
 } // anonymous namespace
 
+/// @brief Entry point for verifying EtherCAT bus topology against an ENI document.
 int main(int argc, char *argv[]) {
   optparse::OptionParser parser =
       optparse::OptionParser().description("Quasar EtherCAT Topology & ENI Validation Tool");
@@ -78,7 +80,7 @@ int main(int argc, char *argv[]) {
 
   try {
     std::cout << "Verifying live bus on " << iface << " against reference..." << std::endl;
-    RawSocket socket(iface);
+    RawSocket socket{iface};
 
     ComparisonReport report = EniComparator::compare_live_bus(reference_doc, socket, level);
     std::cout << report.format_summary() << std::endl;

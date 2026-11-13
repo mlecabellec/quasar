@@ -26,7 +26,7 @@ constexpr std::size_t MAX_PROBE_FMMU = 2;
 } // anonymous namespace
 
 EniGenerator::EniGenerator(IRawSocket &socket)
-    : m_socket(socket) {}
+    : m_socket{socket} {}
 
 void EniGenerator::probe_slave_sync_managers(std::uint16_t phys_addr, EniSlave &out_slave) {
   for (std::size_t i = 0; i < MAX_PROBE_SM; ++i) {
@@ -44,7 +44,8 @@ void EniGenerator::probe_slave_sync_managers(std::uint16_t phys_addr, EniSlave &
       break;
     }
 
-    std::vector<byte> rx_buf(MAX_FRAME_SIZE, static_cast<byte>(0));
+    std::vector<byte> rx_buf{};
+    rx_buf.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
     std::size_t rec = 0;
     try {
       rec = m_socket.receive(rx_buf, nullptr);
@@ -166,7 +167,7 @@ void EniGenerator::probe_slave_pdos_and_coe(std::uint16_t phys_addr, EniSlave &o
 }
 
 Result<EniDocument> EniGenerator::generate(const std::string &master_name) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
   if (!lock.owns_lock()) {
     return std::unexpected(ECError::Timeout);
   } else {
@@ -194,7 +195,7 @@ Result<EniDocument> EniGenerator::generate(const std::string &master_name) {
   master.init_cmds.push_back(master_dl_cmd);
 
   // 2. Discover physical slaves using Enumerator
-  Enumerator enumerator(m_socket);
+  Enumerator enumerator{m_socket};
   Result<std::size_t> count_res = enumerator.enumerate();
   if (!count_res.has_value()) {
     return std::unexpected(count_res.error());

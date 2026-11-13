@@ -1,6 +1,7 @@
 #include "quasar/scripting/ObjectTracker.hpp"
 #include "quasar/named/NamedObject.hpp"
 #include "quasar/scripting/NamedLuaMethod.hpp"
+#include "quasar/scripting/ScriptableNamedObject.hpp"
 #include "quasar/scripting/LuaEngine.hpp"
 #include <algorithm>
 #include <iostream>
@@ -20,6 +21,19 @@ void ObjectTracker::track(std::shared_ptr<named::NamedObject> obj) {
     if (obj->getType() == "NamedLuaMethod") {
         m_methods.push_back(obj);
     }
+}
+
+void ObjectTracker::trackScriptable(std::shared_ptr<ScriptableNamedObject> obj) {
+    // [CS-0010.15] Ignore null objects before acquiring tracking mutex.
+    if (!obj) {
+        return;
+    }
+    // [CS-0010.46] Synchronize scriptable registry access with bounded timeout.
+    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+    if (!lock.owns_lock()) {
+        return;
+    }
+    m_scriptables.push_back(obj);
 }
 
 void ObjectTracker::untrack(named::NamedObject* obj) {
@@ -82,6 +96,23 @@ void ObjectTracker::invalidateMethods(size_t engineId) {
             }
         }
         ++it;
+    }
+
+    // [CS-0010.44] Also detach Lua self tables from ScriptableNamedObjects owned by this engine.
+    std::vector<std::weak_ptr<ScriptableNamedObject>>::iterator scIt = m_scriptables.begin();
+    while (scIt != m_scriptables.end()) {
+        std::shared_ptr<ScriptableNamedObject> scriptable = scIt->lock();
+        if (!scriptable) {
+            // [CS-0010.44] Prune expired scriptable references.
+            scIt = m_scriptables.erase(scIt);
+            continue;
+        }
+        if (scriptable->getEngineId() == engineId) {
+            scriptable->invalidate();
+            scIt = m_scriptables.erase(scIt);
+            continue;
+        }
+        ++scIt;
     }
 }
 

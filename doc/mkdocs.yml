@@ -1,90 +1,333 @@
 site_name: Quasar Documentation
 use_directory_urls: false
 plugins:
-  - search
-
+- search
 theme:
   name: material
   features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
+  - navigation.tabs
+  - navigation.sections
+  - toc.integrate
   palette:
-    - scheme: slate          # Dark mode (default)
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    - scheme: default        # Light mode
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-
+  - scheme: slate
+    primary: indigo
+    accent: indigo
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
+  - scheme: default
+    primary: indigo
+    accent: indigo
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
 nav:
-  - Welcome: index.md
-  - Topics Index: topics_index.md
-  - Project Rules:
-      - Rules Index: architecture/rules_index.md
-      - "CS-0010 Quality Standards": architecture/CS-0010.md
-      - "CS-0020 C++ Coding Standards": architecture/CS-0020.md
-      - "CS-0030 Modifications Standards": architecture/CS-0030.md
-      - "CS-0040 Constant Management": architecture/CS-0040.md
-      - "CS-0050 C++26 Safety Standards": architecture/CS-0050.md
-      - "CS-0060 Bounded Logic Scheduler": architecture/CS-0060.md
-      - "CS-0070 High-Integrity ZeroMQ": architecture/CS-0070.md
-  - Architecture:
-      - Architecture Index: architecture/architecture_index.md
-      - Components Register: architecture/components_index.md
-      - Core Primitive Types: architecture/CP-0010.md
-      - Architecture diagrams: architecture/diagrams.md
-      - System Overview: architecture/README.md
-  - Features Specification:
-      - Features Overview: features/README.md
-      - "Use Case UC-0010": features/UC-0010.md
-      - "FE-0010 Data Codec Engine": features/FE-0010.md
-      - "FE-0020 Scheduler Service": features/FE-0020.md
-      - "FE-0030 Named Primitive Mapping": features/FE-0030.md
-      - "FE-0040 Object Lifecycle": features/FE-0040.md
-      - "FE-0050 Calibration Functions": features/FE-0050.md
-      - "FE-0060 Scripting Engine Extension": features/FE-0060.md
-      - "FE-0070 RPC Methods Integration": features/FE-0070.md
-      - "FE-0080 Logic Engine Integration": features/FE-0080.md
-      - "FE-0090 Named Containers": features/FE-0090.md
-      - "FE-0100 Binary serialization": features/FE-0100.md
-      - "FE-0110 Cause Effect Matrix": features/FE-0110.md
-      - "FE-0120 Lua Logic Engine bindings": features/FE-0120.md
-      - "FE-0130 ZeroMQ Transports": features/FE-0130.md
-      - "FE-0140 OPC-UA server/client": features/FE-0140.md
-      - "FE-0150 Net plugin interface": features/FE-0150.md
-      - "FE-0160 High performance calibration": features/FE-0160.md
-      - "FE-0170 Calibration service logic": features/FE-0170.md
-      - "FE-0180 OPC-UA client service": features/FE-0180.md
-      - "FE-0190 Net plugin base class": features/FE-0190.md
-      - "FE-0200 OPC-UA server service": features/FE-0200.md
-      - "FE-0210 Calibration service parameters": features/FE-0210.md
-      - "FE-0220 OPC-UA client parameters": features/FE-0220.md
-      - "FE-0230 Net plugin library loading": features/FE-0230.md
-      - "FE-0240 OPC-UA server parameters": features/FE-0240.md
-      - "FE-0250 Tree transformers": features/FE-0250.md
-      - "FE-0260 Raw Ethernet service": features/FE-0260.md
-  - User Manual & Scripting:
-      - Manual Index: manual/README.md
-      - Named Service Lua integration: manual/named-service-lua.md
-  - Standards:
-      - Standards Overview: standards/index.md
-  - Developer Reports:
-      - Developer Reports Index: reports/index.md
-      - ASAN Handover Report: reports/HANDOVER-ASAN-STABILIZATION-20260423.md
-      - Web Networking Plan: reports/REFLEXIVE-WEB-NETWORKING-PLAN-20260422.md
-      - Q2 2026 Roadmap: reports/ROADMAP-Q2-2026.md
-      - named module CS-0010 Audit: reports/named-CS-0010-2026-02-25.md
-      - scripting module CS-0010 Audit: reports/scripting-CS-0010-2026-03-08.md
-  - Guides & Operations:
-      - Developer Helpers: helpers/README.md
-      - OS Requirements: DEBIAN-REQUIREMENTS.md
-      - Fedora Requirements: FEDORA-REQUIREMENTS.md
-      - Arch Linux Requirements: ARCHLINUX-REQUIREMENTS.md
-      - Project TODOs: TODO.md
+- Welcome: index.md
+- Topics Index: topics_index.md
+- Project Rules:
+  - Rules Index: architecture/rules_index.md
+  - CS-0010 Quality Standards: architecture/CS-0010.md
+  - CS-0020 C++ Coding Standards: architecture/CS-0020.md
+  - CS-0030 Modifications Standards: architecture/CS-0030.md
+  - CS-0040 Constant Management: architecture/CS-0040.md
+  - CS-0050 C++26 Safety Standards: architecture/CS-0050.md
+  - CS-0060 Bounded Logic Scheduler: architecture/CS-0060.md
+  - CS-0070 High-Integrity ZeroMQ: architecture/CS-0070.md
+  - CS-0090 Commenting & Doxygen Standards: architecture/CS-0090.md
+- Architecture:
+  - architecture Overview: architecture/README.md
+  - CP-0010: architecture/CP-0010.md
+  - architecture_index: architecture/architecture_index.md
+  - components_index: architecture/components_index.md
+  - diagrams: architecture/diagrams.md
+- Features Specification:
+  - features Overview: features/README.md
+  - FE-0010: features/FE-0010.md
+  - FE-0020: features/FE-0020.md
+  - FE-0030: features/FE-0030.md
+  - FE-0040: features/FE-0040.md
+  - FE-0050: features/FE-0050.md
+  - FE-0060: features/FE-0060.md
+  - FE-0070: features/FE-0070.md
+  - FE-0080: features/FE-0080.md
+  - FE-0090: features/FE-0090.md
+  - FE-0100: features/FE-0100.md
+  - FE-0110: features/FE-0110.md
+  - FE-0120: features/FE-0120.md
+  - FE-0130: features/FE-0130.md
+  - FE-0140: features/FE-0140.md
+  - FE-0150: features/FE-0150.md
+  - FE-0160: features/FE-0160.md
+  - FE-0170: features/FE-0170.md
+  - FE-0180: features/FE-0180.md
+  - FE-0190: features/FE-0190.md
+  - FE-0200: features/FE-0200.md
+  - FE-0210: features/FE-0210.md
+  - FE-0220: features/FE-0220.md
+  - FE-0230: features/FE-0230.md
+  - FE-0240: features/FE-0240.md
+  - FE-0250: features/FE-0250.md
+  - FE-0260: features/FE-0260.md
+  - UC-0010: features/UC-0010.md
+- Implementation:
+  - impl Overview: impl/README.md
+  - classes Overview: impl/classes/README.md
+  - coverage Overview: impl/coverage/README.md
+  - interfaces Overview: impl/interfaces/README.md
+  - justifications Overview: impl/justifications/README.md
+  - CoreInterfaces: impl/interfaces/CoreInterfaces.md
+  - quasar::coretypes:
+    - coretypes Overview: impl/classes/quasar/coretypes/README.md
+    - BitBuffer: impl/classes/quasar/coretypes/BitBuffer.md
+    - Boolean: impl/classes/quasar/coretypes/Boolean.md
+    - Buffer: impl/classes/quasar/coretypes/Buffer.md
+    - BufferSlice: impl/classes/quasar/coretypes/BufferSlice.md
+    - Date: impl/classes/quasar/coretypes/Date.md
+    - Duration: impl/classes/quasar/coretypes/Duration.md
+    - FloatingPoint: impl/classes/quasar/coretypes/FloatingPoint.md
+    - FloatingPointTypes: impl/classes/quasar/coretypes/FloatingPointTypes.md
+    - Integer: impl/classes/quasar/coretypes/Integer.md
+    - IntegerTypes: impl/classes/quasar/coretypes/IntegerTypes.md
+    - Number: impl/classes/quasar/coretypes/Number.md
+    - Quantity: impl/classes/quasar/coretypes/Quantity.md
+    - String: impl/classes/quasar/coretypes/String.md
+    - Timestamp: impl/classes/quasar/coretypes/Timestamp.md
+  - quasar::named:
+    - named Overview: impl/classes/quasar/named/README.md
+    - ActiveEntity: impl/classes/quasar/named/ActiveEntity.md
+    - NamedArray: impl/classes/quasar/named/NamedArray.md
+    - NamedBitBuffer: impl/classes/quasar/named/NamedBitBuffer.md
+    - NamedBitBufferSlice: impl/classes/quasar/named/NamedBitBufferSlice.md
+    - NamedBoolean: impl/classes/quasar/named/NamedBoolean.md
+    - NamedBuffer: impl/classes/quasar/named/NamedBuffer.md
+    - NamedBufferSlice: impl/classes/quasar/named/NamedBufferSlice.md
+    - NamedDate: impl/classes/quasar/named/NamedDate.md
+    - NamedDuration: impl/classes/quasar/named/NamedDuration.md
+    - NamedFloatingPoint: impl/classes/quasar/named/NamedFloatingPoint.md
+    - NamedInteger: impl/classes/quasar/named/NamedInteger.md
+    - NamedMap: impl/classes/quasar/named/NamedMap.md
+    - NamedMethod: impl/classes/quasar/named/NamedMethod.md
+    - NamedObject: impl/classes/quasar/named/NamedObject.md
+    - NamedQuantity: impl/classes/quasar/named/NamedQuantity.md
+    - NamedService: impl/classes/quasar/named/NamedService.md
+    - NamedSet: impl/classes/quasar/named/NamedSet.md
+    - NamedString: impl/classes/quasar/named/NamedString.md
+    - NamedTimestamp: impl/classes/quasar/named/NamedTimestamp.md
+    - NamedVariant: impl/classes/quasar/named/NamedVariant.md
+    - Serialization: impl/classes/quasar/named/Serialization.md
+    - Traversal: impl/classes/quasar/named/Traversal.md
+  - calibration:
+    - calibration Overview: impl/classes/calibration/README.md
+    - Calibrations: impl/classes/calibration/Calibrations.md
+    - NamedCalibration: impl/classes/calibration/NamedCalibration.md
+  - datacodec:
+    - AdvancedSchema: impl/classes/datacodec/AdvancedSchema.md
+    - BinaryMapper: impl/classes/datacodec/BinaryMapper.md
+    - FloatCodec: impl/classes/datacodec/FloatCodec.md
+    - ICodec: impl/classes/datacodec/ICodec.md
+    - IntegerCodec: impl/classes/datacodec/IntegerCodec.md
+    - Schema: impl/classes/datacodec/Schema.md
+    - StringCodec: impl/classes/datacodec/StringCodec.md
+  - datalogger:
+    - datalogger Overview: impl/classes/datalogger/README.md
+    - ADevRecorder: impl/classes/datalogger/ADevRecorder.md
+    - CsvFileWriter: impl/classes/datalogger/CsvFileWriter.md
+    - DataAccess: impl/classes/datalogger/DataAccess.md
+    - DataLoggerService: impl/classes/datalogger/DataLoggerService.md
+    - Interfaces: impl/classes/datalogger/Interfaces.md
+    - LogEntry: impl/classes/datalogger/LogEntry.md
+    - MathFilter: impl/classes/datalogger/MathFilter.md
+    - RingBuffer: impl/classes/datalogger/RingBuffer.md
+    - ValueThresholdTrigger: impl/classes/datalogger/ValueThresholdTrigger.md
+  - logicengine:
+    - logicengine Overview: impl/classes/logicengine/README.md
+    - CauseEffectMatrix: impl/classes/logicengine/CauseEffectMatrix.md
+    - LogicEngine: impl/classes/logicengine/LogicEngine.md
+    - SFC: impl/classes/logicengine/SFC.md
+    - StateMachine: impl/classes/logicengine/StateMachine.md
+  - opcua:
+    - opcua Overview: impl/classes/opcua/README.md
+    - OpcUaSecurityManager: impl/classes/opcua/OpcUaSecurityManager.md
+    - OpcUaServices: impl/classes/opcua/OpcUaServices.md
+  - resoem:
+    - resoem Overview: impl/classes/resoem/README.md
+    - CoEHandler: impl/classes/resoem/CoEHandler.md
+    - DatagramHeader: impl/classes/resoem/DatagramHeader.md
+    - Diagnostics: impl/classes/resoem/Diagnostics.md
+    - EniConfigurator: impl/classes/resoem/EniConfigurator.md
+    - EniDocument: impl/classes/resoem/EniDocument.md
+    - EniGenerator: impl/classes/resoem/EniGenerator.md
+    - Enumerator: impl/classes/resoem/Enumerator.md
+    - EtherCATHeader: impl/classes/resoem/EtherCATHeader.md
+    - EtherCATTypes: impl/classes/resoem/EtherCATTypes.md
+    - FrameBuilder: impl/classes/resoem/FrameBuilder.md
+    - FrameError: impl/classes/resoem/FrameError.md
+    - HotConnectManager: impl/classes/resoem/HotConnectManager.md
+    - MailboxHandler: impl/classes/resoem/MailboxHandler.md
+    - MailboxProtocols: impl/classes/resoem/MailboxProtocols.md
+    - MasterServiceAndVirtual: impl/classes/resoem/MasterServiceAndVirtual.md
+    - ProcessImage: impl/classes/resoem/ProcessImage.md
+    - RawSocket: impl/classes/resoem/RawSocket.md
+    - RedundancyManager: impl/classes/resoem/RedundancyManager.md
+    - SlaveInfo: impl/classes/resoem/SlaveInfo.md
+    - SocketError: impl/classes/resoem/SocketError.md
+    - SDOHeader: impl/classes/resoem/coe/SDOHeader.md
+    - Header: impl/classes/resoem/mailbox/Header.md
+  - resoes:
+    - resoes Overview: impl/classes/resoes/README.md
+    - CoeServer: impl/classes/resoes/CoeServer.md
+    - EepromEmulator: impl/classes/resoes/EepromEmulator.md
+    - EscController: impl/classes/resoes/EscController.md
+    - EscTypes: impl/classes/resoes/EscTypes.md
+    - IEscHardware: impl/classes/resoes/IEscHardware.md
+    - MailboxServer: impl/classes/resoes/MailboxServer.md
+    - MemoryEscHardware: impl/classes/resoes/MemoryEscHardware.md
+    - ObjectDictionary: impl/classes/resoes/ObjectDictionary.md
+    - SlaveApplication: impl/classes/resoes/SlaveApplication.md
+  - sched:
+    - Scheduler: impl/classes/sched/Scheduler.md
+  - scripting:
+    - scripting Overview: impl/classes/scripting/README.md
+    - LuaEngine: impl/classes/scripting/LuaEngine.md
+    - LuaService: impl/classes/scripting/LuaService.md
+    - PluginLoader: impl/classes/scripting/PluginLoader.md
+    - ScriptableNamedObject: impl/classes/scripting/ScriptableNamedObject.md
+  - sim:
+    - Simulator: impl/classes/sim/Simulator.md
+    - TypeRegistry: impl/classes/sim/TypeRegistry.md
+  - utils:
+    - EventManager: impl/classes/utils/EventManager.md
+    - Logger: impl/classes/utils/Logger.md
+    - TimeKeeper: impl/classes/utils/TimeKeeper.md
+  - Smp:
+    - Smp Overview: impl/classes/Smp/README.md
+    - AnySimple: impl/classes/Smp/AnySimple.md
+    - Object: impl/classes/Smp/Object.md
+    - Publication: impl/classes/Smp/Publication/Publication.md
+    - TypeRegistry: impl/classes/Smp/Publication/TypeRegistry.md
+    - Simulator: impl/classes/Smp/Simulator.md
+    - Uuid: impl/classes/Smp/Uuid.md
+- Verification Tests:
+  - calibration: implementation/tests/calibration.md
+  - coretypes: implementation/tests/coretypes.md
+  - datacodec: implementation/tests/datacodec.md
+  - datalogger: implementation/tests/datalogger.md
+  - logicengine: implementation/tests/logicengine.md
+  - named: implementation/tests/named.md
+  - opcua: implementation/tests/opcua.md
+  - resoem: implementation/tests/resoem.md
+  - resoes: implementation/tests/resoes.md
+  - sched: implementation/tests/sched.md
+  - scripting: implementation/tests/scripting.md
+  - sim: implementation/tests/sim.md
+  - smp: implementation/tests/smp.md
+  - utils: implementation/tests/utils.md
+- Project Tasks & Reviews:
+  - milestones Overview: project/milestones/README.md
+  - tasks Overview: project/tasks/README.md
+  - TSK-20260303-001: project/tasks/TSK-20260303-001.md
+  - TSK-20260303-004: project/tasks/TSK-20260303-004.md
+  - TSK-20260310-001: project/tasks/TSK-20260310-001.md
+  - TSK-20260311-001: project/tasks/TSK-20260311-001.md
+  - TSK-20260311-002: project/tasks/TSK-20260311-002.md
+  - TSK-20260311-003: project/tasks/TSK-20260311-003.md
+  - TSK-20260311-004: project/tasks/TSK-20260311-004.md
+  - TSK-20260311-005: project/tasks/TSK-20260311-005.md
+  - TSK-20260311-006: project/tasks/TSK-20260311-006.md
+  - TSK-20260311-008: project/tasks/TSK-20260311-008.md
+  - TSK-20260311-009: project/tasks/TSK-20260311-009.md
+  - TSK-20260311-010: project/tasks/TSK-20260311-010.md
+  - TSK-20260311-011: project/tasks/TSK-20260311-011.md
+  - TSK-20260328-001: project/tasks/TSK-20260328-001.md
+  - TSK-20260410-001: project/tasks/TSK-20260410-001.md
+  - TSK-20260410-002: project/tasks/TSK-20260410-002.md
+  - TSK-20260410-003: project/tasks/TSK-20260410-003.md
+  - TSK-20260410-004: project/tasks/TSK-20260410-004.md
+  - TSK-20260410-005: project/tasks/TSK-20260410-005.md
+  - TSK-20260421-001: project/tasks/TSK-20260421-001.md
+  - TSK-20260529-001: project/tasks/TSK-20260529-001.md
+  - TSK-20260920-001: project/tasks/TSK-20260920-001.md
+  - TSK-20261113-001: project/tasks/TSK-20261113-001.md
+  - TSK-20261113-002: project/tasks/TSK-20261113-002.md
+  - TSK-20261113-003: project/tasks/TSK-20261113-003.md
+  - Archived Tasks:
+    - TSK-20260301-001: project/tasks/archived/TSK-20260301-001.md
+    - TSK-20260303-002: project/tasks/archived/TSK-20260303-002.md
+    - TSK-20260303-003: project/tasks/archived/TSK-20260303-003.md
+    - TSK-20260308-001: project/tasks/archived/TSK-20260308-001.md
+    - TSK-20260308-002: project/tasks/archived/TSK-20260308-002.md
+  - Code Reviews:
+    - reviews Overview: project/reviews/README.md
+    - REVIEW-00001: project/reviews/2026/02/REVIEW-00001.md
+    - REVIEW-00002: project/reviews/2026/02/REVIEW-00002.md
+    - REVIEW-00003: project/reviews/2026/02/REVIEW-00003.md
+    - REVIEW-00004: project/reviews/2026/02/REVIEW-00004.md
+    - REVIEW-00005: project/reviews/2026/02/REVIEW-00005.md
+    - REVIEW-00006: project/reviews/2026/02/REVIEW-00006.md
+    - REVIEW-00007: project/reviews/2026/02/REVIEW-00007.md
+    - REVIEW-00008: project/reviews/2026/02/REVIEW-00008.md
+- User Manual & Scripting:
+  - manual Overview: manual/README.md
+  - man Overview: manual/man/README.md
+  - qlsh: manual/man/qlsh.md
+  - named-service-lua: manual/named-service-lua.md
+- Knowledge & Modules:
+  - ethercat-modules: knowledge/ethercat-modules.md
+  - EtherCAT Kernel Module:
+    - ethercat Overview: linux-modules/ethercat/README.md
+    - fake_lib Overview: linux-modules/ethercat/fake_lib/README.md
+    - CONTRIBUTING: linux-modules/ethercat/CONTRIBUTING.md
+    - CodingStyle: linux-modules/ethercat/CodingStyle.md
+    - FEATURES: linux-modules/ethercat/FEATURES.md
+    - INSTALL: linux-modules/ethercat/INSTALL.md
+    - NEWS: linux-modules/ethercat/NEWS.md
+    - device_drivers_template: linux-modules/ethercat/devices/device_drivers_template.md
+    - api_usage_notes: linux-modules/ethercat/master/api_usage_notes.md
+  - Legacy SOEM Reference:
+    - SOEM Overview: linux-modules/SOEM/README.md
+    - erika Overview: linux-modules/SOEM/contrib/osal/erika/README.md
+    - LICENSE: linux-modules/SOEM/LICENSE.md
+- Standards:
+  - standards Overview: standards/index.md
+- Developer Reports:
+  - reports Overview: reports/index.md
+  - HANDOVER-ASAN-STABILIZATION-20260423: reports/HANDOVER-ASAN-STABILIZATION-20260423.md
+  - HANDOVER-WEB-NETWORKING-20260422: reports/HANDOVER-WEB-NETWORKING-20260422.md
+  - HANDOVER-WEB-NETWORKING-20260423: reports/HANDOVER-WEB-NETWORKING-20260423.md
+  - LUA-STABILITY-REFACTORING-20260419: reports/LUA-STABILITY-REFACTORING-20260419.md
+  - LUA-STABILITY-VALIDATION-20260409: reports/LUA-STABILITY-VALIDATION-20260409.md
+  - PROGRESS-WEB-NETWORKING-20260423: reports/PROGRESS-WEB-NETWORKING-20260423.md
+  - PROPOSAL-LUA-PLAN-20260311: reports/PROPOSAL-LUA-PLAN-20260311.md
+  - PROPOSAL-LUA-PLAN-DEEP-20260311: reports/PROPOSAL-LUA-PLAN-DEEP-20260311.md
+  - PROPOSAL-TASKS-20260311: reports/PROPOSAL-TASKS-20260311.md
+  - REFLEXIVE-WEB-NETWORKING-PLAN-20260422: reports/REFLEXIVE-WEB-NETWORKING-PLAN-20260422.md
+  - ROADMAP-Q2-2026: reports/ROADMAP-Q2-2026.md
+  - TASK-REPORT-20260409: reports/TASK-REPORT-20260409.md
+  - TASK-REPORT-20260410: reports/TASK-REPORT-20260410.md
+  - TASK-REPORT-20260419: reports/TASK-REPORT-20260419.md
+  - TASK-REPORT-20260804: reports/TASK-REPORT-20260804.md
+  - TSK-20260311-001_handover_report: reports/TSK-20260311-001_handover_report.md
+  - TSK-20260311-001_progress_report: reports/TSK-20260311-001_progress_report.md
+  - datacodec-CS-0010-2026-02-25: reports/datacodec-CS-0010-2026-02-25.md
+  - datalogger-CS-0010-2026-04-07: reports/datalogger-CS-0010-2026-04-07.md
+  - diagrams: reports/diagrams.md
+  - named-CS-0010-2026-02-25: reports/named-CS-0010-2026-02-25.md
+  - opcua-progress-report-2026-04-07: reports/opcua-progress-report-2026-04-07.md
+  - opcua-progress-report-2026-04-19: reports/opcua-progress-report-2026-04-19.md
+  - sched-CS-0010-2026-02-25: reports/sched-CS-0010-2026-02-25.md
+  - scripting-CS-0010-2026-03-08: reports/scripting-CS-0010-2026-03-08.md
+  - sim-CS-0010-2026-02-25: reports/sim-CS-0010-2026-02-25.md
+  - sim-test-CS-0010-2026-02-25: reports/sim-test-CS-0010-2026-02-25.md
+  - utils-CS-0010-2026-02-25: reports/utils-CS-0010-2026-02-25.md
+- Guides & Operations:
+  - helpers Overview: helpers/README.md
+  - ARCHLINUX-REQUIREMENTS: ARCHLINUX-REQUIREMENTS.md
+  - DEBIAN-REQUIREMENTS: DEBIAN-REQUIREMENTS.md
+  - FEDORA-REQUIREMENTS: FEDORA-REQUIREMENTS.md
+  - GEMINI: GEMINI.md
+  - IDEAS: IDEAS.md
+  - TODO: TODO.md
+  - coverage_report: coverage_report.md
+  - deletion_analysis_report: deletion_analysis_report.md
+  - klingon_poem: misc/klingon_poem.md
+  - sim_missing_features_report: sim_missing_features_report.md

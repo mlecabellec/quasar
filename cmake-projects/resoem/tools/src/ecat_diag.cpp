@@ -9,6 +9,7 @@
 
 using namespace resoem;
 
+/// @brief Print decoded FMMU configuration entries for an EtherCAT slave.
 void print_fmmu(Enumerator& enumerator, uint16_t addr) {
     std::cout << "\nFMMU Configuration (max 16 entries):" << std::endl;
     std::cout << std::left << std::setw(6) << "Idx" << std::setw(12) << "LogAddr" << std::setw(10) << "Len" 
@@ -29,6 +30,7 @@ void print_fmmu(Enumerator& enumerator, uint16_t addr) {
     }
 }
 
+/// @brief Entry point for dumping EtherCAT bus FMMU and diagnostic information.
 int main(int argc, char* argv[]) {
     optparse::OptionParser parser = optparse::OptionParser().description("Quasar EtherCAT Diagnostic Utility");
 
@@ -43,8 +45,8 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        RawSocket socket(iface);
-        Enumerator enumerator(socket);
+        RawSocket socket{iface};
+        Enumerator enumerator{socket};
         Result<size_t> result = enumerator.enumerate();
         if (result == false) {
             std::cerr << "Enumeration failed." << std::endl;

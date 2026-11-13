@@ -73,55 +73,30 @@ public:
       const resoem::eni::EniSlave &slave_cfg,
       std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~SimulatedSlave() noexcept = default;
 
-  // Prevent copying
-  SimulatedSlave(const SimulatedSlave &) = delete;
-  SimulatedSlave &operator=(const SimulatedSlave &) = delete;
+  // Non-copyable via std::timed_mutex member
 
-  /**
-   * @brief Get the root NamedObject node of this slave.
-   * @return Shared pointer to root NamedObject.
-   */
+  /// @brief Get the root NamedObject node of this slave.
   [[nodiscard]] std::shared_ptr<quasar::named::NamedObject> get_root_node() const noexcept;
 
-  /**
-   * @brief Get the configured station address (ESC reg 0x0010).
-   * @return 16-bit configured address.
-   */
+  /// @brief Get the configured station address (ESC reg 0x0010).
   [[nodiscard]] std::uint16_t get_configured_address() const noexcept;
 
-  /**
-   * @brief Set the configured station address (ESC reg 0x0010).
-   * @param address New 16-bit configured address.
-   */
+  /// @brief Set the configured station address (ESC reg 0x0010).
   void set_configured_address(std::uint16_t address);
 
-  /**
-   * @brief Get the configured station alias (ESC reg 0x0012).
-   * @return 16-bit station alias.
-   */
+  /// @brief Get the configured station alias (ESC reg 0x0012).
   [[nodiscard]] std::uint16_t get_station_alias() const noexcept;
 
-  /**
-   * @brief Set the station alias (ESC reg 0x0012).
-   * @param alias New 16-bit station alias.
-   */
+  /// @brief Set the station alias (ESC reg 0x0012).
   void set_station_alias(std::uint16_t alias);
 
-  /**
-   * @brief Get current Application Layer (AL) state.
-   * @return State enum value (states::INIT, states::PRE_OP, etc.).
-   */
+  /// @brief Get current Application Layer (AL) state.
   [[nodiscard]] std::uint16_t get_al_state() const noexcept;
 
-  /**
-   * @brief Set Application Layer state directly (for testing/fault injection).
-   * @param state New AL state bits.
-   */
+  /// @brief Set Application Layer state directly (for testing/fault injection).
   void set_al_state(std::uint16_t state);
 
   /**
@@ -151,11 +126,7 @@ public:
    */
   [[nodiscard]] std::int64_t get_input_value(const std::string &name) const;
 
-  /**
-   * @brief Set the value of an input variable (simulating sensor data change).
-   * @param name Variable name.
-   * @param value New value.
-   */
+  /// @brief Set the value of an input variable (simulating sensor data change).
   void set_input_value(const std::string &name, std::int64_t value);
 
   /**
@@ -205,44 +176,19 @@ public:
   void process_fpwr(std::uint16_t addr, std::uint16_t offset,
                     std::span<const byte> data, std::uint16_t &wkc);
 
-  /**
-   * @brief Process a Broadcast Read (BRD) datagram.
-   * @param offset ESC register offset.
-   * @param data Payload span to write into.
-   * @param wkc Working counter to increment.
-   */
+  /// @brief Process a Broadcast Read (BRD) datagram.
   void process_brd(std::uint16_t offset, std::span<byte> data, std::uint16_t &wkc);
 
-  /**
-   * @brief Process a Broadcast Write (BWR) datagram.
-   * @param offset ESC register offset.
-   * @param data Payload span to read from.
-   * @param wkc Working counter to increment.
-   */
+  /// @brief Process a Broadcast Write (BWR) datagram.
   void process_bwr(std::uint16_t offset, std::span<const byte> data, std::uint16_t &wkc);
 
-  /**
-   * @brief Process a Logical ReadWrite (LRW) datagram.
-   * @param logical_addr 32-bit logical address.
-   * @param data Payload span (in/out).
-   * @param wkc Working counter to increment.
-   */
+  /// @brief Process a Logical ReadWrite (LRW) datagram.
   void process_lrw(std::uint32_t logical_addr, std::span<byte> data, std::uint16_t &wkc);
 
-  /**
-   * @brief Process a Logical Read (LRD) datagram.
-   * @param logical_addr 32-bit logical address.
-   * @param data Payload span to write into.
-   * @param wkc Working counter to increment.
-   */
+  /// @brief Process a Logical Read (LRD) datagram.
   void process_lrd(std::uint32_t logical_addr, std::span<byte> data, std::uint16_t &wkc);
 
-  /**
-   * @brief Process a Logical Write (LWR) datagram.
-   * @param logical_addr 32-bit logical address.
-   * @param data Payload span to read from.
-   * @param wkc Working counter to increment.
-   */
+  /// @brief Process a Logical Write (LWR) datagram.
   void process_lwr(std::uint32_t logical_addr, std::span<const byte> data, std::uint16_t &wkc);
 
   /**
@@ -255,39 +201,19 @@ public:
    */
   void sync_outputs_to_named();
 
-  /**
-   * @brief Direct read access to simulated ESC register RAM.
-   * @param offset Byte offset in register memory.
-   * @param buffer Output buffer.
-   */
+  /// @brief Direct read access to simulated ESC register RAM.
   void read_esc_ram(std::size_t offset, std::span<byte> buffer) const;
 
-  /**
-   * @brief Direct write access to simulated ESC register RAM.
-   * @param offset Byte offset in register memory.
-   * @param buffer Input data buffer.
-   */
+  /// @brief Direct write access to simulated ESC register RAM.
   void write_esc_ram(std::size_t offset, std::span<const byte> buffer);
 
-  /**
-   * @brief Convenience single-byte write to simulated ESC register.
-   * @param offset Byte offset in register memory.
-   * @param val Byte value to write.
-   */
+  /// @brief Convenience single-byte write to simulated ESC register.
   void write_register(std::uint16_t offset, std::uint8_t val);
 
-  /**
-   * @brief Direct read access to simulated physical RAM (PDO memory).
-   * @param offset Byte offset in physical RAM.
-   * @param buffer Output buffer.
-   */
+  /// @brief Direct read access to simulated physical RAM (PDO memory).
   void read_physical_ram(std::size_t offset, std::span<byte> buffer) const;
 
-  /**
-   * @brief Direct write access to simulated physical RAM (PDO memory).
-   * @param offset Byte offset in physical RAM.
-   * @param buffer Input data buffer.
-   */
+  /// @brief Direct write access to simulated physical RAM (PDO memory).
   void write_physical_ram(std::size_t offset, std::span<const byte> buffer);
 
   /**
@@ -297,18 +223,11 @@ public:
    */
   [[nodiscard]] std::uint16_t read_eeprom_word(std::size_t word_addr) const;
 
-  /**
-   * @brief Direct write access to simulated EEPROM word buffer.
-   * @param word_addr Word offset.
-   * @param value 16-bit word to write.
-   */
+  /// @brief Direct write access to simulated EEPROM word buffer.
   void write_eeprom_word(std::size_t word_addr, std::uint16_t value);
 
 protected:
-  /**
-   * @brief Constructor.
-   * @param name Slave name.
-   */
+  /// @brief Construct a SimulatedSlave instance.
   explicit SimulatedSlave(const std::string &name);
 
   /**
@@ -353,11 +272,15 @@ private:
   // Tracked PDO variables
   std::vector<SimulatedPdoVariable> m_variables;
 
-  // Internal ESC register handling helpers
+  /// @brief Dispatch write to ESC register space.
   void handle_esc_write(std::uint16_t offset, std::span<const byte> data);
+  /// @brief Handle EEPROM control register writes.
   void handle_eeprom_control_write(std::uint16_t control_word);
+  /// @brief Handle AL Control register state machine transitions.
   void handle_al_control_write(std::uint16_t control_word);
+  /// @brief Synchronize simulated ESC registers into Named tree nodes.
   void sync_registers_to_named();
+  /// @brief Populate default SII EEPROM words.
   void init_default_eeprom();
 };
 

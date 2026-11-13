@@ -4,17 +4,30 @@
 
 namespace resoem {
 
+namespace {
+constexpr uint32_t MAX_EOE_RX_FRAGMENTS = 10'000'000U;
+constexpr int EOE_MUTEX_TIMEOUT_MS = 200;
+} // namespace
+
+/// @brief Construct EoEHandler wrapping low-level MailboxHandler.
 EoEHandler::EoEHandler(MailboxHandler &mailbox) : mailbox_(mailbox) {}
 
+/// @brief Fragment and transmit a standard Ethernet frame via EoE.
 Result<> EoEHandler::send_frame(SlaveInfo &slave, std::span<const byte> frame,
                                 std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{
+      mutex_, std::chrono::milliseconds{EOE_MUTEX_TIMEOUT_MS}};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   // [FE-0040.4.3.1] Implement Ethernet frame fragmentation.
   // Calculate maximum payload size based on the slave's mailbox capacity.
   size_t max_payload = slave.mbx_out_length - sizeof(eoe::Header);
   uint16_t total_size = static_cast<uint16_t>(frame.size());
   size_t sent = 0;
   uint8_t frag = 0;
-  std::vector<byte> mbx(slave.mbx_out_length);
+  std::vector<byte> mbx{};
+  mbx.resize(slave.mbx_out_length);
 
   // Tunnel the Ethernet frame through one or more EoE fragments.
   while (sent < frame.size()) {
@@ -44,16 +57,24 @@ Result<> EoEHandler::send_frame(SlaveInfo &slave, std::span<const byte> frame,
   return {};
 }
 
+/// @brief Receive and reassemble an Ethernet frame via EoE with explicit completion check.
 Result<std::vector<byte>>
 EoEHandler::receive_frame(SlaveInfo &slave, std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{
+      mutex_, std::chrono::milliseconds{EOE_MUTEX_TIMEOUT_MS}};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   // [FE-0040.4.3.1] Implement Ethernet frame reassembly.
   std::vector<byte> frame;
   uint8_t exp_frag = 0;
-  std::vector<byte> mbx(slave.mbx_in_length);
+  std::vector<byte> mbx{};
+  mbx.resize(slave.mbx_in_length);
+  bool completed = false;
 
   // Keep reading mailbox fragments until the 'last' fragment of an Ethernet
   // frame is reached.
-  for (uint32_t loop_guard = 0; loop_guard < 10'000'000; ++loop_guard) {
+  for (uint32_t loop_guard = 0; loop_guard < MAX_EOE_RX_FRAGMENTS; ++loop_guard) {
     size_t len;
     mailbox::Type type;
     if (mailbox_.read(slave, type, mbx, len, timeout) <= 0)
@@ -76,10 +97,15 @@ EoEHandler::receive_frame(SlaveInfo &slave, std::chrono::microseconds timeout) {
     frame.insert(frame.end(), mbx.begin() + sizeof(eoe::Header),
                  mbx.begin() + len);
 
-    if (last)
+    if (last == true) {
+      completed = true;
       break; // Full Ethernet frame received.
+    }
 
     exp_frag = (exp_frag + 1) & 0x3F;
+  }
+  if (completed == false) {
+    return std::unexpected(ECError::Timeout);
   }
   return frame;
 }

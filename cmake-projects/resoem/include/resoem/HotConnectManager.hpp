@@ -59,19 +59,12 @@ public:
   HotConnectManager(const eni::EniDocument &doc, IRawSocket &socket,
                     eni::EniConfigurator &configurator);
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~HotConnectManager() noexcept = default;
 
-  // Prevent copying
-  HotConnectManager(const HotConnectManager &) = delete;
-  HotConnectManager &operator=(const HotConnectManager &) = delete;
+  // Non-copyable via std::timed_mutex member
 
-  /**
-   * @brief Register a dynamic Hot Connect group configuration.
-   * @param config Group configuration.
-   */
+  /// @brief Register a dynamic Hot Connect group configuration.
   void register_group(const HotConnectGroupConfig &config);
 
   /**
@@ -86,11 +79,7 @@ public:
    */
   [[nodiscard]] HotConnectGroupState group_state(const std::string &name) const noexcept;
 
-  /**
-   * @brief Configure disconnected data handling policy for a group.
-   * @param name Group name.
-   * @param policy Zero-fill, hold last state, or custom fallback.
-   */
+  /// @brief Configure disconnected data handling policy for a group.
   void set_group_policy(const std::string &name, DisconnectedDataPolicy policy);
 
   /**
@@ -108,17 +97,10 @@ public:
    */
   [[nodiscard]] std::uint16_t calculate_active_expected_wkc() const noexcept;
 
-  /**
-   * @brief Apply disconnected data policies to the master input process image.
-   * @param process_image Mutable span of the master input process image.
-   */
+  /// @brief Apply disconnected data policies to the master input process image.
   void apply_disconnected_data_policies(std::span<byte> process_image);
 
-  /**
-   * @brief Record latest valid inputs for an operational group.
-   * @param name Group name.
-   * @param inputs Current valid inputs received.
-   */
+  /// @brief Record latest valid inputs for an operational group.
   void record_valid_inputs(const std::string &name, std::span<const byte> inputs);
 
   /**
@@ -126,10 +108,7 @@ public:
    */
   void scan_cycle();
 
-  /**
-   * @brief Manually mark a group as disconnected (e.g. following WKC drop or cable event).
-   * @param name Group name.
-   */
+  /// @brief Manually mark a group as disconnected after WKC drop or cable event.
   void mark_group_disconnected(const std::string &name);
 
   /**
@@ -154,9 +133,11 @@ private:
   std::size_t m_cycleCounter{0};                            ///< Scan cycles counter
   std::size_t m_scanInterval{DEFAULT_SCAN_INTERVAL_CYCLES}; ///< Scan interval in cycles
 
-  // Private helpers
+  /// @brief Probe and identify a disconnected Hot Connect group.
   bool probe_and_identify_group(HotConnectGroupConfig &group);
+  /// @brief Initialize a newly identified Hot Connect group non-intrusively.
   bool initialize_group_non_intrusive(HotConnectGroupConfig &group);
+  /// @brief Check health and WKC response of an active Hot Connect group.
   bool check_group_health(HotConnectGroupConfig &group);
 };
 

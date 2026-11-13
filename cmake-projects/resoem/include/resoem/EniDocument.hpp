@@ -302,16 +302,14 @@ public:
     return process_image_variables_;
   }
 
-  /**
-   * @brief Get cycle time in microseconds.
-   */
+  /// @brief Get cycle time in microseconds.
   [[nodiscard]] std::uint32_t cycle_time_us() const noexcept { return cycle_time_us_; }
+  /// @brief Set cycle time in microseconds.
   void set_cycle_time_us(std::uint32_t us) noexcept { cycle_time_us_ = us; }
 
-  /**
-   * @brief Get document version.
-   */
+  /// @brief Get document version.
   [[nodiscard]] const std::string &version() const noexcept { return version_; }
+  /// @brief Set document version.
   void set_version(std::string ver) noexcept { version_ = std::move(ver); }
 
 private:

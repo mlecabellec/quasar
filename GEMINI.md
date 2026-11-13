@@ -33,7 +33,7 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 
 ### 3. Modifications & Feature Protection (CS-0030, CS-0040)
 *   **Deletions**: No unjustified deletions. Any signature removal requires documented justification and caller/callee impact analysis (`CS-0030.3-5`).
-*   **Annotations**: All methods must have Doxygen comments and `@feature` annotations detailing their contribution (`CS-0010.45`, `CS-0030.1`).
+*   **Annotations**: All entities (classes, structs, enums, fields, members, constants, methods) MUST have Doxygen `@brief`, cite `@task`/`@requirement`/`@constraint`/`@rule`/`@feature` IDs, explain `@compliance`, document `@param[in|out|in,out]` (Justification, Usage, Consumed, Prerequisites), and comment control structures & bodies (`CS-0010.44-45`, `CS-0030.1`, `CS-0090`).
 *   **Constants**: No "magic numbers". All system limitations and constants MUST be explicitly defined in dedicated headers (`CS-0040`).
 
 ### 4. Agent Operational Standards (CS-0070)
@@ -73,8 +73,8 @@ Quasar is a deterministic industrial automation framework bridging hardware comm
 ---
 
 ## 🔍 Verification Checklist
-- [ ] Code strictly follows CS-0010 (Check: No `auto`? No `new`?).
-- [ ] Doxygen comments on all public members.
+- [ ] Code strictly follows CS-0010 & CS-0090 (No `auto`, no `new`, `@brief` + `@details`, traceability, full `@param` & `@return` contracts, error categories + `@containment`, `@pre`/`@post`/`@invariant`).
+- [ ] In-body justifications (`CS-0090.5`) and control-structure comments (`CS-0090.6`) present.
 - [ ] Timed mutexes used for all shared field modifications.
 - [ ] Hard iteration limits on all loops/recursions.
 - [ ] ASan and TSan pass without warnings.

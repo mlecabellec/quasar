@@ -25,20 +25,13 @@ namespace resoem::eni {
  */
 class EniGenerator {
 public:
-  /**
-   * @brief Construct an EniGenerator.
-   * @param socket Transport socket connected to bus.
-   */
+  /// @brief Construct an EniGenerator bound to transport socket.
   explicit EniGenerator(IRawSocket &socket);
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~EniGenerator() noexcept = default;
 
-  // Prevent copying
-  EniGenerator(const EniGenerator &) = delete;
-  EniGenerator &operator=(const EniGenerator &) = delete;
+  // Non-copyable via std::timed_mutex member
 
   /**
    * @brief Interrogate the connected network and generate a complete EniDocument AST.
@@ -66,10 +59,13 @@ private:
   mutable std::timed_mutex m_mutex;
   IRawSocket &m_socket;
 
-  // Internal interrogation helpers
+  /// @brief Probe slave SyncManager registers.
   void probe_slave_sync_managers(std::uint16_t phys_addr, EniSlave &out_slave);
+  /// @brief Probe slave FMMU registers.
   void probe_slave_fmmus(std::uint16_t phys_addr, EniSlave &out_slave);
+  /// @brief Probe slave port topology descriptors.
   void probe_slave_topology(std::size_t slave_idx, std::uint16_t phys_addr, EniSlave &out_slave);
+  /// @brief Probe slave PDO mappings and CoE dictionary metadata.
   void probe_slave_pdos_and_coe(std::uint16_t phys_addr, EniSlave &out_slave);
 };
 

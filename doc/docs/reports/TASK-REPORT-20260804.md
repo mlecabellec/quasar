@@ -14,42 +14,42 @@ As of **2026-08-04**, the Quasar framework has reached a mature operational base
 These active development tasks are temporarily paused:
 | Task ID | Goal | Target Module | Dependencies |
 | :--- | :--- | :--- | :--- |
-| **[TSK-20260410-002](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260410-002.md)** | ENI & ESI Engineering | `resoem` | `resoem` |
-| **[TSK-20260410-005](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260410-005.md)** | Passive Master & Redundancy | `resoem` | `resoem` |
+| **[TSK-20260410-002](../project/tasks/TSK-20260410-002.md)** | ENI & ESI Engineering | `resoem` | `resoem` |
+| **[TSK-20260410-005](../project/tasks/TSK-20260410-005.md)** | Passive Master & Redundancy | `resoem` | `resoem` |
 
 ### ✅ Completed
 The core framework modules are fully implemented, verified, and locked:
 | Task ID | Goal | Module | Completed Date |
 | :--- | :--- | :--- | :--- |
-| **[TSK-20260529-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260529-001.md)** | Raw Ethernet Socket Service | `named`, `scripting` | 2026-05-29 |
-| **[TSK-20260421-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260421-001.md)** | Interactive Lua REPL (`qlsh`) | `scripting` | 2026-04-21 |
-| **[TSK-20260410-004](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260410-004.md)** | `ecat-top` Interactive TUI | `resoem` | 2026-04-10 |
-| **[TSK-20260410-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260410-001.md)** | Reflexive Master & Diag | `resoem` | 2026-04-10 |
-| **[TSK-20260328-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260328-001.md)** | Reflexive Execution & Service Orchestration | `named`, `scripting` | 2026-03-28 |
-| **[TSK-20260311-011](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-011.md)** | Lua Environment Validation | `scripting` | 2026-03-11 |
-| **[TSK-20260311-010](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-010.md)** | Calibration Framework | `calibration` | 2026-03-11 |
-| **[TSK-20260311-005](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-005.md)** | OPC UA Server/Client Service | `named`, `scripting` | 2026-03-11 |
-| **[TSK-20260311-004](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-004.md)** | ZeroMQ PUB/SUB Plugin | `scripting` | 2026-03-11 |
-| **[TSK-20260311-003](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-003.md)** | Networking Client Plugin | `scripting` | 2026-03-11 |
-| **[TSK-20260311-002](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-002.md)** | Networking Server Plugin | `scripting` | 2026-03-11 |
-| **[TSK-20260311-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-001.md)** | Tree Transformation Engine | `named` | 2026-03-11 |
-| **[TSK-20260311-008](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-008.md)** | Simple Web Server (REST + WS) | `scripting` | 2026-03-11 |
-| **[TSK-20260311-009](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-009.md)** | LogicEngine (FSM/HSM/SFC) | `logicengine` | 2026-03-11 |
-| **[TSK-20260303-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260303-001.md)** | Data Logging & Acquisition System | `named` | 2026-03-03 |
-| **[TSK-20260310-001](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260310-001.md)** | Standalone Script Runner (`sre`) | `scripting` | 2026-03-10 |
-| **[TSK-20260308-001](file:///home/m/git/quasar/doc/docs/project/tasks/archived/TSK-20260308-001.md)** | Full Polymorphic Integer Dispatch | `coretypes` | 2026-03-08 |
-| **[TSK-20260308-002](file:///home/m/git/quasar/doc/docs/project/tasks/archived/TSK-20260308-002.md)** | ActiveEntity Base | `named` | 2026-03-08 |
-| **[TSK-20260303-002](file:///home/m/git/quasar/doc/docs/project/tasks/archived/TSK-20260303-002.md)** | Core Type System Expansion | `coretypes` | 2026-03-03 |
-| **[TSK-20260303-003](file:///home/m/git/quasar/doc/docs/project/tasks/archived/TSK-20260303-003.md)** | Initial Lua Integration | `scripting` | 2026-03-03 |
-| **[TSK-20260301-001](file:///home/m/git/quasar/doc/docs/project/tasks/archived/TSK-20260301-001.md)** | NamedObject Deep Copy | `named` | 2026-03-01 |
+| **[TSK-20260529-001](../project/tasks/TSK-20260529-001.md)** | Raw Ethernet Socket Service | `named`, `scripting` | 2026-05-29 |
+| **[TSK-20260421-001](../project/tasks/TSK-20260421-001.md)** | Interactive Lua REPL (`qlsh`) | `scripting` | 2026-04-21 |
+| **[TSK-20260410-004](../project/tasks/TSK-20260410-004.md)** | `ecat-top` Interactive TUI | `resoem` | 2026-04-10 |
+| **[TSK-20260410-001](../project/tasks/TSK-20260410-001.md)** | Reflexive Master & Diag | `resoem` | 2026-04-10 |
+| **[TSK-20260328-001](../project/tasks/TSK-20260328-001.md)** | Reflexive Execution & Service Orchestration | `named`, `scripting` | 2026-03-28 |
+| **[TSK-20260311-011](../project/tasks/TSK-20260311-011.md)** | Lua Environment Validation | `scripting` | 2026-03-11 |
+| **[TSK-20260311-010](../project/tasks/TSK-20260311-010.md)** | Calibration Framework | `calibration` | 2026-03-11 |
+| **[TSK-20260311-005](../project/tasks/TSK-20260311-005.md)** | OPC UA Server/Client Service | `named`, `scripting` | 2026-03-11 |
+| **[TSK-20260311-004](../project/tasks/TSK-20260311-004.md)** | ZeroMQ PUB/SUB Plugin | `scripting` | 2026-03-11 |
+| **[TSK-20260311-003](../project/tasks/TSK-20260311-003.md)** | Networking Client Plugin | `scripting` | 2026-03-11 |
+| **[TSK-20260311-002](../project/tasks/TSK-20260311-002.md)** | Networking Server Plugin | `scripting` | 2026-03-11 |
+| **[TSK-20260311-001](../project/tasks/TSK-20260311-001.md)** | Tree Transformation Engine | `named` | 2026-03-11 |
+| **[TSK-20260311-008](../project/tasks/TSK-20260311-008.md)** | Simple Web Server (REST + WS) | `scripting` | 2026-03-11 |
+| **[TSK-20260311-009](../project/tasks/TSK-20260311-009.md)** | LogicEngine (FSM/HSM/SFC) | `logicengine` | 2026-03-11 |
+| **[TSK-20260303-001](../project/tasks/TSK-20260303-001.md)** | Data Logging & Acquisition System | `named` | 2026-03-03 |
+| **[TSK-20260310-001](../project/tasks/TSK-20260310-001.md)** | Standalone Script Runner (`sre`) | `scripting` | 2026-03-10 |
+| **[TSK-20260308-001](../project/tasks/archived/TSK-20260308-001.md)** | Full Polymorphic Integer Dispatch | `coretypes` | 2026-03-08 |
+| **[TSK-20260308-002](../project/tasks/archived/TSK-20260308-002.md)** | ActiveEntity Base | `named` | 2026-03-08 |
+| **[TSK-20260303-002](../project/tasks/archived/TSK-20260303-002.md)** | Core Type System Expansion | `coretypes` | 2026-03-03 |
+| **[TSK-20260303-003](../project/tasks/archived/TSK-20260303-003.md)** | Initial Lua Integration | `scripting` | 2026-03-03 |
+| **[TSK-20260301-001](../project/tasks/archived/TSK-20260301-001.md)** | NamedObject Deep Copy | `named` | 2026-03-01 |
 
 ### 🔲 Backlog (Not Started)
 Future development tasks in queue:
 | Task ID | Goal | Module |
 | :--- | :--- | :--- |
-| **[TSK-20260303-004](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260303-004.md)** | Python Bindings (`nanobind`) | `scripting` |
-| **[TSK-20260311-006](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260311-006.md)** | CAN Bus / SocketCAN Support | `named`, `datacodec` |
-| **[TSK-20260410-003](file:///home/m/git/quasar/doc/docs/project/tasks/TSK-20260410-003.md)** | ESI Cache Management | `resoem` |
+| **[TSK-20260303-004](../project/tasks/TSK-20260303-004.md)** | Python Bindings (`nanobind`) | `scripting` |
+| **[TSK-20260311-006](../project/tasks/TSK-20260311-006.md)** | CAN Bus / SocketCAN Support | `named`, `datacodec` |
+| **[TSK-20260410-003](../project/tasks/TSK-20260410-003.md)** | ESI Cache Management | `resoem` |
 
 ---
 

@@ -17,9 +17,9 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace resoem::eni {
-
 namespace {
+
+using namespace resoem::eni;
 
 /**
  * @brief Parse integer string supporting decimal, 0x hex, #x hex, and negative values.
@@ -30,7 +30,7 @@ std::uint32_t parse_num(const char *text, std::uint32_t default_val = 0) {
   } else {
     // Valid text
   }
-  std::string_view sv(text);
+  std::string_view sv{text};
   while (!sv.empty() && std::isspace(static_cast<unsigned char>(sv.front()))) {
     sv.remove_prefix(1);
   }
@@ -185,7 +185,7 @@ EniInitCmd parse_init_cmd_elem(const tinyxml2::XMLElement *elem) {
 
   const tinyxml2::XMLElement *before_elem = elem->FirstChildElement("BeforeSlave");
   if (before_elem != nullptr && before_elem->GetText() != nullptr) {
-    std::string_view sv(before_elem->GetText());
+    std::string_view sv{before_elem->GetText()};
     cmd.before_slave = (sv == "true" || sv == "1");
   } else {
     cmd.before_slave = false;
@@ -248,7 +248,7 @@ EniInitCmd parse_init_cmd_elem(const tinyxml2::XMLElement *elem) {
     ValidateRule rule;
     const char *signed_attr = val_elem->Attribute("Signed");
     if (signed_attr != nullptr) {
-      std::string_view ssv(signed_attr);
+      std::string_view ssv{signed_attr};
       rule.signed_val = (ssv == "true" || ssv == "1");
     }
     const char *type_attr = val_elem->Attribute("Type");
@@ -273,7 +273,7 @@ EniInitCmd parse_init_cmd_elem(const tinyxml2::XMLElement *elem) {
   return cmd;
 }
 
-// Internal element parsing helpers
+/// @brief Parse ENI Master configuration element.
 void parse_master_node(const tinyxml2::XMLElement *config_elem, EniMaster &master) {
   const tinyxml2::XMLElement *master_elem = config_elem->FirstChildElement("Master");
   if (master_elem != nullptr) {
@@ -324,6 +324,7 @@ void parse_master_node(const tinyxml2::XMLElement *config_elem, EniMaster &maste
   }
 }
 
+/// @brief Parse ENI Slave ProcessData element.
 void parse_slave_process_data(const tinyxml2::XMLElement *pd_elem, EniSlave &slave) {
   if (pd_elem == nullptr) {
     return;
@@ -357,7 +358,7 @@ void parse_slave_process_data(const tinyxml2::XMLElement *pd_elem, EniSlave &sla
       }
       const tinyxml2::XMLElement *ene = sme->FirstChildElement("Enable");
       if (ene != nullptr && ene->GetText() != nullptr) {
-        std::string_view sv(ene->GetText());
+        std::string_view sv{ene->GetText()};
         sm.enable = (sv == "true" || sv == "1");
       } else {
         sm.enable = false;
@@ -393,7 +394,7 @@ void parse_slave_process_data(const tinyxml2::XMLElement *pd_elem, EniSlave &sla
     }
     const char *mand_attr = rx_pdo->Attribute("Mandatory");
     if (mand_attr != nullptr) {
-      std::string_view sv(mand_attr);
+      std::string_view sv{mand_attr};
       pdo.mandatory = (sv == "true" || sv == "1");
     } else {
       pdo.mandatory = false;
@@ -464,7 +465,7 @@ void parse_slave_process_data(const tinyxml2::XMLElement *pd_elem, EniSlave &sla
     }
     const char *mand_attr = tx_pdo->Attribute("Mandatory");
     if (mand_attr != nullptr) {
-      std::string_view sv(mand_attr);
+      std::string_view sv{mand_attr};
       pdo.mandatory = (sv == "true" || sv == "1");
     } else {
       pdo.mandatory = false;
@@ -511,6 +512,7 @@ void parse_slave_process_data(const tinyxml2::XMLElement *pd_elem, EniSlave &sla
   }
 }
 
+/// @brief Parse ENI Slave Mailbox configuration element.
 void parse_slave_mailbox(const tinyxml2::XMLElement *mb_elem, EniSlave &slave) {
   if (mb_elem == nullptr) {
     return;
@@ -519,7 +521,7 @@ void parse_slave_mailbox(const tinyxml2::XMLElement *mb_elem, EniSlave &slave) {
   }
   const char *dll_attr = mb_elem->Attribute("DataLinkLayer");
   if (dll_attr != nullptr) {
-    std::string_view sv(dll_attr);
+    std::string_view sv{dll_attr};
     slave.mailbox.data_link_layer = (sv == "true" || sv == "1");
   } else {
     slave.mailbox.data_link_layer = true;
@@ -614,14 +616,14 @@ void parse_slave_mailbox(const tinyxml2::XMLElement *mb_elem, EniSlave &slave) {
         }
         const char *ca_attr = cic->Attribute("CompleteAccess");
         if (ca_attr != nullptr) {
-          std::string_view sv(ca_attr);
+          std::string_view sv{ca_attr};
           c.complete_access = (sv == "true" || sv == "1");
         } else {
           c.complete_access = false;
         }
         const char *fix_attr = cic->Attribute("Fixed");
         if (fix_attr != nullptr) {
-          std::string_view sv(fix_attr);
+          std::string_view sv{fix_attr};
           c.fixed = (sv == "true" || sv == "1");
         } else {
           c.fixed = false;
@@ -643,124 +645,170 @@ void parse_slave_mailbox(const tinyxml2::XMLElement *mb_elem, EniSlave &slave) {
   }
 }
 
+/// @brief Parse ENI Slave Info identity fields.
+void parse_slave_info(const tinyxml2::XMLElement *sinfo, EniSlave &slave) {
+  if (sinfo == nullptr) {
+    return;
+  } else {
+    // Info element present
+  }
+  const tinyxml2::XMLElement *sn = sinfo->FirstChildElement("Name");
+  if (sn != nullptr && sn->GetText() != nullptr) {
+    slave.name = sn->GetText();
+  } else {
+    // No slave name
+  }
+  const tinyxml2::XMLElement *pa = sinfo->FirstChildElement("PhysAddr");
+  if (pa != nullptr) {
+    slave.phys_addr = static_cast<std::uint16_t>(parse_num(pa->GetText()));
+  } else {
+    // No phys addr
+  }
+  const tinyxml2::XMLElement *aia = sinfo->FirstChildElement("AutoIncAddr");
+  if (aia != nullptr) {
+    slave.auto_inc_addr = static_cast<std::int16_t>(parse_num(aia->GetText()));
+  } else {
+    // No auto inc addr
+  }
+  const tinyxml2::XMLElement *phy = sinfo->FirstChildElement("Physics");
+  if (phy != nullptr && phy->GetText() != nullptr) {
+    slave.physics = phy->GetText();
+  } else {
+    // No physics
+  }
+  const tinyxml2::XMLElement *vi = sinfo->FirstChildElement("VendorId");
+  if (vi != nullptr) {
+    slave.vendor_id = parse_num(vi->GetText());
+  } else {
+    // No vendor id
+  }
+  const tinyxml2::XMLElement *pc = sinfo->FirstChildElement("ProductCode");
+  if (pc != nullptr) {
+    slave.product_code = parse_num(pc->GetText());
+  } else {
+    // No product code
+  }
+  const tinyxml2::XMLElement *rn = sinfo->FirstChildElement("RevisionNo");
+  if (rn != nullptr) {
+    slave.revision_no = parse_num(rn->GetText());
+  } else {
+    // No revision no
+  }
+  const tinyxml2::XMLElement *sn_elem = sinfo->FirstChildElement("SerialNo");
+  if (sn_elem != nullptr) {
+    slave.serial_no = parse_num(sn_elem->GetText());
+  } else {
+    // No serial no
+  }
+}
+
+/// @brief Parse ENI Slave PreviousPort topology element.
+void parse_slave_previous_port(const tinyxml2::XMLElement *pp_elem, EniSlave &slave) {
+  if (pp_elem == nullptr) {
+    return;
+  } else {
+    // PreviousPort present
+  }
+  EniPreviousPort pp;
+  const char *sel_attr = pp_elem->Attribute("Selected");
+  if (sel_attr != nullptr) {
+    std::string_view ssv{sel_attr};
+    pp.selected = (ssv == "true" || ssv == "1");
+  } else {
+    pp.selected = true;
+  }
+  const tinyxml2::XMLElement *porte = pp_elem->FirstChildElement("Port");
+  if (porte != nullptr && porte->GetText() != nullptr && porte->GetText()[0] != '\0') {
+    pp.port = porte->GetText()[0];
+  } else {
+    pp.port = 'A';
+  }
+  const tinyxml2::XMLElement *ppa = pp_elem->FirstChildElement("PhysAddr");
+  if (ppa != nullptr) {
+    pp.phys_addr = static_cast<std::uint16_t>(parse_num(ppa->GetText()));
+  } else {
+    // No parent phys addr
+  }
+  slave.previous_port = pp;
+}
+
+/// @brief Parse ENI Slave HotConnect group definition.
+void parse_slave_hot_connect(const tinyxml2::XMLElement *hc_elem, EniSlave &slave) {
+  if (hc_elem == nullptr) {
+    return;
+  } else {
+    // HotConnect present
+  }
+  EniHotConnect hc;
+  const tinyxml2::XMLElement *gn = hc_elem->FirstChildElement("GroupName");
+  if (gn != nullptr && gn->GetText() != nullptr) {
+    hc.group_name = gn->GetText();
+  } else {
+    // No group name
+  }
+  const tinyxml2::XMLElement *gmc = hc_elem->FirstChildElement("GroupMemberCnt");
+  if (gmc != nullptr) {
+    hc.group_member_count = parse_num(gmc->GetText(), 1);
+  } else {
+    hc.group_member_count = 1;
+  }
+  const tinyxml2::XMLElement *id_cmd = hc_elem->FirstChildElement("IdentifyCmd");
+  while (id_cmd != nullptr) {
+    hc.identify_cmds.push_back(parse_init_cmd_elem(id_cmd));
+    id_cmd = id_cmd->NextSiblingElement("IdentifyCmd");
+  }
+  slave.hot_connect = std::move(hc);
+}
+
+/// @brief Parse ENI Slave Distributed Clocks configuration.
+void parse_slave_dc(const tinyxml2::XMLElement *dc_elem, EniSlave &slave) {
+  if (dc_elem == nullptr) {
+    return;
+  } else {
+    // DC element present
+  }
+  slave.dc.enabled = true;
+  const tinyxml2::XMLElement *prc = dc_elem->FirstChildElement("PotentialReferenceClock");
+  if (prc != nullptr && prc->GetText() != nullptr) {
+    std::string_view sv{prc->GetText()};
+    slave.dc.potential_ref_clock = (sv == "true" || sv == "1");
+  } else {
+    slave.dc.potential_ref_clock = false;
+  }
+  const tinyxml2::XMLElement *ct0 = dc_elem->FirstChildElement("CycleTime0");
+  if (ct0 != nullptr) {
+    slave.dc.cycle_time_0 = parse_num(ct0->GetText());
+  } else {
+    // No cycle time 0
+  }
+  const tinyxml2::XMLElement *ct1 = dc_elem->FirstChildElement("CycleTime1");
+  if (ct1 != nullptr) {
+    slave.dc.cycle_time_1 = parse_num(ct1->GetText());
+  } else {
+    // No cycle time 1
+  }
+  const tinyxml2::XMLElement *st0 = dc_elem->FirstChildElement("ShiftTime0");
+  if (st0 != nullptr) {
+    slave.dc.shift_time_0 = static_cast<std::int32_t>(parse_num(st0->GetText()));
+  } else {
+    // No shift time 0
+  }
+  const tinyxml2::XMLElement *st1 = dc_elem->FirstChildElement("ShiftTime1");
+  if (st1 != nullptr) {
+    slave.dc.shift_time_1 = static_cast<std::int32_t>(parse_num(st1->GetText()));
+  } else {
+    // No shift time 1
+  }
+}
+
+/// @brief Parse a complete ENI Slave XML section.
 void parse_slave_section(const tinyxml2::XMLElement *slave_elem, EniSlave &slave) {
-  const tinyxml2::XMLElement *sinfo = slave_elem->FirstChildElement("Info");
-  if (sinfo != nullptr) {
-    const tinyxml2::XMLElement *sn = sinfo->FirstChildElement("Name");
-    if (sn != nullptr && sn->GetText() != nullptr) {
-      slave.name = sn->GetText();
-    } else {
-      // No slave name
-    }
-    const tinyxml2::XMLElement *pa = sinfo->FirstChildElement("PhysAddr");
-    if (pa != nullptr) {
-      slave.phys_addr = static_cast<std::uint16_t>(parse_num(pa->GetText()));
-    } else {
-      // No phys addr
-    }
-    const tinyxml2::XMLElement *aia = sinfo->FirstChildElement("AutoIncAddr");
-    if (aia != nullptr) {
-      slave.auto_inc_addr = static_cast<std::int16_t>(parse_num(aia->GetText()));
-    } else {
-      // No auto inc addr
-    }
-    const tinyxml2::XMLElement *phy = sinfo->FirstChildElement("Physics");
-    if (phy != nullptr && phy->GetText() != nullptr) {
-      slave.physics = phy->GetText();
-    } else {
-      // No physics
-    }
-    const tinyxml2::XMLElement *vi = sinfo->FirstChildElement("VendorId");
-    if (vi != nullptr) {
-      slave.vendor_id = parse_num(vi->GetText());
-    } else {
-      // No vendor id
-    }
-    const tinyxml2::XMLElement *pc = sinfo->FirstChildElement("ProductCode");
-    if (pc != nullptr) {
-      slave.product_code = parse_num(pc->GetText());
-    } else {
-      // No product code
-    }
-    const tinyxml2::XMLElement *rn = sinfo->FirstChildElement("RevisionNo");
-    if (rn != nullptr) {
-      slave.revision_no = parse_num(rn->GetText());
-    } else {
-      // No revision no
-    }
-    const tinyxml2::XMLElement *sn_elem = sinfo->FirstChildElement("SerialNo");
-    if (sn_elem != nullptr) {
-      slave.serial_no = parse_num(sn_elem->GetText());
-    } else {
-      // No serial no
-    }
-  } else {
-    // No info element
-  }
+  parse_slave_info(slave_elem->FirstChildElement("Info"), slave);
+  parse_slave_previous_port(slave_elem->FirstChildElement("PreviousPort"), slave);
+  parse_slave_hot_connect(slave_elem->FirstChildElement("HotConnect"), slave);
+  parse_slave_process_data(slave_elem->FirstChildElement("ProcessData"), slave);
+  parse_slave_mailbox(slave_elem->FirstChildElement("Mailbox"), slave);
 
-  // PreviousPort
-  const tinyxml2::XMLElement *pp_elem = slave_elem->FirstChildElement("PreviousPort");
-  if (pp_elem != nullptr) {
-    EniPreviousPort pp;
-    const char *sel_attr = pp_elem->Attribute("Selected");
-    if (sel_attr != nullptr) {
-      std::string_view ssv(sel_attr);
-      pp.selected = (ssv == "true" || ssv == "1");
-    } else {
-      pp.selected = true;
-    }
-    const tinyxml2::XMLElement *porte = pp_elem->FirstChildElement("Port");
-    if (porte != nullptr && porte->GetText() != nullptr && porte->GetText()[0] != '\0') {
-      pp.port = porte->GetText()[0];
-    } else {
-      pp.port = 'A';
-    }
-    const tinyxml2::XMLElement *ppa = pp_elem->FirstChildElement("PhysAddr");
-    if (ppa != nullptr) {
-      pp.phys_addr = static_cast<std::uint16_t>(parse_num(ppa->GetText()));
-    } else {
-      // No parent phys addr
-    }
-    slave.previous_port = pp;
-  } else {
-    // No previous port
-  }
-
-  // HotConnect
-  const tinyxml2::XMLElement *hc_elem = slave_elem->FirstChildElement("HotConnect");
-  if (hc_elem != nullptr) {
-    EniHotConnect hc;
-    const tinyxml2::XMLElement *gn = hc_elem->FirstChildElement("GroupName");
-    if (gn != nullptr && gn->GetText() != nullptr) {
-      hc.group_name = gn->GetText();
-    } else {
-      // No group name
-    }
-    const tinyxml2::XMLElement *gmc = hc_elem->FirstChildElement("GroupMemberCnt");
-    if (gmc != nullptr) {
-      hc.group_member_count = parse_num(gmc->GetText(), 1);
-    } else {
-      hc.group_member_count = 1;
-    }
-    const tinyxml2::XMLElement *id_cmd = hc_elem->FirstChildElement("IdentifyCmd");
-    while (id_cmd != nullptr) {
-      hc.identify_cmds.push_back(parse_init_cmd_elem(id_cmd));
-      id_cmd = id_cmd->NextSiblingElement("IdentifyCmd");
-    }
-    slave.hot_connect = std::move(hc);
-  } else {
-    // No hot connect
-  }
-
-  // ProcessData
-  const tinyxml2::XMLElement *pd_elem = slave_elem->FirstChildElement("ProcessData");
-  parse_slave_process_data(pd_elem, slave);
-
-  // Mailbox
-  const tinyxml2::XMLElement *mb_elem = slave_elem->FirstChildElement("Mailbox");
-  parse_slave_mailbox(mb_elem, slave);
-
-  // InitCmds (Register level)
   const tinyxml2::XMLElement *sinit_cmds = slave_elem->FirstChildElement("InitCmds");
   if (sinit_cmds != nullptr) {
     const tinyxml2::XMLElement *ic_elem = sinit_cmds->FirstChildElement("InitCmd");
@@ -774,44 +822,7 @@ void parse_slave_section(const tinyxml2::XMLElement *slave_elem, EniSlave &slave
     // No init cmds
   }
 
-  // DC
-  const tinyxml2::XMLElement *dc_elem = slave_elem->FirstChildElement("DC");
-  if (dc_elem != nullptr) {
-    slave.dc.enabled = true;
-    const tinyxml2::XMLElement *prc = dc_elem->FirstChildElement("PotentialReferenceClock");
-    if (prc != nullptr && prc->GetText() != nullptr) {
-      std::string_view sv(prc->GetText());
-      slave.dc.potential_ref_clock = (sv == "true" || sv == "1");
-    } else {
-      slave.dc.potential_ref_clock = false;
-    }
-    const tinyxml2::XMLElement *ct0 = dc_elem->FirstChildElement("CycleTime0");
-    if (ct0 != nullptr) {
-      slave.dc.cycle_time_0 = parse_num(ct0->GetText());
-    } else {
-      // No cycle time 0
-    }
-    const tinyxml2::XMLElement *ct1 = dc_elem->FirstChildElement("CycleTime1");
-    if (ct1 != nullptr) {
-      slave.dc.cycle_time_1 = parse_num(ct1->GetText());
-    } else {
-      // No cycle time 1
-    }
-    const tinyxml2::XMLElement *st0 = dc_elem->FirstChildElement("ShiftTime0");
-    if (st0 != nullptr) {
-      slave.dc.shift_time_0 = static_cast<std::int32_t>(parse_num(st0->GetText()));
-    } else {
-      // No shift time 0
-    }
-    const tinyxml2::XMLElement *st1 = dc_elem->FirstChildElement("ShiftTime1");
-    if (st1 != nullptr) {
-      slave.dc.shift_time_1 = static_cast<std::int32_t>(parse_num(st1->GetText()));
-    } else {
-      // No shift time 1
-    }
-  } else {
-    // No DC
-  }
+  parse_slave_dc(slave_elem->FirstChildElement("DC"), slave);
 }
 
 void parse_cyclic_section(const tinyxml2::XMLElement *config_elem, std::uint32_t &cycle_time_us,
@@ -1001,8 +1012,10 @@ void parse_process_image_section(const tinyxml2::XMLElement *config_elem,
 
 } // anonymous namespace
 
+namespace resoem::eni {
+
 Result<> EniDocument::load_from_file(const std::string &filepath) {
-  std::ifstream f(filepath, std::ios::in | std::ios::binary);
+  std::ifstream f{filepath, std::ios::in | std::ios::binary};
   if (!f.is_open()) {
     return std::unexpected(ECError::ProtocolError);
   } else {
@@ -1041,7 +1054,7 @@ Result<> EniDocument::load_from_memory(std::string_view xml_content) {
     // Root element found
   }
 
-  std::string_view root_name(root->Name());
+  std::string_view root_name{root->Name()};
   const tinyxml2::XMLElement *config_elem = nullptr;
   if (root_name == "EtherCATConfig") {
     config_elem = root->FirstChildElement("Config");
@@ -1093,7 +1106,7 @@ Result<> EniDocument::save_to_file(const std::string &filepath) const {
     return std::unexpected(xml_res.error());
   }
 
-  std::ofstream out(filepath, std::ios::out | std::ios::trunc);
+  std::ofstream out{filepath, std::ios::out | std::ios::trunc};
   if (!out.is_open()) {
     return std::unexpected(ECError::ProtocolError);
   }
@@ -1243,7 +1256,8 @@ EniDocument::to_named_tree(std::shared_ptr<quasar::named::NamedObject> parent) c
     if (slave.previous_port.has_value()) {
       std::shared_ptr<quasar::named::NamedObject> pp_node =
           quasar::named::NamedObject::create("PreviousPort", sn);
-      std::string pstr(1, slave.previous_port->port);
+      std::string pstr{};
+      pstr.push_back(slave.previous_port->port);
       quasar::named::NamedString::create("Port", pstr, pp_node);
       quasar::named::NamedInteger<std::uint32_t>::create("ParentPhysAddr", slave.previous_port->phys_addr, pp_node);
     }

@@ -10,6 +10,8 @@
 
 namespace quasar::scripting {
 
+class ScriptableNamedObject;
+
 /**
  * @brief Tracks C++ objects exposed to Lua to monitor their lifecycle.
  * 
@@ -29,6 +31,12 @@ public:
      * @brief Registers an object for tracking (weak reference).
      */
     void track(std::shared_ptr<named::NamedObject> obj);
+
+    /**
+     * @brief Registers a ScriptableNamedObject for safe Lua table invalidation on engine teardown.
+     * @param obj Scriptable object holding a Lua self table reference.
+     */
+    void trackScriptable(std::shared_ptr<ScriptableNamedObject> obj);
 
     /**
      * @brief Registers any shared object for tracking (strong reference).
@@ -89,6 +97,8 @@ protected:
     std::map<named::NamedObject*, std::weak_ptr<named::NamedObject>> m_trackedObjects;
     /** @brief Pool of methods to handle destruction races. */
     std::vector<std::shared_ptr<named::NamedObject>> m_methods;
+    /** @brief Weak references to ScriptableNamedObjects holding Lua self tables. */
+    std::vector<std::weak_ptr<ScriptableNamedObject>> m_scriptables;
     /** @brief Map from EngineID to list of strong references (keeps objects alive). */
     std::map<size_t, std::vector<std::any>> m_scopedStrongObjects;
 };

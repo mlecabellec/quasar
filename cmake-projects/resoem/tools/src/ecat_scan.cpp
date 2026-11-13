@@ -15,6 +15,7 @@
 using namespace resoem;
 using namespace resoem::eni;
 
+/// @brief Entry point for scanning an EtherCAT bus and generating an ENI XML file.
 int main(int argc, char *argv[]) {
   optparse::OptionParser parser =
       optparse::OptionParser().description("Quasar EtherCAT ENI Generator & Bus Scanner");
@@ -43,8 +44,8 @@ int main(int argc, char *argv[]) {
   std::cout << "Starting EtherCAT scan on interface: " << iface << "..." << std::endl;
 
   try {
-    RawSocket socket(iface);
-    EniGenerator generator(socket);
+    RawSocket socket{iface};
+    EniGenerator generator{socket};
 
     Result<EniDocument> gen_res = generator.generate(master_name);
     if (!gen_res.has_value()) {

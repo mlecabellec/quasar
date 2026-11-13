@@ -26,6 +26,7 @@ std::shared_ptr<SimulatedSlave> SimulatedSlave::create(
     std::uint32_t serial_no,
     std::shared_ptr<quasar::named::NamedObject> parent) {
   struct MakeSharedEnabler : public SimulatedSlave {
+    /// @brief Construct enabled SimulatedSlave instance.
     explicit MakeSharedEnabler(const std::string &n) : SimulatedSlave(n) {}
   };
   std::shared_ptr<SimulatedSlave> slave = std::make_shared<MakeSharedEnabler>(name);
@@ -82,7 +83,7 @@ std::shared_ptr<SimulatedSlave> SimulatedSlave::create_from_eni(
 }
 
 SimulatedSlave::SimulatedSlave(const std::string &name)
-    : m_name(name) {
+    : m_name{name} {
   m_eeprom.resize(SIMULATED_EEPROM_WORDS, 0);
 }
 
@@ -92,7 +93,7 @@ void SimulatedSlave::initialize(
     std::uint32_t revision_no,
     std::uint32_t serial_no,
     std::shared_ptr<quasar::named::NamedObject> parent) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(500));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(500)};
   if (!lock.owns_lock()) {
     throw std::runtime_error("Failed to acquire mutex in SimulatedSlave::initialize");
   } else {
@@ -213,7 +214,7 @@ std::shared_ptr<quasar::named::NamedObject> SimulatedSlave::get_root_node() cons
 }
 
 std::uint16_t SimulatedSlave::get_configured_address() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {
@@ -224,7 +225,7 @@ std::uint16_t SimulatedSlave::get_configured_address() const noexcept {
 }
 
 void SimulatedSlave::set_configured_address(std::uint16_t address) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     std::memcpy(&m_escRam[regs::CONFIG_STATION_ADDR], &address, sizeof(std::uint16_t));
     if (m_namedConfiguredAddress != nullptr) {
@@ -238,7 +239,7 @@ void SimulatedSlave::set_configured_address(std::uint16_t address) {
 }
 
 std::uint16_t SimulatedSlave::get_station_alias() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {
@@ -249,7 +250,7 @@ std::uint16_t SimulatedSlave::get_station_alias() const noexcept {
 }
 
 void SimulatedSlave::set_station_alias(std::uint16_t alias) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     std::memcpy(&m_escRam[regs::CONFIG_STATION_ALIAS], &alias, sizeof(std::uint16_t));
     m_eeprom[4] = alias;
@@ -264,7 +265,7 @@ void SimulatedSlave::set_station_alias(std::uint16_t alias) {
 }
 
 std::uint16_t SimulatedSlave::get_al_state() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return states::INIT;
   } else {
@@ -275,7 +276,7 @@ std::uint16_t SimulatedSlave::get_al_state() const noexcept {
 }
 
 void SimulatedSlave::set_al_state(std::uint16_t state) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     std::memcpy(&m_escRam[regs::AL_STATUS], &state, sizeof(std::uint16_t));
     if (m_namedAlStatus != nullptr) {
@@ -290,7 +291,7 @@ void SimulatedSlave::set_al_state(std::uint16_t state) {
 
 void SimulatedSlave::add_input_variable(const std::string &name, std::size_t bit_offset,
                                        std::size_t bit_length, std::int64_t initial_value) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     std::shared_ptr<quasar::named::NamedInteger<std::int64_t>> node =
         quasar::named::NamedInteger<std::int64_t>::create(name, initial_value, m_inputsNode);
@@ -309,7 +310,7 @@ void SimulatedSlave::add_input_variable(const std::string &name, std::size_t bit
 
 void SimulatedSlave::add_output_variable(const std::string &name, std::size_t bit_offset,
                                         std::size_t bit_length, std::int64_t initial_value) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     std::shared_ptr<quasar::named::NamedInteger<std::int64_t>> node =
         quasar::named::NamedInteger<std::int64_t>::create(name, initial_value, m_outputsNode);
@@ -327,7 +328,7 @@ void SimulatedSlave::add_output_variable(const std::string &name, std::size_t bi
 }
 
 std::int64_t SimulatedSlave::get_input_value(const std::string &name) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {
@@ -343,7 +344,7 @@ std::int64_t SimulatedSlave::get_input_value(const std::string &name) const {
 }
 
 void SimulatedSlave::set_input_value(const std::string &name, std::int64_t value) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     for (SimulatedPdoVariable &var : m_variables) {
       if (var.is_input && var.name == name && var.named_node != nullptr) {
@@ -359,7 +360,7 @@ void SimulatedSlave::set_input_value(const std::string &name, std::int64_t value
 }
 
 std::int64_t SimulatedSlave::get_output_value(const std::string &name) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {
@@ -376,7 +377,7 @@ std::int64_t SimulatedSlave::get_output_value(const std::string &name) const {
 
 void SimulatedSlave::process_aprd(std::uint16_t &addr, std::uint16_t offset,
                                   std::span<byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -398,7 +399,7 @@ void SimulatedSlave::process_aprd(std::uint16_t &addr, std::uint16_t offset,
 
 void SimulatedSlave::process_apwr(std::uint16_t &addr, std::uint16_t offset,
                                   std::span<const byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -421,7 +422,7 @@ void SimulatedSlave::process_apwr(std::uint16_t &addr, std::uint16_t offset,
 
 void SimulatedSlave::process_fprd(std::uint16_t addr, std::uint16_t offset,
                                   std::span<byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -442,7 +443,7 @@ void SimulatedSlave::process_fprd(std::uint16_t addr, std::uint16_t offset,
 
 void SimulatedSlave::process_fpwr(std::uint16_t addr, std::uint16_t offset,
                                   std::span<const byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -463,7 +464,7 @@ void SimulatedSlave::process_fpwr(std::uint16_t addr, std::uint16_t offset,
 }
 
 void SimulatedSlave::process_brd(std::uint16_t offset, std::span<byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -480,7 +481,7 @@ void SimulatedSlave::process_brd(std::uint16_t offset, std::span<byte> data, std
 }
 
 void SimulatedSlave::process_bwr(std::uint16_t offset, std::span<const byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -495,7 +496,7 @@ void SimulatedSlave::process_bwr(std::uint16_t offset, std::span<const byte> dat
 }
 
 void SimulatedSlave::process_lrw(std::uint32_t logical_addr, std::span<byte> data, std::uint16_t &wkc) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -582,7 +583,7 @@ void SimulatedSlave::process_lrd(std::uint32_t logical_addr, std::span<byte> dat
 }
 
 void SimulatedSlave::process_lwr(std::uint32_t logical_addr, std::span<const byte> data, std::uint16_t &wkc) {
-  std::vector<byte> non_const_copy(data.begin(), data.end());
+  std::vector<byte> non_const_copy{data.begin(), data.end()};
   process_lrw(logical_addr, std::span<byte>(non_const_copy.data(), non_const_copy.size()), wkc);
 }
 
@@ -747,7 +748,7 @@ void SimulatedSlave::sync_outputs_to_named() {
 }
 
 void SimulatedSlave::read_esc_ram(std::size_t offset, std::span<byte> buffer) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && offset + buffer.size() <= SIMULATED_ESC_RAM_SIZE) {
     std::memcpy(buffer.data(), &m_escRam[offset], buffer.size());
   } else {
@@ -756,7 +757,7 @@ void SimulatedSlave::read_esc_ram(std::size_t offset, std::span<byte> buffer) co
 }
 
 void SimulatedSlave::write_esc_ram(std::size_t offset, std::span<const byte> buffer) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && offset + buffer.size() <= SIMULATED_ESC_RAM_SIZE) {
     std::memcpy(&m_escRam[offset], buffer.data(), buffer.size());
   } else {
@@ -771,7 +772,7 @@ void SimulatedSlave::write_register(std::uint16_t offset, std::uint8_t val) {
 }
 
 void SimulatedSlave::read_physical_ram(std::size_t offset, std::span<byte> buffer) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && offset + buffer.size() <= SIMULATED_ESC_RAM_SIZE) {
     std::memcpy(buffer.data(), &m_physicalRam[offset], buffer.size());
   } else {
@@ -780,7 +781,7 @@ void SimulatedSlave::read_physical_ram(std::size_t offset, std::span<byte> buffe
 }
 
 void SimulatedSlave::write_physical_ram(std::size_t offset, std::span<const byte> buffer) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && offset + buffer.size() <= SIMULATED_ESC_RAM_SIZE) {
     std::memcpy(&m_physicalRam[offset], buffer.data(), buffer.size());
   } else {
@@ -789,7 +790,7 @@ void SimulatedSlave::write_physical_ram(std::size_t offset, std::span<const byte
 }
 
 std::uint16_t SimulatedSlave::read_eeprom_word(std::size_t word_addr) const {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && word_addr < m_eeprom.size()) {
     return m_eeprom[word_addr];
   } else {
@@ -798,7 +799,7 @@ std::uint16_t SimulatedSlave::read_eeprom_word(std::size_t word_addr) const {
 }
 
 void SimulatedSlave::write_eeprom_word(std::size_t word_addr, std::uint16_t value) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock() && word_addr < m_eeprom.size()) {
     m_eeprom[word_addr] = value;
   } else {

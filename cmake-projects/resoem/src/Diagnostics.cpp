@@ -3,6 +3,7 @@
 
 namespace resoem {
 
+/// @brief Map an SDO abort code to a human-readable string.
 std::string_view sdo_abort_to_string(uint32_t abort_code) {
   // [FE-0040.7.3] Provide human-readable diagnostic strings for SDO Abort codes.
   // Static map of standard SDO abort codes as defined in the EtherCAT
@@ -22,6 +23,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
        "SDO Complete access not supported for variable length objects"},
       {0x06010005, "Object length exceeds mailbox size"},
       {0x06010006, "Object mapped to RxPDO, SDO download blocked"},
+      // Object existence and PDO mapping errors
       {0x06020000, "The object does not exist in the object directory"},
       {0x06040041, "The object can not be mapped into the PDO"},
       {0x06040042, "The number and length of the objects to be mapped would "
@@ -37,6 +39,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
        "Data type does not match, length of service parameter too low"},
       {0x06090011, "Subindex does not exist"},
       {0x06090030, "Value range of parameter exceeded (only for write access)"},
+      // Value bounds and generic device errors
       {0x06090031, "Value of parameter written too high"},
       {0x06090032, "Value of parameter written too low"},
       {0x06090036, "Maximum value is less than minimum value"},
@@ -59,6 +62,7 @@ std::string_view sdo_abort_to_string(uint32_t abort_code) {
   return "Unknown SDO abort code";
 }
 
+/// @brief Map an AL status code to a human-readable string.
 std::string_view al_status_code_to_string(uint16_t status_code) {
   // [FE-0040.7.3] Provide human-readable diagnostic strings for AL Status codes.
   // Static map of Application Layer (AL) Status codes from register 0x0134.
@@ -77,6 +81,7 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x0014, "No valid firmware"},
       {0x0015, "Invalid mailbox configuration"},
       {0x0016, "Invalid mailbox configuration"},
+      // SyncManager and PDO input/output validation errors
       {0x0017, "Invalid sync manager configuration"},
       {0x0018, "No valid inputs available"},
       {0x0019, "No valid outputs"},
@@ -92,6 +97,7 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x0023, "Slave needs SAFEOP"},
       {0x0024, "Invalid input mapping"},
       {0x0025, "Invalid output mapping"},
+      // Synchronization & Distributed Clocks error codes
       {0x0026, "Inconsistent settings"},
       {0x0027, "Freerun not supported"},
       {0x0028, "Synchronisation not supported"},
@@ -101,6 +107,7 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x002C, "Fatal sync error"},
       {0x002D, "No sync error"},
       {0x002E, "Invalid input FMMU configuration"},
+      // Distributed Clocks error codes
       {0x0030, "Invalid DC SYNC configuration"},
       {0x0031, "Invalid DC latch configuration"},
       {0x0032, "PLL error"},
@@ -109,12 +116,14 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x0035, "DC invalid sync cycle time"},
       {0x0036, "DC invalid sync0 cycle time"},
       {0x0037, "DC invalid sync1 cycle time"},
+      // Mailbox, EEPROM & hardware health error codes
       {0x0041, "MBX_AOE"},
       {0x0042, "MBX_EOE"},
       {0x0043, "MBX_COE"},
       {0x0044, "MBX_FOE"},
       {0x0045, "MBX_SOE"},
       {0x004F, "MBX_VOE"},
+      // General hardware & EEPROM health error codes
       {0x0050, "EEPROM no access"},
       {0x0051, "EEPROM error"},
       {0x0052, "External hardware not ready"},
@@ -125,6 +134,7 @@ std::string_view al_status_code_to_string(uint16_t status_code) {
       {0x0081, "Supply voltage too high"},
       {0x0082, "Temperature too low"},
       {0x0083, "Temperature too high"},
+      // Application controller notification
       {0x00f0, "Application controller available"},
   };
 

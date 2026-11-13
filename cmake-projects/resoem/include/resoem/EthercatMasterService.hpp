@@ -34,101 +34,50 @@ enum class RedundancyState : std::uint8_t;
  */
 class EthercatMasterService : public quasar::named::NamedService {
 public:
-    /**
-     * @brief Factory method for creating an EthercatMasterService.
-     * @param name The name of the service.
-     * @param parent The parent NamedObject.
-     * @return A shared pointer to the created service.
-     */
+    /// @brief Factory method for creating an EthercatMasterService.
     static std::shared_ptr<EthercatMasterService> create(const std::string& name, std::shared_ptr<quasar::named::NamedObject> parent = nullptr);
 
-    /**
-     * @brief Destructor.
-     */
+    /// @brief Destructor.
     ~EthercatMasterService() override;
 
-    /**
-     * @brief Start the EtherCAT service.
-     */
+    /// @brief Start the EtherCAT service.
     void start() override;
 
-    /**
-     * @brief Stop the EtherCAT service.
-     */
+    /// @brief Stop the EtherCAT service.
     void stop() override;
 
-    /**
-     * @brief Get the type of the service.
-     * @return The type name.
-     */
+    /// @brief Get the type of the service.
     std::string getType() const override { return "EthercatMasterService"; }
 
-    /**
-     * @brief Set the network interface name.
-     * @param iface The interface name (e.g., "eth0").
-     */
+    /// @brief Set the network interface name (e.g., "eth0").
     void setInterface(const std::string& iface);
 
-    /**
-     * @brief Refresh the status of all slaves.
-     * @param args NamedObject containing arguments.
-     * @return Result NamedObject.
-     */
+    /// @brief Refresh the status of all slaves.
     std::shared_ptr<quasar::named::NamedObject> refreshStatus(std::shared_ptr<quasar::named::NamedObject> args);
 
-    /**
-     * @brief Force all slaves to INIT state.
-     * @param args NamedObject containing arguments.
-     * @return Result NamedObject.
-     */
+    /// @brief Force all slaves to INIT state.
     std::shared_ptr<quasar::named::NamedObject> forceInit(std::shared_ptr<quasar::named::NamedObject> args);
 
-    /**
-     * @brief Reconfigure a specific slave.
-     * @param args NamedObject containing "slaveIndex".
-     * @return Result NamedObject.
-     */
+    /// @brief Reconfigure a specific slave by "slaveIndex".
     std::shared_ptr<quasar::named::NamedObject> reconfigureSlave(std::shared_ptr<quasar::named::NamedObject> args);
 
-    /**
-     * @brief Configure cable redundancy.
-     * @param enable Whether to enable redundancy.
-     * @param secondary_iface Secondary network interface name.
-     */
+    /// @brief Configure cable redundancy and secondary interface.
     void setRedundancy(bool enable, const std::string& secondary_iface = "");
 
-    /**
-     * @brief Load and apply an ENI configuration file.
-     * @param args NamedObject containing "filepath".
-     * @return Result NamedObject.
-     */
+    /// @brief Load and apply an ENI configuration file by "filepath".
     std::shared_ptr<quasar::named::NamedObject> loadEni(std::shared_ptr<quasar::named::NamedObject> args);
 
-    /**
-     * @brief Export the current bus topology as an ETG.2100 ENI XML file.
-     * @param args NamedObject containing "filepath" and optional "masterName".
-     * @return Result NamedObject.
-     */
+    /// @brief Export the current bus topology as an ETG.2100 ENI XML file.
     std::shared_ptr<quasar::named::NamedObject> exportEni(std::shared_ptr<quasar::named::NamedObject> args);
 
-    /**
-     * @brief Compare a reference ENI file against the live bus.
-     * @param args NamedObject containing "filepath" and optional "level".
-     * @return Result NamedObject with "matched" (bool) and "summary" (string).
-     */
+    /// @brief Compare a reference ENI file against the live bus.
     std::shared_ptr<quasar::named::NamedObject> compareEni(std::shared_ptr<quasar::named::NamedObject> args);
 
 protected:
-    /**
-     * @brief Constructor.
-     * @param name The name of the service.
-     */
+    /// @brief Construct an EthercatMasterService.
     EthercatMasterService(const std::string& name);
 
-    /**
-     * @brief Initialize the service components.
-     * @param self Shared pointer to self.
-     */
+    /// @brief Initialize the service components and method bindings.
     void initialize(std::shared_ptr<EthercatMasterService> self);
 
 private:

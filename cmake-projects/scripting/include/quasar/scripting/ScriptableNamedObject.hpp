@@ -7,6 +7,7 @@
 
 namespace quasar::scripting {
 template<typename T> class LuaProxy;
+class LuaEngine;
 
 /**
  * @brief A NamedObject that can have its methods overridden/hooked by Lua.
@@ -22,9 +23,24 @@ public:
     static std::shared_ptr<ScriptableNamedObject> create(const std::string& name, std::shared_ptr<named::NamedObject> parent = nullptr);
 
     /**
+     * @brief Virtual destructor ensuring safe Lua reference cleanup.
+     */
+    virtual ~ScriptableNamedObject() noexcept;
+
+    /**
      * @brief Sets the Lua table that provides overrides for this object.
      */
-    void setLuaSelf(sol::table luaSelf) { m_luaSelf = luaSelf; }
+    void setLuaSelf(sol::table luaSelf);
+
+    /**
+     * @brief Detaches the Lua table reference while its engine state is still alive.
+     */
+    void invalidate() noexcept;
+
+    /**
+     * @brief Returns the tracked Lua engine identifier for this object.
+     */
+    size_t getEngineId() const noexcept { return m_engineId; }
     
     /**
      * @brief Gets the associated Lua table.
@@ -67,6 +83,8 @@ protected:
 
 protected:
     sol::table m_luaSelf;
+    std::weak_ptr<LuaEngine> m_engine;
+    size_t m_engineId{0};
 };
 
 } // namespace quasar::scripting

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 
 namespace resoem {
 
@@ -12,6 +13,10 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
                                uint8_t subindex, std::span<const byte> data,
                                bool complete_access,
                                std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{mutex_, timeout};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   if (verbose_level_ > 0) {
     std::cout << "[CoE] SDO Write to slave 0x" << std::hex << slave.configured_address 
               << " index 0x" << index << ":" << (int)subindex 
@@ -49,7 +54,8 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
 
     // Wait for the response from the slave.
     mailbox::Type rx_type;
-    std::vector<byte> resp_buf(slave.mbx_in_length);
+    std::vector<byte> resp_buf{};
+    resp_buf.resize(slave.mbx_in_length);
     size_t actual_len;
     wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
@@ -101,7 +107,8 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
 
     // Receive initiation response.
     mailbox::Type rx_type;
-    std::vector<byte> resp_buf(slave.mbx_in_length);
+    std::vector<byte> resp_buf{};
+    resp_buf.resize(slave.mbx_in_length);
     size_t actual_len;
     wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
@@ -118,25 +125,30 @@ Result<> CoEHandler::sdo_write(SlaveInfo &slave, uint16_t index,
     }
 
     // [FE-0040.4.1.2] Implement segmented SDO transfers for large data objects.
-    // Send remaining data in segments.
+    // Send remaining data in segments with hard iteration bound [CS-0010.37].
     size_t sent = first_segment_size;
     uint8_t toggle = 0x00;
-    int seg_count = 0;
+    size_t seg_count = 0;
     while (sent < data.size()) {
+      if (seg_count >= MAX_SDO_SEGMENTS) {
+        throw std::runtime_error("CoE SDO write segment limit exceeded [CS-0010.37]");
+      }
       // Max segment size depends on the slave's mailbox capacity.
       size_t max_seg = slave.mbx_out_length -
                        3; // 2 bytes CoE header + 1 byte Segment control
       size_t seg_size = std::min(data.size() - sent, max_seg);
       bool last_seg = (sent + seg_size == data.size());
 
-      if (verbose_level_ > 1) std::cout << "    - Sending segment " << ++seg_count << " (" << seg_size << " B)" << std::endl;
+      ++seg_count;
+      if (verbose_level_ > 1) std::cout << "    - Sending segment " << seg_count << " (" << seg_size << " B)" << std::endl;
 
-      std::vector<byte> seg_buf(2 + 1 + seg_size);
+      std::vector<byte> seg_buf{};
+      seg_buf.resize(2 + 1 + seg_size);
       std::memcpy(seg_buf.data(), &canopen_header, 2);
 
       // Segment command: [Toggle bit | n bytes | last segment bit].
       uint8_t cmd = toggle;
-      if (last_seg) {
+      if (last_seg == true) {
         cmd |= 0x01; // Last segment
         // Bits 1-3 indicate how many bytes in the segment are NOT used.
         if (seg_size < max_seg)
@@ -171,13 +183,18 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
                                     uint8_t subindex, std::span<byte> data,
                                     bool complete_access,
                                     std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{mutex_, timeout};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   if (verbose_level_ > 0) {
     std::cout << "[CoE] SDO Read from slave 0x" << std::hex << slave.configured_address 
               << " index 0x" << index << ":" << (int)subindex << std::dec << "..." << std::endl;
   }
 
   // [FE-0040.4.1.1] Support SDO Read for expedited and normal transfers.
-  std::vector<byte> req_buf(sizeof(uint16_t) + sizeof(coe::SDOHeader));
+  std::vector<byte> req_buf{};
+  req_buf.resize(sizeof(uint16_t) + sizeof(coe::SDOHeader));
   uint16_t canopen_header = (coe::SDO_REQUEST << 12);
   std::memcpy(req_buf.data(), &canopen_header, 2);
 
@@ -192,7 +209,8 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
     return std::unexpected(ECError::MailboxError);
 
   mailbox::Type rx_type;
-  std::vector<byte> resp_buf(slave.mbx_in_length);
+  std::vector<byte> resp_buf{};
+  resp_buf.resize(slave.mbx_in_length);
   size_t actual_len;
   wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
@@ -243,11 +261,15 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
     }
 
     // [FE-0040.4.1.2] Implement segmented SDO transfers for large data objects.
-    // Request segments until the 'last segment' bit is received.
+    // Request segments until the 'last segment' bit or hard iteration limit [CS-0010.37].
     uint8_t toggle = 0x00;
-    int seg_count = 0;
+    size_t seg_count = 0;
     while (received < total_size) {
-      std::vector<byte> seg_req(3);
+      if (seg_count >= MAX_SDO_SEGMENTS) {
+        throw std::runtime_error("CoE SDO read segment limit exceeded [CS-0010.37]");
+      }
+      std::vector<byte> seg_req{};
+      seg_req.resize(3);
       uint16_t can_req = (coe::SDO_REQUEST << 12);
       std::memcpy(seg_req.data(), &can_req, 2);
       seg_req[2] = coe::SDO_SEG_UP_REQ | toggle;
@@ -265,7 +287,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
 
       size_t seg_size = actual_len - 3;
       bool last_seg = (resp_buf[2] & 0x01) != 0;
-      if (last_seg) {
+      if (last_seg == true) {
         // Calculate how many bytes in the last segment are padding.
         uint8_t bytes_not_valid = (resp_buf[2] >> 1) & 0x07;
         if (seg_size >= bytes_not_valid)
@@ -275,7 +297,7 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
       
       std::memcpy(data.data() + received, resp_buf.data() + 3, seg_size);
       received += seg_size;
-      if (last_seg)
+      if (last_seg == true)
         break;
       toggle ^= 0x10;
     }
@@ -287,12 +309,14 @@ Result<size_t> CoEHandler::sdo_read(SlaveInfo &slave, uint16_t index,
 
 Result<std::vector<uint16_t>>
 CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{mutex_, timeout};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   // [FE-0040.4.1.3] Provide Object Dictionary (OD) browsing capabilities (Read OD List).
   std::vector<uint16_t> indexes;
-// ...
-// Actually I'll do them one by one to avoid large blocks
-
-  std::vector<byte> req_buf(8);
+  std::vector<byte> req_buf{};
+  req_buf.resize(8);
   // CANopen Service 1 = SDO Information.
   uint16_t canopen_header = (0x01 << 12);
   std::memcpy(req_buf.data(), &canopen_header, 2);
@@ -305,9 +329,15 @@ CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
     return std::unexpected(ECError::MailboxError);
 
   bool more = true;
-  while (more) {
+  size_t page_count = 0;
+  while (more == true) {
+    if (page_count >= MAX_OD_LIST_PAGES) {
+      throw std::runtime_error("CoE OD list page limit exceeded [CS-0010.37]");
+    }
+    ++page_count;
     mailbox::Type rx_type;
-    std::vector<byte> resp_buf(slave.mbx_in_length);
+    std::vector<byte> resp_buf{};
+    resp_buf.resize(slave.mbx_in_length);
     size_t actual_len;
     wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
     if (wkc <= 0)
@@ -336,8 +366,13 @@ CoEHandler::read_od_list(SlaveInfo &slave, std::chrono::microseconds timeout) {
 Result<CoEHandler::ODEntry>
 CoEHandler::read_od_description(SlaveInfo &slave, uint16_t index,
                                 std::chrono::microseconds timeout) {
+  std::unique_lock<std::timed_mutex> lock{mutex_, timeout};
+  if (lock.owns_lock() == false) {
+    return std::unexpected(ECError::Timeout);
+  }
   // [FE-0040.4.1.3] Provide Object Dictionary (OD) browsing capabilities (Read OD Description).
-  std::vector<byte> req_buf(8);
+  std::vector<byte> req_buf{};
+  req_buf.resize(8);
   uint16_t canopen_header = (0x01 << 12);
   std::memcpy(req_buf.data(), &canopen_header, 2);
   req_buf[2] = 0x03; // SDO Information Service: Get Object Description Request.
@@ -348,7 +383,8 @@ CoEHandler::read_od_description(SlaveInfo &slave, uint16_t index,
     return std::unexpected(ECError::MailboxError);
 
   mailbox::Type rx_type;
-  std::vector<byte> resp_buf(slave.mbx_in_length);
+  std::vector<byte> resp_buf{};
+  resp_buf.resize(slave.mbx_in_length);
   size_t actual_len;
   wkc = mailbox_.read(slave, rx_type, resp_buf, actual_len, timeout);
 
@@ -370,9 +406,10 @@ CoEHandler::read_od_description(SlaveInfo &slave, uint16_t index,
 
 void CoEHandler::handle_sdo_abort(uint16_t slave_addr, uint16_t index,
                                   uint8_t subindex, uint32_t abort_code) {
+  const std::string_view ABORT_DESC = sdo_abort_to_string(abort_code);
   std::cerr << "SDO Abort at slave 0x" << std::hex << slave_addr << " index 0x"
             << index << ":" << (int)subindex << " code 0x" << abort_code << ": "
-            << sdo_abort_to_string(abort_code) << std::dec << std::endl;
+            << ABORT_DESC << std::dec << std::endl;
 }
 
 } // namespace resoem

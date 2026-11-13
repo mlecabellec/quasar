@@ -70,6 +70,9 @@ target_link_libraries(test_hot_connect PRIVATE resoem tinyxml2)
 add_executable(test_eni_generator_comparator test/test_eni_generator_comparator.cpp)
 target_link_libraries(test_eni_generator_comparator PRIVATE resoem tinyxml2)
 
+add_executable(test_compliance_and_stress test/test_compliance_and_stress.cpp)
+target_link_libraries(test_compliance_and_stress PRIVATE resoem)
+
 # Samples
 add_subdirectory(samples)
 

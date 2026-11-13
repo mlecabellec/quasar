@@ -153,7 +153,7 @@ checkConstraintsComplianceImpl()
     local currentCmakeProjectDir="$1"
     echo "currentCmakeProjectDir: $currentCmakeProjectDir"
 
-    for cConstraintFile in $(find $PROJECT_ROOT_DIR/doc/architecture -type f -name "CS*md")
+    for cConstraintFile in $(find $PROJECT_ROOT_DIR/doc/docs/architecture -type f -name "CS*md")
     {
         echo "PWD: $PWD"
         pushd $PWD

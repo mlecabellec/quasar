@@ -67,12 +67,14 @@ struct ErrorCounters {
   uint8_t rx_err_1 = 0;      ///< RX Error Port 1
   uint8_t rx_err_2 = 0;      ///< RX Error Port 2
   uint8_t rx_err_3 = 0;      ///< RX Error Port 3
+  // Forwarded RX & processing error counters
   uint8_t fwd_rx_err_0 = 0;  ///< Forwarded RX Error Port 0
   uint8_t fwd_rx_err_1 = 0;  ///< Forwarded RX Error Port 1
   uint8_t fwd_rx_err_2 = 0;  ///< Forwarded RX Error Port 2
   uint8_t fwd_rx_err_3 = 0;  ///< Forwarded RX Error Port 3
   uint8_t proc_unit_err = 0; ///< Processing Unit Error
   uint8_t pdi_err = 0;       ///< PDI Error
+  // Lost link counters per physical port
   uint8_t lost_link_0 = 0;   ///< Lost Link Port 0
   uint8_t lost_link_1 = 0;   ///< Lost Link Port 1
   uint8_t lost_link_2 = 0;   ///< Lost Link Port 2

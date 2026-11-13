@@ -39,9 +39,7 @@ public:
    */
   ~RawSocket() override;
 
-  // Prevent copying
-  RawSocket(const RawSocket &) = delete;
-  RawSocket &operator=(const RawSocket &) = delete;
+  // Non-copyable via user-declared move constructor/assignment
 
   /**
    * @brief Move constructor.
@@ -53,32 +51,13 @@ public:
    */
   RawSocket &operator=(RawSocket &&other) noexcept;
 
-  /**
-   * @brief Send a raw frame.
-   * @details [FE-0040.1.3] Implement non-blocking send operation.
-   * @param data The data to send.
-   * @param use_secondary If true, send through the secondary interface.
-   * @return Number of bytes sent.
-   * @throws SocketError on failure.
-   */
+  /// @brief Send a raw Ethernet frame ([FE-0040.1.3]).
   size_t send(std::span<const byte> data, bool use_secondary = false) override;
 
-  /**
-   * @brief Receive a raw frame.
-   * @details [FE-0040.1.3] Implement non-blocking receive operation.
-   * @param buffer The buffer to store received data.
-   * @param out_port_index Optional pointer to store the receiving port index
-   * (0=Primary, 1=Secondary).
-   * @return Number of bytes received.
-   * @throws SocketError on failure.
-   */
+  /// @brief Receive a raw Ethernet frame ([FE-0040.1.3]).
   size_t receive(std::span<byte> buffer, int *out_port_index = nullptr) override;
 
-  /**
-   * @brief Set receive and send timeouts.
-   * @details [FE-0040.1.2] Support configurable receive timeouts.
-   * @param timeout_ms Timeout in milliseconds.
-   */
+  /// @brief Set receive and send timeouts in milliseconds ([FE-0040.1.2]).
   void set_timeout(int timeout_ms) override;
 
   /**
@@ -96,10 +75,7 @@ public:
    */
   std::array<uint8_t, ETHERNET_MAC_ADDRESS_LENGTH> get_mac_address(bool use_secondary = false) const override;
 
-  /**
-   * @brief Check if redundancy is available (secondary interface configured).
-   * @return true if secondary interface is active.
-   */
+  /// @brief Check if secondary redundant interface is configured and active.
   bool has_redundancy() const noexcept override { return sock_fd_secondary_ >= 0; }
 
 private:

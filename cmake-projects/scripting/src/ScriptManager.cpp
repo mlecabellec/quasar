@@ -13,56 +13,83 @@ ScriptManager& ScriptManager::getInstance() {
 ScriptManager::ScriptManager() : named::NamedObject("ScriptManager") {}
 
 std::shared_ptr<LuaService> ScriptManager::createService(const std::string& name, const std::string& scriptPath) {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        throw std::runtime_error("Timeout acquiring ScriptManager mutex in createService");
-    }
-    
+    // [CS-0010.44] Instantiate and load the service outside m_mutex to avoid serializing heavy Lua initialization.
     std::shared_ptr<LuaService> svc = LuaService::create(name, getSelf());
-    
-    // Note: To truly sandbox, we need to ensure the script runs IN a sandboxed environment.
-    // This should be done inside LuaService::loadScript where the state mutex is safely held.
-    
-    if (svc->loadScript(scriptPath)) {
-        m_services[name] = svc;
-        svc->onInit();
-        return svc;
+    if (!svc->loadScript(scriptPath)) {
+        return nullptr;
     }
-    
-    return nullptr;
+
+    {
+        // [CS-0010.46] Guard only map insertion with m_mutex so workers do not contend on long-running init calls.
+        std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            throw std::runtime_error("Timeout acquiring ScriptManager mutex in createService");
+        }
+        m_services[name] = svc;
+    }
+
+    svc->onInit();
+    return svc;
 }
 
 void ScriptManager::stopService(const std::string& name) {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        throw std::runtime_error("Timeout acquiring ScriptManager mutex in stopService");
+    std::shared_ptr<LuaService> svc;
+    {
+        // [CS-0010.46] Extract and erase the service pointer briefly under lock before invoking shutdown hooks.
+        std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            throw std::runtime_error("Timeout acquiring ScriptManager mutex in stopService");
+        }
+        std::map<std::string, std::shared_ptr<LuaService>>::iterator it = m_services.find(name);
+        if (it != m_services.end()) {
+            svc = it->second;
+            m_services.erase(it);
+        }
     }
-    std::map<std::string, std::shared_ptr<LuaService>>::iterator it = m_services.find(name);
-    if (it != m_services.end()) {
-        it->second->onShutdown();
-        m_services.erase(it);
+    if (svc) {
+        svc->onShutdown();
     }
 }
 
 void ScriptManager::update(double dt) {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        std::cerr << "ScriptManager update timeout" << std::endl;
-        return;
+    std::vector<std::shared_ptr<LuaService>> snapshot;
+    {
+        // [CS-0010.46] Snapshot active services briefly under lock so periodic updates do not block map edits.
+        std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            std::cerr << "ScriptManager update timeout" << std::endl;
+            return;
+        }
+        snapshot.reserve(m_services.size());
+        for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
+            snapshot.push_back(pair.second);
+        }
     }
-    for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
-        pair.second->onUpdate(dt);
+    for (const std::shared_ptr<LuaService>& svc : snapshot) {
+        if (svc) {
+            svc->onUpdate(dt);
+        }
     }
 }
 
 void ScriptManager::tickGC(int stepSize) {
-    std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
-    if (!lock.owns_lock()) {
-        std::cerr << "ScriptManager tickGC timeout" << std::endl;
-        return;
+    std::vector<std::shared_ptr<LuaService>> snapshot;
+    {
+        // [CS-0010.46] Snapshot active services briefly under lock so GC steps never starve concurrent service ops.
+        std::unique_lock<std::timed_mutex> lock(m_mutex, named::config::DEFAULT_LOCK_TIMEOUT);
+        if (!lock.owns_lock()) {
+            std::cerr << "ScriptManager tickGC timeout" << std::endl;
+            return;
+        }
+        snapshot.reserve(m_services.size());
+        for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
+            snapshot.push_back(pair.second);
+        }
     }
-    for (std::map<std::string, std::shared_ptr<LuaService>>::value_type& pair : m_services) {
-        pair.second->gcStep(stepSize);
+    for (const std::shared_ptr<LuaService>& svc : snapshot) {
+        if (svc) {
+            svc->gcStep(stepSize);
+        }
     }
 }
 

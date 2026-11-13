@@ -47,6 +47,7 @@ std::string get_state_name(uint16_t state) {
     }
 }
 
+/// @brief Prints formatted PDO mapping summary for a slave.
 static void print_pdos(const std::string& label, const std::vector<PDOInfo>& pdos) {
     std::cout << "  " << label << " (" << pdos.size() << " PDOs):" << std::endl;
     if (pdos.empty()) std::cout << "    (None)\n";
@@ -139,6 +140,7 @@ void print_slave_info(const SlaveInfo &s, int idx) {
   print_pdos("TxPDOs (Slave -> Master / Inputs )", s.tx_pdos);
 }
 
+/// @brief Entry point for EtherCAT slave exploration sample.
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     std::cout << "Usage: slaveinfo IFNAME [-od] [-v | -vv]\n";
@@ -166,8 +168,8 @@ int main(int argc, char *argv[]) {
     std::cout << "======================================================" << std::endl;
 
     std::cout << "[PHASE 1] Initializing Network on " << iface << "..." << std::endl;
-    RawSocket socket(iface);
-    Enumerator enumerator(socket);
+    RawSocket socket{iface};
+    Enumerator enumerator{socket};
     enumerator.set_verbose(verbose_level); 
 
     std::cout << "[PHASE 2] Enumerating Slaves..." << std::endl;
@@ -182,9 +184,10 @@ int main(int argc, char *argv[]) {
           uint16_t code = enumerator.read_register_fprd<uint16_t>(
               enumerator.slaves()[i].configured_address, regs::AL_STATUS_CODE, wkc);
           if (wkc > 0 && code != 0) {
+              const std::string_view AL_DESC = al_status_code_to_string(code);
               std::cerr << "  - Slave " << i << " (" << enumerator.slaves()[i].name 
                         << ") AL Status Code: 0x" << std::hex << code << ": " 
-                        << al_status_code_to_string(code) << std::dec << std::endl;
+                        << AL_DESC << std::dec << std::endl;
           }
       }
       return 1;
@@ -207,25 +210,25 @@ int main(int argc, char *argv[]) {
       print_slave_info(s, i);
 
       // [OPTIONAL] CoE Object Dictionary browsing
-      if (print_od) {
+      if (print_od == true) {
         if (!(s.mbx_protocols & 0x04)) {
             std::cout << "\n  [COE OBJECT DICTIONARY]\n    Skipped: Slave does not support CoE.\n";
         } else {
             std::cout << "\n  [COE OBJECT DICTIONARY]" << std::endl;
-            MailboxHandler mbx(socket);
+            MailboxHandler mbx{socket};
             mbx.set_verbose(verbose_level);
-            CoEHandler coe(mbx);
+            CoEHandler coe{mbx};
             coe.set_verbose(verbose_level);            
             // Need mutable reference to update mailbox counters internally
             SlaveInfo &mut_s = const_cast<SlaveInfo &>(s);
 
             std::cout << "    Reading OD list... " << std::flush;
             Result<std::vector<uint16_t>> list_res = coe.read_od_list(mut_s);
-            if (list_res) {
+            if (list_res.has_value() == true) {
               std::cout << "Found " << list_res->size() << " objects." << std::endl;
               for (uint16_t idx : *list_res) {
                 Result<CoEHandler::ODEntry> desc_res = coe.read_od_description(mut_s, idx);
-                if (desc_res) {
+                if (desc_res.has_value() == true) {
                   std::cout << "    - 0x" << std::hex << std::setw(4) << std::setfill('0') << idx 
                             << ": " << desc_res->name 
                             << " (Type=0x" << desc_res->datatype 
@@ -238,8 +241,9 @@ int main(int argc, char *argv[]) {
               int wkc;
               uint16_t al_code = enumerator.read_register_fprd<uint16_t>(s.configured_address, regs::AL_STATUS_CODE, wkc);
               if (wkc > 0 && al_code != 0) {
+                  const std::string_view AL_DESC = al_status_code_to_string(al_code);
                   std::cout << "    AL Status Code: 0x" << std::hex << al_code << ": " 
-                            << al_status_code_to_string(al_code) << std::dec << "\n";
+                            << AL_DESC << std::dec << "\n";
               }
             }
         }

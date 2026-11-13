@@ -29,70 +29,37 @@ namespace resoem::redundancy {
  */
 class RedundancyManager {
 public:
-  /**
-   * @brief Construct a RedundancyManager.
-   * @param socket Transport socket (must support dual interface/redundancy).
-   */
+  /// @brief Construct a RedundancyManager.
   explicit RedundancyManager(IRawSocket &socket);
 
-  /**
-   * @brief Virtual destructor.
-   */
+  /// @brief Virtual destructor.
   virtual ~RedundancyManager() noexcept = default;
 
-  // Prevent copying
-  RedundancyManager(const RedundancyManager &) = delete;
-  RedundancyManager &operator=(const RedundancyManager &) = delete;
+  // Non-copyable via std::timed_mutex member
 
-  /**
-   * @brief Get current redundancy engine state.
-   * @return RedundancyState (CIRCULAR_NORMAL, BIFURCATED_BROKEN, etc.).
-   */
+  /// @brief Get current redundancy engine state.
   [[nodiscard]] RedundancyState state() const noexcept;
 
-  /**
-   * @brief Set the expected Working Counter (WKC) for the cyclic frame.
-   * @param expected_wkc Expected WKC value.
-   */
+  /// @brief Set the expected Working Counter (WKC) for the cyclic frame.
   void set_expected_wkc(std::uint16_t expected_wkc) noexcept;
 
-  /**
-   * @brief Get current expected WKC.
-   * @return Expected WKC.
-   */
+  /// @brief Get current expected WKC.
   [[nodiscard]] std::uint16_t expected_wkc() const noexcept;
 
-  /**
-   * @brief Get total number of detected cable break events.
-   * @return Break counter.
-   */
+  /// @brief Get total number of detected cable break events.
   [[nodiscard]] std::size_t break_count() const noexcept;
 
-  /**
-   * @brief Get total number of successful healing events.
-   * @return Healing counter.
-   */
+  /// @brief Get total number of successful healing events.
   [[nodiscard]] std::size_t heal_count() const noexcept;
 
-  /**
-   * @brief Set the cycle interval between background healing probes.
-   * @param cycles Cycle interval.
-   */
+  /// @brief Set the cycle interval between background healing probes.
   void set_probe_interval_cycles(std::size_t cycles) noexcept;
 
-  /**
-   * @brief Perform cyclic frame transmission with redundancy failover and healing.
-   * @param frame_data Frame buffer (sent and updated in-place with received data).
-   * @param expected_wkc Expected WKC for this frame.
-   * @return Total working counter or error.
-   */
+  /// @brief Perform cyclic frame transmission with redundancy failover and healing.
   [[nodiscard]] Result<std::uint16_t> exchange_cyclic_frame(std::span<byte> frame_data,
                                                             std::uint16_t expected_wkc);
 
-  /**
-   * @brief Manually trigger a background healing probe datagram on the secondary port.
-   * @return True if loop was confirmed healed.
-   */
+  /// @brief Manually trigger a background healing probe datagram on the secondary port.
   bool check_healing_probe();
 
 private:
@@ -106,9 +73,11 @@ private:
   std::size_t m_probeIntervalCycles{DEFAULT_PROBE_INTERVAL_CYCLES}; ///< Healing probe frequency
   std::size_t m_consecutiveHealSuccess{0};                         ///< Healing confirmation accumulator
 
-  // Internal helper methods
+  /// @brief Extract working counter from received frame.
   [[nodiscard]] static std::uint16_t extract_wkc_from_frame(std::span<const byte> frame) noexcept;
+  /// @brief Update working counter field in frame buffer.
   static void update_wkc_in_frame(std::span<byte> frame, std::uint16_t wkc) noexcept;
+  /// @brief Merge secondary interface payloads into primary frame.
   static void merge_datagram_payloads(std::span<byte> target_frame,
                                       std::span<const byte> secondary_frame,
                                       std::span<const byte> original_tx) noexcept;

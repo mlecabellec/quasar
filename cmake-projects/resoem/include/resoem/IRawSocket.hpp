@@ -28,28 +28,13 @@ public:
    */
   virtual ~IRawSocket() noexcept = default;
 
-  /**
-   * @brief Send a raw Ethernet frame.
-   * @param data Zero-copy span of frame bytes to transmit.
-   * @param use_secondary If true, send through the secondary redundant interface.
-   * @return Number of bytes transmitted.
-   * @throws SocketError on transmission failure.
-   */
+  /// @brief Send a raw Ethernet frame.
   virtual std::size_t send(std::span<const byte> data, bool use_secondary = false) = 0;
 
-  /**
-   * @brief Receive a raw Ethernet frame into a buffer.
-   * @param buffer Output span buffer to receive packet bytes.
-   * @param out_port_index Optional pointer to record receiving interface index (0=Primary, 1=Secondary).
-   * @return Number of bytes received.
-   * @throws SocketError on reception failure.
-   */
+  /// @brief Receive a raw Ethernet frame into a buffer.
   virtual std::size_t receive(std::span<byte> buffer, int *out_port_index = nullptr) = 0;
 
-  /**
-   * @brief Set socket receive/send timeouts in milliseconds.
-   * @param timeout_ms Timeout value in milliseconds.
-   */
+  /// @brief Set socket receive/send timeouts in milliseconds.
   virtual void set_timeout(int timeout_ms) = 0;
 
   /**

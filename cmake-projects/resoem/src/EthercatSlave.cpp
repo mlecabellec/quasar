@@ -12,7 +12,7 @@ std::shared_ptr<EthercatSlave> EthercatSlave::create(const std::string& name, co
     };
     std::shared_ptr<EthercatSlave> slave = std::make_shared<make_shared_enabler>(name, info.configured_address);
     slave->setSelf(slave);
-    if (parent) {
+    if (parent != nullptr) {
         slave->setParent(parent);
     }
 

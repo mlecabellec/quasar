@@ -1,21 +1,57 @@
+/**
+ * @file TestDatacodec.cpp
+ * @brief Standalone manual verification program for IntegerCodec, ContainerDef, and BitBuffer.
+ * @details Exercises schema creation, raw buffer setup, and manual codec decode path against
+ * NamedInteger<uint8_t> output.
+ * @task TSK-20261113-003, TSK-20260303-002
+ * @feature FE-0010, FE-0100, FE-0020
+ * @compliance Satisfies CS-0090.1..CS-0090.9 documentation, control-branch annotations, and CS-0010.44 density.
+ */
+// Standard assertion, stream IO, smart pointer, and vector headers.
 #include <cassert>
 #include <iostream>
 #include <memory>
 #include <vector>
 
+// Datacodec codecs/schemas and coretypes/named dependencies.
 #include "datacodec/BinaryMapper.hpp"
 #include "datacodec/ICodec.hpp"
 #include "datacodec/IntegerCodec.hpp"
 #include "datacodec/Schema.hpp"
+// Bit-buffer and NamedInteger headers.
 #include "quasar/coretypes/BitBuffer.hpp"
 #include "quasar/coretypes/BitBufferSlice.hpp"
 #include "quasar/coretypes/Buffer.hpp"
 #include "quasar/named/NamedInteger.hpp"
 
+// Bring datacodec, coretypes, and named test symbols into scope.
 using namespace datacodec;
 using namespace quasar::coretypes;
 using namespace quasar::named;
 
+/**
+ * @brief Standalone test runner exercising codec schema setup and integer decode verification.
+ * @details Creates an 8-bit IntegerCodec, registers a FieldDef on a ContainerDef schema, populates
+ * a byte buffer with 0xAB, invokes decode, and validates the decoded NamedInteger<uint8_t> value.
+ * @task TSK-20261113-003, TSK-20260303-002
+ * @feature FE-0010, FE-0100, FE-0020
+ * @compliance Documents entry point return values, error containment, and FE-0020 evaluation notes (CS-0090.1..CS-0090.9).
+ * @return Process status code indicating decode verification pass (0) or failure (1).
+ *   Justification: Signals manual test pass/fail outcome to shell and CTest runners.
+ *   Usage: Returned directly from main to the operating system.
+ *   Consumed: Plain integer value consumed by OS process exit handler.
+ *   Prerequisites: Runtime environment supports heap allocation and std::cout.
+ *   Limitations: Placeholder IntegerCodec decode returns 0 rather than 0xAB if unpacking is incomplete.
+ *   Lifecycle: Scalar int scoped to process termination.
+ *   Modification / Deletion: Caller does not modify process return code.
+ *   Specific Values: 0 when decoded NamedInteger<uint8_t> equals 0xAB; 1 on mismatch or failure.
+ *   Error Behavior: Uncaught exceptions from decode/allocation terminate or propagate to runtime.
+ * @post Logs test progression and returns 0 on decode match or 1 otherwise.
+ * @throws std::exception if BitBuffer, ContainerDef, or IntegerCodec::decode throws.
+ * @containment
+ *   Approach: Explicit null check on dynamic_pointer_cast prevents null dereference before reading value().
+ *   Limitations: No top-level try/catch wraps BitBuffer allocation or decode calls inside standalone test.
+ */
 int main() {
   std::cout << "Starting Datacodec Test..." << std::endl;
 
@@ -55,8 +91,10 @@ int main() {
   std::shared_ptr<NamedInteger<uint8_t>> namedInt =
       std::dynamic_pointer_cast<NamedInteger<uint8_t>>(decodedObj);
 
+  // Verify decoded object is a NamedInteger<uint8_t> equal to 0xAB, returning failure otherwise.
   if (namedInt && namedInt->value() == 0xAB) {
     std::cout << "SUCCESS: Decoded 0xAB correctly!" << std::endl;
+  // Report decode failure when cast fails or decoded byte differs from 0xAB.
   } else {
     std::cout << "FAILURE: Failed to decode." << std::endl;
     return 1;

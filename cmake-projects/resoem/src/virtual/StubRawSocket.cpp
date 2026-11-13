@@ -14,11 +14,11 @@
 namespace resoem::virtual_bus {
 
 StubRawSocket::StubRawSocket(std::shared_ptr<VirtualEtherCATBus> bus, bool enable_redundancy)
-    : m_bus(std::move(bus)), m_hasRedundancy(enable_redundancy) {}
+    : m_bus{std::move(bus)}, m_hasRedundancy{enable_redundancy} {}
 
 std::size_t StubRawSocket::send(std::span<const byte> data, bool use_secondary) {
   if (m_bus == nullptr) {
-    throw SocketError("StubRawSocket: backing virtual bus is null");
+    throw SocketError{"StubRawSocket: backing virtual bus is null"};
   } else {
     // Valid bus
   }
@@ -26,9 +26,9 @@ std::size_t StubRawSocket::send(std::span<const byte> data, bool use_secondary) 
   std::vector<byte> rx_frame;
   m_bus->process_frame(data, use_secondary, rx_frame);
 
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
-    throw SocketError("StubRawSocket: lock timeout on send");
+    throw SocketError{"StubRawSocket: lock timeout on send"};
   } else {
     // Lock acquired
   }
@@ -63,7 +63,7 @@ std::size_t StubRawSocket::send(std::span<const byte> data, bool use_secondary) 
 }
 
 std::size_t StubRawSocket::receive(std::span<byte> buffer, int *out_port_index) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {

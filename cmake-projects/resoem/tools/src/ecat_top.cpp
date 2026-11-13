@@ -14,6 +14,7 @@ using namespace ftxui;
 using namespace resoem;
 using namespace quasar::named;
 
+/// @brief Entry point for the interactive EtherCAT topology TUI.
 int main(int argc, char* argv[]) {
     // 1. Initialize Service
     std::shared_ptr<NamedObject> root = NamedObject::create("root");
@@ -30,7 +31,7 @@ int main(int argc, char* argv[]) {
 
     // 3. Logic to fetch tree data
     std::function<void()> update_data = [&]() {
-        std::lock_guard<std::mutex> lock(data_mutex);
+        std::lock_guard<std::mutex> lock{data_mutex};
         std::vector<std::string> list;
         std::shared_ptr<NamedObject> slavesNode = service->getChild("slaves");
         if (slavesNode != nullptr) {
@@ -48,7 +49,7 @@ int main(int argc, char* argv[]) {
     Component menu = Menu(&slaves_list_cache, &selected_slave);
 
     Component renderer = Renderer(menu, [&] {
-        std::lock_guard<std::mutex> lock(data_mutex);
+        std::lock_guard<std::mutex> lock{data_mutex};
         
         // Detailed info for selected slave
         Elements details;
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
                 std::shared_ptr<NamedObject> slave = *it;
                 details.push_back(text("Name: " + slave->getName()));
                 std::shared_ptr<NamedObject> diag = slave->getChild("diagnostics");
+                // Render selected slave diagnostics
                 if (diag != nullptr) {
                      std::shared_ptr<NamedObject> st = diag->getChild("al_status");
                      if (st != nullptr) {
@@ -99,13 +101,13 @@ int main(int argc, char* argv[]) {
 
     // 6. Refresh loop (separate thread)
     std::atomic<bool> refresh_active{true};
-    std::thread refresh_thread([&] {
+    std::thread refresh_thread{[&] {
         while (refresh_active == true) {
             update_data();
             screen.PostEvent(Event::Custom);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-    });
+    }};
 
     screen.Loop(renderer);
 

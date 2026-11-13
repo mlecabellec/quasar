@@ -23,9 +23,11 @@
 #include <fcntl.h>
 #include <iostream>
 #include <linux/if_tun.h>
+#include <atomic>
 #include <net/if.h>
 #include <poll.h>
 #include <string>
+// System socket headers
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -37,14 +39,11 @@
 using namespace resoem;
 
 // Global flag for graceful exit
-volatile sig_atomic_t g_stop = 0;
-void handle_sigint(int) { g_stop = 1; }
+std::atomic<bool> g_stop{false};
+/// @brief Signal handler for SIGINT graceful shutdown.
+void handle_sigint(int) { g_stop.store(true); }
 
-/**
- * @brief Allocates a Linux TAP interface.
- * @param dev Name of the interface (e.g., "tap0").
- * @return File descriptor or -1 on error.
- */
+/// @brief Allocates a Linux TAP interface and returns its file descriptor.
 int tun_alloc(char *dev) {
   struct ifreq ifr;
   int fd, err;
@@ -57,9 +56,9 @@ int tun_alloc(char *dev) {
   // IFF_NO_PI avoids the 4-byte protocol info header
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
   if (*dev) {
-    const std::size_t copy_len = std::min(std::strlen(dev), static_cast<std::size_t>(IFNAMSIZ - 1));
-    std::memcpy(ifr.ifr_name, dev, copy_len);
-    ifr.ifr_name[copy_len] = '\0';
+    const std::size_t COPY_LEN = std::min(std::strlen(dev), static_cast<std::size_t>(IFNAMSIZ - 1));
+    std::memcpy(ifr.ifr_name, dev, COPY_LEN);
+    ifr.ifr_name[COPY_LEN] = '\0';
   }
 
   if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0) {
@@ -70,6 +69,7 @@ int tun_alloc(char *dev) {
   return fd;
 }
 
+/// @brief Entry point for EoE TAP tunneling sample.
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     std::cout << "Usage: eoe_test IFNAME SLAVE_IDX [-v]\n";
@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
     std::cout << "======================================================" << std::endl;
 
     std::cout << "[STEP 1] Initializing interface " << iface << "..." << std::endl;
-    RawSocket socket(iface);
-    Enumerator enumerator(socket);
+    RawSocket socket{iface};
+    Enumerator enumerator{socket};
     enumerator.set_verbose(verbose);
 
     if (Result<size_t> res = enumerator.enumerate(); !res || *res == 0) {
@@ -127,15 +127,15 @@ int main(int argc, char *argv[]) {
     std::cout << "[STEP 3] Moving slaves to SAFE-OP (Mailbox Active)..." << std::endl;
     enumerator.request_state_all(states::SAFE_OP);
 
-    MailboxHandler mbx(socket);
+    MailboxHandler mbx{socket};
     mbx.set_verbose(verbose);
-    EoEHandler eoe(mbx);
+    EoEHandler eoe{mbx};
 
     std::cout << "[STEP 4] Entering Tunneling Loop... (Ctrl+C to stop)\n";
     std::cout << "------------------------------------------------------" << std::endl;
 
     uint64_t tx_pkts = 0, rx_pkts = 0;
-    while (!g_stop) {
+    while (!g_stop.load()) {
       struct pollfd fds[1];
       fds[0].fd = tun_fd;
       fds[0].events = POLLIN;
@@ -143,7 +143,8 @@ int main(int argc, char *argv[]) {
       // 1. Check for incoming packets from TAP (OS -> EtherCAT)
       int ret = poll(fds, 1, 0); // Non-blocking check
       if (ret > 0 && (fds[0].revents & POLLIN)) {
-        std::vector<byte> eth_frame(2048);
+        std::vector<byte> eth_frame{};
+        eth_frame.resize(2048);
         ssize_t nread = read(tun_fd, eth_frame.data(), eth_frame.size());
         if (nread > 0) {
           eth_frame.resize(static_cast<size_t>(nread));
@@ -158,7 +159,7 @@ int main(int argc, char *argv[]) {
       // 2. Check for incoming packets from EtherCAT (Slave -> OS)
       // We use a short timeout to keep the loop responsive
       Result<std::vector<byte>> res = eoe.receive_frame(slave, std::chrono::microseconds(100));
-      if (res) {
+      if (res.has_value() == true) {
         if (write(tun_fd, res->data(), res->size()) > 0) {
             rx_pkts++;
         }

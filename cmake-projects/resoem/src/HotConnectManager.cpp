@@ -22,7 +22,7 @@ constexpr std::size_t MAX_INIT_RETRIES = 3;
 
 HotConnectManager::HotConnectManager(const eni::EniDocument &doc, IRawSocket &socket,
                                      eni::EniConfigurator &configurator)
-    : m_doc(doc), m_socket(socket), m_configurator(configurator) {
+    : m_doc{doc}, m_socket{socket}, m_configurator{configurator} {
   // Compute initial base expected WKC from cyclic frames
   std::uint16_t cyc_wkc = 0;
   for (const eni::EniCyclicFrame &cf : m_doc.cyclic_frames()) {
@@ -34,7 +34,7 @@ HotConnectManager::HotConnectManager(const eni::EniDocument &doc, IRawSocket &so
 }
 
 void HotConnectManager::register_group(const HotConnectGroupConfig &config) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     // Deduct group's expected WKC from base expected WKC if group is currently disconnected
     if (config.state == HotConnectGroupState::DISCONNECTED && m_baseExpectedWkc >= config.expected_wkc) {
@@ -49,7 +49,7 @@ void HotConnectManager::register_group(const HotConnectGroupConfig &config) {
 }
 
 void HotConnectManager::auto_discover_groups_from_eni() {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -152,7 +152,7 @@ void HotConnectManager::auto_discover_groups_from_eni() {
 }
 
 HotConnectGroupState HotConnectManager::group_state(const std::string &name) const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return HotConnectGroupState::ERROR_STATE;
   } else {
@@ -173,7 +173,7 @@ void HotConnectManager::set_group_policy(const std::string &name, DisconnectedDa
 
 void HotConnectManager::set_group_policy(const std::string &name, DisconnectedDataPolicy policy,
                                          std::span<const byte> fallback_data) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     for (HotConnectGroupConfig &grp : m_groups) {
       if (grp.name == name) {
@@ -194,7 +194,7 @@ void HotConnectManager::set_group_policy(const std::string &name, DisconnectedDa
 }
 
 std::uint16_t HotConnectManager::calculate_active_expected_wkc() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return m_baseExpectedWkc;
   } else {
@@ -211,7 +211,7 @@ std::uint16_t HotConnectManager::calculate_active_expected_wkc() const noexcept 
 }
 
 void HotConnectManager::apply_disconnected_data_policies(std::span<byte> process_image) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -256,7 +256,7 @@ void HotConnectManager::apply_disconnected_data_policies(std::span<byte> process
 }
 
 void HotConnectManager::record_valid_inputs(const std::string &name, std::span<const byte> inputs) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     for (HotConnectGroupConfig &grp : m_groups) {
       if (grp.name == name) {
@@ -300,7 +300,8 @@ bool HotConnectManager::probe_and_identify_group(HotConnectGroupConfig &group) {
     return false;
   }
 
-  std::vector<byte> rx_buffer(MAX_FRAME_SIZE, static_cast<byte>(0));
+  std::vector<byte> rx_buffer{};
+  rx_buffer.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
   std::size_t rec = 0;
   try {
     rec = m_socket.receive(rx_buffer, nullptr);
@@ -363,7 +364,8 @@ bool HotConnectManager::check_group_health(HotConnectGroupConfig &group) {
     return false;
   }
 
-  std::vector<byte> rx_buf(MAX_FRAME_SIZE, static_cast<byte>(0));
+  std::vector<byte> rx_buf{};
+  rx_buf.assign(MAX_FRAME_SIZE, static_cast<byte>(0));
   std::size_t rec = 0;
   try {
     rec = m_socket.receive(rx_buf, nullptr);
@@ -431,7 +433,7 @@ bool HotConnectManager::initialize_group_non_intrusive(HotConnectGroupConfig &gr
 }
 
 void HotConnectManager::scan_cycle() {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return;
   } else {
@@ -468,7 +470,7 @@ void HotConnectManager::scan_cycle() {
 }
 
 void HotConnectManager::mark_group_disconnected(const std::string &name) {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (lock.owns_lock()) {
     for (HotConnectGroupConfig &grp : m_groups) {
       if (grp.name == name) {
@@ -485,7 +487,7 @@ void HotConnectManager::mark_group_disconnected(const std::string &name) {
 }
 
 std::size_t HotConnectManager::operational_group_count() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {
@@ -502,7 +504,7 @@ std::size_t HotConnectManager::operational_group_count() const noexcept {
 }
 
 std::size_t HotConnectManager::total_group_count() const noexcept {
-  std::unique_lock<std::timed_mutex> lock(m_mutex, std::chrono::milliseconds(200));
+  std::unique_lock<std::timed_mutex> lock{m_mutex, std::chrono::milliseconds(200)};
   if (!lock.owns_lock()) {
     return 0;
   } else {

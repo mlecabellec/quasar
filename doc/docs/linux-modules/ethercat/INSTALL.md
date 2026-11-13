@@ -49,7 +49,7 @@ Now you can start the EtherCAT master:
 # /etc/init.d/ethercat start # For init.d based distro
 ```
 
-Have a look at the [examples subdirectory](examples/) for some application
+Have a look at the `examples/` subdirectory in the kernel module source tree for some application
 examples.
 
 ---

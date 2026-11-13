@@ -10,6 +10,7 @@
 
 using namespace resoem;
 
+/// @brief Entry point for ecat_sdo CoE SDO utility tool.
 int main(int argc, char* argv[]) {
     optparse::OptionParser parser = optparse::OptionParser().description("Quasar EtherCAT SDO Utility");
 
@@ -23,8 +24,8 @@ int main(int argc, char* argv[]) {
     int slave_idx = options.get("slave");
 
     try {
-        RawSocket socket(iface);
-        Enumerator enumerator(socket);
+        RawSocket socket{iface};
+        Enumerator enumerator{socket};
         Result<size_t> enum_res = enumerator.enumerate();
         if (!enum_res) return 1;
 
@@ -34,8 +35,8 @@ int main(int argc, char* argv[]) {
         }
 
         SlaveInfo& slave = const_cast<SlaveInfo&>(enumerator.slaves()[static_cast<size_t>(slave_idx)]);
-        MailboxHandler mailbox(socket);
-        CoEHandler coe(mailbox);
+        MailboxHandler mailbox{socket};
+        CoEHandler coe{mailbox};
 
         if (options.is_set("read")) {
             std::string target = options["read"];
@@ -43,9 +44,10 @@ int main(int argc, char* argv[]) {
             uint16_t index = static_cast<uint16_t>(std::stoul(target.substr(0, colon), nullptr, 16));
             uint8_t subindex = (colon != std::string::npos) ? static_cast<uint8_t>(std::stoul(target.substr(colon + 1), nullptr, 16)) : static_cast<uint8_t>(0);
 
-            std::vector<uint8_t> buffer(1024);
+            std::vector<uint8_t> buffer{};
+            buffer.resize(1024);
             Result<size_t> res = coe.sdo_read(slave, index, subindex, std::span<uint8_t>(buffer));
-            if (res) {
+            if (res.has_value() == true) {
                 std::cout << "Value: " << resoem::tools::format_hex(buffer.data(), res.value()) << std::endl;
             }
         } else if (options.is_set("write")) {
@@ -63,19 +65,19 @@ int main(int argc, char* argv[]) {
 
             std::vector<uint8_t> data = resoem::tools::parse_hex(pos_args[0]);
             Result<> res = coe.sdo_write(slave, index, subindex, std::span<const uint8_t>(data));
-            if (res) {
+            if (res.has_value() == true) {
                 std::cout << "Write Success." << std::endl;
             }
         } else {
             // Default: Browse OD
             Result<std::vector<uint16_t>> list_res = coe.read_od_list(slave);
-            if (list_res) {
+            if (list_res.has_value() == true) {
                 std::cout << "Object Dictionary for Slave " << slave_idx << ":" << std::endl;
                 std::vector<uint16_t> indices = list_res.value();
                 for (std::vector<uint16_t>::const_iterator it = indices.begin(); it != indices.end(); ++it) {
                     uint16_t idx = *it;
                     Result<CoEHandler::ODEntry> desc = coe.read_od_description(slave, idx);
-                    if (desc) {
+                    if (desc.has_value() == true) {
                         std::cout << "0x" << std::hex << std::setw(4) << std::setfill('0') << idx << ": " 
                                   << desc.value().name << std::dec << std::endl;
                     }

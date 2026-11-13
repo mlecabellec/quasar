@@ -13,6 +13,9 @@ Regulations governing code ownership, commits, and review processes:
 - **Review & Modifications**: [Constraint CS-0030 Code Modification Standards](CS-0030.md)
   - Impact study rules for deletions and major edits.
   - Human validation checklists.
+- **Commenting & Documentation**: [Constraint CS-0090 Formal C++ Commenting & Doxygen Standards](CS-0090.md)
+  - Universal Doxygen coverage, traceability (`@task`/`@requirement`/`@constraint`/`@compliance`), and 4-part `@param` specs.
+  - Mandatory in-body justification and control-structure operational comments.
 
 ---
 
