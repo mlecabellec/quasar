@@ -14,6 +14,27 @@ jobs:
     if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
 
     steps:
+      - name: "Diagnostic: Environment & Runner Context"
+        env:
+          CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_STRATEGY: ${{ toJSON(strategy) }}
+          CTX_MATRIX: ${{ toJSON(matrix) }}
+          CTX_GITEA: ${{ toJSON(gitea) }}
+        run: |
+          echo "=== Host / Container OS ==="
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          id
+          pwd
+          df -h . || true
+          echo "=== Runner Context ==="
+          printf '%s\n' "$CTX_RUNNER"
+          echo "=== Strategy / Matrix Context ==="
+          printf '%s\n' "$CTX_STRATEGY"
+          printf '%s\n' "$CTX_MATRIX"
+          echo "=== Gitea Context (token redacted) ==="
+          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+
       - name: Install Node.js and Git Prerequisites (Debian)
         run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
 
@@ -29,6 +50,24 @@ jobs:
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
+
+      - name: "Diagnostic: Workspace & Toolchain Check"
+        run: |
+          echo "=== Workspace Files ==="
+          ls -la
+          if [ -d .git ]; then
+            git status -sb || true
+            git remote -v || true
+            git log -1 --oneline || true
+          fi
+          echo "=== Available Tools ==="
+          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+            if command -v "$cmd" >/dev/null 2>&1; then
+              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+            else
+              printf "%-10s missing\n" "$cmd:"
+            fi
+          done
 
       - name: ccache cache
         continue-on-error: true
@@ -80,12 +119,11 @@ jobs:
           fi
 
       - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
         continue-on-error: true
-        with:
-          repository: m/mkdocs-kit
-          path: .cache/mkdocs-kit
-          token: ${{ gitea.token }}
+        run: |
+          rm -rf .cache/mkdocs-kit
+          mkdir -p .cache
+          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
 
       - name: Build Documentation
         continue-on-error: true
@@ -112,6 +150,13 @@ jobs:
         continue-on-error: true
         run: cmake -S linux-modules -B build-modules
 
+      - name: "Diagnostic: Post-Run Summary"
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          df -h . || true
+          ls -la
+
   build-debian-13:
     name: Build, Test & Package (debian-13)
     runs-on: debian-13
@@ -119,6 +164,27 @@ jobs:
     continue-on-error: true
 
     steps:
+      - name: "Diagnostic: Environment & Runner Context"
+        env:
+          CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_STRATEGY: ${{ toJSON(strategy) }}
+          CTX_MATRIX: ${{ toJSON(matrix) }}
+          CTX_GITEA: ${{ toJSON(gitea) }}
+        run: |
+          echo "=== Host / Container OS ==="
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          id
+          pwd
+          df -h . || true
+          echo "=== Runner Context ==="
+          printf '%s\n' "$CTX_RUNNER"
+          echo "=== Strategy / Matrix Context ==="
+          printf '%s\n' "$CTX_STRATEGY"
+          printf '%s\n' "$CTX_MATRIX"
+          echo "=== Gitea Context (token redacted) ==="
+          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+
       - name: Install Node.js and Git Prerequisites (Debian)
         run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
 
@@ -134,6 +200,24 @@ jobs:
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
+
+      - name: "Diagnostic: Workspace & Toolchain Check"
+        run: |
+          echo "=== Workspace Files ==="
+          ls -la
+          if [ -d .git ]; then
+            git status -sb || true
+            git remote -v || true
+            git log -1 --oneline || true
+          fi
+          echo "=== Available Tools ==="
+          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+            if command -v "$cmd" >/dev/null 2>&1; then
+              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+            else
+              printf "%-10s missing\n" "$cmd:"
+            fi
+          done
 
       - name: ccache cache
         continue-on-error: true
@@ -185,12 +269,11 @@ jobs:
           fi
 
       - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
         continue-on-error: true
-        with:
-          repository: m/mkdocs-kit
-          path: .cache/mkdocs-kit
-          token: ${{ gitea.token }}
+        run: |
+          rm -rf .cache/mkdocs-kit
+          mkdir -p .cache
+          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
 
       - name: Build Documentation
         continue-on-error: true
@@ -217,6 +300,13 @@ jobs:
         continue-on-error: true
         run: cmake -S linux-modules -B build-modules
 
+      - name: "Diagnostic: Post-Run Summary"
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          df -h . || true
+          ls -la
+
   build-fedora:
     name: Build, Test & Package (fedora)
     runs-on: fedora
@@ -224,6 +314,27 @@ jobs:
     continue-on-error: true
 
     steps:
+      - name: "Diagnostic: Environment & Runner Context"
+        env:
+          CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_STRATEGY: ${{ toJSON(strategy) }}
+          CTX_MATRIX: ${{ toJSON(matrix) }}
+          CTX_GITEA: ${{ toJSON(gitea) }}
+        run: |
+          echo "=== Host / Container OS ==="
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          id
+          pwd
+          df -h . || true
+          echo "=== Runner Context ==="
+          printf '%s\n' "$CTX_RUNNER"
+          echo "=== Strategy / Matrix Context ==="
+          printf '%s\n' "$CTX_STRATEGY"
+          printf '%s\n' "$CTX_MATRIX"
+          echo "=== Gitea Context (token redacted) ==="
+          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+
       - name: Install Node.js and Git Prerequisites (Fedora)
         run: dnf install -y nodejs git ca-certificates
 
@@ -241,6 +352,24 @@ jobs:
                          gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
                          yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
                          curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
+
+      - name: "Diagnostic: Workspace & Toolchain Check"
+        run: |
+          echo "=== Workspace Files ==="
+          ls -la
+          if [ -d .git ]; then
+            git status -sb || true
+            git remote -v || true
+            git log -1 --oneline || true
+          fi
+          echo "=== Available Tools ==="
+          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+            if command -v "$cmd" >/dev/null 2>&1; then
+              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+            else
+              printf "%-10s missing\n" "$cmd:"
+            fi
+          done
 
       - name: ccache cache
         continue-on-error: true
@@ -292,12 +421,11 @@ jobs:
           fi
 
       - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
         continue-on-error: true
-        with:
-          repository: m/mkdocs-kit
-          path: .cache/mkdocs-kit
-          token: ${{ gitea.token }}
+        run: |
+          rm -rf .cache/mkdocs-kit
+          mkdir -p .cache
+          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
 
       - name: Build Documentation
         continue-on-error: true
@@ -324,6 +452,13 @@ jobs:
         continue-on-error: true
         run: cmake -S linux-modules -B build-modules
 
+      - name: "Diagnostic: Post-Run Summary"
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          df -h . || true
+          ls -la
+
   build-archlinux:
     name: Build, Test & Package (archlinux)
     runs-on: archlinux
@@ -331,6 +466,27 @@ jobs:
     continue-on-error: true
 
     steps:
+      - name: "Diagnostic: Environment & Runner Context"
+        env:
+          CTX_RUNNER: ${{ toJSON(runner) }}
+          CTX_STRATEGY: ${{ toJSON(strategy) }}
+          CTX_MATRIX: ${{ toJSON(matrix) }}
+          CTX_GITEA: ${{ toJSON(gitea) }}
+        run: |
+          echo "=== Host / Container OS ==="
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          id
+          pwd
+          df -h . || true
+          echo "=== Runner Context ==="
+          printf '%s\n' "$CTX_RUNNER"
+          echo "=== Strategy / Matrix Context ==="
+          printf '%s\n' "$CTX_STRATEGY"
+          printf '%s\n' "$CTX_MATRIX"
+          echo "=== Gitea Context (token redacted) ==="
+          printf '%s\n' "$CTX_GITEA" | sed 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+
       - name: Install Node.js and Git Prerequisites (Arch Linux)
         run: pacman -Sy --noconfirm nodejs git ca-certificates
 
@@ -347,6 +503,24 @@ jobs:
                          alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
                          gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
                          curl npm python-pip plantuml graphviz jre-openjdk pango cairo
+
+      - name: "Diagnostic: Workspace & Toolchain Check"
+        run: |
+          echo "=== Workspace Files ==="
+          ls -la
+          if [ -d .git ]; then
+            git status -sb || true
+            git remote -v || true
+            git log -1 --oneline || true
+          fi
+          echo "=== Available Tools ==="
+          for cmd in node git python3 cmake gcc g++ make java mvn podman docker curl; do
+            if command -v "$cmd" >/dev/null 2>&1; then
+              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+            else
+              printf "%-10s missing\n" "$cmd:"
+            fi
+          done
 
       - name: ccache cache
         continue-on-error: true
@@ -398,12 +572,11 @@ jobs:
           fi
 
       - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
         continue-on-error: true
-        with:
-          repository: m/mkdocs-kit
-          path: .cache/mkdocs-kit
-          token: ${{ gitea.token }}
+        run: |
+          rm -rf .cache/mkdocs-kit
+          mkdir -p .cache
+          git clone --depth=1 https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
 
       - name: Build Documentation
         continue-on-error: true
@@ -429,3 +602,10 @@ jobs:
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
         run: cmake -S linux-modules -B build-modules
+
+      - name: "Diagnostic: Post-Run Summary"
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          df -h . || true
+          ls -la
