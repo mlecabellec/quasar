@@ -14,7 +14,7 @@ In Arch Linux, essential build tools are bundled in the `base-devel` group.
 
 ## 2. Kernel Module Development
 
-Required for building the `linux-modules` (EtherCAT, SOEM, SOES).
+Required for building the `linux-modules` (EtherCAT).
 
 *   `linux-headers`: Header files for the Linux kernel.
 *   `autoconf`: Configuration script builder.

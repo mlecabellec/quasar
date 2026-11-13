@@ -1,6 +1,6 @@
-# EtherCAT Knowledge: SOEM, IgH EtherCAT, and SOES
+# EtherCAT Knowledge: IgH EtherCAT, Resoem, and SOES
 
-This document synthesizes knowledge derived from the `linux-modules` directory, specifically focusing on `SOEM`, `ethercat` (IgH), and `SOES`. It also touches upon the internal `resoem` project which aims to modernize the EtherCAT master implementation.
+This document synthesizes knowledge regarding EtherCAT implementations in Quasar: `ethercat` (IgH kernel master in `linux-modules/ethercat`), the modernized C++23 master implementation `resoem` (`cmake-projects/resoem`), and `SOES` (`cmake-projects/third-party/SOES`). The legacy C `SOEM` and stub `SOES` directories previously located under `linux-modules` have been removed as `resoem` fully supersedes `SOEM` and slave support is consolidated in `cmake-projects/third-party/SOES`.
 
 ## 1. SOEM (Simple Open EtherCAT Master)
 
@@ -104,4 +104,4 @@ SOES is a library for implementing EtherCAT Slave devices (SubDevices). It is th
     *   `Enumerator` logic.
 
 ### Relationship to Modules
-The `linux-modules/SOEM` directory likely serves as a reference implementation for `resoem` and as a fallback/legacy master until `resoem` is feature-complete.
+`resoem` is the primary C++23 user-space master stack for Quasar. The legacy `linux-modules/SOEM` reference implementation has been removed.

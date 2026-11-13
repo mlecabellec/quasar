@@ -16,7 +16,7 @@ These tools are required for the basic compilation and configuration of the proj
 
 ## 2. Kernel Module Development
 
-Required for building the `linux-modules` (EtherCAT, SOEM, SOES).
+Required for building the `linux-modules` (EtherCAT).
 
 *   `kernel-devel-$(uname -r)`: Header files for the running Linux kernel.
 *   `autoconf`: Configuration script builder.
