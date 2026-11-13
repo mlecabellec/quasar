@@ -205,7 +205,13 @@ Result<> MailboxServer::enqueue_tx(uint8_t protocol_type,
   slots_[slot_idx].mbx_type = protocol_type;
   slots_[slot_idx].length = static_cast<uint16_t>(frame.size());
   slots_[slot_idx].frame = std::move(frame);
-  return flush_tx_queue_locked().transform([](bool) {});
+  // Flush queued TX slot explicitly so std::expected works without C++23 monadic .transform (GCC 12).
+  Result<bool> flushed = flush_tx_queue_locked();
+  // Propagate flush failure before reporting mailbox enqueue success.
+  if (flushed.has_value() == false) {
+    return std::unexpected(flushed.error());
+  }
+  return {};
 }
 
 /// @brief Execute one mailbox service cycle: flush SM1 TX & read/dispatch SM0 RX.
