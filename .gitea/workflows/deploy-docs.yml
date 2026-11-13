@@ -45,8 +45,16 @@ jobs:
           printf '%s\n' "$CTX_MATRIX"
           echo "=== Gitea Context (token redacted) ==="
           printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
-          echo "=== Environment Variables (redacted) ==="
-          env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
+          echo "=== Environment Variables (single-line sorted, sensitive values redacted) ==="
+          python3 - <<'PY'
+          import os, re
+          pat = re.compile(r'(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)', re.I)
+          for k in sorted(os.environ):
+              if k.startswith("CTX_"):
+                  continue
+              v = "***" if pat.search(k) else os.environ[k].replace("\n", "\\n")
+              print(f"{k}={v}")
+          PY
 
       - name: Checkout Repository
         uses: actions/checkout@v4
