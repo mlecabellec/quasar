@@ -39,11 +39,35 @@ jobs:
         if: matrix.os == 'fedora'
         run: dnf install -y nodejs git ca-certificates
 
+      - name: Checkout Quasar
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ gitea.token }}
+        run: |
+          git config --global --add safe.directory "$PWD"
+          git init .
+          git remote remove origin 2>/dev/null || true
+          git remote add origin "https://gitea2.lecabellec.fr/${{ gitea.repository }}.git"
+          if [ -n "${GITEA_TOKEN:-}" ]; then
+            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
+            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
+              fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
+            git checkout --force "${{ gitea.sha }}" 2>/dev/null || git checkout --force FETCH_HEAD
+            git submodule sync --recursive
+            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
+              submodule update --init --recursive
+          else
+            git fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
+            git checkout --force "${{ gitea.sha }}" 2>/dev/null || git checkout --force FETCH_HEAD
+            git submodule sync --recursive
+            git submodule update --init --recursive
+          fi
+
       - name: Install dependencies (Debian)
         if: matrix.os == 'debian-12' || matrix.os == 'debian-13'
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
+          apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
                               libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
@@ -52,12 +76,12 @@ jobs:
         if: matrix.os == 'fedora'
         run: |
           dnf install -y gcc-c++ make cmake pkgconf-pkg-config python3 file \
-                         kernel-devel autoconf automake libtool dkms \
+                         kernel-devel autoconf automake libtool dkms rpm-build \
                          alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
                          mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
                          gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
                          yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
-                         curl npm python3-pip plantuml java-21-openjdk pango cairo
+                         curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
 
       - name: Install dependencies (Arch Linux)
         if: matrix.os == 'archlinux'
@@ -67,15 +91,10 @@ jobs:
                          linux-headers autoconf automake libtool dkms \
                          alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
                          gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
-                         curl npm python-pip plantuml jre-openjdk pango cairo
-
-      - name: Checkout Quasar
-        uses: actions/checkout@v4
-        with:
-          github-server-url: https://gitea2.lecabellec.fr
-          submodules: recursive
+                         curl npm python-pip plantuml graphviz jre-openjdk pango cairo
 
       - name: ccache cache
+        continue-on-error: true
         uses: actions/cache@v4
         with:
           path: .ccache
@@ -85,8 +104,9 @@ jobs:
 
       - name: Configure CMake Projects
         run: |
-          mkdir -p .ccache
+          mkdir -p .ccache build-projects
           cmake -S cmake-projects -B build-projects \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -124,12 +144,19 @@ jobs:
 
       - name: Checkout MkDocs Kit
         continue-on-error: true
-        uses: actions/checkout@v4
-        with:
-          repository: m/mkdocs-kit
-          github-server-url: https://gitea2.lecabellec.fr
-          path: .cache/mkdocs-kit
-          token: ${{ gitea.token }}
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ gitea.token }}
+        run: |
+          rm -rf .cache/mkdocs-kit
+          mkdir -p .cache
+          if [ -n "${GITEA_TOKEN:-}" ]; then
+            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
+            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
+              clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" .cache/mkdocs-kit
+          else
+            git clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" .cache/mkdocs-kit
+          fi
 
       - name: Build Documentation
         continue-on-error: true

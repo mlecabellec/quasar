@@ -15,17 +15,36 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          github-server-url: https://gitea2.lecabellec.fr
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ gitea.token }}
+        run: |
+          git config --global --add safe.directory "$PWD"
+          git init .
+          git remote remove origin 2>/dev/null || true
+          git remote add origin "https://gitea2.lecabellec.fr/${{ gitea.repository }}.git"
+          if [ -n "${GITEA_TOKEN:-}" ]; then
+            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
+            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
+              fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
+          else
+            git fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
+          fi
+          git checkout --force "${{ gitea.sha }}" 2>/dev/null || git checkout --force FETCH_HEAD
 
       - name: Checkout MkDocs Kit
-        uses: actions/checkout@v4
-        with:
-          repository: m/mkdocs-kit
-          github-server-url: https://gitea2.lecabellec.fr
-          path: mkdocs-kit
-          token: ${{ gitea.token }}
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ gitea.token }}
+        run: |
+          rm -rf mkdocs-kit
+          if [ -n "${GITEA_TOKEN:-}" ]; then
+            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
+            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
+              clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" mkdocs-kit
+          else
+            git clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" mkdocs-kit
+          fi
 
       - name: Install System Dependencies
         run: |
