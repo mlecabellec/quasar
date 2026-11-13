@@ -357,6 +357,16 @@ public:
   size_t getBitSize() const override { return m_rawCodec->getBitSize(); }
 
   /**
+   * @brief Returns canonical codec type identifier by delegating to m_rawCodec.
+   * @task TSK-20261113-004, TSK-20260303-002
+   * @feature FE-0010, FE-0100
+   * @constraint CS-0090.1, CS-0090.2, CS-0090.7
+   * @compliance Completes ICodec interface contract per ICodec.hpp line 122.
+   * @return Canonical codec category string from `m_rawCodec`.
+   */
+  std::string getCodecType() const override { return m_rawCodec->getCodecType(); }
+
+  /**
    * @brief Computes dynamic encoded bit size by reverse-transforming value and querying m_rawCodec.
    * @details Executes m_reverseTransform(value) and returns m_rawCodec->getEncodedBitSize(rawValue).
    * @task TSK-20261113-003, TSK-20260303-002

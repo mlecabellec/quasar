@@ -27,3 +27,14 @@ target_link_libraries(datacodec_test PRIVATE
 
 include(GoogleTest)
 gtest_discover_tests(datacodec_test)
+
+# CS-0100 extended test executable
+add_executable(datacodec_extended_test
+    TestDatacodecExtended.cpp
+)
+target_link_libraries(datacodec_extended_test PRIVATE
+    datacodec
+    quasar_test_support
+    GTest::gtest_main
+)
+gtest_discover_tests(datacodec_extended_test)

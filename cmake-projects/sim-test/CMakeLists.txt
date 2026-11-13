@@ -43,6 +43,14 @@ set_target_properties(test-delayed-array PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(test-delayed-array PRIVATE ${TEST_INCLUDE_DIRS})
 target_link_libraries(test-delayed-array PRIVATE ECSS_SMP sim)
 
+# CS-0100 extended integration test
+add_executable(sim_extended_cs0100_test src/test_sim_extended_cs0100.cpp)
+set_target_properties(sim_extended_cs0100_test PROPERTIES ENABLE_EXPORTS ON)
+target_include_directories(sim_extended_cs0100_test PRIVATE ${TEST_INCLUDE_DIRS})
+target_link_libraries(sim_extended_cs0100_test PRIVATE ECSS_SMP sim quasar_test_support GTest::gtest_main)
+add_test(NAME sim_extended_cs0100_test COMMAND sim_extended_cs0100_test)
+set_tests_properties(sim_extended_cs0100_test PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib")
+
 # CTest definitions
 set(TEST_LIST sim-test dynamic-sim-test test-inverter test-delayed-simple test-delayed-array)
 foreach(test_name ${TEST_LIST})

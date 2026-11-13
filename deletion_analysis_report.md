@@ -4,3 +4,6 @@ The following method signatures were deleted in recent commits and appear to be 
 
 | Commit | Deleted Signature |
 | ------ | ----------------- |
+| `f6d34f9e` | `EoEHandler eoe(mbx)` |
+| `f6d34f9e` | `FoEHandler foe(mbx)` |
+| `f6d34f9e` | `CoEHandler coe_handler(mbx)` |

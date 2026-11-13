@@ -38,3 +38,5 @@ add_executable(test_resoes_coe_pdo test/test_coe_and_pdo.cpp)
 quasar_apply_standards(test_resoes_coe_pdo)
 target_link_libraries(test_resoes_coe_pdo PRIVATE resoes)
 add_test(NAME resoes_coe_pdo COMMAND test_resoes_coe_pdo)
+
+add_subdirectory(test_cs0100)

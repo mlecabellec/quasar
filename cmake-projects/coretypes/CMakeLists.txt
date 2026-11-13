@@ -36,3 +36,4 @@ install(DIRECTORY include/
 # Testing
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(test_cs0100)

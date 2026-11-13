@@ -60,4 +60,5 @@ if(BUILD_TESTING)
     
     include(GoogleTest)
     gtest_discover_tests(logicengine_test)
+    add_subdirectory(test_cs0100)
 endif()

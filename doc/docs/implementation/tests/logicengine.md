@@ -21,3 +21,24 @@ This document describes the testing suite for the `logicengine` module, located 
 - **High Node Count**: Execution of a state machine with 1,000 states and 5,000 transitions.
 - **Concurrent Modification**: Verifies that adding/removing logic components from the `LogicEngine` while it is running is thread-safe.
 - **Memory Safety**: ASan validation of long-duration execution loops (100,000 cycles).
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `BitVectorTest.BasicOperations` | [BitVectorTest.BasicOperations](logicengine/BitVectorTest.BasicOperations.md) |
+| `CauseEffectMatrixTest.Evaluation` | [CauseEffectMatrixTest.Evaluation](logicengine/CauseEffectMatrixTest.Evaluation.md) |
+| `LogicEngineTest.Orchestration` | [LogicEngineTest.Orchestration](logicengine/LogicEngineTest.Orchestration.md) |
+| `StateMachineTest.TransactionalSafety` | [StateMachineTest.TransactionalSafety](logicengine/StateMachineTest.TransactionalSafety.md) |
+| `StateMachineTest.InvariantFailure` | [StateMachineTest.InvariantFailure](logicengine/StateMachineTest.InvariantFailure.md) |
+| `SFCTest.ParallelExecution` | [SFCTest.ParallelExecution](logicengine/SFCTest.ParallelExecution.md) |
+| `LogicStressTest.LuaInfiniteLoopRecovery` | [LogicStressTest.LuaInfiniteLoopRecovery](logicengine/LogicStressTest.LuaInfiniteLoopRecovery.md) |
+| `LogicStressTest.InvalidTreeAccess` | [LogicStressTest.InvalidTreeAccess](logicengine/LogicStressTest.InvalidTreeAccess.md) |
+| `LogicStressTest.ParallelDeterminism` | [LogicStressTest.ParallelDeterminism](logicengine/LogicStressTest.ParallelDeterminism.md) |
+| `LogicStressTest.TokenMerge` | [LogicStressTest.TokenMerge](logicengine/LogicStressTest.TokenMerge.md) |
+| `LogicEngineTutorialTest.Tutorial1_SimpleLuaExpressionEvaluation` | [LogicEngineTutorialTest.Tutorial1_SimpleLuaExpressionEvaluation](logicengine/LogicEngineTutorialTest.Tutorial1_SimpleLuaExpressionEvaluation.md) |
+| `LogicEngineTutorialTest.Tutorial2_IntermediateHierarchicalStateMachineWithInvariant` | [LogicEngineTutorialTest.Tutorial2_IntermediateHierarchicalStateMachineWithInvariant](logicengine/LogicEngineTutorialTest.Tutorial2_IntermediateHierarchicalStateMachineWithInvariant.md) |
+| `LogicEngineTutorialTest.Tutorial3_AdvancedEngineOrchestratingSfcAndCauseEffect` | [LogicEngineTutorialTest.Tutorial3_AdvancedEngineOrchestratingSfcAndCauseEffect](logicengine/LogicEngineTutorialTest.Tutorial3_AdvancedEngineOrchestratingSfcAndCauseEffect.md) |
+| `LogicEngineCoverageTest.EvaluationStatusesExceptionsAndBitVectorOps` | [LogicEngineCoverageTest.EvaluationStatusesExceptionsAndBitVectorOps](logicengine/LogicEngineCoverageTest.EvaluationStatusesExceptionsAndBitVectorOps.md) |
+| `LogicEngineFuzzStressTest.LargeMatrixFuzzAndConcurrentLogicEngineStress` | [LogicEngineFuzzStressTest.LargeMatrixFuzzAndConcurrentLogicEngineStress](logicengine/LogicEngineFuzzStressTest.LargeMatrixFuzzAndConcurrentLogicEngineStress.md) |

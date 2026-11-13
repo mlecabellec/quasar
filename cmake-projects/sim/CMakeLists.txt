@@ -32,3 +32,10 @@ quasar_apply_standards(sim)
 # Test executable
 add_executable(test_basic_simulation test/test_basic_simulation.cpp)
 target_link_libraries(test_basic_simulation PRIVATE sim ECSS_SMP)
+add_test(NAME test_basic_simulation COMMAND test_basic_simulation)
+
+# CS-0100 extended test executable
+add_executable(sim_extended_test test/TestSimExtended.cpp)
+target_link_libraries(sim_extended_test PRIVATE sim ECSS_SMP quasar_test_support GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(sim_extended_test)

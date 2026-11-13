@@ -73,6 +73,21 @@ target_link_libraries(test_eni_generator_comparator PRIVATE resoem tinyxml2)
 add_executable(test_compliance_and_stress test/test_compliance_and_stress.cpp)
 target_link_libraries(test_compliance_and_stress PRIVATE resoem)
 
+# Register hardware-free virtual-bus and protocol tests with CTest
+add_test(NAME resoem_diagnostics COMMAND test_diagnostics)
+add_test(NAME resoem_eni_parser COMMAND test_eni_parser)
+add_test(NAME resoem_virtual_bus COMMAND test_virtual_bus)
+add_test(NAME resoem_eni_configurator COMMAND test_eni_configurator)
+add_test(NAME resoem_redundancy_loop COMMAND test_redundancy_loop)
+add_test(NAME resoem_hot_connect COMMAND test_hot_connect)
+add_test(NAME resoem_eni_generator_comparator COMMAND test_eni_generator_comparator)
+add_test(NAME resoem_compliance_and_stress COMMAND test_compliance_and_stress)
+add_test(NAME resoem_topology COMMAND test_topology)
+add_test(NAME resoem_dc_calc COMMAND test_dc_calc)
+add_test(NAME resoem_soe_framing COMMAND test_soe_framing)
+
+add_subdirectory(test_cs0100)
+
 # Samples
 add_subdirectory(samples)
 

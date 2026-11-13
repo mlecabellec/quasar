@@ -71,6 +71,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 add_subdirectory(test)
+add_subdirectory(test_cs0100)
 add_subdirectory(runner)
 add_subdirectory(qlsh)
 add_subdirectory(test_plugin)

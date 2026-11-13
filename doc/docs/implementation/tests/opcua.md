@@ -18,3 +18,15 @@ This document describes the testing suite for the `opcua` module, located in `cm
 - **X.509 Validation**: Verifies that the `OpcUaSecurityManager` correctly rejects clients with untrusted or expired certificates.
 - **Encryption**: Validates data integrity and confidentiality under `SignAndEncrypt` policies.
 - **User Auth**: Tests Username/Password authentication logic.
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `opcua_test` | [opcua_test](opcua/opcua_test.md) |
+| `OpcUaTutorialTest.Tutorial1_UaVariantConversionAndHelpers` | [OpcUaTutorialTest.Tutorial1_UaVariantConversionAndHelpers](opcua/OpcUaTutorialTest.Tutorial1_UaVariantConversionAndHelpers.md) |
+| `OpcUaTutorialTest.Tutorial2_ServerAndClientMirroring` | [OpcUaTutorialTest.Tutorial2_ServerAndClientMirroring](opcua/OpcUaTutorialTest.Tutorial2_ServerAndClientMirroring.md) |
+| `OpcUaTutorialTest.Tutorial3_SecurityManagerAndCredentials` | [OpcUaTutorialTest.Tutorial3_SecurityManagerAndCredentials](opcua/OpcUaTutorialTest.Tutorial3_SecurityManagerAndCredentials.md) |
+| `OpcUaCoverageTest.UnreachableEndpointAndExceptionBoundaries` | [OpcUaCoverageTest.UnreachableEndpointAndExceptionBoundaries](opcua/OpcUaCoverageTest.UnreachableEndpointAndExceptionBoundaries.md) |
+| `OpcUaFuzzStressTest.DeterministicVariantFuzzAndConcurrentTaskQueue` | [OpcUaFuzzStressTest.DeterministicVariantFuzzAndConcurrentTaskQueue](opcua/OpcUaFuzzStressTest.DeterministicVariantFuzzAndConcurrentTaskQueue.md) |

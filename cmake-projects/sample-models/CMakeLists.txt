@@ -31,3 +31,20 @@ add_library(sample-delayed-array SHARED
 target_include_directories(sample-delayed-array PRIVATE include)
 target_link_libraries(sample-delayed-array PRIVATE ECSS_SMP)
 set_target_properties(sample-delayed-array PROPERTIES COMPILE_DEFINITIONS "BUILD_DELAYED_ARRAY")
+
+# Unit Tests for sample-models
+add_executable(sample_models_test
+    test/TestSampleModels.cpp
+    src/InverterModel.cpp
+    src/DelayedModels.cpp
+    ${COMMON_SRCS}
+)
+target_include_directories(sample_models_test PRIVATE include)
+target_link_libraries(sample_models_test PRIVATE
+    ECSS_SMP
+    sim
+    quasar_test_support
+    GTest::gtest_main
+)
+include(GoogleTest)
+gtest_discover_tests(sample_models_test)

@@ -199,3 +199,77 @@ Tests for the `BitBuffer` class are split across three files, covering basic fun
     *   **Pre-conditions:** Strings "abc", "def".
     *   **Sequence:** Check equality and `compareTo`.
     *   **Post-conditions:** `equals` returns false. "abc" compares less than "def".
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `BitBufferTest.GetSetBit` | [BitBufferTest.GetSetBit](coretypes/BitBufferTest.GetSetBit.md) |
+| `BitBufferTest.BitSize` | [BitBufferTest.BitSize](coretypes/BitBufferTest.BitSize.md) |
+| `BitBufferTest.SliceBits` | [BitBufferTest.SliceBits](coretypes/BitBufferTest.SliceBits.md) |
+| `BitBufferTest.ConcatBits` | [BitBufferTest.ConcatBits](coretypes/BitBufferTest.ConcatBits.md) |
+| `BitBufferTest.ReverseBits` | [BitBufferTest.ReverseBits](coretypes/BitBufferTest.ReverseBits.md) |
+| `BitBufferTest.ReverseBitsGroup` | [BitBufferTest.ReverseBitsGroup](coretypes/BitBufferTest.ReverseBitsGroup.md) |
+| `BitBufferTest.OutOfRange` | [BitBufferTest.OutOfRange](coretypes/BitBufferTest.OutOfRange.md) |
+| `BitBufferTest.Equals` | [BitBufferTest.Equals](coretypes/BitBufferTest.Equals.md) |
+| `BitBufferTest.Clone` | [BitBufferTest.Clone](coretypes/BitBufferTest.Clone.md) |
+| `BitBufferTest.Performance_GetSet` | [BitBufferTest.Performance_GetSet](coretypes/BitBufferTest.Performance_GetSet.md) |
+| `BitBufferTest.ThreadSafety` | [BitBufferTest.ThreadSafety](coretypes/BitBufferTest.ThreadSafety.md) |
+| `BitBufferSliceTest.CreationAndGet` | [BitBufferSliceTest.CreationAndGet](coretypes/BitBufferSliceTest.CreationAndGet.md) |
+| `BitBufferSliceTest.SubSlice` | [BitBufferSliceTest.SubSlice](coretypes/BitBufferSliceTest.SubSlice.md) |
+| `BitBufferSliceTest.Concat` | [BitBufferSliceTest.Concat](coretypes/BitBufferSliceTest.Concat.md) |
+| `BitBufferStress.LargeAllocation` | [BitBufferStress.LargeAllocation](coretypes/BitBufferStress.LargeAllocation.md) |
+| `BitBufferStress.HeavySlice` | [BitBufferStress.HeavySlice](coretypes/BitBufferStress.HeavySlice.md) |
+| `BooleanTest.ConstructorValue` | [BooleanTest.ConstructorValue](coretypes/BooleanTest.ConstructorValue.md) |
+| `BooleanTest.ConstructorString` | [BooleanTest.ConstructorString](coretypes/BooleanTest.ConstructorString.md) |
+| `BooleanTest.ToString` | [BooleanTest.ToString](coretypes/BooleanTest.ToString.md) |
+| `BooleanTest.FromNumeric` | [BooleanTest.FromNumeric](coretypes/BooleanTest.FromNumeric.md) |
+| `BooleanTest.PrimitiveComparison` | [BooleanTest.PrimitiveComparison](coretypes/BooleanTest.PrimitiveComparison.md) |
+| `BufferTest.ConstructAndSize` | [BufferTest.ConstructAndSize](coretypes/BufferTest.ConstructAndSize.md) |
+| `BufferTest.SetGet` | [BufferTest.SetGet](coretypes/BufferTest.SetGet.md) |
+| `BufferTest.ToString` | [BufferTest.ToString](coretypes/BufferTest.ToString.md) |
+| `BufferTest.FromString` | [BufferTest.FromString](coretypes/BufferTest.FromString.md) |
+| `BufferTest.NumericIO` | [BufferTest.NumericIO](coretypes/BufferTest.NumericIO.md) |
+| `BufferTest.SliceConcat` | [BufferTest.SliceConcat](coretypes/BufferTest.SliceConcat.md) |
+| `BufferTest.Reverse` | [BufferTest.Reverse](coretypes/BufferTest.Reverse.md) |
+| `BufferTest.ReverseWord` | [BufferTest.ReverseWord](coretypes/BufferTest.ReverseWord.md) |
+| `BufferTest.Clone` | [BufferTest.Clone](coretypes/BufferTest.Clone.md) |
+| `BufferTest.SliceView` | [BufferTest.SliceView](coretypes/BufferTest.SliceView.md) |
+| `BufferTest.BitwiseOps` | [BufferTest.BitwiseOps](coretypes/BufferTest.BitwiseOps.md) |
+| `BufferTest.ComparisonOps` | [BufferTest.ComparisonOps](coretypes/BufferTest.ComparisonOps.md) |
+| `FloatingPointTest.Arithmetic` | [FloatingPointTest.Arithmetic](coretypes/FloatingPointTest.Arithmetic.md) |
+| `FloatingPointTest.SafeArithmetic` | [FloatingPointTest.SafeArithmetic](coretypes/FloatingPointTest.SafeArithmetic.md) |
+| `FloatingPointTest.StringParsing` | [FloatingPointTest.StringParsing](coretypes/FloatingPointTest.StringParsing.md) |
+| `FloatingPointTest.PrimitiveComparison` | [FloatingPointTest.PrimitiveComparison](coretypes/FloatingPointTest.PrimitiveComparison.md) |
+| `FloatingPointTest.ToStringHex` | [FloatingPointTest.ToStringHex](coretypes/FloatingPointTest.ToStringHex.md) |
+| `IntegerTest.Arithmetic` | [IntegerTest.Arithmetic](coretypes/IntegerTest.Arithmetic.md) |
+| `IntegerTest.SafeArithmeticOverflow` | [IntegerTest.SafeArithmeticOverflow](coretypes/IntegerTest.SafeArithmeticOverflow.md) |
+| `IntegerTest.DivisionByZero` | [IntegerTest.DivisionByZero](coretypes/IntegerTest.DivisionByZero.md) |
+| `IntegerTest.StringRadix` | [IntegerTest.StringRadix](coretypes/IntegerTest.StringRadix.md) |
+| `IntegerTest.ParseIntExceptions` | [IntegerTest.ParseIntExceptions](coretypes/IntegerTest.ParseIntExceptions.md) |
+| `IntegerTest.CompareTo` | [IntegerTest.CompareTo](coretypes/IntegerTest.CompareTo.md) |
+| `IntegerTest.LongType` | [IntegerTest.LongType](coretypes/IntegerTest.LongType.md) |
+| `IntegerTest.UByteType` | [IntegerTest.UByteType](coretypes/IntegerTest.UByteType.md) |
+| `IntegerTest.Endianness` | [IntegerTest.Endianness](coretypes/IntegerTest.Endianness.md) |
+| `IntegerTest.PrimitiveInitialization` | [IntegerTest.PrimitiveInitialization](coretypes/IntegerTest.PrimitiveInitialization.md) |
+| `IntegerTest.BitwiseOperations` | [IntegerTest.BitwiseOperations](coretypes/IntegerTest.BitwiseOperations.md) |
+| `IntegerTest.Introspection` | [IntegerTest.Introspection](coretypes/IntegerTest.Introspection.md) |
+| `IntegerTest.PrimitiveComparison` | [IntegerTest.PrimitiveComparison](coretypes/IntegerTest.PrimitiveComparison.md) |
+| `IntegerPolymorphicTest.MatrixTests` | [IntegerPolymorphicTest.MatrixTests](coretypes/IntegerPolymorphicTest.MatrixTests.md) |
+| `IntegerPolymorphicTest.MixedWithFloatingPoint` | [IntegerPolymorphicTest.MixedWithFloatingPoint](coretypes/IntegerPolymorphicTest.MixedWithFloatingPoint.md) |
+| `IntegerPolymorphicTest.OverflowChecks` | [IntegerPolymorphicTest.OverflowChecks](coretypes/IntegerPolymorphicTest.OverflowChecks.md) |
+| `IntegerPolymorphicTest.BitwiseNotAndShifts` | [IntegerPolymorphicTest.BitwiseNotAndShifts](coretypes/IntegerPolymorphicTest.BitwiseNotAndShifts.md) |
+| `StringTest.Creation` | [StringTest.Creation](coretypes/StringTest.Creation.md) |
+| `StringTest.Comparison` | [StringTest.Comparison](coretypes/StringTest.Comparison.md) |
+| `CoreTypesThreadSafety.IntegerImmutable` | [CoreTypesThreadSafety.IntegerImmutable](coretypes/CoreTypesThreadSafety.IntegerImmutable.md) |
+| `CoreTypesThreadSafety.FloatingPointImmutable` | [CoreTypesThreadSafety.FloatingPointImmutable](coretypes/CoreTypesThreadSafety.FloatingPointImmutable.md) |
+| `VariantTest.BasicConstructionAndTypeChecking` | [VariantTest.BasicConstructionAndTypeChecking](coretypes/VariantTest.BasicConstructionAndTypeChecking.md) |
+| `VariantTest.ErrorHandlingAndSafety` | [VariantTest.ErrorHandlingAndSafety](coretypes/VariantTest.ErrorHandlingAndSafety.md) |
+| `VariantTest.MoveAndCopySemantics` | [VariantTest.MoveAndCopySemantics](coretypes/VariantTest.MoveAndCopySemantics.md) |
+| `CoretypesTutorialTest.Tutorial1_SimpleTemporalAndVariantBasics` | [CoretypesTutorialTest.Tutorial1_SimpleTemporalAndVariantBasics](coretypes/CoretypesTutorialTest.Tutorial1_SimpleTemporalAndVariantBasics.md) |
+| `CoretypesTutorialTest.Tutorial2_IntermediatePhysicalUnitsAndQuantities` | [CoretypesTutorialTest.Tutorial2_IntermediatePhysicalUnitsAndQuantities](coretypes/CoretypesTutorialTest.Tutorial2_IntermediatePhysicalUnitsAndQuantities.md) |
+| `CoretypesTutorialTest.Tutorial3_AdvancedBitBufferSlicingAndTemperatureOffset` | [CoretypesTutorialTest.Tutorial3_AdvancedBitBufferSlicingAndTemperatureOffset](coretypes/CoretypesTutorialTest.Tutorial3_AdvancedBitBufferSlicingAndTemperatureOffset.md) |
+| `CoretypesTemplateTest.TwentyPlusPrimitiveTemplateInstantiations` | [CoretypesTemplateTest.TwentyPlusPrimitiveTemplateInstantiations](coretypes/CoretypesTemplateTest.TwentyPlusPrimitiveTemplateInstantiations.md) |
+| `CoretypesCoverageTest.AllEnumsUnitSymbolsAndExceptionBoundaries` | [CoretypesCoverageTest.AllEnumsUnitSymbolsAndExceptionBoundaries](coretypes/CoretypesCoverageTest.AllEnumsUnitSymbolsAndExceptionBoundaries.md) |
+| `CoretypesFuzzStressTest.DeterministicQuantityFuzzAndConcurrentBitBufferStress` | [CoretypesFuzzStressTest.DeterministicQuantityFuzzAndConcurrentBitBufferStress](coretypes/CoretypesFuzzStressTest.DeterministicQuantityFuzzAndConcurrentBitBufferStress.md) |

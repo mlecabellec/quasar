@@ -29,3 +29,4 @@ Regulations and guidelines enforcing safe C++23 middleware development:
 - [CS-0030: Code Modification Standards](CS-0030.md): Deletions study and review gatekeepers.
 - [CS-0050: C++26 Safety Standards](CS-0050.md): Memory safety, analyzer rules, and compilations bounds.
 - [CS-0090: Commenting & Doxygen Standards](CS-0090.md): Formal Doxygen coverage, traceability citations, complete `@param` contracts, in-body & control-structure commenting.
+- [CS-0100: Testing Standards](CS-0100.md): Universal method coverage, branch/domain/template completeness, deterministic stress/concurrency suites, async verbose logging, and PlantUML test documentation.

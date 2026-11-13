@@ -9,3 +9,16 @@ This document describes the automated unit and integration tests for the `resoes
 ## test_coe_and_pdo (`resoes_test_coe_and_pdo`)
 - Verifies `MailboxServer` `SM0`/`SM1` slot transitions (`Idle`, `OwnerEcat`, `OwnerPdi`, `RepeatReq`, `Again`) and `MBX_error` handling.
 - Verifies `ObjectDictionary` and `CoeServer` Expedited, Segmented, and Complete-Access SDO transfers, SDO Info (`ODList`, `OD`, `ED`), `ICoeObserver` pre/post write rejection, and dynamic `0x1C12`/`0x1C13` PDO packing/unpacking through `SlaveApplication::step_freerun()`.
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `resoes_esm_eeprom` | [resoes_esm_eeprom](resoes/resoes_esm_eeprom.md) |
+| `resoes_coe_pdo` | [resoes_coe_pdo](resoes/resoes_coe_pdo.md) |
+| `ResoesTutorialTest.Tutorial1_MemoryHardwareAndEepromStorage` | [ResoesTutorialTest.Tutorial1_MemoryHardwareAndEepromStorage](resoes/ResoesTutorialTest.Tutorial1_MemoryHardwareAndEepromStorage.md) |
+| `ResoesTutorialTest.Tutorial2_ObjectDictionaryAndCoePdoPackUnpack` | [ResoesTutorialTest.Tutorial2_ObjectDictionaryAndCoePdoPackUnpack](resoes/ResoesTutorialTest.Tutorial2_ObjectDictionaryAndCoePdoPackUnpack.md) |
+| `ResoesTutorialTest.Tutorial3_SlaveApplicationFreerunAndCallbacks` | [ResoesTutorialTest.Tutorial3_SlaveApplicationFreerunAndCallbacks](resoes/ResoesTutorialTest.Tutorial3_SlaveApplicationFreerunAndCallbacks.md) |
+| `ResoesCoverageTest.AllEnumsErrorBoundariesAndMailboxSlotStates` | [ResoesCoverageTest.AllEnumsErrorBoundariesAndMailboxSlotStates](resoes/ResoesCoverageTest.AllEnumsErrorBoundariesAndMailboxSlotStates.md) |
+| `ResoesFuzzStressTest.DeterministicPdoFuzzAndConcurrentOdAccess` | [ResoesFuzzStressTest.DeterministicPdoFuzzAndConcurrentOdAccess](resoes/ResoesFuzzStressTest.DeterministicPdoFuzzAndConcurrentOdAccess.md) |

@@ -14,6 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(QuasarStandards.cmake)
 
 add_subdirectory(third-party)
+add_subdirectory(test-support)
 
 add_subdirectory(utils)
 add_subdirectory(sched)
@@ -31,6 +32,7 @@ add_subdirectory(opcua)
 add_subdirectory(sample-models)
 add_subdirectory(sim-test)
 add_subdirectory(datalogger)
+add_subdirectory(integration-tests)
 add_subdirectory(manual-tests)
 
 # CPack Configuration

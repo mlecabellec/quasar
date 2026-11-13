@@ -16,6 +16,9 @@ Regulations governing code ownership, commits, and review processes:
 - **Commenting & Documentation**: [Constraint CS-0090 Formal C++ Commenting & Doxygen Standards](CS-0090.md)
   - Universal Doxygen coverage, traceability (`@task`/`@requirement`/`@constraint`/`@compliance`), and 4-part `@param` specs.
   - Mandatory in-body justification and control-structure operational comments.
+- **Testing & Verification**: [Constraint CS-0100 Comprehensive Testing Standards](CS-0100.md)
+  - Universal method coverage, traceability, branch/domain/template analysis, determinism, and resource limits (`2 GB` / `3 min`).
+  - Concurrency/stress testing, cross-module integration graphs, progressive tutorial tests, async verbose logging, and PlantUML test docs.
 
 ---
 

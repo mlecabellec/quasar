@@ -101,7 +101,7 @@ public:
       throw std::out_of_range("Buffer too small for FloatCodec");
     }
     T value = 0.0;
-    return quasar::named::NamedFloatingPoint<T>::create("", value);
+    return quasar::named::NamedFloatingPoint<T>::create("decoded", value);
   }
 
   /**

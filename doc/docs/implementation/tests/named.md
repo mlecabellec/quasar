@@ -137,3 +137,90 @@ The thread safety tests ensure that concurrent operations on the `NamedObject` t
     - **Reader Threads (4)**: Continually iterate over the child list and access object names.
 - **Duration**: 1 second of intensive concurrent execution.
 - **Verification**: No crashes, assertion failures, or deadlocks occur during the test period. Objects remains in a consistent state throughout the operations.
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `TestActiveEntity.LifecycleTransitions` | [TestActiveEntity.LifecycleTransitions](named/TestActiveEntity.LifecycleTransitions.md) |
+| `TestActiveEntity.ObserverPattern` | [TestActiveEntity.ObserverPattern](named/TestActiveEntity.ObserverPattern.md) |
+| `TestActiveEntity.FieldReflexivity` | [TestActiveEntity.FieldReflexivity](named/TestActiveEntity.FieldReflexivity.md) |
+| `TestActiveEntity.MethodReflexivity` | [TestActiveEntity.MethodReflexivity](named/TestActiveEntity.MethodReflexivity.md) |
+| `TestBoundPrimitives.NamedIntegerBinding` | [TestBoundPrimitives.NamedIntegerBinding](named/TestBoundPrimitives.NamedIntegerBinding.md) |
+| `TestBoundPrimitives.NamedFloatingPointBinding` | [TestBoundPrimitives.NamedFloatingPointBinding](named/TestBoundPrimitives.NamedFloatingPointBinding.md) |
+| `TestBoundPrimitives.NamedBooleanBinding` | [TestBoundPrimitives.NamedBooleanBinding](named/TestBoundPrimitives.NamedBooleanBinding.md) |
+| `TestBoundPrimitives.BoundaryCheck` | [TestBoundPrimitives.BoundaryCheck](named/TestBoundPrimitives.BoundaryCheck.md) |
+| `TestBoundPrimitives.CloneSharingPolicy` | [TestBoundPrimitives.CloneSharingPolicy](named/TestBoundPrimitives.CloneSharingPolicy.md) |
+| `MethodPerformanceTest.CallOverheadComparison` | [MethodPerformanceTest.CallOverheadComparison](named/MethodPerformanceTest.CallOverheadComparison.md) |
+| `MethodPerformanceTest.CoreNamedObjectIsolation` | [MethodPerformanceTest.CoreNamedObjectIsolation](named/MethodPerformanceTest.CoreNamedObjectIsolation.md) |
+| `MethodPerformanceTest.ValidationRejection` | [MethodPerformanceTest.ValidationRejection](named/MethodPerformanceTest.ValidationRejection.md) |
+| `NamedContainersTest.NamedArray` | [NamedContainersTest.NamedArray](named/NamedContainersTest.NamedArray.md) |
+| `NamedContainersTest.NamedMap` | [NamedContainersTest.NamedMap](named/NamedContainersTest.NamedMap.md) |
+| `NamedContainersTest.NamedSet` | [NamedContainersTest.NamedSet](named/NamedContainersTest.NamedSet.md) |
+| `NamedContainersTest.Iterators` | [NamedContainersTest.Iterators](named/NamedContainersTest.Iterators.md) |
+| `NamedMethodAndServiceTest.NamedMethodBasic` | [NamedMethodAndServiceTest.NamedMethodBasic](named/NamedMethodAndServiceTest.NamedMethodBasic.md) |
+| `NamedMethodAndServiceTest.NamedMethodOwnerAccess` | [NamedMethodAndServiceTest.NamedMethodOwnerAccess](named/NamedMethodAndServiceTest.NamedMethodOwnerAccess.md) |
+| `NamedMethodAndServiceTest.NamedServiceLifecycle` | [NamedMethodAndServiceTest.NamedServiceLifecycle](named/NamedMethodAndServiceTest.NamedServiceLifecycle.md) |
+| `NamedMethodAndServiceTest.NamedServiceHooks` | [NamedMethodAndServiceTest.NamedServiceHooks](named/NamedMethodAndServiceTest.NamedServiceHooks.md) |
+| `NamedMethodAndServiceTest.MultiThreadStress` | [NamedMethodAndServiceTest.MultiThreadStress](named/NamedMethodAndServiceTest.MultiThreadStress.md) |
+| `NamedObjectTest.Creation` | [NamedObjectTest.Creation](named/NamedObjectTest.Creation.md) |
+| `NamedObjectTest.InvalidName` | [NamedObjectTest.InvalidName](named/NamedObjectTest.InvalidName.md) |
+| `NamedObjectTest.Hierarchy` | [NamedObjectTest.Hierarchy](named/NamedObjectTest.Hierarchy.md) |
+| `NamedObjectTest.Uniqueness` | [NamedObjectTest.Uniqueness](named/NamedObjectTest.Uniqueness.md) |
+| `NamedObjectTest.CycleDetection` | [NamedObjectTest.CycleDetection](named/NamedObjectTest.CycleDetection.md) |
+| `NamedObjectTest.DerivedClasses` | [NamedObjectTest.DerivedClasses](named/NamedObjectTest.DerivedClasses.md) |
+| `NamedObjectTest.SerializationXML` | [NamedObjectTest.SerializationXML](named/NamedObjectTest.SerializationXML.md) |
+| `NamedObjectTest.SerializationYAML` | [NamedObjectTest.SerializationYAML](named/NamedObjectTest.SerializationYAML.md) |
+| `NamedObjectTest.NamedBuffers` | [NamedObjectTest.NamedBuffers](named/NamedObjectTest.NamedBuffers.md) |
+| `NamedObjectTest.RelatedObject` | [NamedObjectTest.RelatedObject](named/NamedObjectTest.RelatedObject.md) |
+| `NamedObjectTest.RTTI` | [NamedObjectTest.RTTI](named/NamedObjectTest.RTTI.md) |
+| `NamedObjectTest.ReplaceInTree` | [NamedObjectTest.ReplaceInTree](named/NamedObjectTest.ReplaceInTree.md) |
+| `NamedObjectStress.DeepHierarchy` | [NamedObjectStress.DeepHierarchy](named/NamedObjectStress.DeepHierarchy.md) |
+| `NamedObjectStress.WideHierarchy` | [NamedObjectStress.WideHierarchy](named/NamedObjectStress.WideHierarchy.md) |
+| `NamedObjectThreadSafety.StressTest` | [NamedObjectThreadSafety.StressTest](named/NamedObjectThreadSafety.StressTest.md) |
+| `NamedBufferSliceTest.CreationAndUsage` | [NamedBufferSliceTest.CreationAndUsage](named/NamedBufferSliceTest.CreationAndUsage.md) |
+| `NamedBufferSliceTest.Clone` | [NamedBufferSliceTest.Clone](named/NamedBufferSliceTest.Clone.md) |
+| `NamedBufferSliceTest.OutOfBoundsTests` | [NamedBufferSliceTest.OutOfBoundsTests](named/NamedBufferSliceTest.OutOfBoundsTests.md) |
+| `NamedBufferSliceTest.DeepCopyRebasing` | [NamedBufferSliceTest.DeepCopyRebasing](named/NamedBufferSliceTest.DeepCopyRebasing.md) |
+| `NamedBitBufferSliceTest.CreationAndUsage` | [NamedBitBufferSliceTest.CreationAndUsage](named/NamedBitBufferSliceTest.CreationAndUsage.md) |
+| `NamedBitBufferSliceTest.OutOfBoundsTests` | [NamedBitBufferSliceTest.OutOfBoundsTests](named/NamedBitBufferSliceTest.OutOfBoundsTests.md) |
+| `NamedBitBufferSliceTest.DeepCopyRebasing` | [NamedBitBufferSliceTest.DeepCopyRebasing](named/NamedBitBufferSliceTest.DeepCopyRebasing.md) |
+| `NamedStringTest.CreationAndValue` | [NamedStringTest.CreationAndValue](named/NamedStringTest.CreationAndValue.md) |
+| `NamedStringTest.ParentChild` | [NamedStringTest.ParentChild](named/NamedStringTest.ParentChild.md) |
+| `NamedStringTest.Clone` | [NamedStringTest.Clone](named/NamedStringTest.Clone.md) |
+| `NamedVariantTest.BasicUsage` | [NamedVariantTest.BasicUsage](named/NamedVariantTest.BasicUsage.md) |
+| `NamedVariantTest.Cloning` | [NamedVariantTest.Cloning](named/NamedVariantTest.Cloning.md) |
+| `NamedVariantsAndTemporalTest.NamedVariant` | [NamedVariantsAndTemporalTest.NamedVariant](named/NamedVariantsAndTemporalTest.NamedVariant.md) |
+| `NamedVariantsAndTemporalTest.CollectionVariants` | [NamedVariantsAndTemporalTest.CollectionVariants](named/NamedVariantsAndTemporalTest.CollectionVariants.md) |
+| `NamedVariantsAndTemporalTest.TemporalTimestampTest` | [NamedVariantsAndTemporalTest.TemporalTimestampTest](named/NamedVariantsAndTemporalTest.TemporalTimestampTest.md) |
+| `NamedVariantsAndTemporalTest.TemporalDurationTest` | [NamedVariantsAndTemporalTest.TemporalDurationTest](named/NamedVariantsAndTemporalTest.TemporalDurationTest.md) |
+| `NamedVariantsAndTemporalTest.TemporalDateTest` | [NamedVariantsAndTemporalTest.TemporalDateTest](named/NamedVariantsAndTemporalTest.TemporalDateTest.md) |
+| `PredefinedRulesTest.SliceBufferRuleShare` | [PredefinedRulesTest.SliceBufferRuleShare](named/PredefinedRulesTest.SliceBufferRuleShare.md) |
+| `PredefinedRulesTest.ExtractIntegerRule` | [PredefinedRulesTest.ExtractIntegerRule](named/PredefinedRulesTest.ExtractIntegerRule.md) |
+| `ProtocolMappingTest.CastToStructureZeroCopy` | [ProtocolMappingTest.CastToStructureZeroCopy](named/ProtocolMappingTest.CastToStructureZeroCopy.md) |
+| `ProtocolMappingTest.ExtractIntegerZeroCopy` | [ProtocolMappingTest.ExtractIntegerZeroCopy](named/ProtocolMappingTest.ExtractIntegerZeroCopy.md) |
+| `TestRawEthernetService.VerifyCreationAndPropertyMapping` | [TestRawEthernetService.VerifyCreationAndPropertyMapping](named/TestRawEthernetService.VerifyCreationAndPropertyMapping.md) |
+| `TestRawEthernetService.VerifyPermissionSkippingOnStart` | [TestRawEthernetService.VerifyPermissionSkippingOnStart](named/TestRawEthernetService.VerifyPermissionSkippingOnStart.md) |
+| `TestRawEthernetService.VerifyIncomingTreeMaterialization` | [TestRawEthernetService.VerifyIncomingTreeMaterialization](named/TestRawEthernetService.VerifyIncomingTreeMaterialization.md) |
+| `SerializationTest.XMLRoundTrip` | [SerializationTest.XMLRoundTrip](named/SerializationTest.XMLRoundTrip.md) |
+| `SerializationTest.YAMLRoundTrip` | [SerializationTest.YAMLRoundTrip](named/SerializationTest.YAMLRoundTrip.md) |
+| `SerializationTest.JSONRoundTrip` | [SerializationTest.JSONRoundTrip](named/SerializationTest.JSONRoundTrip.md) |
+| `SerializationTest.BinaryRoundTrip` | [SerializationTest.BinaryRoundTrip](named/SerializationTest.BinaryRoundTrip.md) |
+| `TransformerTest.BasicOutwardTransformation` | [TransformerTest.BasicOutwardTransformation](named/TransformerTest.BasicOutwardTransformation.md) |
+| `TransformerTest.InPlaceTransformation` | [TransformerTest.InPlaceTransformation](named/TransformerTest.InPlaceTransformation.md) |
+| `TransformerTest.ComplexTreeTransformation` | [TransformerTest.ComplexTreeTransformation](named/TransformerTest.ComplexTreeTransformation.md) |
+| `TransformerTest.RecursionLimit` | [TransformerTest.RecursionLimit](named/TransformerTest.RecursionLimit.md) |
+| `TransformerTest.RecursiveModification` | [TransformerTest.RecursiveModification](named/TransformerTest.RecursiveModification.md) |
+| `TransformerTest.RulePriority` | [TransformerTest.RulePriority](named/TransformerTest.RulePriority.md) |
+| `TransformerStressTest.ConcurrentInPlaceTransformation` | [TransformerStressTest.ConcurrentInPlaceTransformation](named/TransformerStressTest.ConcurrentInPlaceTransformation.md) |
+| `TransformerStressTest.PerformanceBenchmark` | [TransformerStressTest.PerformanceBenchmark](named/TransformerStressTest.PerformanceBenchmark.md) |
+| `TraversalTest.DFS` | [TraversalTest.DFS](named/TraversalTest.DFS.md) |
+| `TraversalTest.BFS` | [TraversalTest.BFS](named/TraversalTest.BFS.md) |
+| `TraversalTest.FindByName` | [TraversalTest.FindByName](named/TraversalTest.FindByName.md) |
+| `TraversalTest.DeepCopy` | [TraversalTest.DeepCopy](named/TraversalTest.DeepCopy.md) |
+| `NamedTutorialTest.Tutorial1_SimpleNamedPrimitivesAndQuantities` | [NamedTutorialTest.Tutorial1_SimpleNamedPrimitivesAndQuantities](named/NamedTutorialTest.Tutorial1_SimpleNamedPrimitivesAndQuantities.md) |
+| `NamedTutorialTest.Tutorial2_IntermediateReflexiveAndWebNamedMethod` | [NamedTutorialTest.Tutorial2_IntermediateReflexiveAndWebNamedMethod](named/NamedTutorialTest.Tutorial2_IntermediateReflexiveAndWebNamedMethod.md) |
+| `NamedTutorialTest.Tutorial3_AdvancedTreeTransformationAndSerialization` | [NamedTutorialTest.Tutorial3_AdvancedTreeTransformationAndSerialization](named/NamedTutorialTest.Tutorial3_AdvancedTreeTransformationAndSerialization.md) |
+| `NamedCoverageTest.ConfigConstantsCopyPoliciesVariantAndErrorBranches` | [NamedCoverageTest.ConfigConstantsCopyPoliciesVariantAndErrorBranches](named/NamedCoverageTest.ConfigConstantsCopyPoliciesVariantAndErrorBranches.md) |
+| `NamedFuzzStressTest.TransformationFuzzAndConcurrentNamedVariantStress` | [NamedFuzzStressTest.TransformationFuzzAndConcurrentNamedVariantStress](named/NamedFuzzStressTest.TransformationFuzzAndConcurrentNamedVariantStress.md) |

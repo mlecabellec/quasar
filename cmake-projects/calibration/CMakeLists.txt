@@ -26,3 +26,9 @@ target_compile_features(quasar_calibration PUBLIC cxx_std_23)
 add_executable(quasar_calibration_test test/main.cpp test/TestCalibrations.cpp)
 target_link_libraries(quasar_calibration_test PRIVATE quasar_calibration GTest::gtest_main)
 add_test(NAME quasar_calibration_test COMMAND quasar_calibration_test)
+
+# CS-0100 extended test executable
+add_executable(calibration_extended_test test/TestCalibrationExtended.cpp)
+target_link_libraries(calibration_extended_test PRIVATE quasar_calibration quasar_test_support GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(calibration_extended_test)

@@ -135,3 +135,4 @@ quasar_apply_standards(quasar_named)
 # Testing
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(test_cs0100)

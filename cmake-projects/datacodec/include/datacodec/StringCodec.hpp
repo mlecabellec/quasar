@@ -108,7 +108,7 @@ public:
   decode(const quasar::coretypes::BitBufferSlice &buffer) const override {
     // Suppress unused buffer warning in placeholder decoder implementation.
     (void)buffer;
-    return quasar::named::NamedString::create("", "");
+    return quasar::named::NamedString::create("decoded", "");
   }
 
   /**

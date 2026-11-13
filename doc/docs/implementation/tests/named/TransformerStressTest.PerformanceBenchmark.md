@@ -1,0 +1,60 @@
+# Test Case: `TransformerStressTest.PerformanceBenchmark`
+
+| Property | Value |
+| :--- | :--- |
+| **Module** | `named` |
+| **Source File** | `cmake-projects/named/test/TestTransformerStress.cpp` (lines 108–141) |
+| **Category** | Determinism, Fuzzing, Concurrency & Stress (`CS-0100.7`, `CS-0100.10`, `CS-0100.11`, `CS-0100.12`) |
+| **Traceability** | See module specification (`FE-*` / `TSK-*`) |
+| **Async Telemetry** | Standard GTest / CTest stdout |
+
+## Summary
+
+Benchmark in-place transformation on a 100k node tree.
+
+## Sequence Diagram
+
+```plantuml
+@startuml
+autonumber
+participant "TestRunner" as Runner
+participant "NamedObject" as SUT0
+loop Bounded test iteration / stress window
+Runner -> SUT0 : std::shared_ptr<NamedObject> root = NamedObject::create( root )
+SUT0 --> Runner : return / state updated
+Runner -> SUT0 : std::shared_ptr<NamedObject> l1 = NamedObject::create( l1_ + std:...
+SUT0 --> Runner : return / state updated
+Runner -> SUT0 : (void)NamedObject::create( l2_ + std::to_string(j), l1)
+SUT0 --> Runner : return / state updated
+Runner -> SUT0 : transformer.addRule(
+SUT0 --> Runner : return / state updated
+Runner -> SUT0 : (const TransformContext ctx) return ctx.getDepth() == 2 ,
+SUT0 --> Runner : return / state updated
+Runner -> SUT0 : (const TransformContext ctx, Transformer t) -> std::vector<std::s...
+SUT0 --> Runner : return / state updated
+end
+alt Exception / boundary / conditional branch check
+else Nominal path verified
+Runner -> Runner : Post-conditions hold
+end
+@enduml
+```
+
+## Observed Operations
+
+- `std::shared_ptr<NamedObject> root = NamedObject::create("root")`
+- `std::shared_ptr<NamedObject> l1 = NamedObject::create("l1_" + std::to_string(i), root)`
+- `(void)NamedObject::create("l2_" + std::to_string(j), l1)`
+- `transformer.addRule(`
+- `[](const TransformContext& ctx) { return ctx.getDepth() == 2; },`
+- `[](const TransformContext& ctx, Transformer& t) -> std::vector<std::shared_ptr<NamedObject>> {`
+- `std::shared_ptr<NamedObject> node = ctx.getNode()`
+- `node->setName(node->getName() + "_leaf")`
+
+## Verification Assertions
+
+- Verified via exit status `0` and runtime checks inside executable.
+
+---
+
+[Back to `named` Tests Overview](../named.md)

@@ -31,6 +31,7 @@ Architecture is splitted by types:
 - [CS-0060.md](CS-0060.md) : High-Integrity and Deterministic Logic Standards
 - [CS-0070.md](CS-0070.md) : Agent Operational Standards and Submission Protocols
 - [CS-0090.md](CS-0090.md) : Formal C++ Commenting, Doxygen & Traceability Standards
+- [CS-0100.md](CS-0100.md) : Comprehensive Testing, Determinism, Logging & Test Documentation Standards
 
 # Dependencies
 

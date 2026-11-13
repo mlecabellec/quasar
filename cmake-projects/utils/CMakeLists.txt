@@ -24,3 +24,8 @@ target_include_directories(utils PUBLIC
 )
 
 target_link_libraries(utils PUBLIC ECSS_SMP core)
+
+add_executable(utils_test test/TestUtils.cpp)
+target_link_libraries(utils_test PRIVATE utils sim quasar_test_support GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(utils_test)

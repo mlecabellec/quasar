@@ -10,6 +10,21 @@
 #ifndef DATACODEC_BINARYMAPPER_HPP
 #define DATACODEC_BINARYMAPPER_HPP
 
+#include "datacodec/AdvancedSchema.hpp"
+#include "datacodec/Schema.hpp"
+#include "quasar/coretypes/BitBufferSlice.hpp"
+#include "quasar/named/NamedObject.hpp"
+#include <memory>
+#include <stdexcept>
+
+/**
+ * @brief Namespace for Quasar binary and schema-driven data codecs and mappers.
+ * @task TSK-20261113-003, TSK-20260303-002
+ * @feature FE-0010, FE-0100
+ * @compliance Opens namespace datacodec cleanly before BinaryMapper declaration (CS-0010.33).
+ */
+namespace datacodec {
+
 /**
  * @class BinaryMapper
  * @brief Maps between binary buffers and NamedObject hierarchies using a schema.

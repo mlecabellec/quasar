@@ -99,3 +99,25 @@ Verifies dual-interface cable redundancy bifurcation upon WKC loss, reverse fram
 
 ### Description
 Exercises error handling, timeout bounds, bounded loop limits (`CS-0010.37`), concurrent `std::timed_mutex` stress tests, and compliance checks across `resoem` components.
+
+<!-- CS-0100-CATALOGUE-START -->
+## Registered Test Case Pages (`CS-0100.22`)
+
+| Test Case | Documentation Page |
+| :--- | :--- |
+| `resoem_diagnostics` | [resoem_diagnostics](resoem/resoem_diagnostics.md) |
+| `resoem_eni_parser` | [resoem_eni_parser](resoem/resoem_eni_parser.md) |
+| `resoem_virtual_bus` | [resoem_virtual_bus](resoem/resoem_virtual_bus.md) |
+| `resoem_eni_configurator` | [resoem_eni_configurator](resoem/resoem_eni_configurator.md) |
+| `resoem_redundancy_loop` | [resoem_redundancy_loop](resoem/resoem_redundancy_loop.md) |
+| `resoem_hot_connect` | [resoem_hot_connect](resoem/resoem_hot_connect.md) |
+| `resoem_eni_generator_comparator` | [resoem_eni_generator_comparator](resoem/resoem_eni_generator_comparator.md) |
+| `resoem_compliance_and_stress` | [resoem_compliance_and_stress](resoem/resoem_compliance_and_stress.md) |
+| `resoem_topology` | [resoem_topology](resoem/resoem_topology.md) |
+| `resoem_dc_calc` | [resoem_dc_calc](resoem/resoem_dc_calc.md) |
+| `resoem_soe_framing` | [resoem_soe_framing](resoem/resoem_soe_framing.md) |
+| `ResoemTutorialTest.Tutorial1_FrameBuilderMultiDatagramConstruction` | [ResoemTutorialTest.Tutorial1_FrameBuilderMultiDatagramConstruction](resoem/ResoemTutorialTest.Tutorial1_FrameBuilderMultiDatagramConstruction.md) |
+| `ResoemTutorialTest.Tutorial2_VirtualBusEnumerationAndStateTransitions` | [ResoemTutorialTest.Tutorial2_VirtualBusEnumerationAndStateTransitions](resoem/ResoemTutorialTest.Tutorial2_VirtualBusEnumerationAndStateTransitions.md) |
+| `ResoemTutorialTest.Tutorial3_MasterServiceConfigAndEniDocumentParsing` | [ResoemTutorialTest.Tutorial3_MasterServiceConfigAndEniDocumentParsing](resoem/ResoemTutorialTest.Tutorial3_MasterServiceConfigAndEniDocumentParsing.md) |
+| `ResoemCoverageTest.FaultInjectionOutOfBoundsAndRedundancyToggles` | [ResoemCoverageTest.FaultInjectionOutOfBoundsAndRedundancyToggles](resoem/ResoemCoverageTest.FaultInjectionOutOfBoundsAndRedundancyToggles.md) |
+| `ResoemFuzzStressTest.DeterministicFrameFuzzAndConcurrentVirtualBusStress` | [ResoemFuzzStressTest.DeterministicFrameFuzzAndConcurrentVirtualBusStress](resoem/ResoemFuzzStressTest.DeterministicFrameFuzzAndConcurrentVirtualBusStress.md) |

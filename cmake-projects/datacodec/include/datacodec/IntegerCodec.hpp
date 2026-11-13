@@ -107,7 +107,7 @@ public:
     }
     T value = 0;
     // Implementation placeholder
-    return quasar::named::NamedInteger<T>::create("", value);
+    return quasar::named::NamedInteger<T>::create("decoded", value);
   }
 
   /**
