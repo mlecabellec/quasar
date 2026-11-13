@@ -40,28 +40,9 @@ jobs:
         run: dnf install -y nodejs git ca-certificates
 
       - name: Checkout Quasar
-        shell: bash
-        env:
-          GITEA_TOKEN: ${{ gitea.token }}
-        run: |
-          git config --global --add safe.directory "$PWD"
-          git init .
-          git remote remove origin 2>/dev/null || true
-          git remote add origin "https://gitea2.lecabellec.fr/${{ gitea.repository }}.git"
-          if [ -n "${GITEA_TOKEN:-}" ]; then
-            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
-            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
-              fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
-            git checkout --force "${{ gitea.sha }}" 2>/dev/null || git checkout --force FETCH_HEAD
-            git submodule sync --recursive
-            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
-              submodule update --init --recursive
-          else
-            git fetch --no-tags --prune --depth=1 origin "${{ gitea.ref }}"
-            git checkout --force "${{ gitea.sha }}" 2>/dev/null || git checkout --force FETCH_HEAD
-            git submodule sync --recursive
-            git submodule update --init --recursive
-          fi
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies (Debian)
         if: matrix.os == 'debian-12' || matrix.os == 'debian-13'
@@ -143,20 +124,12 @@ jobs:
           fi
 
       - name: Checkout MkDocs Kit
+        uses: actions/checkout@v4
         continue-on-error: true
-        shell: bash
-        env:
-          GITEA_TOKEN: ${{ gitea.token }}
-        run: |
-          rm -rf .cache/mkdocs-kit
-          mkdir -p .cache
-          if [ -n "${GITEA_TOKEN:-}" ]; then
-            AUTH_B64="$(printf 'x-access-token:%s' "$GITEA_TOKEN" | base64 | tr -d '\n')"
-            git -c "http.https://gitea2.lecabellec.fr/.extraheader=Authorization: Basic ${AUTH_B64}" \
-              clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" .cache/mkdocs-kit
-          else
-            git clone --depth=1 "https://gitea2.lecabellec.fr/m/mkdocs-kit.git" .cache/mkdocs-kit
-          fi
+        with:
+          repository: m/mkdocs-kit
+          path: .cache/mkdocs-kit
+          token: ${{ gitea.token }}
 
       - name: Build Documentation
         continue-on-error: true
