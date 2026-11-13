@@ -8,36 +8,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build, Test & Package (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+  build-debian-12:
+    name: Build, Test & Package (debian-12)
+    runs-on: debian-12
     if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
-    continue-on-error: ${{ matrix.optional }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: debian-12
-            optional: false
-          - os: debian-13
-            optional: true
-          - os: fedora
-            optional: true
-          - os: archlinux
-            optional: true
 
     steps:
       - name: Install Node.js and Git Prerequisites (Debian)
-        if: matrix.os == 'debian-12' || matrix.os == 'debian-13'
         run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
-
-      - name: Install Node.js and Git Prerequisites (Arch Linux)
-        if: matrix.os == 'archlinux'
-        run: pacman -Sy --noconfirm nodejs git ca-certificates
-
-      - name: Install Node.js and Git Prerequisites (Fedora)
-        if: matrix.os == 'fedora'
-        run: dnf install -y nodejs git ca-certificates
 
       - name: Checkout Quasar
         uses: actions/checkout@v4
@@ -45,7 +23,6 @@ jobs:
           submodules: recursive
 
       - name: Install dependencies (Debian)
-        if: matrix.os == 'debian-12' || matrix.os == 'debian-13'
         run: |
           apt-get update
           apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
@@ -53,35 +30,14 @@ jobs:
                               libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
                               curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
 
-      - name: Install dependencies (Fedora)
-        if: matrix.os == 'fedora'
-        run: |
-          dnf install -y gcc-c++ make cmake pkgconf-pkg-config python3 file \
-                         kernel-devel autoconf automake libtool dkms rpm-build \
-                         alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
-                         mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
-                         gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
-                         yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
-                         curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
-
-      - name: Install dependencies (Arch Linux)
-        if: matrix.os == 'archlinux'
-        run: |
-          pacman -S --needed --noconfirm \
-                         base-devel cmake python file \
-                         linux-headers autoconf automake libtool dkms \
-                         alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
-                         gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
-                         curl npm python-pip plantuml graphviz jre-openjdk pango cairo
-
       - name: ccache cache
         continue-on-error: true
         uses: actions/cache@v4
         with:
           path: .ccache
-          key: ${{ matrix.os }}-ccache-${{ gitea.sha }}
+          key: debian-12-ccache-${{ gitea.sha }}
           restore-keys: |
-            ${{ matrix.os }}-ccache-
+            debian-12-ccache-
 
       - name: Configure CMake Projects
         run: |
@@ -144,7 +100,325 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: quasar-pkg-${{ matrix.os }}
+          name: quasar-pkg-debian-12
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+
+      - name: Configure Linux Modules (EtherCAT)
+        continue-on-error: true
+        run: cmake -S linux-modules -B build-modules
+
+  build-debian-13:
+    name: Build, Test & Package (debian-13)
+    runs-on: debian-13
+    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    continue-on-error: true
+
+    steps:
+      - name: Install Node.js and Git Prerequisites (Debian)
+        run: apt-get update && apt-get install -y --no-install-recommends nodejs git ca-certificates
+
+      - name: Checkout Quasar
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Debian)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
+                              libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+                              libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
+                              curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 autoconf automake libtool
+
+      - name: ccache cache
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: debian-13-ccache-${{ gitea.sha }}
+          restore-keys: |
+            debian-13-ccache-
+
+      - name: Configure CMake Projects
+        run: |
+          mkdir -p .ccache build-projects
+          cmake -S cmake-projects -B build-projects \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_SHARED_LINKER_FLAGS="-lzstd" \
+                -DCMAKE_EXE_LINKER_FLAGS="-lzstd"
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Build CMake Projects
+        run: |
+          ccache -z
+          cmake --build build-projects --parallel $(nproc)
+          ccache -s
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Test CMake Projects
+        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+
+      - name: Run Stress Tests in GDB
+        continue-on-error: true
+        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+
+      - name: Package (Debian/RPM/TGZ)
+        run: |
+          cd build-projects
+          if command -v dpkg > /dev/null; then
+            cpack -G DEB
+          elif command -v rpmbuild > /dev/null; then
+            cpack -G RPM
+          else
+            cpack -G TGZ
+          fi
+
+      - name: Checkout MkDocs Kit
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: m/mkdocs-kit
+          path: .cache/mkdocs-kit
+          token: ${{ gitea.token }}
+
+      - name: Build Documentation
+        continue-on-error: true
+        run: |
+          python3 -m venv .venv-docs
+          .venv-docs/bin/pip install --upgrade pip
+          .venv-docs/bin/pip install "setuptools<82.0.0"
+          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          cd doc
+          ../.venv-docs/bin/mkdocs-kit build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: quasar-pkg-debian-13
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+
+      - name: Configure Linux Modules (EtherCAT)
+        continue-on-error: true
+        run: cmake -S linux-modules -B build-modules
+
+  build-fedora:
+    name: Build, Test & Package (fedora)
+    runs-on: fedora
+    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    continue-on-error: true
+
+    steps:
+      - name: Install Node.js and Git Prerequisites (Fedora)
+        run: dnf install -y nodejs git ca-certificates
+
+      - name: Checkout Quasar
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Fedora)
+        run: |
+          dnf install -y gcc-c++ make cmake pkgconf-pkg-config python3 file \
+                         kernel-devel autoconf automake libtool dkms rpm-build \
+                         alsa-lib-devel libX11-devel libXrandr-devel libXi-devel \
+                         mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
+                         gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
+                         yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
+                         curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
+
+      - name: ccache cache
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: fedora-ccache-${{ gitea.sha }}
+          restore-keys: |
+            fedora-ccache-
+
+      - name: Configure CMake Projects
+        run: |
+          mkdir -p .ccache build-projects
+          cmake -S cmake-projects -B build-projects \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_SHARED_LINKER_FLAGS="-lzstd" \
+                -DCMAKE_EXE_LINKER_FLAGS="-lzstd"
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Build CMake Projects
+        run: |
+          ccache -z
+          cmake --build build-projects --parallel $(nproc)
+          ccache -s
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Test CMake Projects
+        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+
+      - name: Run Stress Tests in GDB
+        continue-on-error: true
+        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+
+      - name: Package (Debian/RPM/TGZ)
+        run: |
+          cd build-projects
+          if command -v dpkg > /dev/null; then
+            cpack -G DEB
+          elif command -v rpmbuild > /dev/null; then
+            cpack -G RPM
+          else
+            cpack -G TGZ
+          fi
+
+      - name: Checkout MkDocs Kit
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: m/mkdocs-kit
+          path: .cache/mkdocs-kit
+          token: ${{ gitea.token }}
+
+      - name: Build Documentation
+        continue-on-error: true
+        run: |
+          python3 -m venv .venv-docs
+          .venv-docs/bin/pip install --upgrade pip
+          .venv-docs/bin/pip install "setuptools<82.0.0"
+          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          cd doc
+          ../.venv-docs/bin/mkdocs-kit build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: quasar-pkg-fedora
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+
+      - name: Configure Linux Modules (EtherCAT)
+        continue-on-error: true
+        run: cmake -S linux-modules -B build-modules
+
+  build-archlinux:
+    name: Build, Test & Package (archlinux)
+    runs-on: archlinux
+    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    continue-on-error: true
+
+    steps:
+      - name: Install Node.js and Git Prerequisites (Arch Linux)
+        run: pacman -Sy --noconfirm nodejs git ca-certificates
+
+      - name: Checkout Quasar
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Arch Linux)
+        run: |
+          pacman -S --needed --noconfirm \
+                         base-devel cmake python file \
+                         linux-headers autoconf automake libtool dkms \
+                         alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
+                         gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
+                         curl npm python-pip plantuml graphviz jre-openjdk pango cairo
+
+      - name: ccache cache
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: archlinux-ccache-${{ gitea.sha }}
+          restore-keys: |
+            archlinux-ccache-
+
+      - name: Configure CMake Projects
+        run: |
+          mkdir -p .ccache build-projects
+          cmake -S cmake-projects -B build-projects \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_SHARED_LINKER_FLAGS="-lzstd" \
+                -DCMAKE_EXE_LINKER_FLAGS="-lzstd"
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Build CMake Projects
+        run: |
+          ccache -z
+          cmake --build build-projects --parallel $(nproc)
+          ccache -s
+        env:
+          CCACHE_DIR: ${{ gitea.workspace }}/.ccache
+
+      - name: Test CMake Projects
+        run: ctest --test-dir build-projects --output-on-failure --repeat until-pass:99 -E "GoogleTestVerification|VerifyPermissionSkippingOnStart"
+
+      - name: Run Stress Tests in GDB
+        continue-on-error: true
+        run: gdb -batch -ex "run" -ex "bt full" -ex "quit" --args ./build-projects/bin/scripting_test --gtest_filter="ScriptManagerTest.MemoryStress:LuaServiceTest.FullLifecycle"
+
+      - name: Package (Debian/RPM/TGZ)
+        run: |
+          cd build-projects
+          if command -v dpkg > /dev/null; then
+            cpack -G DEB
+          elif command -v rpmbuild > /dev/null; then
+            cpack -G RPM
+          else
+            cpack -G TGZ
+          fi
+
+      - name: Checkout MkDocs Kit
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: m/mkdocs-kit
+          path: .cache/mkdocs-kit
+          token: ${{ gitea.token }}
+
+      - name: Build Documentation
+        continue-on-error: true
+        run: |
+          python3 -m venv .venv-docs
+          .venv-docs/bin/pip install --upgrade pip
+          .venv-docs/bin/pip install "setuptools<82.0.0"
+          .venv-docs/bin/pip install ./.cache/mkdocs-kit
+          cd doc
+          ../.venv-docs/bin/mkdocs-kit build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: quasar-pkg-archlinux
           path: |
             build-projects/*.deb
             build-projects/*.rpm
