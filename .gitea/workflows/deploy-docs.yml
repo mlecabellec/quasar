@@ -73,25 +73,16 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
-            /tmp/quasar-ci-logs-docs/quasar-docs-01-first-analysis.log
+          name: quasar-docs-logs-first-analysis
+          path: /tmp/quasar-ci-logs-docs/quasar-docs-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Checkout Repository
         id: checkout-repository
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
 
       - name: Checkout MkDocs Kit
         run: |
@@ -158,7 +149,7 @@ jobs:
 
       - name: Set up Python
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: https://gitea.com/actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -238,41 +229,26 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/11-pre-upload-inventory.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Upload Documentation Site Artifact
-        id: release-docs-site
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-docs-site
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-docs-site
+          path: |
+            doc/site/
             release-assets/quasar-docs-site.tar.gz
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Upload PDF Manual Artifact
-        id: release-docs-pdf
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-docs-pdf
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
-            release-assets/quasar-documentation.pdf
-            release-assets/quasar-mkdocs-kit.log
+          name: quasar-docs-pdf
+          path: |
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
@@ -288,9 +264,9 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-repository:      outcome=${{ steps.checkout-repository.outcome }} conclusion=${{ steps.checkout-repository.conclusion }}"
             echo "setup-python:             outcome=${{ steps.setup-python.outcome }} conclusion=${{ steps.setup-python.conclusion }}"
-            echo "release-docs-site:        outcome=${{ steps.release-docs-site.outcome }} conclusion=${{ steps.release-docs-site.conclusion }}"
-            echo "release-docs-pdf:         outcome=${{ steps.release-docs-pdf.outcome }} conclusion=${{ steps.release-docs-pdf.conclusion }}"
-          } | tee -a "$LOG_DIR/12-action-release-docs-artifacts.log" "$LOG_DIR/quasar-docs-full-execution.log"
+            echo "upload-docs-site:         outcome=${{ steps.upload-docs-site.outcome }} conclusion=${{ steps.upload-docs-site.conclusion }}"
+            echo "upload-docs-pdf:          outcome=${{ steps.upload-docs-pdf.outcome }} conclusion=${{ steps.upload-docs-pdf.conclusion }}"
+          } | tee -a "$LOG_DIR/12-action-upload-docs-artifacts.log" "$LOG_DIR/quasar-docs-full-execution.log"
           (
             echo "=== [STEP 14] Diagnostic: Post-Run Summary ==="
             date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -309,19 +285,12 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-docs-logs-full
+          path: |
             ci-logs/quasar-docs-full-execution.log
             ci-logs/quasar-docs-full-logs.tar.gz
+            ci-logs/*.log
+          overwrite: true
+          if-no-files-found: warn

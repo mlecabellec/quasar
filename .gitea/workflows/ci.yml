@@ -75,21 +75,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-runner-diagnostics
+          path: |
             /tmp/quasar-ci-logs-runner-diagnostics/quasar-runner-diagnostics-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: "Debug: Host OS, Kernel, Hardware, Cgroups & Network"
         run: |
@@ -374,22 +366,15 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-runner-diagnostics
+          path: |
             ci-logs/quasar-runner-diagnostics-full-execution.log
             ci-logs/quasar-runner-diagnostics-full-logs.tar.gz
+            ci-logs/*.log
+          overwrite: true
+          if-no-files-found: warn
 
   build-ubuntu:
     name: Build, Test & Package (ubuntu-latest)
@@ -441,7 +426,7 @@ jobs:
             unset CTX_RUNNER CTX_JOB CTX_NEEDS CTX_STRATEGY CTX_MATRIX CTX_GITEA
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
-              echo "=== Bootstrapping Node.js and Git for gitea-release-action ==="
+              echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               SUDO=""
               [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
               $SUDO apt-get update
@@ -453,21 +438,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-ubuntu-latest
+          path: |
             /tmp/quasar-ci-logs-ubuntu-latest/quasar-ubuntu-latest-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Install Node.js and Git Prerequisites (Ubuntu)
         run: |
@@ -494,7 +471,7 @@ jobs:
 
       - name: Checkout Quasar
         id: checkout-quasar
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
         with:
           submodules: recursive
 
@@ -571,7 +548,7 @@ jobs:
       - name: Restore ccache
         id: ccache-restore
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: https://gitea.com/actions/cache/restore@v4
         with:
           path: .ccache
           key: ubuntu-latest-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -793,25 +770,23 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/19-pre-upload-inventory.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
 
       - name: Upload Artifacts
-        id: release-artifacts
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-artifacts
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-pkg-ubuntu-latest
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
             release-assets/quasar-pkg-ubuntu-latest-*
             release-assets/quasar-docs-site-ubuntu-latest.tar.gz
             release-assets/quasar-documentation-ubuntu-latest.pdf
             release-assets/quasar-mkdocs-kit-ubuntu-latest.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
@@ -821,8 +796,8 @@ jobs:
           mkdir -p "$LOG_DIR"
           {
             echo "=== [STEP 20] Upload Artifacts Action Status ==="
-            echo "outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
-          } | tee -a "$LOG_DIR/20-action-release-artifacts.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
+            echo "outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
+          } | tee -a "$LOG_DIR/20-action-upload-artifacts.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
           (
             set -e
             set -x
@@ -834,7 +809,7 @@ jobs:
         id: ccache-save
         if: always()
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: https://gitea.com/actions/cache/save@v4
         with:
           path: .ccache
           key: ubuntu-latest-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -860,7 +835,7 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-quasar:          outcome=${{ steps.checkout-quasar.outcome }} conclusion=${{ steps.checkout-quasar.conclusion }}"
             echo "ccache-restore:           outcome=${{ steps.ccache-restore.outcome }} conclusion=${{ steps.ccache-restore.conclusion }}"
-            echo "release-artifacts:        outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
+            echo "upload-artifacts:         outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
             echo "ccache-save:              outcome=${{ steps.ccache-save.outcome }} conclusion=${{ steps.ccache-save.conclusion }}"
           } | tee -a "$LOG_DIR/22-action-steps-summary.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
           (
@@ -874,7 +849,7 @@ jobs:
             ls -la
             ls -lh "$LOG_DIR" || true
           ) 2>&1 | tee -a "$LOG_DIR/23-post-run-summary.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
-          cp -f "$LOG_DIR/quasar-ubuntu-latest-full-execution.log" "ci-logs/quasar-ubuntu-latest-full-execution.log"
+          cp -f "$LOG_DIR"/*.log "$LOG_DIR"/*.yaml ci-logs/ 2>/dev/null || true
           tar -czf "ci-logs/quasar-ubuntu-latest-full-logs.tar.gz" -C "$LOG_DIR" .
           ls -lh ci-logs/
 
@@ -882,22 +857,16 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-ubuntu-latest
+          path: |
             ci-logs/quasar-ubuntu-latest-full-execution.log
             ci-logs/quasar-ubuntu-latest-full-logs.tar.gz
+            ci-logs/*.log
+            ci-logs/*.yaml
+          overwrite: true
+          if-no-files-found: warn
 
   build-debian-12:
     name: Build, Test & Package (debian-12)
@@ -949,7 +918,7 @@ jobs:
             unset CTX_RUNNER CTX_JOB CTX_NEEDS CTX_STRATEGY CTX_MATRIX CTX_GITEA
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
-              echo "=== Bootstrapping Node.js and Git for gitea-release-action ==="
+              echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               apt-get update
               apt-get install -y --no-install-recommends nodejs git ca-certificates
             fi
@@ -959,21 +928,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-debian-12
+          path: |
             /tmp/quasar-ci-logs-debian-12/quasar-debian-12-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Install Node.js and Git Prerequisites (Debian)
         run: |
@@ -997,7 +958,7 @@ jobs:
 
       - name: Checkout Quasar
         id: checkout-quasar
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
         with:
           submodules: recursive
 
@@ -1072,7 +1033,7 @@ jobs:
       - name: Restore ccache
         id: ccache-restore
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: https://gitea.com/actions/cache/restore@v4
         with:
           path: .ccache
           key: debian-12-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -1294,25 +1255,23 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/19-pre-upload-inventory.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
 
       - name: Upload Artifacts
-        id: release-artifacts
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-artifacts
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-pkg-debian-12
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
             release-assets/quasar-pkg-debian-12-*
             release-assets/quasar-docs-site-debian-12.tar.gz
             release-assets/quasar-documentation-debian-12.pdf
             release-assets/quasar-mkdocs-kit-debian-12.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
@@ -1322,8 +1281,8 @@ jobs:
           mkdir -p "$LOG_DIR"
           {
             echo "=== [STEP 20] Upload Artifacts Action Status ==="
-            echo "outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
-          } | tee -a "$LOG_DIR/20-action-release-artifacts.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
+            echo "outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
+          } | tee -a "$LOG_DIR/20-action-upload-artifacts.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
           (
             set -e
             set -x
@@ -1335,7 +1294,7 @@ jobs:
         id: ccache-save
         if: always()
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: https://gitea.com/actions/cache/save@v4
         with:
           path: .ccache
           key: debian-12-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -1361,7 +1320,7 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-quasar:          outcome=${{ steps.checkout-quasar.outcome }} conclusion=${{ steps.checkout-quasar.conclusion }}"
             echo "ccache-restore:           outcome=${{ steps.ccache-restore.outcome }} conclusion=${{ steps.ccache-restore.conclusion }}"
-            echo "release-artifacts:        outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
+            echo "upload-artifacts:         outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
             echo "ccache-save:              outcome=${{ steps.ccache-save.outcome }} conclusion=${{ steps.ccache-save.conclusion }}"
           } | tee -a "$LOG_DIR/22-action-steps-summary.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
           (
@@ -1375,7 +1334,7 @@ jobs:
             ls -la
             ls -lh "$LOG_DIR" || true
           ) 2>&1 | tee -a "$LOG_DIR/23-post-run-summary.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
-          cp -f "$LOG_DIR/quasar-debian-12-full-execution.log" "ci-logs/quasar-debian-12-full-execution.log"
+          cp -f "$LOG_DIR"/*.log "$LOG_DIR"/*.yaml ci-logs/ 2>/dev/null || true
           tar -czf "ci-logs/quasar-debian-12-full-logs.tar.gz" -C "$LOG_DIR" .
           ls -lh ci-logs/
 
@@ -1383,22 +1342,16 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-debian-12
+          path: |
             ci-logs/quasar-debian-12-full-execution.log
             ci-logs/quasar-debian-12-full-logs.tar.gz
+            ci-logs/*.log
+            ci-logs/*.yaml
+          overwrite: true
+          if-no-files-found: warn
 
   build-debian-13:
     name: Build, Test & Package (debian-13)
@@ -1451,7 +1404,7 @@ jobs:
             unset CTX_RUNNER CTX_JOB CTX_NEEDS CTX_STRATEGY CTX_MATRIX CTX_GITEA
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
-              echo "=== Bootstrapping Node.js and Git for gitea-release-action ==="
+              echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               apt-get update
               apt-get install -y --no-install-recommends nodejs git ca-certificates
             fi
@@ -1461,21 +1414,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-debian-13
+          path: |
             /tmp/quasar-ci-logs-debian-13/quasar-debian-13-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Install Node.js and Git Prerequisites (Debian)
         run: |
@@ -1499,7 +1444,7 @@ jobs:
 
       - name: Checkout Quasar
         id: checkout-quasar
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
         with:
           submodules: recursive
 
@@ -1574,7 +1519,7 @@ jobs:
       - name: Restore ccache
         id: ccache-restore
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: https://gitea.com/actions/cache/restore@v4
         with:
           path: .ccache
           key: debian-13-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -1796,25 +1741,23 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/19-pre-upload-inventory.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
 
       - name: Upload Artifacts
-        id: release-artifacts
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-artifacts
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-pkg-debian-13
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
             release-assets/quasar-pkg-debian-13-*
             release-assets/quasar-docs-site-debian-13.tar.gz
             release-assets/quasar-documentation-debian-13.pdf
             release-assets/quasar-mkdocs-kit-debian-13.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
@@ -1824,8 +1767,8 @@ jobs:
           mkdir -p "$LOG_DIR"
           {
             echo "=== [STEP 20] Upload Artifacts Action Status ==="
-            echo "outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
-          } | tee -a "$LOG_DIR/20-action-release-artifacts.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
+            echo "outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
+          } | tee -a "$LOG_DIR/20-action-upload-artifacts.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
           (
             set -e
             set -x
@@ -1837,7 +1780,7 @@ jobs:
         id: ccache-save
         if: always()
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: https://gitea.com/actions/cache/save@v4
         with:
           path: .ccache
           key: debian-13-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -1863,7 +1806,7 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-quasar:          outcome=${{ steps.checkout-quasar.outcome }} conclusion=${{ steps.checkout-quasar.conclusion }}"
             echo "ccache-restore:           outcome=${{ steps.ccache-restore.outcome }} conclusion=${{ steps.ccache-restore.conclusion }}"
-            echo "release-artifacts:        outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
+            echo "upload-artifacts:         outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
             echo "ccache-save:              outcome=${{ steps.ccache-save.outcome }} conclusion=${{ steps.ccache-save.conclusion }}"
           } | tee -a "$LOG_DIR/22-action-steps-summary.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
           (
@@ -1877,7 +1820,7 @@ jobs:
             ls -la
             ls -lh "$LOG_DIR" || true
           ) 2>&1 | tee -a "$LOG_DIR/23-post-run-summary.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
-          cp -f "$LOG_DIR/quasar-debian-13-full-execution.log" "ci-logs/quasar-debian-13-full-execution.log"
+          cp -f "$LOG_DIR"/*.log "$LOG_DIR"/*.yaml ci-logs/ 2>/dev/null || true
           tar -czf "ci-logs/quasar-debian-13-full-logs.tar.gz" -C "$LOG_DIR" .
           ls -lh ci-logs/
 
@@ -1885,22 +1828,16 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-debian-13
+          path: |
             ci-logs/quasar-debian-13-full-execution.log
             ci-logs/quasar-debian-13-full-logs.tar.gz
+            ci-logs/*.log
+            ci-logs/*.yaml
+          overwrite: true
+          if-no-files-found: warn
 
   build-fedora:
     name: Build, Test & Package (fedora)
@@ -1953,7 +1890,7 @@ jobs:
             unset CTX_RUNNER CTX_JOB CTX_NEEDS CTX_STRATEGY CTX_MATRIX CTX_GITEA
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
-              echo "=== Bootstrapping Node.js and Git for gitea-release-action ==="
+              echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               dnf install -y nodejs git ca-certificates
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-fedora-full-execution.log"
@@ -1962,21 +1899,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-fedora
+          path: |
             /tmp/quasar-ci-logs-fedora/quasar-fedora-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Install Node.js and Git Prerequisites (Fedora)
         run: |
@@ -1999,7 +1928,7 @@ jobs:
 
       - name: Checkout Quasar
         id: checkout-quasar
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
         with:
           submodules: recursive
 
@@ -2076,7 +2005,7 @@ jobs:
       - name: Restore ccache
         id: ccache-restore
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: https://gitea.com/actions/cache/restore@v4
         with:
           path: .ccache
           key: fedora-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -2298,25 +2227,23 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/19-pre-upload-inventory.log" "$LOG_DIR/quasar-fedora-full-execution.log"
 
       - name: Upload Artifacts
-        id: release-artifacts
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-artifacts
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-pkg-fedora
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
             release-assets/quasar-pkg-fedora-*
             release-assets/quasar-docs-site-fedora.tar.gz
             release-assets/quasar-documentation-fedora.pdf
             release-assets/quasar-mkdocs-kit-fedora.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
@@ -2326,8 +2253,8 @@ jobs:
           mkdir -p "$LOG_DIR"
           {
             echo "=== [STEP 20] Upload Artifacts Action Status ==="
-            echo "outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
-          } | tee -a "$LOG_DIR/20-action-release-artifacts.log" "$LOG_DIR/quasar-fedora-full-execution.log"
+            echo "outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
+          } | tee -a "$LOG_DIR/20-action-upload-artifacts.log" "$LOG_DIR/quasar-fedora-full-execution.log"
           (
             set -e
             set -x
@@ -2339,7 +2266,7 @@ jobs:
         id: ccache-save
         if: always()
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: https://gitea.com/actions/cache/save@v4
         with:
           path: .ccache
           key: fedora-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -2365,7 +2292,7 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-quasar:          outcome=${{ steps.checkout-quasar.outcome }} conclusion=${{ steps.checkout-quasar.conclusion }}"
             echo "ccache-restore:           outcome=${{ steps.ccache-restore.outcome }} conclusion=${{ steps.ccache-restore.conclusion }}"
-            echo "release-artifacts:        outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
+            echo "upload-artifacts:         outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
             echo "ccache-save:              outcome=${{ steps.ccache-save.outcome }} conclusion=${{ steps.ccache-save.conclusion }}"
           } | tee -a "$LOG_DIR/22-action-steps-summary.log" "$LOG_DIR/quasar-fedora-full-execution.log"
           (
@@ -2379,7 +2306,7 @@ jobs:
             ls -la
             ls -lh "$LOG_DIR" || true
           ) 2>&1 | tee -a "$LOG_DIR/23-post-run-summary.log" "$LOG_DIR/quasar-fedora-full-execution.log"
-          cp -f "$LOG_DIR/quasar-fedora-full-execution.log" "ci-logs/quasar-fedora-full-execution.log"
+          cp -f "$LOG_DIR"/*.log "$LOG_DIR"/*.yaml ci-logs/ 2>/dev/null || true
           tar -czf "ci-logs/quasar-fedora-full-logs.tar.gz" -C "$LOG_DIR" .
           ls -lh ci-logs/
 
@@ -2387,22 +2314,16 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-fedora
+          path: |
             ci-logs/quasar-fedora-full-execution.log
             ci-logs/quasar-fedora-full-logs.tar.gz
+            ci-logs/*.log
+            ci-logs/*.yaml
+          overwrite: true
+          if-no-files-found: warn
 
   build-archlinux:
     name: Build, Test & Package (archlinux)
@@ -2455,7 +2376,7 @@ jobs:
             unset CTX_RUNNER CTX_JOB CTX_NEEDS CTX_STRATEGY CTX_MATRIX CTX_GITEA
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
-              echo "=== Bootstrapping Node.js and Git for gitea-release-action ==="
+              echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               pacman -Sy --noconfirm nodejs git ca-certificates
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
@@ -2464,21 +2385,13 @@ jobs:
       - name: Push First Analysis Step Logs
         id: push-first-analysis-logs
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-first-analysis-archlinux
+          path: |
             /tmp/quasar-ci-logs-archlinux/quasar-archlinux-01-first-analysis.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Install Node.js and Git Prerequisites (Arch Linux)
         run: |
@@ -2501,7 +2414,7 @@ jobs:
 
       - name: Checkout Quasar
         id: checkout-quasar
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
         with:
           submodules: recursive
 
@@ -2577,7 +2490,7 @@ jobs:
       - name: Restore ccache
         id: ccache-restore
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: https://gitea.com/actions/cache/restore@v4
         with:
           path: .ccache
           key: archlinux-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -2798,25 +2711,23 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/19-pre-upload-inventory.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
 
       - name: Upload Artifacts
-        id: release-artifacts
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        id: upload-artifacts
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-pkg-archlinux
+          path: |
+            build-projects/*.deb
+            build-projects/*.rpm
+            build-projects/*.tar.gz
+            doc/site/
+            doc/documentation.pdf
+            doc/mkdocs-kit.log
             release-assets/quasar-pkg-archlinux-*
             release-assets/quasar-docs-site-archlinux.tar.gz
             release-assets/quasar-documentation-archlinux.pdf
             release-assets/quasar-mkdocs-kit-archlinux.log
+          overwrite: true
+          if-no-files-found: warn
 
       - name: Configure Linux Modules (EtherCAT)
         continue-on-error: true
@@ -2826,8 +2737,8 @@ jobs:
           mkdir -p "$LOG_DIR"
           {
             echo "=== [STEP 20] Upload Artifacts Action Status ==="
-            echo "outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
-          } | tee -a "$LOG_DIR/20-action-release-artifacts.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
+            echo "outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
+          } | tee -a "$LOG_DIR/20-action-upload-artifacts.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
           (
             set -e
             set -x
@@ -2839,7 +2750,7 @@ jobs:
         id: ccache-save
         if: always()
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: https://gitea.com/actions/cache/save@v4
         with:
           path: .ccache
           key: archlinux-ccache-${{ gitea.sha }}-${{ gitea.run_id }}-${{ gitea.run_attempt }}
@@ -2865,7 +2776,7 @@ jobs:
             echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
             echo "checkout-quasar:          outcome=${{ steps.checkout-quasar.outcome }} conclusion=${{ steps.checkout-quasar.conclusion }}"
             echo "ccache-restore:           outcome=${{ steps.ccache-restore.outcome }} conclusion=${{ steps.ccache-restore.conclusion }}"
-            echo "release-artifacts:        outcome=${{ steps.release-artifacts.outcome }} conclusion=${{ steps.release-artifacts.conclusion }}"
+            echo "upload-artifacts:         outcome=${{ steps.upload-artifacts.outcome }} conclusion=${{ steps.upload-artifacts.conclusion }}"
             echo "ccache-save:              outcome=${{ steps.ccache-save.outcome }} conclusion=${{ steps.ccache-save.conclusion }}"
           } | tee -a "$LOG_DIR/22-action-steps-summary.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
           (
@@ -2879,7 +2790,7 @@ jobs:
             ls -la
             ls -lh "$LOG_DIR" || true
           ) 2>&1 | tee -a "$LOG_DIR/23-post-run-summary.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
-          cp -f "$LOG_DIR/quasar-archlinux-full-execution.log" "ci-logs/quasar-archlinux-full-execution.log"
+          cp -f "$LOG_DIR"/*.log "$LOG_DIR"/*.yaml ci-logs/ 2>/dev/null || true
           tar -czf "ci-logs/quasar-archlinux-full-logs.tar.gz" -C "$LOG_DIR" .
           ls -lh ci-logs/
 
@@ -2887,19 +2798,13 @@ jobs:
         id: push-full-execution-logs
         if: always()
         continue-on-error: true
-        uses: https://gitea.com/actions/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: "--experimental-fetch"
+        uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
-          server_url: ${{ gitea.server_url }}
-          repository: ${{ gitea.repository }}
-          token: ${{ gitea.token }}
-          tag_name: ci-run-${{ gitea.run_id }}
-          target_commitish: ${{ gitea.sha }}
-          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
-          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
-          draft: false
-          prerelease: false
-          files: |-
+          name: quasar-logs-full-archlinux
+          path: |
             ci-logs/quasar-archlinux-full-execution.log
             ci-logs/quasar-archlinux-full-logs.tar.gz
+            ci-logs/*.log
+            ci-logs/*.yaml
+          overwrite: true
+          if-no-files-found: warn
