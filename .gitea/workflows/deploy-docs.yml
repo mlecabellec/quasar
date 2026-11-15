@@ -22,31 +22,37 @@ jobs:
           CTX_MATRIX: ${{ toJSON(matrix) }}
           CTX_GITEA: ${{ toJSON(gitea) }}
         run: |
-          echo "=== UTC Timestamp ==="
-          date -u +"%Y-%m-%dT%H:%M:%SZ"
-          echo "=== Host / Container OS & Hardware ==="
-          cat /etc/os-release 2>/dev/null || true
-          uname -a
-          hostname -f 2>/dev/null || hostname || true
-          id
-          pwd
-          nproc || true
-          free -h || true
-          df -hT . || true
-          cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
-          cat /proc/1/cgroup 2>/dev/null || true
-          ls -la /var/run/docker.sock /run/podman/podman.sock 2>/dev/null || true
-          docker images --all 2>/dev/null || true
-          echo "=== Runner & Job Context ==="
-          printf '%s\n' "$CTX_RUNNER"
-          printf '%s\n' "$CTX_JOB"
-          echo "=== Strategy / Matrix Context ==="
-          printf '%s\n' "$CTX_STRATEGY"
-          printf '%s\n' "$CTX_MATRIX"
-          echo "=== Gitea Context (token redacted) ==="
-          printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
-          echo "=== Environment Variables (single-line sorted, sensitive values redacted) ==="
-          python3 - <<'PY'
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          (
+            set -e
+            echo "=== [STEP 01] Diagnostic: Environment, Runner & Container Socket Context ==="
+            echo "=== UTC Timestamp ==="
+            date -u +"%Y-%m-%dT%H:%M:%SZ"
+            echo "=== Host / Container OS & Hardware ==="
+            cat /etc/os-release 2>/dev/null || true
+            uname -a
+            hostname -f 2>/dev/null || hostname || true
+            id
+            pwd
+            nproc || true
+            free -h || true
+            df -hT . || true
+            cat /run/.containerenv 2>/dev/null || ls -la /.dockerenv 2>/dev/null || true
+            cat /proc/1/cgroup 2>/dev/null || true
+            ls -la /var/run/docker.sock /run/podman/podman.sock 2>/dev/null || true
+            docker images --all 2>/dev/null || true
+            echo "=== Runner & Job Context ==="
+            printf '%s\n' "$CTX_RUNNER"
+            printf '%s\n' "$CTX_JOB"
+            echo "=== Strategy / Matrix Context ==="
+            printf '%s\n' "$CTX_STRATEGY"
+            printf '%s\n' "$CTX_MATRIX"
+            echo "=== Gitea Context (token redacted) ==="
+            printf '%s\n' "$CTX_GITEA" | sed -E 's/"token":[[:space:]]*"[^"]*"/"token": "***"/g'
+            echo "=== Environment Variables (single-line sorted, sensitive values redacted) ==="
+            python3 - <<'PY'
           import os, re
           pat = re.compile(r'(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)', re.I)
           for k in sorted(os.environ):
@@ -55,45 +61,103 @@ jobs:
               v = "***" if pat.search(k) else os.environ[k].replace("\n", "\\n")
               print(f"{k}={v}")
           PY
+            if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
+              SUDO=""
+              [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
+              $SUDO apt-get update
+              $SUDO apt-get install -y --no-install-recommends nodejs git ca-certificates
+            fi
+          ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-docs-01-first-analysis.log"
+
+      - name: Push First Analysis Step Logs
+        id: push-first-analysis-logs
+        continue-on-error: true
+        uses: https://gitea.com/actions/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: "--experimental-fetch"
+        with:
+          server_url: ${{ gitea.server_url }}
+          repository: ${{ gitea.repository }}
+          token: ${{ gitea.token }}
+          tag_name: ci-run-${{ gitea.run_id }}
+          target_commitish: ${{ gitea.sha }}
+          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
+          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
+          draft: false
+          prerelease: false
+          files: |-
+            /tmp/quasar-ci-logs-docs/quasar-docs-01-first-analysis.log
 
       - name: Checkout Repository
+        id: checkout-repository
         uses: actions/checkout@v4
 
       - name: Checkout MkDocs Kit
         run: |
-          set -x
-          rm -rf mkdocs-kit
-          git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
-          git -C mkdocs-kit log -1 --oneline || true
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          {
+            echo "=== [STEP 02] Push First Analysis Step Logs Action Status ==="
+            echo "outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
+          } | tee -a "$LOG_DIR/02-action-push-first-analysis-logs.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          {
+            echo "=== [STEP 03] Checkout Repository Action Status ==="
+            echo "outcome=${{ steps.checkout-repository.outcome }} conclusion=${{ steps.checkout-repository.conclusion }}"
+          } | tee -a "$LOG_DIR/03-action-checkout-repository.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 04] Checkout MkDocs Kit ==="
+            rm -rf mkdocs-kit
+            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
+            git -C mkdocs-kit log -1 --oneline || true
+          ) 2>&1 | tee -a "$LOG_DIR/04-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: "Diagnostic: Workspace, Git & Toolchain Check"
         run: |
-          set -x
-          ls -la
-          ls -la doc/ 2>/dev/null || true
-          git status -sb || true
-          git remote -v || true
-          git log -n 5 --oneline --decorate || true
-          for cmd in node git python3 pip3 cmake gcc g++ make java mvn podman docker curl plantuml dot; do
-            if command -v "$cmd" >/dev/null 2>&1; then
-              printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
-            else
-              printf "%-10s missing\n" "$cmd:"
-            fi
-          done
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 05] Diagnostic: Workspace, Git & Toolchain Check ==="
+            ls -la
+            ls -la doc/ 2>/dev/null || true
+            git status -sb || true
+            git remote -v || true
+            git log -n 5 --oneline --decorate || true
+            for cmd in node git python3 pip3 cmake gcc g++ make java mvn podman docker curl plantuml dot; do
+              if command -v "$cmd" >/dev/null 2>&1; then
+                printf "%-10s %s\n" "$cmd:" "$(command -v "$cmd")"
+              else
+                printf "%-10s missing\n" "$cmd:"
+              fi
+            done
+          ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-workspace-toolchain.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Install System Dependencies
         run: |
-          set -x
-          SUDO=""
-          [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-          $SUDO apt-get update
-          $SUDO apt-get install -y --no-install-recommends plantuml graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev default-jre-headless
-          plantuml -version || true
-          dot -V || true
-          java -version 2>&1 || true
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 06] Install System Dependencies ==="
+            SUDO=""
+            [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
+            $SUDO apt-get update
+            $SUDO apt-get install -y --no-install-recommends plantuml graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev default-jre-headless
+            plantuml -version || true
+            dot -V || true
+            java -version 2>&1 || true
+          ) 2>&1 | tee -a "$LOG_DIR/06-install-system-dependencies.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -101,53 +165,163 @@ jobs:
 
       - name: "Diagnostic: Python Environment Check"
         run: |
-          set -x
-          python --version
-          pip --version
-          pip list
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          {
+            echo "=== [STEP 07] Set up Python Action Status ==="
+            echo "outcome=${{ steps.setup-python.outcome }} conclusion=${{ steps.setup-python.conclusion }}"
+          } | tee -a "$LOG_DIR/07-action-setup-python.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 08] Diagnostic: Python Environment Check ==="
+            python --version
+            pip --version
+            pip list
+          ) 2>&1 | tee -a "$LOG_DIR/08-diagnostic-python-env.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Install Python Dependencies
         run: |
-          set -x
-          pip install -v --upgrade pip
-          pip install -v "setuptools<82.0.0"
-          pip install -v ./mkdocs-kit
-          pip list
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 09] Install Python Dependencies ==="
+            pip install -v --upgrade pip
+            pip install -v "setuptools<82.0.0"
+            pip install -v ./mkdocs-kit
+            pip list
+          ) 2>&1 | tee -a "$LOG_DIR/09-install-python-dependencies.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Build Documentation
         run: |
-          set -x
-          cd doc
-          ls -la
-          mkdocs-kit build -v
-          tail -n 120 mkdocs-kit.log 2>/dev/null || true
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR"
+          (
+            set -e
+            set -x
+            echo "=== [STEP 10] Build Documentation ==="
+            cd doc
+            ls -la
+            mkdocs-kit build -v
+            cp -f mkdocs-kit.log "$LOG_DIR/10-mkdocs-kit-internal.log" 2>/dev/null || true
+            tail -n 120 mkdocs-kit.log 2>/dev/null || true
+          ) 2>&1 | tee -a "$LOG_DIR/10-build-documentation.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: "Diagnostic: Pre-Upload Documentation Artifacts Inventory"
         if: always()
         run: |
-          set -x
-          ls -lh doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
-          ls -la doc/site/ 2>/dev/null || true
-          du -sh doc/site/ 2>/dev/null || true
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR" release-assets
+          (
+            set -x
+            echo "=== [STEP 11] Diagnostic: Pre-Upload Documentation Artifacts Inventory ==="
+            ls -lh doc/documentation.pdf doc/mkdocs-kit.log 2>/dev/null || true
+            ls -la doc/site/ 2>/dev/null || true
+            du -sh doc/site/ 2>/dev/null || true
+            if [ -d doc/site ]; then
+              tar -czf release-assets/quasar-docs-site.tar.gz -C doc site
+            fi
+            if [ -f doc/documentation.pdf ]; then
+              cp -f doc/documentation.pdf release-assets/quasar-documentation.pdf
+            fi
+            if [ -f doc/mkdocs-kit.log ]; then
+              cp -f doc/mkdocs-kit.log release-assets/quasar-mkdocs-kit.log
+              cp -f doc/mkdocs-kit.log "$LOG_DIR/10-mkdocs-kit-internal.log"
+            fi
+            ls -lh release-assets/ 2>/dev/null || true
+          ) 2>&1 | tee -a "$LOG_DIR/11-pre-upload-inventory.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
       - name: Upload Documentation Site Artifact
-        uses: actions/upload-artifact@v3
+        id: release-docs-site
+        uses: https://gitea.com/actions/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: "--experimental-fetch"
         with:
-          name: quasar-docs-site
-          path: doc/site/
+          server_url: ${{ gitea.server_url }}
+          repository: ${{ gitea.repository }}
+          token: ${{ gitea.token }}
+          tag_name: ci-run-${{ gitea.run_id }}
+          target_commitish: ${{ gitea.sha }}
+          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
+          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
+          draft: false
+          prerelease: false
+          files: |-
+            release-assets/quasar-docs-site.tar.gz
 
       - name: Upload PDF Manual Artifact
-        uses: actions/upload-artifact@v3
+        id: release-docs-pdf
+        uses: https://gitea.com/actions/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: "--experimental-fetch"
         with:
-          name: quasar-docs-pdf
-          path: doc/documentation.pdf
+          server_url: ${{ gitea.server_url }}
+          repository: ${{ gitea.repository }}
+          token: ${{ gitea.token }}
+          tag_name: ci-run-${{ gitea.run_id }}
+          target_commitish: ${{ gitea.sha }}
+          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
+          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
+          draft: false
+          prerelease: false
+          files: |-
+            release-assets/quasar-documentation.pdf
+            release-assets/quasar-mkdocs-kit.log
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
         run: |
-          date -u +"%Y-%m-%dT%H:%M:%SZ"
-          echo "Job Status: ${{ job.status }}"
-          free -h || true
-          df -h . || true
-          du -sh * doc/site 2>/dev/null || true
-          ls -la
+          set -e -o pipefail
+          LOG_DIR="/tmp/quasar-ci-logs-docs"
+          mkdir -p "$LOG_DIR" ci-logs
+          if [ -f doc/mkdocs-kit.log ]; then
+            cp -f doc/mkdocs-kit.log "$LOG_DIR/10-mkdocs-kit-internal.log" 2>/dev/null || true
+          fi
+          {
+            echo "=== [STEP 12 & 13] Action Steps Summary ==="
+            echo "push-first-analysis-logs: outcome=${{ steps.push-first-analysis-logs.outcome }} conclusion=${{ steps.push-first-analysis-logs.conclusion }}"
+            echo "checkout-repository:      outcome=${{ steps.checkout-repository.outcome }} conclusion=${{ steps.checkout-repository.conclusion }}"
+            echo "setup-python:             outcome=${{ steps.setup-python.outcome }} conclusion=${{ steps.setup-python.conclusion }}"
+            echo "release-docs-site:        outcome=${{ steps.release-docs-site.outcome }} conclusion=${{ steps.release-docs-site.conclusion }}"
+            echo "release-docs-pdf:         outcome=${{ steps.release-docs-pdf.outcome }} conclusion=${{ steps.release-docs-pdf.conclusion }}"
+          } | tee -a "$LOG_DIR/12-action-release-docs-artifacts.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          (
+            echo "=== [STEP 14] Diagnostic: Post-Run Summary ==="
+            date -u +"%Y-%m-%dT%H:%M:%SZ"
+            echo "Job Status: ${{ job.status }}"
+            free -h || true
+            df -h . || true
+            du -sh * doc/site 2>/dev/null || true
+            ls -la
+            ls -lh "$LOG_DIR" || true
+          ) 2>&1 | tee -a "$LOG_DIR/14-post-run-summary.log" "$LOG_DIR/quasar-docs-full-execution.log"
+          cp -f "$LOG_DIR"/*.log ci-logs/ 2>/dev/null || true
+          tar -czf ci-logs/quasar-docs-full-logs.tar.gz -C "$LOG_DIR" .
+          ls -lh ci-logs/
+
+      - name: Push Full Execution Logs
+        id: push-full-execution-logs
+        if: always()
+        continue-on-error: true
+        uses: https://gitea.com/actions/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: "--experimental-fetch"
+        with:
+          server_url: ${{ gitea.server_url }}
+          repository: ${{ gitea.repository }}
+          token: ${{ gitea.token }}
+          tag_name: ci-run-${{ gitea.run_id }}
+          target_commitish: ${{ gitea.sha }}
+          name: "Quasar CI & Docs Run #${{ gitea.run_id }} (${{ gitea.ref_name }})"
+          body: "Automated Quasar CI/CD release for commit ${{ gitea.sha }} (ref: ${{ gitea.ref_name }}, run #${{ gitea.run_id }}). Contains build packages, mkdocs-kit documentation, first-step analysis logs, and full execution logs."
+          draft: false
+          prerelease: false
+          files: |-
+            ci-logs/quasar-docs-full-execution.log
+            ci-logs/quasar-docs-full-logs.tar.gz
