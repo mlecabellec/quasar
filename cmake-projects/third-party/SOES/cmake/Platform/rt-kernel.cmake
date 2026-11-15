@@ -4,7 +4,7 @@ if(_RT_KERNEL_CMAKE_)
 endif()
 set(_RT_KERNEL_CMAKE_ TRUE)
 
-cmake_minimum_required (VERSION 3.1.2)
+cmake_minimum_required (VERSION 3.10)
 
 # Get environment variables
 set(RTK $ENV{RTK} CACHE STRING

@@ -198,7 +198,7 @@ jobs:
             echo "=== [STEP 10] Build Documentation ==="
             cd doc
             ls -la
-            mkdocs-kit build -v
+            PYTHONPATH="$(pwd)/../mkdocs-kit/src" python ../helpers/build_docs_with_pdf_links.py build -v || mkdocs-kit build -v
             cp -f mkdocs-kit.log "$LOG_DIR/10-mkdocs-kit-internal.log" 2>/dev/null || true
             tail -n 120 mkdocs-kit.log 2>/dev/null || true
           ) 2>&1 | tee -a "$LOG_DIR/10-build-documentation.log" "$LOG_DIR/quasar-docs-full-execution.log"
@@ -230,6 +230,8 @@ jobs:
 
       - name: Upload Documentation Site Artifact
         id: upload-docs-site
+        if: always()
+        continue-on-error: true
         uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
           name: quasar-docs-site
@@ -241,6 +243,8 @@ jobs:
 
       - name: Upload PDF Manual Artifact
         id: upload-docs-pdf
+        if: always()
+        continue-on-error: true
         uses: https://gitea.com/actions/gitea-upload-artifact@v4
         with:
           name: quasar-docs-pdf

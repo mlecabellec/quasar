@@ -12,6 +12,7 @@
 #include "errors/system_error.h"
 #include "system/source_location.h"
 
+#include <cstdint>
 #include <exception>
 #include <string>
 #include <utility>

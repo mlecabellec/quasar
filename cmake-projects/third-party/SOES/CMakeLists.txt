@@ -1,7 +1,7 @@
 # CMakeLists files in this project can
 # refer to the root source directory of the project as ${SOES_SOURCE_DIR} and
 # to the root binary directory of the project as ${SOES_BINARY_DIR}.
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.10)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 project (SOES)
 

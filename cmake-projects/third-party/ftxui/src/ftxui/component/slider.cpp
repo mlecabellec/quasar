@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in
 // the LICENSE file.
 #include <algorithm>                              // for max, min
+#include <cstdint>                                // for int8_t, uint8_t, etc.
 #include <ftxui/component/component_options.hpp>  // for SliderOption
 #include <ftxui/dom/direction.hpp>  // for Direction, Direction::Down, Direction::Left, Direction::Right, Direction::Up
 #include <string>                   // for allocator
