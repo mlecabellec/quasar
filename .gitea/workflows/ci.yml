@@ -393,6 +393,100 @@ jobs:
           overwrite: true
           if-no-files-found: warn
 
+      - name: "Retention: Prune Older Workflow Runs, Logs & Artifacts (Keep Last 3)"
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
+          GITEA_API_URL: ${{ gitea.api_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_RUN_ID: ${{ gitea.run_id }}
+          KEEP_RUNS: "3"
+        run: |
+          if [ -z "${GITEA_TOKEN:-}" ] || ! command -v python3 >/dev/null 2>&1; then
+            echo "Retention skipped: missing GITEA_TOKEN or python3."
+            exit 0
+          fi
+          python3 - <<'PY'
+          import collections, json, os, urllib.error, urllib.request
+
+          token = os.environ.get("GITEA_TOKEN", "").strip()
+          api = os.environ.get("GITEA_API_URL", "").rstrip("/")
+          repo = os.environ.get("GITEA_REPO", "").strip("/")
+          cur_id = str(os.environ.get("GITEA_RUN_ID", "")).strip()
+          keep = int(os.environ.get("KEEP_RUNS", "3"))
+          if not (token and api and repo):
+              print("Retention skipped: missing API context.")
+              raise SystemExit(0)
+
+          def req(method, path):
+              url = f"{api}/repos/{repo}{path}"
+              r = urllib.request.Request(
+                  url, method=method, headers={"Authorization": f"token {token}"}
+              )
+              try:
+                  with urllib.request.urlopen(r, timeout=15) as resp:
+                      body = resp.read().decode("utf-8", errors="replace")
+                      return resp.status, (json.loads(body) if body.strip() else {})
+              except urllib.error.HTTPError as exc:
+                  err = exc.read().decode("utf-8", errors="replace")
+                  return exc.code, {"error": err[:200]}
+              except Exception as exc:
+                  return 0, {"error": str(exc)}
+
+          all_runs = []
+          for page in range(1, 21):
+              st, data = req("GET", f"/actions/runs?page={page}&limit=50")
+              if st != 200:
+                  print(f"GET runs page={page} -> HTTP {st}: {data}")
+                  break
+              batch = (data.get("workflow_runs") or []) if isinstance(data, dict) else []
+              if not batch:
+                  break
+              all_runs.extend(batch)
+              if len(batch) < 50:
+                  break
+
+          by_wf = collections.defaultdict(list)
+          for run in all_runs:
+              wf = (run.get("path") or "__unknown__").split("@", 1)[0]
+              by_wf[wf].append(run)
+
+          active_states = {"in_progress", "running", "queued", "waiting", "pending"}
+          pruned_ids = set()
+          for wf, runs in sorted(by_wf.items()):
+              runs.sort(key=lambda r: int(r.get("id") or 0), reverse=True)
+              for run in runs[keep:]:
+                  rid = str(run.get("id") or "")
+                  status = str(run.get("status") or "").lower()
+                  if not rid or rid == cur_id or status in active_states:
+                      continue
+                  pruned_ids.add(rid)
+                  st_a, arts = req("GET", f"/actions/runs/{rid}/artifacts")
+                  if st_a == 200 and isinstance(arts, dict):
+                      for art in (arts.get("artifacts") or []):
+                          aid = art.get("id")
+                          if aid is not None:
+                              da, _ = req("DELETE", f"/actions/artifacts/{aid}")
+                              print(f"[{wf}] DEL artifact id={aid} -> HTTP {da}")
+                  dr, _ = req("DELETE", f"/actions/runs/{rid}")
+                  print(f"[{wf}] DEL run id={rid} (logs+run) -> HTTP {dr}")
+                  if dr == 403:
+                      print("Hint: set GITEA_CLEANUP_TOKEN secret if token lacks delete")
+
+          st_all, repo_arts = req("GET", "/actions/artifacts?limit=100")
+          if st_all == 200 and isinstance(repo_arts, dict):
+              for art in (repo_arts.get("artifacts") or []):
+                  wrid = str((art.get("workflow_run") or {}).get("id") or "")
+                  if wrid in pruned_ids or art.get("expired"):
+                      aid = art.get("id")
+                      if aid is not None:
+                          da, _ = req("DELETE", f"/actions/artifacts/{aid}")
+                          print(f"[orphan/expired] DEL artifact {aid} -> HTTP {da}")
+          print(f"Retention check finished (keep={keep}, runs_scanned={len(all_runs)})")
+          PY
+
   build-ubuntu:
     name: Build, Test & Package (ubuntu-latest)
     needs: runner-diagnostics
@@ -906,6 +1000,100 @@ jobs:
             ci-logs/*.yaml
           overwrite: true
           if-no-files-found: warn
+
+      - name: "Retention: Prune Older Workflow Runs, Logs & Artifacts (Keep Last 3)"
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
+          GITEA_API_URL: ${{ gitea.api_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_RUN_ID: ${{ gitea.run_id }}
+          KEEP_RUNS: "3"
+        run: |
+          if [ -z "${GITEA_TOKEN:-}" ] || ! command -v python3 >/dev/null 2>&1; then
+            echo "Retention skipped: missing GITEA_TOKEN or python3."
+            exit 0
+          fi
+          python3 - <<'PY'
+          import collections, json, os, urllib.error, urllib.request
+
+          token = os.environ.get("GITEA_TOKEN", "").strip()
+          api = os.environ.get("GITEA_API_URL", "").rstrip("/")
+          repo = os.environ.get("GITEA_REPO", "").strip("/")
+          cur_id = str(os.environ.get("GITEA_RUN_ID", "")).strip()
+          keep = int(os.environ.get("KEEP_RUNS", "3"))
+          if not (token and api and repo):
+              print("Retention skipped: missing API context.")
+              raise SystemExit(0)
+
+          def req(method, path):
+              url = f"{api}/repos/{repo}{path}"
+              r = urllib.request.Request(
+                  url, method=method, headers={"Authorization": f"token {token}"}
+              )
+              try:
+                  with urllib.request.urlopen(r, timeout=15) as resp:
+                      body = resp.read().decode("utf-8", errors="replace")
+                      return resp.status, (json.loads(body) if body.strip() else {})
+              except urllib.error.HTTPError as exc:
+                  err = exc.read().decode("utf-8", errors="replace")
+                  return exc.code, {"error": err[:200]}
+              except Exception as exc:
+                  return 0, {"error": str(exc)}
+
+          all_runs = []
+          for page in range(1, 21):
+              st, data = req("GET", f"/actions/runs?page={page}&limit=50")
+              if st != 200:
+                  print(f"GET runs page={page} -> HTTP {st}: {data}")
+                  break
+              batch = (data.get("workflow_runs") or []) if isinstance(data, dict) else []
+              if not batch:
+                  break
+              all_runs.extend(batch)
+              if len(batch) < 50:
+                  break
+
+          by_wf = collections.defaultdict(list)
+          for run in all_runs:
+              wf = (run.get("path") or "__unknown__").split("@", 1)[0]
+              by_wf[wf].append(run)
+
+          active_states = {"in_progress", "running", "queued", "waiting", "pending"}
+          pruned_ids = set()
+          for wf, runs in sorted(by_wf.items()):
+              runs.sort(key=lambda r: int(r.get("id") or 0), reverse=True)
+              for run in runs[keep:]:
+                  rid = str(run.get("id") or "")
+                  status = str(run.get("status") or "").lower()
+                  if not rid or rid == cur_id or status in active_states:
+                      continue
+                  pruned_ids.add(rid)
+                  st_a, arts = req("GET", f"/actions/runs/{rid}/artifacts")
+                  if st_a == 200 and isinstance(arts, dict):
+                      for art in (arts.get("artifacts") or []):
+                          aid = art.get("id")
+                          if aid is not None:
+                              da, _ = req("DELETE", f"/actions/artifacts/{aid}")
+                              print(f"[{wf}] DEL artifact id={aid} -> HTTP {da}")
+                  dr, _ = req("DELETE", f"/actions/runs/{rid}")
+                  print(f"[{wf}] DEL run id={rid} (logs+run) -> HTTP {dr}")
+                  if dr == 403:
+                      print("Hint: set GITEA_CLEANUP_TOKEN secret if token lacks delete")
+
+          st_all, repo_arts = req("GET", "/actions/artifacts?limit=100")
+          if st_all == 200 and isinstance(repo_arts, dict):
+              for art in (repo_arts.get("artifacts") or []):
+                  wrid = str((art.get("workflow_run") or {}).get("id") or "")
+                  if wrid in pruned_ids or art.get("expired"):
+                      aid = art.get("id")
+                      if aid is not None:
+                          da, _ = req("DELETE", f"/actions/artifacts/{aid}")
+                          print(f"[orphan/expired] DEL artifact {aid} -> HTTP {da}")
+          print(f"Retention check finished (keep={keep}, runs_scanned={len(all_runs)})")
+          PY
 
   build-debian-12:
     name: Build, Test & Package (debian-12)
