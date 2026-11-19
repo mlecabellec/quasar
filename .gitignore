@@ -28,3 +28,7 @@ doc/man/
 doc/documentation.pdf
 
 /doc/mkdocs-kit.log
+
+
+# Logs
+*.log
