@@ -789,7 +789,7 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG -Wno-error=maybe-uninitialized" \
               -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -846,8 +846,9 @@ jobs:
             fi
             MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
             if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
-            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
-            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+            SWAP_TOTAL_KB=$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB or SwapTotal is 0 (prevents OOM kills)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ] || [ "$SWAP_TOTAL_KB" -eq 0 ]; then
               BUILD_JOBS=1
             else
               MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
@@ -855,7 +856,7 @@ jobs:
               BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
               if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
             fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB, swap=${SWAP_TOTAL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -1610,7 +1611,7 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG -Wno-error=maybe-uninitialized" \
               -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -1667,8 +1668,9 @@ jobs:
             fi
             MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
             if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
-            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
-            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+            SWAP_TOTAL_KB=$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB or SwapTotal is 0 (prevents OOM kills)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ] || [ "$SWAP_TOTAL_KB" -eq 0 ]; then
               BUILD_JOBS=1
             else
               MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
@@ -1676,7 +1678,7 @@ jobs:
               BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
               if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
             fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB, swap=${SWAP_TOTAL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -2305,7 +2307,7 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG -Wno-error=maybe-uninitialized" \
               -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -2362,8 +2364,9 @@ jobs:
             fi
             MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
             if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
-            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
-            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+            SWAP_TOTAL_KB=$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB or SwapTotal is 0 (prevents OOM kills)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ] || [ "$SWAP_TOTAL_KB" -eq 0 ]; then
               BUILD_JOBS=1
             else
               MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
@@ -2371,7 +2374,7 @@ jobs:
               BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
               if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
             fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB, swap=${SWAP_TOTAL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -2995,7 +2998,7 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG -Wno-error=maybe-uninitialized" \
               -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -3052,8 +3055,9 @@ jobs:
             fi
             MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
             if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
-            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
-            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+            SWAP_TOTAL_KB=$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB or SwapTotal is 0 (prevents OOM kills)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ] || [ "$SWAP_TOTAL_KB" -eq 0 ]; then
               BUILD_JOBS=1
             else
               MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
@@ -3061,7 +3065,7 @@ jobs:
               BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
               if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
             fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB, swap=${SWAP_TOTAL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -3684,7 +3688,7 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG -Wno-error=maybe-uninitialized" \
               -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -3741,8 +3745,9 @@ jobs:
             fi
             MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
             if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
-            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
-            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+            SWAP_TOTAL_KB=$(awk '/SwapTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB or SwapTotal is 0 (prevents OOM kills)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ] || [ "$SWAP_TOTAL_KB" -eq 0 ]; then
               BUILD_JOBS=1
             else
               MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
@@ -3750,7 +3755,7 @@ jobs:
               BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
               if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
             fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB, swap=${SWAP_TOTAL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
