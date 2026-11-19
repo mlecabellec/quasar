@@ -3,6 +3,7 @@
 This directory tracks active, completed, and archived engineering tasks across the Quasar codebase.
 
 ## Active & Recent Tasks (`2026-11` / `2026-09`)
+- [TSK-20261119-001](TSK-20261119-001.md): Gitea2 Multi-Distro CI Follow-Up, Staggered 8 GiB Runner Verification & Cross-Repo Docs Token
 - [TSK-20261113-003](TSK-20261113-003.md): Repository-Wide Application of `CS-0090` (Doxygen, Traceability & Formal Contracts) across `cmake-projects/`
 - [TSK-20261113-002](TSK-20261113-002.md): Gap Analysis & Improvement Proposal for `resoem` Relative to SOEM
 - [TSK-20261113-001](TSK-20261113-001.md): `resoes` Clean-Room C++23 EtherCAT SubDevice (Slave) Stack
