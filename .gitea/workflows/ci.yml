@@ -1318,7 +1318,9 @@ jobs:
   build-debian-12:
     name: Build, Test & Package (debian-12)
     needs: runner-diagnostics
-    runs-on: debian-12
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/debian:12
     if: >-
       always() &&
       (startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr') ||
@@ -1966,7 +1968,9 @@ jobs:
   build-debian-13:
     name: Build, Test & Package (debian-13)
     needs: runner-diagnostics
-    runs-on: debian-13
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/debian:13
     if: >-
       always() &&
       (startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr') ||
@@ -2615,7 +2619,9 @@ jobs:
   build-fedora:
     name: Build, Test & Package (fedora)
     needs: runner-diagnostics
-    runs-on: fedora
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/fedora:latest
     if: >-
       always() &&
       (startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr') ||
@@ -3262,7 +3268,9 @@ jobs:
   build-archlinux:
     name: Build, Test & Package (archlinux)
     needs: runner-diagnostics
-    runs-on: archlinux
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/archlinux:latest
     if: >-
       always() &&
       (startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr') ||
