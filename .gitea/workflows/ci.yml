@@ -3329,7 +3329,7 @@ jobs:
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
               echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
-              pacman -Sy --noconfirm nodejs git ca-certificates
+              pacman -Syu --noconfirm nodejs git ca-certificates python
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
           cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-archlinux-01-first-analysis.log"
@@ -3359,7 +3359,7 @@ jobs:
             set -e
             set -x
             echo "=== [STEP 03] Install Node.js and Git Prerequisites (Arch Linux) ==="
-            pacman -Sy --noconfirm nodejs git ca-certificates
+            pacman -Syu --noconfirm nodejs git ca-certificates python
             node --version
             git --version
           ) 2>&1 | tee -a "$LOG_DIR/03-install-prerequisites.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
