@@ -15,6 +15,14 @@ env:
   CMAKE_POLICY_VERSION_MINIMUM: "3.5"
   CTEST_OUTPUT_ON_FAILURE: "1"
 
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
+  cancel-in-progress: true
+
 jobs:
   runner-diagnostics:
     name: Pre-Matrix Runner & Container Discovery
@@ -79,8 +87,13 @@ jobs:
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
               SUDO=""
               [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-              $SUDO apt-get update
-              $SUDO apt-get install -y --no-install-recommends nodejs git ca-certificates
+              APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+              $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+              if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates; then
+                $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+                $SUDO apt-get "${APT_OPTS[@]}" update || true
+                $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates
+              fi
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-debug-contexts.log" "$LOG_DIR/quasar-runner-diagnostics-full-execution.log"
           cp -f "$LOG_DIR/01-debug-contexts.log" "$LOG_DIR/quasar-runner-diagnostics-01-first-analysis.log"
@@ -597,8 +610,13 @@ jobs:
               echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
               SUDO=""
               [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-              $SUDO apt-get update
-              $SUDO apt-get install -y --no-install-recommends git ca-certificates nodejs
+              APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+              $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+              if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates nodejs; then
+                $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+                $SUDO apt-get "${APT_OPTS[@]}" update || true
+                $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates nodejs
+              fi
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
           cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-ubuntu-latest-01-first-analysis.log"
@@ -630,9 +648,14 @@ jobs:
             echo "=== [STEP 03] Install Node.js and Git Prerequisites (Ubuntu) ==="
             SUDO=""
             [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-            $SUDO apt-get update
-            $SUDO apt-get install -y --no-install-recommends git ca-certificates
-            command -v node >/dev/null 2>&1 || $SUDO apt-get install -y --no-install-recommends nodejs
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+            if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates; then
+              $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+              $SUDO apt-get "${APT_OPTS[@]}" update || true
+              $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates
+            fi
+            command -v node >/dev/null 2>&1 || $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs
             node --version
             git --version
           ) 2>&1 | tee -a "$LOG_DIR/03-install-prerequisites.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
@@ -667,6 +690,7 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-post-checkout.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
 
       - name: Install dependencies (Ubuntu)
+        id: install-deps
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-ubuntu-latest"
@@ -677,12 +701,18 @@ jobs:
             echo "=== [STEP 06] Install dependencies (Ubuntu) ==="
             SUDO=""
             [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-            $SUDO apt-get update
-            $SUDO apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file \
-                                      libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
-                                      libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
-                                      curl python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
-                                      libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev autoconf automake libtool
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            PKGS=(build-essential ccache cmake g++ make pkg-config python3 file \
+                  libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+                  libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
+                  curl python3-pip python3-venv plantuml default-jre graphviz fonts-noto-color-emoji libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
+                  libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev autoconf automake libtool)
+            $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+            if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends "${PKGS[@]}"; then
+              $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+              $SUDO apt-get "${APT_OPTS[@]}" update || true
+              $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends "${PKGS[@]}"
+            fi
           ) 2>&1 | tee -a "$LOG_DIR/06-install-dependencies.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
 
       - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
@@ -759,6 +789,8 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -797,13 +829,33 @@ jobs:
             export CCACHE_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.ccache"
             ccache -z
             CPUS=$(nproc 2>/dev/null || echo 2)
-            MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
-            # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
-            MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
-            if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
-            BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
-            if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+            PROC_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            CGROUP_AVAIL_KB=$PROC_AVAIL_KB
+            if [ -r /sys/fs/cgroup/memory.max ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+              CG_CUR=$(cat /sys/fs/cgroup/memory.current 2>/dev/null || echo 0)
+              if [ "$CG_MAX" != "max" ] && [ "$CG_MAX" -gt 0 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            elif [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo 0)
+              CG_CUR=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null || echo 0)
+              if [ "$CG_MAX" -gt 0 ] 2>/dev/null && [ "$CG_MAX" -lt 9000000000000000 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            fi
+            MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
+            if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+              BUILD_JOBS=1
+            else
+              MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+              if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+              BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+              if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+            fi
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -884,8 +936,11 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/16-package-cpack.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
 
       - name: Checkout MkDocs Kit
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-ubuntu-latest"
@@ -896,12 +951,27 @@ jobs:
             echo "=== [STEP 17] Checkout MkDocs Kit ==="
             rm -rf .cache/mkdocs-kit
             mkdir -p .cache
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            fi
             git -C .cache/mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/17-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-ubuntu-latest-full-execution.log"
 
       - name: Build Documentation
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -974,7 +1044,7 @@ jobs:
           retention-days: 7
 
       - name: Configure Linux Modules (EtherCAT)
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -1317,7 +1387,7 @@ jobs:
 
   build-debian-12:
     name: Build, Test & Package (debian-12)
-    needs: runner-diagnostics
+    needs: [runner-diagnostics, build-ubuntu]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/debian:12
@@ -1378,8 +1448,9 @@ jobs:
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
               echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
-              apt-get update
-              apt-get install -y --no-install-recommends nodejs git ca-certificates
+              APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+              apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+              apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
           cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-debian-12-01-first-analysis.log"
@@ -1409,9 +1480,10 @@ jobs:
             set -e
             set -x
             echo "=== [STEP 03] Install Node.js and Git Prerequisites (Debian) ==="
-            apt-get update
-            apt-get install -y --no-install-recommends git ca-certificates
-            command -v node >/dev/null 2>&1 || apt-get install -y --no-install-recommends nodejs
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+            apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates
+            command -v node >/dev/null 2>&1 || apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs
             node --version
             git --version
           ) 2>&1 | tee -a "$LOG_DIR/03-install-prerequisites.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
@@ -1446,6 +1518,7 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-post-checkout.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
 
       - name: Install dependencies (Debian)
+        id: install-deps
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-debian-12"
@@ -1454,11 +1527,12 @@ jobs:
             set -e
             set -x
             echo "=== [STEP 06] Install dependencies (Debian) ==="
-            apt-get update
-            apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+            apt-get "${APT_OPTS[@]}" install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
                                 libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                                 libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
-                                curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
+                                curl npm python3-pip python3-venv plantuml default-jre graphviz fonts-noto-color-emoji libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
                                 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev autoconf automake libtool
           ) 2>&1 | tee -a "$LOG_DIR/06-install-dependencies.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
 
@@ -1536,6 +1610,8 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -1574,13 +1650,33 @@ jobs:
             export CCACHE_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.ccache"
             ccache -z
             CPUS=$(nproc 2>/dev/null || echo 2)
-            MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
-            # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
-            MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
-            if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
-            BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
-            if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+            PROC_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            CGROUP_AVAIL_KB=$PROC_AVAIL_KB
+            if [ -r /sys/fs/cgroup/memory.max ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+              CG_CUR=$(cat /sys/fs/cgroup/memory.current 2>/dev/null || echo 0)
+              if [ "$CG_MAX" != "max" ] && [ "$CG_MAX" -gt 0 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            elif [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo 0)
+              CG_CUR=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null || echo 0)
+              if [ "$CG_MAX" -gt 0 ] 2>/dev/null && [ "$CG_MAX" -lt 9000000000000000 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            fi
+            MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
+            if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+              BUILD_JOBS=1
+            else
+              MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+              if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+              BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+              if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+            fi
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -1661,8 +1757,11 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/16-package-cpack.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
 
       - name: Checkout MkDocs Kit
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-debian-12"
@@ -1673,12 +1772,27 @@ jobs:
             echo "=== [STEP 17] Checkout MkDocs Kit ==="
             rm -rf .cache/mkdocs-kit
             mkdir -p .cache
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            fi
             git -C .cache/mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/17-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-debian-12-full-execution.log"
 
       - name: Build Documentation
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -1751,7 +1865,7 @@ jobs:
           retention-days: 7
 
       - name: Configure Linux Modules (EtherCAT)
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -1967,7 +2081,7 @@ jobs:
 
   build-debian-13:
     name: Build, Test & Package (debian-13)
-    needs: runner-diagnostics
+    needs: [runner-diagnostics, build-debian-12]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/debian:13
@@ -2029,8 +2143,9 @@ jobs:
             env | sort | sed -E 's/^([^=]*(TOKEN|SECRET|PASSWORD|PASSWD|KEY|AUTH)[^=]*)=.*/\1=***/I'
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
               echo "=== Bootstrapping Node.js and Git for gitea-upload-artifact ==="
-              apt-get update
-              apt-get install -y --no-install-recommends nodejs git ca-certificates
+              APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+              apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+              apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
           cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-debian-13-01-first-analysis.log"
@@ -2060,9 +2175,10 @@ jobs:
             set -e
             set -x
             echo "=== [STEP 03] Install Node.js and Git Prerequisites (Debian) ==="
-            apt-get update
-            apt-get install -y --no-install-recommends git ca-certificates
-            command -v node >/dev/null 2>&1 || apt-get install -y --no-install-recommends nodejs
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+            apt-get "${APT_OPTS[@]}" install -y --no-install-recommends git ca-certificates
+            command -v node >/dev/null 2>&1 || apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs
             node --version
             git --version
           ) 2>&1 | tee -a "$LOG_DIR/03-install-prerequisites.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
@@ -2097,6 +2213,7 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-post-checkout.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
 
       - name: Install dependencies (Debian)
+        id: install-deps
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-debian-13"
@@ -2105,11 +2222,12 @@ jobs:
             set -e
             set -x
             echo "=== [STEP 06] Install dependencies (Debian) ==="
-            apt-get update
-            apt-get install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || apt-get "${APT_OPTS[@]}" update || true
+            apt-get "${APT_OPTS[@]}" install -y --no-install-recommends build-essential ccache cmake g++ make pkg-config python3 file linux-headers-amd64 \
                                 libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
                                 libgmp-dev libssl-dev libsasl2-dev libzstd-dev uuid-dev binutils-dev libbfd-dev zlib1g-dev libiberty-dev libcurl4-openssl-dev gdb \
-                                curl npm python3-pip python3-venv plantuml default-jre graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
+                                curl npm python3-pip python3-venv plantuml default-jre graphviz fonts-noto-color-emoji libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
                                 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev autoconf automake libtool
           ) 2>&1 | tee -a "$LOG_DIR/06-install-dependencies.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
 
@@ -2187,6 +2305,8 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -2225,13 +2345,33 @@ jobs:
             export CCACHE_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.ccache"
             ccache -z
             CPUS=$(nproc 2>/dev/null || echo 2)
-            MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
-            # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
-            MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
-            if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
-            BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
-            if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+            PROC_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            CGROUP_AVAIL_KB=$PROC_AVAIL_KB
+            if [ -r /sys/fs/cgroup/memory.max ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+              CG_CUR=$(cat /sys/fs/cgroup/memory.current 2>/dev/null || echo 0)
+              if [ "$CG_MAX" != "max" ] && [ "$CG_MAX" -gt 0 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            elif [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo 0)
+              CG_CUR=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null || echo 0)
+              if [ "$CG_MAX" -gt 0 ] 2>/dev/null && [ "$CG_MAX" -lt 9000000000000000 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            fi
+            MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
+            if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+              BUILD_JOBS=1
+            else
+              MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+              if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+              BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+              if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+            fi
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -2312,8 +2452,11 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/16-package-cpack.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
 
       - name: Checkout MkDocs Kit
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-debian-13"
@@ -2324,12 +2467,27 @@ jobs:
             echo "=== [STEP 17] Checkout MkDocs Kit ==="
             rm -rf .cache/mkdocs-kit
             mkdir -p .cache
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            fi
             git -C .cache/mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/17-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-debian-13-full-execution.log"
 
       - name: Build Documentation
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -2402,7 +2560,7 @@ jobs:
           retention-days: 7
 
       - name: Configure Linux Modules (EtherCAT)
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -2618,7 +2776,7 @@ jobs:
 
   build-fedora:
     name: Build, Test & Package (fedora)
-    needs: runner-diagnostics
+    needs: [runner-diagnostics, build-debian-13]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/fedora:latest
@@ -2745,6 +2903,7 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-post-checkout.log" "$LOG_DIR/quasar-fedora-full-execution.log"
 
       - name: Install dependencies (Fedora)
+        id: install-deps
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-fedora"
@@ -2759,7 +2918,7 @@ jobs:
                            mesa-libGL-devel mesa-libGLU-devel libXcursor-devel libXinerama-devel \
                            gmp-devel openssl-devel libuuid-devel zlib-devel binutils-devel \
                            yaml-cpp-devel tinyxml2-devel ccache gdb libzstd-devel \
-                           curl npm python3-pip plantuml graphviz java-21-openjdk pango cairo
+                           curl npm python3-pip plantuml graphviz java-latest-openjdk-headless google-noto-color-emoji-fonts pango cairo
           ) 2>&1 | tee -a "$LOG_DIR/06-install-dependencies.log" "$LOG_DIR/quasar-fedora-full-execution.log"
 
       - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
@@ -2836,6 +2995,8 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -2874,13 +3035,33 @@ jobs:
             export CCACHE_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.ccache"
             ccache -z
             CPUS=$(nproc 2>/dev/null || echo 2)
-            MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
-            # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
-            MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
-            if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
-            BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
-            if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+            PROC_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            CGROUP_AVAIL_KB=$PROC_AVAIL_KB
+            if [ -r /sys/fs/cgroup/memory.max ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+              CG_CUR=$(cat /sys/fs/cgroup/memory.current 2>/dev/null || echo 0)
+              if [ "$CG_MAX" != "max" ] && [ "$CG_MAX" -gt 0 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            elif [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo 0)
+              CG_CUR=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null || echo 0)
+              if [ "$CG_MAX" -gt 0 ] 2>/dev/null && [ "$CG_MAX" -lt 9000000000000000 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            fi
+            MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
+            if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+              BUILD_JOBS=1
+            else
+              MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+              if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+              BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+              if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+            fi
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -2961,8 +3142,11 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/16-package-cpack.log" "$LOG_DIR/quasar-fedora-full-execution.log"
 
       - name: Checkout MkDocs Kit
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-fedora"
@@ -2973,12 +3157,27 @@ jobs:
             echo "=== [STEP 17] Checkout MkDocs Kit ==="
             rm -rf .cache/mkdocs-kit
             mkdir -p .cache
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            fi
             git -C .cache/mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/17-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-fedora-full-execution.log"
 
       - name: Build Documentation
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -3051,7 +3250,7 @@ jobs:
           retention-days: 7
 
       - name: Configure Linux Modules (EtherCAT)
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -3267,7 +3466,7 @@ jobs:
 
   build-archlinux:
     name: Build, Test & Package (archlinux)
-    needs: runner-diagnostics
+    needs: [runner-diagnostics, build-fedora]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/archlinux:latest
@@ -3394,6 +3593,7 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/05-diagnostic-post-checkout.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
 
       - name: Install dependencies (Arch Linux)
+        id: install-deps
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-archlinux"
@@ -3407,7 +3607,7 @@ jobs:
                            linux-headers autoconf automake libtool dkms \
                            alsa-lib libx11 libxrandr libxi mesa glu libxcursor libxinerama \
                            gmp openssl util-linux-libs zlib binutils yaml-cpp tinyxml2 ccache gdb \
-                           curl npm python-pip plantuml graphviz jre-openjdk pango cairo
+                           curl npm python-pip plantuml graphviz jre-openjdk noto-fonts-emoji pango cairo
           ) 2>&1 | tee -a "$LOG_DIR/06-install-dependencies.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
 
       - name: "Diagnostic: Workspace, Toolchain, Compilers & Libraries Check"
@@ -3484,6 +3684,8 @@ jobs:
             mkdir -p "$CCACHE_DIR" build-projects
             cmake -S cmake-projects -B build-projects \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+              -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -DCMAKE_POLICY_DEFAULT_CMP0000=NEW \
@@ -3522,13 +3724,33 @@ jobs:
             export CCACHE_DIR="${GITHUB_WORKSPACE:-$(pwd)}/.ccache"
             ccache -z
             CPUS=$(nproc 2>/dev/null || echo 2)
-            MEM_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
-            # Reserve ~4 GiB per concurrent C++23 -O3 compilation slot (0B swap on runner), capped at 2
-            MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
-            if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
-            BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
-            if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
-            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, MemAvailable=${MEM_AVAIL_KB}kB)"
+            PROC_AVAIL_KB=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+            CGROUP_AVAIL_KB=$PROC_AVAIL_KB
+            if [ -r /sys/fs/cgroup/memory.max ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+              CG_CUR=$(cat /sys/fs/cgroup/memory.current 2>/dev/null || echo 0)
+              if [ "$CG_MAX" != "max" ] && [ "$CG_MAX" -gt 0 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            elif [ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              CG_MAX=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo 0)
+              CG_CUR=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null || echo 0)
+              if [ "$CG_MAX" -gt 0 ] 2>/dev/null && [ "$CG_MAX" -lt 9000000000000000 ] 2>/dev/null; then
+                CGROUP_AVAIL_KB=$(( (CG_MAX - CG_CUR) / 1024 ))
+              fi
+            fi
+            MEM_AVAIL_KB=$(( PROC_AVAIL_KB < CGROUP_AVAIL_KB ? PROC_AVAIL_KB : CGROUP_AVAIL_KB ))
+            if [ "$MEM_AVAIL_KB" -lt 0 ]; then MEM_AVAIL_KB=0; fi
+            # Cap BUILD_JOBS=1 whenever effective RAM is <=10 GiB (handles 8 GiB runner cgroup limits)
+            if [ "$MEM_AVAIL_KB" -le 10485760 ]; then
+              BUILD_JOBS=1
+            else
+              MEM_JOBS=$(( MEM_AVAIL_KB / 4194304 ))
+              if [ "$MEM_JOBS" -lt 1 ]; then MEM_JOBS=1; fi
+              BUILD_JOBS=$(( CPUS < MEM_JOBS ? CPUS : MEM_JOBS ))
+              if [ "$BUILD_JOBS" -gt 2 ]; then BUILD_JOBS=2; fi
+            fi
+            echo "Build parallelism: BUILD_JOBS=$BUILD_JOBS (nproc=$CPUS, procAvail=${PROC_AVAIL_KB}kB, effAvail=${MEM_AVAIL_KB}kB)"
             free -h || true
             cmake --build build-projects --target liblua quasar_coretypes quasar_named utils --parallel "$BUILD_JOBS" --verbose
             # Build sol2-heavy quasar_scripting sequentially so RegistryBindings.cpp has full RAM headroom
@@ -3608,8 +3830,11 @@ jobs:
           ) 2>&1 | tee -a "$LOG_DIR/16-package-cpack.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
 
       - name: Checkout MkDocs Kit
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-archlinux"
@@ -3620,12 +3845,27 @@ jobs:
             echo "=== [STEP 17] Checkout MkDocs Kit ==="
             rm -rf .cache/mkdocs-kit
             mkdir -p .cache
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" .cache/mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git .cache/mkdocs-kit
+            fi
             git -C .cache/mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/17-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-archlinux-full-execution.log"
 
       - name: Build Documentation
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail
@@ -3698,7 +3938,7 @@ jobs:
           retention-days: 7
 
       - name: Configure Linux Modules (EtherCAT)
-        if: (!cancelled())
+        if: (!cancelled()) && steps.install-deps.outcome == 'success'
         continue-on-error: true
         run: |
           set -e -o pipefail

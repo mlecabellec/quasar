@@ -10,6 +10,10 @@ on:
       - main
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build-docs:
     name: Build Documentation Site & PDF Manual
@@ -76,8 +80,13 @@ jobs:
             if ! command -v node >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
               SUDO=""
               [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-              $SUDO apt-get update
-              $SUDO apt-get install -y --no-install-recommends nodejs git ca-certificates
+              APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+              $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+              if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates; then
+                $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+                $SUDO apt-get "${APT_OPTS[@]}" update || true
+                $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends nodejs git ca-certificates
+              fi
             fi
           ) 2>&1 | tee -a "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-docs-full-execution.log"
           cp -f "$LOG_DIR/01-diagnostic-environment.log" "$LOG_DIR/quasar-docs-01-first-analysis.log"
@@ -98,6 +107,9 @@ jobs:
         uses: https://gitea.com/actions/checkout@v4
 
       - name: Checkout MkDocs Kit
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_CLONE_TOKEN: ${{ secrets.MKDOCS_KIT_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
         run: |
           set -e -o pipefail
           LOG_DIR="/tmp/quasar-ci-logs-docs"
@@ -115,7 +127,22 @@ jobs:
             set -x
             echo "=== [STEP 04] Checkout MkDocs Kit ==="
             rm -rf mkdocs-kit
-            git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
+            GITEA_BASE="${GITEA_SERVER_URL%/}"
+            GITEA_BASE="${GITEA_BASE:-https://gitea2.lecabellec.fr}"
+            CLONE_OK=0
+            if [ -n "${GITEA_CLONE_TOKEN:-}" ]; then
+              ASKPASS_SCRIPT=$(mktemp)
+              printf '#!/bin/sh\ncase "$1" in\n  *Username*) printf "%%s\\n" "x-access-token" ;;\n  *) printf "%%s\\n" "${GITEA_CLONE_TOKEN}" ;;\nesac\n' > "$ASKPASS_SCRIPT"
+              chmod +x "$ASKPASS_SCRIPT"
+              if GIT_ASKPASS="$ASKPASS_SCRIPT" GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" mkdocs-kit; then
+                CLONE_OK=1
+              fi
+              rm -f "$ASKPASS_SCRIPT"
+            fi
+            if [ "$CLONE_OK" -eq 0 ]; then
+              GIT_TERMINAL_PROMPT=0 git clone --depth=1 --verbose "${GITEA_BASE}/m/mkdocs-kit.git" mkdocs-kit || \
+                git clone --depth=1 --verbose https://github.com/mlecabellec/mkdocs-kit.git mkdocs-kit
+            fi
             git -C mkdocs-kit log -1 --oneline || true
           ) 2>&1 | tee -a "$LOG_DIR/04-checkout-mkdocs-kit.log" "$LOG_DIR/quasar-docs-full-execution.log"
 
@@ -153,8 +180,14 @@ jobs:
             echo "=== [STEP 06] Install System Dependencies ==="
             SUDO=""
             [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null && SUDO="sudo"
-            $SUDO apt-get update
-            $SUDO apt-get install -y --no-install-recommends plantuml graphviz libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev default-jre-headless
+            APT_OPTS=(-o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+            PKGS=(plantuml graphviz fonts-noto-color-emoji libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev libxml2-dev libxslt1-dev default-jre-headless)
+            $SUDO apt-get "${APT_OPTS[@]}" -o APT::Update::Error-Mode=any update || $SUDO apt-get "${APT_OPTS[@]}" update || true
+            if ! $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends "${PKGS[@]}"; then
+              $SUDO sed -i 's|http://archive.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|http://fr.archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+              $SUDO apt-get "${APT_OPTS[@]}" update || true
+              $SUDO apt-get "${APT_OPTS[@]}" install -y --no-install-recommends "${PKGS[@]}"
+            fi
             plantuml -version || true
             dot -V || true
             java -version 2>&1 || true

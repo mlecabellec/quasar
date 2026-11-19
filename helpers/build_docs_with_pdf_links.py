@@ -54,6 +54,7 @@ def rewrite_combined_pdf_html(master_html: str) -> str:
 
     page_ids = {}
     id_map = {}
+    global_id_targets = {}
 
     # Pass 1: Assign deterministic page IDs (reusing any upstream section id) and per-page namespaced element IDs.
     for rel_html, open_tag, body in sections:
@@ -67,7 +68,9 @@ def rewrite_combined_pdf_html(master_html: str) -> str:
                 page_ids[posixpath.join(dir_name, "index.html") if dir_name else "index.html"] = page_id
         for id_match in _ID_ATTR_RE.finditer(body):
             old_id = id_match.group(2)
-            id_map[(page_id, old_id)] = f"{page_id}--{old_id}"
+            namespaced_id = f"{page_id}--{old_id}"
+            id_map[(page_id, old_id)] = namespaced_id
+            global_id_targets.setdefault(old_id, []).append(namespaced_id)
 
     # Pass 2: Namespace IDs and rewrite internal hrefs to #pdf-page-... / #pdf-page-...--frag.
     rebuilt_sections = []
@@ -97,6 +100,11 @@ def rewrite_combined_pdf_html(master_html: str) -> str:
             if href.startswith("#"):
                 frag = urllib.parse.unquote(href[1:])
                 mapped = id_map.get((page_id, frag))
+                if not mapped:
+                    # Fallback for cross-page bare #id links rewritten by mkdocs-kit before section namespacing.
+                    candidates_global = global_id_targets.get(frag, [])
+                    if len(candidates_global) == 1:
+                        mapped = candidates_global[0]
                 if mapped:
                     return f"{attr_eq}{quote}#{mapped}{quote}"
                 return m.group(0)
