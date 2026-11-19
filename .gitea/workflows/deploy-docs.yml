@@ -2,6 +2,9 @@ name: Build & Publish Documentation (Gitea)
 
 on:
   push:
+    tags:
+      - 'v*'
+      - 'release-*'
     branches:
       - master
       - main
@@ -11,7 +14,16 @@ jobs:
   build-docs:
     name: Build Documentation Site & PDF Manual
     runs-on: ubuntu-latest
-    if: startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr')
+    if: >-
+      (startsWith(gitea.server_url, 'https://gitea2.lecabellec.fr') ||
+      gitea.event_name == 'workflow_dispatch') &&
+      (gitea.event_name == 'workflow_dispatch' ||
+      startsWith(gitea.ref, 'refs/tags/') ||
+      contains(gitea.event.head_commit.message, 'RUN_WORKFLOW') ||
+      contains(gitea.event.commits[0].message, 'RUN_WORKFLOW') ||
+      contains(gitea.event.pull_request.title, 'RUN_WORKFLOW') ||
+      contains(gitea.event.head_commit.message, 'RELEASE_ARTIFACTS') ||
+      contains(gitea.event.commits[0].message, 'RELEASE_ARTIFACTS'))
 
     steps:
       - name: "Diagnostic: Environment, Runner & Container Socket Context"
@@ -79,6 +91,7 @@ jobs:
           path: /tmp/quasar-ci-logs-docs/quasar-docs-01-first-analysis.log
           overwrite: true
           if-no-files-found: warn
+          retention-days: 7
 
       - name: Checkout Repository
         id: checkout-repository
@@ -240,6 +253,7 @@ jobs:
             release-assets/quasar-docs-site.tar.gz
           overwrite: true
           if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload PDF Manual Artifact
         id: upload-docs-pdf
@@ -253,6 +267,7 @@ jobs:
             doc/mkdocs-kit.log
           overwrite: true
           if-no-files-found: warn
+          retention-days: 7
 
       - name: "Diagnostic: Post-Run Summary"
         if: always()
@@ -298,8 +313,137 @@ jobs:
             ci-logs/*.log
           overwrite: true
           if-no-files-found: warn
+          retention-days: 7
 
-      - name: "Retention: Prune Older Workflow Runs, Logs & Artifacts (Keep Last 3)"
+      - name: "Release: Publish Artifacts to Gitea Tag Release"
+        if: success() && startsWith(gitea.ref, 'refs/tags/')
+        continue-on-error: true
+        shell: bash
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_RELEASE_TOKEN || secrets.GITEA_CLEANUP_TOKEN || gitea.token }}
+          GITEA_API_URL: ${{ gitea.api_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          TAG_NAME: ${{ gitea.ref_name }}
+          RELEASE_PATHS: |
+            release-assets/quasar-docs-site.tar.gz
+            doc/documentation.pdf
+        run: |
+          if [ -z "${GITEA_TOKEN:-}" ] || ! command -v python3 >/dev/null 2>&1; then
+            echo "Release skipped: missing GITEA_TOKEN or python3."
+            exit 0
+          fi
+          python3 - <<'PY'
+          import glob, json, mimetypes, os, urllib.error, urllib.parse, urllib.request, uuid
+
+          token = os.environ.get("GITEA_TOKEN", "").strip()
+          api = os.environ.get("GITEA_API_URL", "").rstrip("/")
+          repo = os.environ.get("GITEA_REPO", "").strip("/")
+          tag = os.environ.get("TAG_NAME", "").strip()
+          raw_paths = os.environ.get("RELEASE_PATHS", "")
+          if not (token and api and repo and tag):
+              print("Release skipped: missing API context or tag.")
+              raise SystemExit(0)
+
+          files = []
+          seen = set()
+          for pat in raw_paths.splitlines():
+              pat = pat.strip()
+              if not pat:
+                  continue
+              for match in sorted(glob.glob(pat)):
+                  if os.path.isfile(match) and match not in seen:
+                      seen.add(match)
+                      files.append(match)
+
+          if not files:
+              print(f"Release skipped for tag {tag}: no matching artifact files found.")
+              raise SystemExit(0)
+
+          def api_json(method, path, payload=None):
+              url = f"{api}/repos/{repo}{path}"
+              headers = {"Authorization": f"token {token}"}
+              data = None
+              if payload is not None:
+                  data = json.dumps(payload).encode("utf-8")
+                  headers["Content-Type"] = "application/json"
+              req = urllib.request.Request(url, data=data, method=method, headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as resp:
+                      body = resp.read().decode("utf-8", errors="replace")
+                      return resp.status, (json.loads(body) if body.strip() else {})
+              except urllib.error.HTTPError as exc:
+                  err = exc.read().decode("utf-8", errors="replace")
+                  return exc.code, {"error": err[:300]}
+              except Exception as exc:
+                  return 0, {"error": str(exc)}
+
+          def upload_asset(rel_id, fpath):
+              fname = os.path.basename(fpath)
+              qname = urllib.parse.quote(fname)
+              url = f"{api}/repos/{repo}/releases/{rel_id}/assets?name={qname}"
+              boundary = f"----GiteaRel{uuid.uuid4().hex}"
+              ctype = mimetypes.guess_type(fname)[0] or "application/octet-stream"
+              with open(fpath, "rb") as fh:
+                  content = fh.read()
+              body = (
+                  f"--{boundary}\r\n"
+                  f'Content-Disposition: form-data; name="attachment"; filename="{fname}"\r\n'
+                  f"Content-Type: {ctype}\r\n\r\n"
+              ).encode("utf-8") + content + f"\r\n--{boundary}--\r\n".encode("utf-8")
+              headers = {
+                  "Authorization": f"token {token}",
+                  "Content-Type": f"multipart/form-data; boundary={boundary}",
+              }
+              req = urllib.request.Request(url, data=body, method="POST", headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=120) as resp:
+                      return resp.status, resp.read().decode("utf-8", errors="replace")[:200]
+              except urllib.error.HTTPError as exc:
+                  return exc.code, exc.read().decode("utf-8", errors="replace")[:200]
+              except Exception as exc:
+                  return 0, str(exc)
+
+          qtag = urllib.parse.quote(tag, safe="")
+          st, rel = api_json("GET", f"/releases/tags/{qtag}")
+          if st == 404:
+              st, rel = api_json(
+                  "POST",
+                  "/releases",
+                  {
+                      "tag_name": tag,
+                      "name": tag,
+                      "body": f"Automated release artifacts published by Gitea Actions for tag `{tag}`.",
+                      "draft": False,
+                      "prerelease": ("-" in tag),
+                  },
+              )
+          if st not in (200, 201) or not isinstance(rel, dict) or not rel.get("id"):
+              print(f"Release creation/lookup failed for {tag} -> HTTP {st}: {rel}")
+              if st == 403:
+                  print("Hint: set GITEA_RELEASE_TOKEN secret if token lacks release write scope")
+              raise SystemExit(0)
+
+          rel_id = rel["id"]
+          st_a, assets = api_json("GET", f"/releases/{rel_id}/assets")
+          existing = {}
+          if st_a == 200 and isinstance(assets, list):
+              for a in assets:
+                  if isinstance(a, dict) and a.get("name") and a.get("id"):
+                      existing[a["name"]] = a["id"]
+
+          for fpath in files:
+              fname = os.path.basename(fpath)
+              if fname in existing:
+                  da, _ = api_json("DELETE", f"/releases/{rel_id}/assets/{existing[fname]}")
+                  print(f"[release {tag}] Replaced existing asset {fname} -> HTTP {da}")
+              su, msg = upload_asset(rel_id, fpath)
+              fsize = os.path.getsize(fpath)
+              print(f"[release {tag}] Uploaded {fname} ({fsize} bytes) -> HTTP {su}")
+              if su not in (200, 201):
+                  print(f"  detail: {msg}")
+          PY
+
+      - name: "Retention: Prune Older Workflow Runs, Logs & Artifacts (Keep Last 3, Max 7 Days)"
         if: always()
         continue-on-error: true
         shell: bash
@@ -309,22 +453,50 @@ jobs:
           GITEA_REPO: ${{ gitea.repository }}
           GITEA_RUN_ID: ${{ gitea.run_id }}
           KEEP_RUNS: "3"
+          RETENTION_DAYS: "7"
         run: |
           if [ -z "${GITEA_TOKEN:-}" ] || ! command -v python3 >/dev/null 2>&1; then
             echo "Retention skipped: missing GITEA_TOKEN or python3."
             exit 0
           fi
           python3 - <<'PY'
-          import collections, json, os, urllib.error, urllib.request
+          import collections, datetime, json, os, re, urllib.error, urllib.request
 
           token = os.environ.get("GITEA_TOKEN", "").strip()
           api = os.environ.get("GITEA_API_URL", "").rstrip("/")
           repo = os.environ.get("GITEA_REPO", "").strip("/")
           cur_id = str(os.environ.get("GITEA_RUN_ID", "")).strip()
           keep = int(os.environ.get("KEEP_RUNS", "3"))
+          retention_days = int(os.environ.get("RETENTION_DAYS", "7"))
           if not (token and api and repo):
               print("Retention skipped: missing API context.")
               raise SystemExit(0)
+
+          cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+              days=retention_days
+          )
+
+          def parse_ts(val):
+              if not val or not isinstance(val, str):
+                  return None
+              s = val.strip()
+              if s.endswith("Z"):
+                  s = s[:-1] + "+00:00"
+              s = re.sub(r"(\.\d{6})\d+", r"\1", s)
+              try:
+                  dt = datetime.datetime.fromisoformat(s)
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=datetime.timezone.utc)
+                  return dt.astimezone(datetime.timezone.utc)
+              except Exception:
+                  return None
+
+          def is_expired(obj):
+              for key in ("created_at", "started_at", "updated_at", "completed_at"):
+                  dt = parse_ts(obj.get(key))
+                  if dt is not None:
+                      return dt < cutoff
+              return False
 
           def req(method, path):
               url = f"{api}/repos/{repo}{path}"
@@ -363,7 +535,9 @@ jobs:
           pruned_ids = set()
           for wf, runs in sorted(by_wf.items()):
               runs.sort(key=lambda r: int(r.get("id") or 0), reverse=True)
-              for run in runs[keep:]:
+              for idx, run in enumerate(runs):
+                  if idx < keep and not is_expired(run):
+                      continue
                   rid = str(run.get("id") or "")
                   status = str(run.get("status") or "").lower()
                   if not rid or rid == cur_id or status in active_states:
@@ -385,10 +559,13 @@ jobs:
           if st_all == 200 and isinstance(repo_arts, dict):
               for art in (repo_arts.get("artifacts") or []):
                   wrid = str((art.get("workflow_run") or {}).get("id") or "")
-                  if wrid in pruned_ids or art.get("expired"):
+                  if wrid in pruned_ids or art.get("expired") or is_expired(art):
                       aid = art.get("id")
                       if aid is not None:
                           da, _ = req("DELETE", f"/actions/artifacts/{aid}")
                           print(f"[orphan/expired] DEL artifact {aid} -> HTTP {da}")
-          print(f"Retention check finished (keep={keep}, runs_scanned={len(all_runs)})")
+          print(
+              f"Retention check finished (keep={keep}, "
+              f"retention_days={retention_days}, runs_scanned={len(all_runs)})"
+          )
           PY
